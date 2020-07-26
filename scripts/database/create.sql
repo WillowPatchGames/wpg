@@ -26,7 +26,3 @@ CREATE TABLE authentication (
 
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
-CREATE TABLE games (
-  id BIGSERIAL PRIMARY KEY
-);
