@@ -8,10 +8,10 @@ uninstall: remove_database
 
 build: cmds
 
-cmds: wcauther
+cmds: wcapi
 
-wcauther: cmd/wcauther/main.go pkg/auth/*.go
-	go build $(NAMESPACE)/cmd/wcauther
+wcapi: cmd/wcapi/main.go pkg/auth/*.go
+	go build $(NAMESPACE)/cmd/wcapi
 
 install_database:
 	cd scripts/database && ./setup.sh

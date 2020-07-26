@@ -27,3 +27,5 @@ CREATE TABLE authentication (
 
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE USER wordcorp WITH PASSWORD 'CHANGEME';

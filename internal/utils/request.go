@@ -3,7 +3,6 @@ package utils
 import (
     "encoding/json"
     "io"
-    "log"
     "net/http"
     "strings"
 
@@ -45,8 +44,6 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, obj interface{}) error
     if !validContentType(contentType) {
         return api_errors.UnknownContentType
     }
-
-    log.Println("Got content type: " + contentType)
 
     r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
     if contentType == "application/json" {

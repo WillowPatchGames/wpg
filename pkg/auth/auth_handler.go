@@ -30,6 +30,8 @@ type authHandlerResponse struct {
 }
 
 type AuthHandler struct {
+	http.Handler
+
 	req  authHandlerData
 	resp authHandlerResponse
 }

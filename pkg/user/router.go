@@ -4,12 +4,13 @@
  * Licensed under the terms of the AGPLv3.
  */
 
-package auth
+package user
 
 import (
 	"github.com/gorilla/mux"
 )
 
 func BuildRouter(router *mux.Router) {
-	router.Handle("/auth", new(AuthHandler)).Methods("POST")
+    router.Handle("/{eid:[0-9]+}", new(QueryHandler)).Methods("GET")
+	router.Handle("/", new(RegisterHandler)).Methods("POST")
 }
