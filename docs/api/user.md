@@ -29,7 +29,8 @@ returned to other users and won't be available for sign in. By default, if
 ```json
 {
     "id": int,
-    "username": str
+    "username": str,
+    "email": str
 }
 ```
 
@@ -39,6 +40,17 @@ Users should then [auth](auth.md).
 
 From an external identifier, returns identifying information about a user.
 
-This is useful for learning about others in the room.
+This is useful for learning about others in the room. Depending on whether
+or not the user passes an API token, certain fields may or may not be
+available.
 
 ### Response Data
+
+```json
+{
+    "id": int,
+    "username": str,
+    "display": str,
+    "email": str
+}
+```
