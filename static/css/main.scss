@@ -1,0 +1,58 @@
+body {
+  font-family: "Quicksand", sans-serif;
+}
+
+@mixin noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+}
+
+.word {
+  font-family: "Quicksand", sans-serif;
+  font-weight: 600;
+  font-size: 30px;
+}
+
+.tile {
+  @extend .word;
+  @include noselect;
+
+  width: 32px;
+  height: 32px;
+  /* to force height to be respected */
+  line-height: 100%;
+  text-align: center;
+
+  border: 1px solid #88a8e2;
+}
+
+table.word.grid {
+  border-collapse: collapse;
+  color: #550080;
+  td {
+    @extend .tile;
+
+    &:empty {
+      cursor: default;
+    }
+    &:not(:empty) {
+      background: #e0dfef;
+      cursor: pointer;
+    }
+  }
+}
+
+.word.bank {
+  span.letter {
+    @extend .tile;
+    display: inline-block;
+    border: 1px solid #88a8e2;
+    background: #e0dfef;
+    cursor: pointer;
+  }
+}
