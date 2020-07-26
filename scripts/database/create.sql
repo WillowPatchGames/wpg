@@ -10,6 +10,7 @@ CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
   eid      BIGINT,
   username VARCHAR (512) NOT NULL,
+  display  VARCHAR (512),
   email    VARCHAR (512),
   UNIQUE(eid),
   UNIQUE(username),
