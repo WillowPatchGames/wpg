@@ -10,7 +10,7 @@ build: cmds
 
 cmds: wcapi
 
-wcapi: cmd/wcapi/main.go pkg/auth/*.go
+wcapi: cmd/wcapi/main.go pkg/*/*.go internal/*/*.go
 	go build $(NAMESPACE)/cmd/wcapi
 
 install_database:

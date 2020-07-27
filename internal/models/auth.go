@@ -1,5 +1,1 @@
 package models
-
-import (
-	"log"
-)

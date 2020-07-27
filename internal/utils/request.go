@@ -9,6 +9,12 @@ import (
     api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
 )
 
+type HTTPRequestHandler interface {
+    GetRequest()  interface{}
+    GetResponse() interface{}
+}
+
+
 var allowedRequestContentTypes = []string {
     "application/json",
     "application/x-www-form-urlencoded",
@@ -27,7 +33,7 @@ func validContentType(contentType string) bool {
     return false
 }
 
-func ParseRequest(w http.ResponseWriter, r *http.Request, obj interface{}) error {
+func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHandler) error {
     var err error
 
     var contentTypeValue = r.Header.Get("Content-Type")
@@ -49,12 +55,14 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, obj interface{}) error
     if contentType == "application/json" {
         var decoder = json.NewDecoder(r.Body)
 
-        err = decoder.Decode(obj)
+        err = decoder.Decode(handle.GetRequest())
         if err != nil {
             return err
         }
 
-        err = decoder.Decode(obj)
+        var obj interface{}
+
+        err = decoder.Decode(&obj)
         if err != io.EOF {
             return api_errors.MultipleJSONObjects
         }
@@ -63,4 +71,16 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, obj interface{}) error
     }
 
     return nil
+}
+
+func SendResponse(w http.ResponseWriter, r *http.Request, obj interface{}) {
+    resp_data, err := json.Marshal(obj)
+    if err != nil {
+        api_errors.WriteError(w, err, true)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.Write(resp_data)
+    w.Write([]byte{byte('\n')})
 }

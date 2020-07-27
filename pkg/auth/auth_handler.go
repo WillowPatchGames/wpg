@@ -7,7 +7,6 @@
 package auth
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"git.cipherboy.com/WordCorp/api/internal/utils"
@@ -31,9 +30,18 @@ type authHandlerResponse struct {
 
 type AuthHandler struct {
 	http.Handler
+	utils.HTTPRequestHandler
 
 	req  authHandlerData
 	resp authHandlerResponse
+}
+
+func (handle AuthHandler) GetRequest() interface{} {
+  return &handle.req
+}
+
+func (handle AuthHandler) GetResponse() interface{} {
+  return handle.resp
 }
 
 func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -43,14 +51,5 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp_data []byte
-	resp_data, err = json.Marshal(handle.resp)
-	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(resp_data)
-	w.Write([]byte{byte('\n')})
+	utils.SendResponse(w, r, handle)
 }

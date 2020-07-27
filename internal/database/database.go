@@ -23,3 +23,7 @@ func OpenDatabase(format string, conn string) error {
 
 	return nil
 }
+
+func GetTransaction() (*sql.Tx, error) {
+	return DB.Begin()
+}
