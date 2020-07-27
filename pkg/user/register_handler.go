@@ -26,10 +26,12 @@ type registerHandlerResponse struct {
 
 type RegisterHandler struct {
 	http.Handler
-	utils.HTTPRequest
+	utils.HTTPRequestHandler
 
 	req  registerHandlerData
 	resp registerHandlerResponse
+
+	requestType string
 }
 
 func (handle RegisterHandler) GetRequest() interface{} {
@@ -40,8 +42,34 @@ func (handle RegisterHandler) GetResponse() interface{} {
 	return handle.resp
 }
 
+func (handle RegisterHandler) GetRequestType() string {
+	return handle.requestType
+}
+
+func (handle RegisterHandler) SetRequestType(requestType string) {
+	handle.requestType = requestType
+}
+
+func (handle RegisterHandler) verifyRequest() error {
+	if handle.req.Username == "" && handle.req.Email == "" {
+		return api_errors.ErrMissingUsernameOrEmail
+	}
+
+	if handle.req.Password == "" {
+		return api_errors.ErrMissingPassword
+	}
+
+	return nil
+}
+
 func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := utils.ParseRequest(w, r, &handle)
+	if err != nil {
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
+	err = handle.verifyRequest()
 	if err != nil {
 		api_errors.WriteError(w, err, true)
 		return
@@ -57,24 +85,22 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		user.Display = user.Username
 	}
 
-	if user.Username == "" && user.Email == "" {
-		api_errors.Write(w, api_errors.MissingUsernameOrEmail, true)
-		return
-	}
-
 	err = user.Create(tx)
 	if err != nil {
 		api_errors.WriteError(w, err, true)
+		return
 	}
 
 	err = user.SetPassword(tx, handle.req.Password)
 	if err != nil {
 		api_errors.WriteError(w, err, true)
+		return
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		api_errors.WriteError(w, err, true)
+		return
 	}
 
 	utils.SendResponse(w, r, handle)

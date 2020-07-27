@@ -14,7 +14,7 @@ import (
 )
 
 type authHandlerData struct {
-	internalID uint64 `json:"id"`
+	InternalID uint64 `json:"id"`
 	UserID     uint64 `json:"eid"`
 	Username   string `json:"username"`
 	Email      string `json:"email"`
@@ -30,10 +30,12 @@ type authHandlerResponse struct {
 
 type AuthHandler struct {
 	http.Handler
-	utils.HTTPRequest
+	utils.HTTPRequestHandler
 
 	req  authHandlerData
 	resp authHandlerResponse
+
+	requestType string
 }
 
 func (handle AuthHandler) GetRequest() interface{} {
@@ -42,6 +44,14 @@ func (handle AuthHandler) GetRequest() interface{} {
 
 func (handle AuthHandler) GetResponse() interface{} {
 	return handle.resp
+}
+
+func (handle AuthHandler) GetRequestType() string {
+	return handle.requestType
+}
+
+func (handle AuthHandler) SetRequestType(requestType string) {
+	handle.requestType = requestType
 }
 
 func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

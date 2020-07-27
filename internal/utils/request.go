@@ -9,15 +9,11 @@ import (
 	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
 )
 
-type HTTPRequest struct {
-	HTTPRequestHandler
-
-	requestType string
-}
-
 type HTTPRequestHandler interface {
 	GetRequest() interface{}
 	GetResponse() interface{}
+	GetRequestType() string
+	SetRequestType(requestType string)
 }
 
 var allowedRequestContentTypes = []string{
@@ -43,21 +39,21 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHand
 
 	var contentTypeValue = r.Header.Get("Content-Type")
 	if contentTypeValue == "" {
-		return api_errors.NoContentType
+		return api_errors.ErrNoContentType
 	}
 
 	var contentTypeSplit []string = strings.SplitN(contentTypeValue, " ", 2)
 	if len(contentTypeSplit) == 0 {
-		return api_errors.NoContentType
+		return api_errors.ErrNoContentType
 	}
 
-	handle.requestType = contentTypeSplit[0]
-	if !validContentType(handle.requestType) {
-		return api_errors.UnknownContentType
+	handle.SetRequestType(contentTypeSplit[0])
+	if !validContentType(handle.GetRequestType()) {
+		return api_errors.ErrUnknownContentType
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
-	if handle.requestType == "application/json" {
+	if handle.GetRequestType() == "application/json" {
 		var decoder = json.NewDecoder(r.Body)
 
 		err = decoder.Decode(handle.GetRequest())
@@ -69,10 +65,10 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHand
 
 		err = decoder.Decode(&obj)
 		if err != io.EOF {
-			return api_errors.MultipleJSONObjects
+			return api_errors.ErrMultipleJSONObjects
 		}
 	} else {
-		return api_errors.UnknownContentType
+		return api_errors.ErrUnknownContentType
 	}
 
 	return nil

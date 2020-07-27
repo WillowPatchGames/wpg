@@ -4,9 +4,10 @@ import (
 	"errors"
 )
 
-var NoContentType = errors.New("Unable to parse malformed or missing Content-Type header on request.")
-var UnknownContentType = errors.New("Unknown or unsupported Content-Type header on request.")
+var ErrNoContentType = errors.New("unable to parse malformed or missing Content-Type header on request")
+var ErrUnknownContentType = errors.New("unknown or unsupported Content-Type header on request")
 
-var MultipleJSONObjects = errors.New("Got multiple JSON objects when we only expected one.")
+var ErrMultipleJSONObjects = errors.New("got multiple JSON objects when we only expected one")
 
-var MissingUsernameOrEmail = errors.New("Missing username or email to describe new user.")
+var ErrMissingUsernameOrEmail = errors.New("missing username or email to describe new user")
+var ErrMissingPassword = errors.New("missing password")

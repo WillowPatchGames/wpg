@@ -7,6 +7,13 @@ all: build
 format:
 	$(GO) fmt $(NAMESPACE)/...
 
+vet:
+	$(GO) vet $(NAMESPACE)/...
+
+staticcheck:
+	test -e ~/go/bin/staticcheck || ( echo "Must install staticcheck: https://staticcheck.io/docs/" && exit 1 )
+	$(HOME)/go/bin/staticcheck $(NAMESPACE)/...
+
 install: install_database
 
 uninstall: remove_database

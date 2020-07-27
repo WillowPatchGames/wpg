@@ -7,17 +7,17 @@ import (
 
 var SaltBytes = 256 / 8
 
-var PasswordMismatch = errors.New("Provided password doesn't match hash.")
-var InvalidObject = errors.New("Invalid or uninitialized object provided.")
-var InvalidSerialization = errors.New("Invalid data provided to Unmarshal.")
-var UnknownId = errors.New("Unknown identifier or invalid id provided.")
+var ErrPasswordMismatch = errors.New("provided password doesn't match hash")
+var ErrInvalidObject = errors.New("invalid or uninitialized object provided")
+var ErrInvalidSerialization = errors.New("invalid data provided to Unmarshal")
+var ErrUnknownId = errors.New("unknown identifier or invalid id provided")
 
 type Crypt struct {
 	Crypter
 
-	Id   string
-	Salt []byte
-	Hash []byte
+	Id    string
+	Salt  []byte
+	Value []byte
 }
 
 type Crypter interface {
@@ -28,7 +28,7 @@ type Crypter interface {
 }
 
 func NewSalt() ([]byte, error) {
-	var data []byte = make([]byte, saltBytes)
+	var data []byte = make([]byte, SaltBytes)
 
 	_, err := rand.Read(data)
 	if err != nil {
@@ -39,5 +39,5 @@ func NewSalt() ([]byte, error) {
 }
 
 func parseInt(src []byte, index int) (int, int, error) {
-	return 0, index, InvalidObject
+	return 0, index, ErrInvalidObject
 }

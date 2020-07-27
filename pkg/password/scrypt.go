@@ -43,7 +43,7 @@ func (s *Scrypt) Hash(password []byte) error {
 		return err
 	}
 
-	s.Hash, err = scrypt.Key(password, s.Salt, s.N, s.R, s.P, s.Len)
+	s.Value, err = scrypt.Key(password, s.Salt, s.N, s.R, s.P, s.Len)
 	if err != nil {
 		return err
 	}
@@ -60,16 +60,16 @@ func (s *Scrypt) Compare(password []byte) error {
 		return err
 	}
 
-	if subtle.ConstantTimeCompare(s.Hash, this) == 0 {
-		return InvalidComparison
+	if subtle.ConstantTimeCompare(s.Value, this) == 0 {
+		return ErrPasswordMismatch
 	}
 
 	return nil
 }
 
 func (s *Scrypt) Marshal() (string, error) {
-	if s.Id == "" || s.Salt == nil || s.Hash == nil {
-		return "", InvalidObject
+	if s.Id == "" || s.Salt == nil || s.Value == nil {
+		return "", ErrInvalidObject
 	}
 
 	var ret string = "$" + s.Id
@@ -78,18 +78,18 @@ func (s *Scrypt) Marshal() (string, error) {
 	ret += ",p=" + strconv.Itoa(s.P)
 	ret += ",len=" + strconv.Itoa(s.Len)
 	ret += "$" + base64.URLEncoding.EncodeToString(s.Salt)
-	ret += "$" + base64.URLEncoding.EncodeToString(s.Hash)
+	ret += "$" + base64.URLEncoding.EncodeToString(s.Value)
 
 	return ret, nil
 }
 
 func (s *Scrypt) unmarshalCheckId(src []byte, index int) (int, error) {
-	if len(data) < (index + len(DefaultId)) {
-		return index, InvalidSerialization
+	if len(src) < (index + len(DefaultId)) {
+		return index, ErrInvalidSerialization
 	}
 
-	if string(data[index:index+len(DefaultId)]) != DefaultId {
-		return index, UnknownId
+	if string(src[index:index+len(DefaultId)]) != DefaultId {
+		return index, ErrUnknownId
 	}
 
 	index += len(DefaultId)
@@ -98,18 +98,22 @@ func (s *Scrypt) unmarshalCheckId(src []byte, index int) (int, error) {
 }
 
 func (s *Scrypt) unmarshalParseParameters(src []byte, index int) (int, error) {
+	if len(src) < index {
+		return index, ErrInvalidSerialization
+	}
+
 	if src[index] == '$' {
 		return index, nil
 	}
 
 	if src[index] != ',' {
-		return index, InvalidSerialization
+		return index, ErrInvalidSerialization
 	}
 
 	index += 1
 
 	if index >= len(src) {
-		return index, InvalidObject
+		return index, ErrInvalidObject
 	}
 
 	var canFitLen = index+3 < len(src)
@@ -128,15 +132,15 @@ func (s *Scrypt) unmarshalParseParameters(src []byte, index int) (int, error) {
 		index += 3
 	}
 
-	return unmarshalParseParameters(src, index)
+	return s.unmarshalParseParameters(src, index)
 }
 
 func (s *Scrypt) Unmarshal(src []byte) error {
 	var index = 0
 	var err error
 
-	if data[index] != '$' {
-		return InvalidSerialization
+	if src[index] != '$' {
+		return ErrInvalidSerialization
 	}
 	index += 1
 

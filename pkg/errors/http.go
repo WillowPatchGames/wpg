@@ -7,7 +7,7 @@ import (
 )
 
 var stringToStatusCode = map[string]int{
-	NoContentType.Error(): http.StatusBadRequest,
+	ErrNoContentType.Error(): http.StatusBadRequest,
 }
 
 type ErrorResult struct {
