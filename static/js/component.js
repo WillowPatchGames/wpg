@@ -138,104 +138,200 @@ defaultGrid.writeWord("TEACHER", 2, 4, true, Letter);
 defaultGrid.writeWord("MAC", 5, 2, false, Letter);
 defaultGrid.padding(2);
 
-console.log(defaultGrid);
-
 class Game extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { scroll: [0,0], grid: defaultGrid, bank: ["\xa0","E","I","J","M","R","Q"].map(l => new Letter(l)), selected: null };
+    this.state = {
+      presentation: {
+        scroll: [0,0],
+        selected: null,
+        pos: {},
+        dropped: null,
+      },
+      data: {
+        grid: defaultGrid,
+        bank: [null].concat(["E","I","J","M","R","Q"].map(l => new Letter(l)))
+      },
+    };
+  }
+
+  drop(where) {
+    return (ref) => {
+      if (ref) {
+        this.state.presentation.pos[where] = {ref, where};
+      } else {
+        delete this.state.presentation.pos[where];
+      }
+    };
+  }
+  repad(state) {
+    if (!state) state = this.state;
+    var adj = state.data.grid.padding(2);
+    state.presentation.scroll[0] -= adj[0];
+    state.presentation.scroll[1] -= adj[1];
+    return state;
+  }
+
+  intersect(a,b) {
+    if (String(a) == String(b)) return;
+    var l = this.state.presentation.pos[a].ref.current.getBoundingClientRect();
+    var r = this.state.presentation.pos[b].ref.current.getBoundingClientRect();
+    var disjoint =
+      l.left > r.right ||
+      l.right < r.left ||
+      l.top > r.bottom ||
+      l.bottom < r.top;
+    if (disjoint) return;
+    var center = bb => ({
+      x: (bb.left + bb.right)/2,
+      y: (bb.top + bb.bottom)/2
+    });
+    var cl = center(l), cr = center(r);
+    return Math.sqrt(
+      Math.pow(cl.x - cr.x, 2) +
+      Math.pow(cl.y - cr.y, 2)
+    );
+  }
+
+  drag(where) {
+    return (final) => {
+      var res = undefined, D = Infinity;
+      for (let there in this.state.presentation.pos) {
+        var d = this.intersect(there, where);
+        if (d !== undefined) {
+          if (d < D) {
+            D = d; res = this.state.presentation.pos[there].where;
+          }
+        }
+      }
+      if (final && res) {
+        this.swap(where, res, true);
+      }
+      return res;
+    };
+  }
+
+  swap(here,there,dropped) {
+    this.setState((state) => {
+      if (here[0] === "bank" && there[0] === "bank") {
+      } else if (here[0] === "grid" && there[0] === "bank") {
+        var dat = state.data.grid.data[here[1]][here[2]];
+        if (state.data.bank[there[1]]?.value) {
+          state.data.grid.data[here[1]][here[2]] = state.data.bank[there[1]];
+          this.repad(state);
+          state.data.bank.splice(there[1], 1, ...(dat?.value ? [dat] : []));
+        } else {
+          delete state.data.grid.data[here[1]][here[2]];
+          this.repad(state);
+          state.data.bank.splice(there[1]+1, 0, ...(dat?.value ? [dat] : []));
+        }
+      } else if (here[0] === "bank" && there[0] === "grid") {
+        var dat = state.data.grid.data[there[1]][there[2]];
+        if (state.data.bank[here[1]]?.value) {
+          state.data.grid.data[there[1]][there[2]] = state.data.bank[here[1]];
+          this.repad(state);
+          state.data.bank.splice(here[1], 1, ...(dat?.value ? [dat] : []));
+        } else {
+          delete state.data.grid.data[there[1]][there[2]];
+          this.repad(state);
+          state.data.bank.splice(here[1]+1, 0, ...(dat?.value ? [dat] : []));
+        }
+      } else if (here[0] === "grid" && there[0] === "grid") {
+        var dat = state.data.grid.data[here[1]][here[2]];
+        state.data.grid.data[here[1]][here[2]] = state.data.grid.data[there[1]][there[2]];
+        state.data.grid.data[there[1]][there[2]] = dat;
+        this.repad(state);
+      }
+      if (dropped) {
+        state.presentation.dropped = here;
+      }
+      state.presentation.selected = null;
+      return state;
+    })
   }
 
   render() {
     let grid = e('table',
       {
         key: "grid", className: "word grid", style: {
-          //transform: "translate(" + (35*this.state.scroll[1]) + "px," + (35*this.state.scroll[0]) + "px)",
+          //transform: "translate(" + (35*this.state.presentation.scroll[1]) + "px," + (35*this.state.presentation.scroll[0]) + "px)",
         },
       },
-      e('tbody', {}, Array.from(this.state.grid.data).map((row, i) =>
+      e('tbody', {}, Array.from(this.state.data.grid.data).map((row, i) =>
         e('tr', {key: i}, Array.from(row).map((dat, j) =>
           e('td', {
+            className: dat ? "" : "empty",
             key: j, onClick: () => {
               this.setState((state) => {
                 const here = ["grid", i, j];
-                if (shallowEqual(state.selected, here)) {
-                  state.selected = null;
-                } else if (!state.selected) {
-                  state.selected = here;
-                } else if (state.selected[0] === "grid") {
-                  state.grid.data[i][j] = state.grid.data[state.selected[1]][state.selected[2]];
-                  state.grid.data[state.selected[1]][state.selected[2]] = dat;
-                  state.selected = here;
-                } else if (state.selected[0] === "bank") {
-                  if (state.bank[state.selected[1]].value !== "\xa0") {
-                    state.grid.data[i][j] = state.bank[state.selected[1]];
-                    var adj = state.grid.padding(2);
-                    state.scroll[0] -= adj[0];
-                    state.scroll[1] -= adj[1];
-                    state.bank.splice(state.selected[1], 1, ...(dat?.value ? [dat] : []));
+                if (shallowEqual(here, state.presentation.dropped)) {
+                  state.presentation.selected = null;
+                  state.presentation.dropped = null;
+                  return;
+                }
+                if (shallowEqual(state.presentation.selected, here)) {
+                  state.presentation.selected = null;
+                } else if (!state.presentation.selected) {
+                  state.presentation.selected = here;
+                } else if (state.presentation.selected[0] === "grid") {
+                  state.data.grid.data[i][j] = state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]];
+                  state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]] = dat;
+                  state.presentation.selected = dat || state.data.grid.data[i][j] ? null : here;
+                  this.repad(state);
+                } else if (state.presentation.selected[0] === "bank") {
+                  if (state.data.bank[state.presentation.selected[1]]?.value) {
+                    state.data.grid.data[i][j] = state.data.bank[state.presentation.selected[1]];
+                    this.repad(state);
+                    state.data.bank.splice(state.presentation.selected[1], 1, ...(dat?.value ? [dat] : []));
                   } else {
-                    delete state.grid.data[i][j];
-                    var adj = state.grid.padding(2);
-                    state.scroll[0] -= adj[0];
-                    state.scroll[1] -= adj[1];
-                    console.log(dat);
-                    state.bank.splice(state.selected[1]+1, 0, ...(dat?.value ? [dat] : []));
+                    delete state.data.grid.data[i][j];
+                    this.repad(state);
+                    state.data.bank.splice(state.presentation.selected[1]+1, 0, ...(dat?.value ? [dat] : []));
                   }
-                  state.selected = null;
+                  state.presentation.selected = null;
                 }
                 return state;
               });
-            }, onDoubleClick: () => {
-              this.setState((state) => {
-                if (dat?.value) {
-                  delete state.grid.data[i][j];
-                  var adj = state.grid.padding(2);
-                  state.scroll[0] -= adj[0];
-                  state.scroll[1] -= adj[1];
-                  state.bank.push(new Letter(dat.value));
-                  state.selected = null;
-                }
-              });
             },
-            "data-selected": shallowEqual(this.state.selected, ["grid", i, j])
-          }, dat?.value)
+            "data-selected": shallowEqual(this.state.presentation.selected, ["grid", i, j])
+          }, dat ? e(Drag, {className: "word tile", onDrop: this.drop(["grid", i, j]), onDrag: this.drag(["grid", i, j])}, dat.value) : e(Drag, {onDrop: this.drop(["grid", i, j])}))
         )
       )
     )));
-    let bank = e('div', {key: "bank", className: "word bank"}, this.state.bank.map((letter, i) =>
+    let bank = e('div', {key: "bank", className: "word bank"}, this.state.data.bank.map((letter, i) =>
       e('span', {
-        key: i, className: "letter",
+        key: i, className: "letter " + (letter ? "" : "empty"),
         onClick: () => {
           this.setState((state) => {
             const here = ["bank", i];
-            if (shallowEqual(state.selected, here)) {
-              state.selected = null;
-            } else if (!state.selected) {
-              state.selected = here;
-            } else if (state.selected[0] === "bank") {
-              state.selected = here;
-            } else if (state.selected[0] === "grid") {
-              var dat = state.grid.data[state.selected[1]][state.selected[2]];
-              if (state.bank[i].value !== "\xa0") {
-                state.grid.data[state.selected[1]][state.selected[2]] = state.bank[i];
-                var adj = state.grid.padding(2);
-                state.scroll[0] -= adj[0];
-                state.scroll[1] -= adj[1];
-                state.bank.splice(i, 1, ...(dat?.value ? [dat] : []));
+            if (shallowEqual(here, state.presentation.dropped)) {
+              state.presentation.selected = null;
+              state.presentation.dropped = null;
+              return;
+            }
+            if (shallowEqual(state.presentation.selected, here)) {
+              state.presentation.selected = null;
+            } else if (!state.presentation.selected) {
+              state.presentation.selected = here;
+            } else if (state.presentation.selected[0] === "bank") {
+              state.presentation.selected = here;
+            } else if (state.presentation.selected[0] === "grid") {
+              var dat = state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]];
+              if (state.data.bank[i]?.value) {
+                state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]] = state.data.bank[i];
+                this.repad(state);
+                state.data.bank.splice(i, 1, ...(dat?.value ? [dat] : []));
               } else {
-                delete state.grid.data[state.selected[1]][state.selected[2]];
-                var adj = state.grid.padding(2);
-                state.scroll[0] -= adj[0];
-                state.scroll[1] -= adj[1];
-                state.bank.splice(i+1, 0, ...(dat?.value ? [dat] : []));
+                delete state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]];
+                this.repad(state);
+                state.data.bank.splice(i+1, 0, ...(dat?.value ? [dat] : []));
               }
-              state.selected = null;
+              state.presentation.selected = null;
             }
             return state;
           });
-        }, "data-selected": shallowEqual(this.state.selected, ["bank", i])
-      }, letter.value)
+        }, "data-selected": shallowEqual(this.state.presentation.selected, ["bank", i])
+      }, letter ? e(Drag, {className: "word tile", onDrop: this.drop(["bank", i]), onDrag: this.drag(["bank", i])}, letter.value) : e(Drag, {onDrop: this.drop(["bank", i])}))
     ));
     return e('div', {}, [grid, bank]);
   }
@@ -259,133 +355,96 @@ class Drag extends React.Component {
       dragging: null,
       listeners: [],
     };
+    this.ref = React.createRef();
+    if (this.props.onDrop) {
+      this.props.onDrop(this.ref);
+    }
+  }
+
+  componentDidMount() {
+    this.props.onDrop(this.ref);
+  }
+  componentDidUpdate() {
+    this.props.onDrop(this.ref);
+  }
+  componentWillUnmount() {
+    for (let l of this.state.listeners) {
+      l();
+    }
+    this.props.onDrop();
+  }
+
+  getDragData(e, initial) {
+    if (e.touches) {
+      if (initial) {
+        var touches = e.targetTouches;
+      } else {
+        var touches = Array.from(e.touches).filter(t => t.identifier === this.state.dragging.touch);
+      }
+      if (touches.length === 1) {
+        var touch = touches[0];
+        var dragging = {x: touch.pageX, y: touch.pageY, touch: touch.identifier};
+      }
+    } else {
+      var dragging = {x: e.pageX, y: e.pageY};
+    }
+    return dragging;
+  }
+
+  start(dragging) {
+    this.setState(() => {
+      this.state.dragging = dragging;
+      if (dragging.touch) {
+        this.state.listeners.push(bodyListener("touchmove", e => this.move(this.getDragData(e))));
+        this.state.listeners.push(bodyListener("touchend", e => this.end()));
+      } else {
+        this.state.listeners.push(bodyListener("mousemove", e => this.move(this.getDragData(e))));
+        this.state.listeners.push(bodyListener("mouseup", e => this.end()));
+      }
+    });
+  }
+  move(dragging) {
+    if (this.state.dragging) {
+      this.setState(() => {
+        this.state.x = dragging.x - this.state.dragging.x;
+        this.state.y = dragging.y - this.state.dragging.y;
+        return this.state;
+      });
+      if (this.props.onDrag) this.props.onDrag();
+    }
+  }
+  end() {
+    if (this.state.dragging) {
+      this.setState(() => {
+        this.state.dragging = null;
+        this.state.x = 0;
+        this.state.y = 0;
+        for (let l of this.state.listeners) {
+          l();
+        }
+        this.state.listeners = [];
+        return this.state;
+      });
+      if (this.props.onDrag) this.props.onDrag(true);
+    }
   }
 
   render() {
-    return e('div', {
-      className: "word tile",
+    return e('div', mergeProps({
       style: {
         transform: "translate(" + this.state.x + "px, " + this.state.y + "px)",
+        zIndex: this.state.dragging ? 100 : 0,
+        position: this.state.dragging ? "relative" : "",
         cursor: "pointer",
         touchAction: "none",
       },
-      onMouseDown: e => {
-        var dragging = {x: e.pageX, y: e.pageY};
-        this.setState(() => {
-          this.state.dragging = dragging;
-          this.state.listeners.push(bodyListener("mousemove", e => {
-            if (this.state.dragging) {
-              var dragging = {x: e.pageX, y: e.pageY};
-              this.setState(() => {
-                this.state.x = dragging.x - this.state.dragging.x;
-                this.state.y = dragging.y - this.state.dragging.y;
-                return this.state;
-              });
-            }
-          }));
-          this.state.listeners.push(bodyListener("mouseup", e => {
-            this.setState(() => {
-              this.state.dragging = null;
-              this.state.x = 0;
-              this.state.y = 0;
-              for (let l of this.state.listeners) {
-                l();
-              }
-              return this.state;
-            });
-          }));
-          return this.state;
-        });
-      },
-      onTouchStart: e => {
-        var touches = e.targetTouches;
-        if (touches.length === 1) {
-          var touch = touches[0];
-          var dragging = {x: touch.pageX, y: touch.pageY, touch: touch.identifier};
-          this.setState(() => {
-            this.state.dragging = dragging;
-            this.state.listeners.push(bodyListener("touchmove", e => {
-              if (this.state.dragging) {
-                var touches = Array.from(e.touches).filter(t => t.identifier === this.state.dragging.touch);
-                if (touches.length === 1) {
-                  var touch = touches[0];
-                  var dragging = {x: touch.pageX, y: touch.pageY};
-                  this.setState(() => {
-                    this.state.x = dragging.x - this.state.dragging.x;
-                    this.state.y = dragging.y - this.state.dragging.y;
-                    return this.state;
-                  });
-                  e.preventDefault();
-                }
-              }
-            }));
-            this.state.listeners.push(bodyListener("touchend", e => {
-              this.setState(() => {
-                this.state.dragging = null;
-                this.state.x = 0;
-                this.state.y = 0;
-                for (let l of this.state.listeners) {
-                  l();
-                }
-                return this.state;
-              });
-              e.preventDefault();
-            }));
-            return this.state;
-          });
-          e.preventDefault();
-        }
-      },
-      onMouseUp: e => {
-        this.setState(() => {
-          this.state.dragging = null;
-          this.state.x = 0;
-          this.state.y = 0;
-          for (let l of this.state.listeners) {
-            l();
-          }
-          return this.state;
-        });
-      },
-      onMouseMove: e => {
-        if (this.state.dragging) {
-          var dragging = {x: e.pageX, y: e.pageY};
-          this.setState(() => {
-            this.state.x = dragging.x - this.state.dragging.x;
-            this.state.y = dragging.y - this.state.dragging.y;
-            return this.state;
-          });
-        }
-      },
-      onTouchEnd: e => {
-        this.setState(() => {
-          this.state.dragging = null;
-          this.state.x = 0;
-          this.state.y = 0;
-          for (let l of this.state.listeners) {
-            l();
-          }
-          return this.state;
-        });
-        e.preventDefault();
-      },
-      onTouchMove: e => {
-        if (this.state.dragging) {
-          var touches = Array.from(e.touches).filter(t => t.identifier === this.state.dragging.touch);
-          if (touches.length === 1) {
-            var touch = touches[0];
-            var dragging = {x: touch.pageX, y: touch.pageY};
-            this.setState(() => {
-              this.state.x = dragging.x - this.state.dragging.x;
-              this.state.y = dragging.y - this.state.dragging.y;
-              return this.state;
-            });
-            e.preventDefault();
-          }
-        }
-      },
-    }, "Z");
+      onMouseDown: e => this.start(this.getDragData(e, true)),
+      onTouchStart: e => this.start(this.getDragData(e, true)),
+      onMouseMove: e => this.move(this.getDragData(e, false)),
+      onTouchMove: e => this.move(this.getDragData(e, false)),
+      onMouseUp: e => this.end(),
+      onTouchEnd: e => this.end(),
+      ref: this.ref,
+    }, this.props), this.props.children);
   }
 }
-
-components['#drag'] = Drag;

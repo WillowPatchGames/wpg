@@ -7,6 +7,22 @@
   <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
   <script>
+    // All modules are global now, mwahahha
+    window.module = {
+      get exports() {
+        return window;
+      },
+      set exports(exports) {
+        if (typeof exports.default === 'object') {
+          Object.assign(window, exports.default);
+        } else if (typeof exports === 'object') {
+          Object.assign(window, exports);
+        }
+      },
+    };
+  </script>
+  <script src="https://unpkg.com/react-merge-props@0.1.4/index.js" crossorigin></script>
+  <script>
     var components = {};
     document.addEventListener("DOMContentLoaded", function() {
       for (let query in components) {

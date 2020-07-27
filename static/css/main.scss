@@ -18,7 +18,7 @@ body {
   font-size: 30px;
 }
 
-.tile {
+@mixin tile {
   @extend .word;
   @include noselect;
 
@@ -29,6 +29,9 @@ body {
   text-align: center;
 
   border: 1px solid #88a8e2;
+}
+.tile {
+  @include tile;
 }
 
 body {
@@ -41,31 +44,81 @@ table.word.grid {
   border-collapse: collapse;
   color: #550080;
   td {
-    @extend .tile;
+    @include tile;
 
-    &:empty {
+    &.empty {
       cursor: default;
+      &:active:hover {
+        background: #95e495;
+      }
     }
-    &:not(:empty) {
+    &:not(.empty) {
       background: #e0dfef;
       cursor: pointer;
     }
+    &:not(.empty) > .tile {
+      display: inline-block;
+      box-sizing: content-box;
+      margin: 0;
+      border: none;
+      background: #e0dfef;
+      &:hover, &:active {
+        border: 1px solid #88a8e2;
+        margin: -1px;
+      }
+      &:active {
+        transform: scale(1.1) translateY(-2px);
+        &:hover {
+          background: #95e495;
+        }
+      }
+    }
     &[data-selected=true] {
       background: #95e495;
+      &:not(.empty) > .tile {
+        background: #95e495;
+        &:active:hover {
+          background: #e0dfef;
+        }
+      }
     }
   }
 }
 
 .word.bank {
   .letter {
-    @extend .tile;
+    @include tile;
     display: inline-block;
+    vertical-align: bottom;
     border: 1px solid #88a8e2;
     background: #e0dfef;
     cursor: pointer;
     &[data-selected=true] {
       color: #053a05;
       background: #95e495;
+      &:not(.empty) > .tile {
+        background: #95e495;
+        &:active:hover {
+          background: #e0dfef;
+        }
+      }
+    }
+    &:not(.empty) > .tile {
+      display: inline-block;
+      box-sizing: content-box;
+      margin: 0;
+      border: none;
+      background: #e0dfef;
+      &:hover, &:active {
+        border: 1px solid #88a8e2;
+        margin: -1px;
+      }
+      &:active {
+        transform: scale(1.1) translateY(-2px);
+        &:hover {
+          background: #95e495;
+        }
+      }
     }
   }
 }
