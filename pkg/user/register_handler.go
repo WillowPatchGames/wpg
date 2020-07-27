@@ -1,76 +1,81 @@
 package user
 
 import (
-    "net/http"
+	"net/http"
 
-    "git.cipherboy.com/WordCorp/api/internal/database"
-    "git.cipherboy.com/WordCorp/api/internal/models"
-    "git.cipherboy.com/WordCorp/api/internal/utils"
+	"git.cipherboy.com/WordCorp/api/internal/database"
+	"git.cipherboy.com/WordCorp/api/internal/models"
+	"git.cipherboy.com/WordCorp/api/internal/utils"
 
-    api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
 )
 
 type registerHandlerData struct {
-    Username string `json:"username"`
-    Email    string `json:"email"`
-    Display  string `json:"display"`
-    Password string `json:"password"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Display  string `json:"display"`
+	Password string `json:"password"`
 }
 
 type registerHandlerResponse struct {
-    UserID   uint64 `json:"id"`
-    Username string `json:"username"`
-    Email    string `json:"email"`
-    Display  string `json:"display"`
+	UserID   uint64 `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Display  string `json:"display"`
 }
 
 type RegisterHandler struct {
-    http.Handler
+	http.Handler
+	utils.HTTPRequest
 
-    req  registerHandlerData
-    resp registerHandlerResponse
+	req  registerHandlerData
+	resp registerHandlerResponse
 }
 
 func (handle RegisterHandler) GetRequest() interface{} {
-    return &handle.req
+	return &handle.req
 }
 
 func (handle RegisterHandler) GetResponse() interface{} {
-    return handle.resp
+	return handle.resp
 }
 
 func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    err := utils.ParseRequest(w, r, &handle)
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-        return
-    }
+	err := utils.ParseRequest(w, r, &handle)
+	if err != nil {
+		api_errors.WriteError(w, err, true)
+		return
+	}
 
-    tx, err := database.GetTransaction()
+	tx, err := database.GetTransaction()
 
-    var user models.UserModel
-    user.Username = handle.req.Username
-    user.Email = handle.req.Email
-    user.Display = handle.req.Display
-    if user.Display == "" && user.Username != "" {
-        user.Display = user.Username
-    }
+	var user models.UserModel
+	user.Username = handle.req.Username
+	user.Email = handle.req.Email
+	user.Display = handle.req.Display
+	if user.Display == "" && user.Username != "" {
+		user.Display = user.Username
+	}
 
-    err = user.Create(tx)
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-    }
+	if user.Username == "" && user.Email == "" {
+		api_errors.Write(w, api_errors.MissingUsernameOrEmail, true)
+		return
+	}
 
-    err = user.SetPassword(tx, handle.req.Password)
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-    }
+	err = user.Create(tx)
+	if err != nil {
+		api_errors.WriteError(w, err, true)
+	}
 
-    err = tx.Commit()
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-    }
+	err = user.SetPassword(tx, handle.req.Password)
+	if err != nil {
+		api_errors.WriteError(w, err, true)
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    w.Write([]byte{byte('\n')})
+	err = tx.Commit()
+	if err != nil {
+		api_errors.WriteError(w, err, true)
+	}
+
+	utils.SendResponse(w, r, handle)
 }

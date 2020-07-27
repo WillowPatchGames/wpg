@@ -30,18 +30,18 @@ type authHandlerResponse struct {
 
 type AuthHandler struct {
 	http.Handler
-	utils.HTTPRequestHandler
+	utils.HTTPRequest
 
 	req  authHandlerData
 	resp authHandlerResponse
 }
 
 func (handle AuthHandler) GetRequest() interface{} {
-  return &handle.req
+	return &handle.req
 }
 
 func (handle AuthHandler) GetResponse() interface{} {
-  return handle.resp
+	return handle.resp
 }
 
 func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

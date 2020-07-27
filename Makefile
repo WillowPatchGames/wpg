@@ -1,6 +1,11 @@
 NAMESPACE?=git.cipherboy.com/WordCorp/api
+GO?=go
+PYTHON?=python3
 
 all: build
+
+format:
+	$(GO) fmt $(NAMESPACE)/...
 
 install: install_database
 
@@ -11,7 +16,7 @@ build: cmds
 cmds: wcapi
 
 wcapi: cmd/wcapi/main.go pkg/*/*.go internal/*/*.go
-	go build $(NAMESPACE)/cmd/wcapi
+	$(GO) build $(NAMESPACE)/cmd/wcapi
 
 install_database:
 	cd scripts/database && ./setup.sh

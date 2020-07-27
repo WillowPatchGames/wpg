@@ -6,30 +6,30 @@ import (
 	"net/http"
 )
 
-var stringToStatusCode = map[string]int {
+var stringToStatusCode = map[string]int{
 	NoContentType.Error(): http.StatusBadRequest,
 }
 
 type ErrorResult struct {
-    Type    string `json:"type"`
-    Message string `json:"message"`
-    Fatal   bool   `json:"fatal"`
+	Type    string `json:"type"`
+	Message string `json:"message"`
+	Fatal   bool   `json:"fatal"`
 }
 
 func WriteError(w http.ResponseWriter, value error, fatal bool) {
-    var ret ErrorResult
-    ret.Type = "error"
-    ret.Message = value.Error()
-    ret.Fatal = fatal
+	var ret ErrorResult
+	ret.Type = "error"
+	ret.Message = value.Error()
+	ret.Fatal = fatal
 
-    var data []byte
+	var data []byte
 
-    data, err := json.Marshal(ret)
-    if err != nil {
-        log.Println("Unable to marshal error struct: " + err.Error() + " -- value: " + value.Error())
-    }
+	data, err := json.Marshal(ret)
+	if err != nil {
+		log.Println("Unable to marshal error struct: " + err.Error() + " -- value: " + value.Error())
+	}
 
-    w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
 	code, present := stringToStatusCode[ret.Message]
 	if present {
@@ -39,7 +39,7 @@ func WriteError(w http.ResponseWriter, value error, fatal bool) {
 	}
 
 	if data != nil {
-	    w.Write(data)
-		w.Write([]byte { byte('\n') })
+		w.Write(data)
+		w.Write([]byte{byte('\n')})
 	}
 }
