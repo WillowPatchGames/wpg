@@ -3,6 +3,9 @@ GO?=go
 PYTHON?=python3
 
 all: build
+test: check
+
+check: vet staticcheck crypt
 
 format:
 	$(GO) fmt $(NAMESPACE)/...
@@ -13,6 +16,9 @@ vet:
 staticcheck:
 	test -e ~/go/bin/staticcheck || ( echo "Must install staticcheck: https://staticcheck.io/docs/" && exit 1 )
 	$(HOME)/go/bin/staticcheck $(NAMESPACE)/...
+
+crypt: pkg/password/*.go
+	go test $(NAMESPACE)/pkg/password
 
 install: install_database
 
@@ -30,3 +36,6 @@ install_database:
 
 remove_database:
 	cd scripts/database && ./remove.sh || true
+
+clean:
+	rm -f wcapi

@@ -76,6 +76,10 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	tx, err := database.GetTransaction()
+	if err != nil {
+		api_errors.WriteError(w, err, true)
+		return
+	}
 
 	var user models.UserModel
 	user.Username = handle.req.Username

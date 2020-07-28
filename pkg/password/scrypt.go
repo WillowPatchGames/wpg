@@ -12,7 +12,7 @@ var DefaultId string = "scrypt"
 var DefaultN int = 1 << 15
 var DefaultR int = 8
 var DefaultP int = 1
-var DefaultLen int = 256
+var DefaultLen int = 128 / 8
 
 type Scrypt struct {
 	Crypt
@@ -28,7 +28,7 @@ func NewScrypt() *Scrypt {
 
 	ret.Id = DefaultId
 	ret.N = DefaultN
-	ret.R = DefaultN
+	ret.R = DefaultR
 	ret.P = DefaultP
 	ret.Len = DefaultLen
 
@@ -67,9 +67,9 @@ func (s *Scrypt) Compare(password []byte) error {
 	return nil
 }
 
-func (s *Scrypt) Marshal() (string, error) {
+func (s *Scrypt) Marshal() ([]byte, error) {
 	if s.Id == "" || s.Salt == nil || s.Value == nil {
-		return "", ErrInvalidObject
+		return nil, ErrInvalidObject
 	}
 
 	var ret string = "$" + s.Id
@@ -80,59 +80,144 @@ func (s *Scrypt) Marshal() (string, error) {
 	ret += "$" + base64.URLEncoding.EncodeToString(s.Salt)
 	ret += "$" + base64.URLEncoding.EncodeToString(s.Value)
 
-	return ret, nil
+	return []byte(ret), nil
 }
 
 func (s *Scrypt) unmarshalCheckId(src []byte, index int) (int, error) {
-	if len(src) < (index + len(DefaultId)) {
+	if len(src) <= index {
 		return index, ErrInvalidSerialization
 	}
 
-	if string(src[index:index+len(DefaultId)]) != DefaultId {
-		return index, ErrUnknownId
+	var startIndex = index
+	var endIndex = index
+
+	for len(src) > endIndex {
+		if src[endIndex] == ',' || src[endIndex] == '$' {
+			break
+		}
+
+		endIndex += 1
 	}
 
-	index += len(DefaultId)
+	if startIndex == endIndex {
+		return index, ErrInvalidSerialization
+	}
+
+	s.Id = string(src[startIndex:endIndex])
+
+	return endIndex, nil
+}
+
+func (s *Scrypt) unmarshalParseParameters(src []byte, index int) (int, error) {
+	var err error
+
+	for {
+		if len(src) <= index {
+			return index, ErrInvalidSerialization
+		}
+		if src[index] == '$' {
+			break
+		}
+		if src[index] != ',' {
+			return index, ErrInvalidSerialization
+		}
+		index += 1
+
+		if len(src) <= index {
+			return index, ErrInvalidSerialization
+		}
+
+		if len(src) <= index+2 {
+			return index, ErrInvalidSerialization
+		}
+
+		var canFitLen = index+4 < len(src)
+
+		if src[index] == 'N' && src[index+1] == '=' {
+			index += 2
+
+			s.N, index, err = parseInt(src, index)
+			if err != nil {
+				return index, err
+			}
+
+			if s.N <= 0 {
+				return index, ErrInvalidObject
+			}
+		} else if src[index] == 'r' && src[index+1] == '=' {
+			index += 2
+
+			s.R, index, err = parseInt(src, index)
+			if err != nil {
+				return index, err
+			}
+
+			if s.R <= 0 {
+				return index, ErrInvalidObject
+			}
+		} else if src[index] == 'p' && src[index+1] == '=' {
+			index += 2
+
+			s.P, index, err = parseInt(src, index)
+			if err != nil {
+				return index, err
+			}
+
+			if s.P <= 0 {
+				return index, ErrInvalidObject
+			}
+		} else if canFitLen && src[index] == 'l' && src[index+1] == 'e' && src[index+2] == 'n' && src[index+3] == '=' {
+			index += 4
+
+			s.Len, index, err = parseInt(src, index)
+			if err != nil {
+				return index, err
+			}
+
+			if s.Len <= 0 {
+				return index, ErrInvalidObject
+			}
+		} else {
+			return index, ErrInvalidSerialization
+		}
+	}
 
 	return index, nil
 }
 
-func (s *Scrypt) unmarshalParseParameters(src []byte, index int) (int, error) {
-	if len(src) < index {
-		return index, ErrInvalidSerialization
+func (s *Scrypt) unmarshalParseBase64(src []byte, index int) ([]byte, int, error) {
+	if len(src) <= index {
+		return nil, index, ErrInvalidSerialization
 	}
 
-	if src[index] == '$' {
-		return index, nil
+	var startIndex = index
+	var endIndex = index
+
+	for len(src) > endIndex {
+		if !isBase64Digit(src, endIndex) {
+			break
+		}
+
+		endIndex += 1
 	}
 
-	if src[index] != ',' {
-		return index, ErrInvalidSerialization
+	if startIndex == endIndex {
+		return nil, index, ErrInvalidSerialization
 	}
 
-	index += 1
+	var dataLen = base64.URLEncoding.DecodedLen(endIndex - startIndex)
+	var data []byte = make([]byte, dataLen)
 
-	if index >= len(src) {
-		return index, ErrInvalidObject
+	n, err := base64.URLEncoding.Decode(data, src[startIndex:endIndex])
+	if err != nil {
+		return nil, index, err
 	}
 
-	var canFitLen = index+3 < len(src)
-
-	if src[index] == 'N' {
-		// Parse N
-		index += 1
-	} else if src[index] == 'r' {
-		// Parse r
-		index += 1
-	} else if src[index] == 'p' {
-		// Parse p
-		index += 1
-	} else if canFitLen && src[index] == 'l' && src[index+1] == 'e' && src[index+2] == 'n' {
-		// Parse len
-		index += 3
+	if n != dataLen {
+		return nil, index, ErrInvalidSerialization
 	}
 
-	return s.unmarshalParseParameters(src, index)
+	return data, endIndex, nil
 }
 
 func (s *Scrypt) Unmarshal(src []byte) error {
@@ -150,6 +235,34 @@ func (s *Scrypt) Unmarshal(src []byte) error {
 	}
 
 	index, err = s.unmarshalParseParameters(src, index)
+	if err != nil {
+		return err
+	}
+
+	if len(src) <= index {
+		return ErrInvalidSerialization
+	}
+
+	if src[index] != '$' {
+		return ErrInvalidSerialization
+	}
+	index += 1
+
+	s.Salt, index, err = s.unmarshalParseBase64(src, index)
+	if err != nil {
+		return err
+	}
+
+	if len(src) <= index {
+		return ErrInvalidSerialization
+	}
+
+	if src[index] != '$' {
+		return ErrInvalidSerialization
+	}
+	index += 1
+
+	s.Value, _, err = s.unmarshalParseBase64(src, index)
 	if err != nil {
 		return err
 	}
