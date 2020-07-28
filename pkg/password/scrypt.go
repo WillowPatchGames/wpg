@@ -220,6 +220,10 @@ func (s *Scrypt) Unmarshal(src []byte) error {
 	var index = 0
 	var err error
 
+	if len(src) == 0 {
+	  return ErrInvalidSerialization
+	}
+
 	if src[index] != '$' {
 		return ErrInvalidSerialization
 	}
