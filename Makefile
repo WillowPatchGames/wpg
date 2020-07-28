@@ -7,6 +7,10 @@ test: check
 
 check: vet staticcheck crypt
 
+fuzz:
+	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
+	cd pkg/password && go-fuzz-build && go-fuzz
+
 format:
 	$(GO) fmt $(NAMESPACE)/...
 
