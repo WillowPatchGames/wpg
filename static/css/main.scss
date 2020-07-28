@@ -1,6 +1,10 @@
 body {
   font-family: "Quicksand", sans-serif;
-  touch-action: manipulation;
+  //touch-action: manipulation;
+}
+
+:root {
+  --font-size: 30px;
 }
 
 @mixin noselect {
@@ -19,28 +23,36 @@ body {
   font-size: 30px;
 }
 
-@mixin tile {
-  @extend .word;
-  @include noselect;
-
-  width: 32px;
-  height: 32px;
+@mixin tile-size {
+  font-size: var(--font-size);
+  width: calc(var(--font-size) + 2px);
+  height: calc(var(--font-size) + 2px);
   /* to force height to be respected */
   line-height: 100%;
   text-align: center;
+}
 
+@mixin tile {
+  @extend .word;
+  @extend .tile-size;
+  @include noselect;
   border: 1px solid #88a8e2;
 }
+.tile-size {
+  @include tile-size;
+}
 .tile {
+  @extend .tile-size;
   @include tile;
 }
 
 table.word.grid {
   border-collapse: collapse;
   color: #550080;
+  --font-size: 30px;
   td {
     @include tile;
-    position: relative;
+    //position: relative;
     &.empty {
       cursor: default;
       &:hover {
@@ -50,8 +62,7 @@ table.word.grid {
         background: #95e495;
       }
       & > div {
-        width: 32px;
-        height: 32px;
+        @extend .tile-size;
       }
     }
     &:not(.empty) {
@@ -125,12 +136,6 @@ table.word.grid {
       }
     }
   }
-}
-
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 /* FULL SCREEN MODE */

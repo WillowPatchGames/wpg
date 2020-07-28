@@ -138,7 +138,7 @@ defaultGrid.writeWord("TEACHER", 2, 4, true, Letter);
 defaultGrid.writeWord("MAC", 5, 2, false, Letter);
 defaultGrid.padding(5);
 
-var PADDING = 10;
+var PADDING = 4;
 var SIZE = 35;
 
 class Game extends React.Component {
@@ -292,14 +292,16 @@ class Game extends React.Component {
       {
         className: "word grid",
         style: {
-          transform: "scale(" + this.state.presentation.scale + ")",
+          transform: FIXED ? "none" : "scale(" + this.state.presentation.scale + ")",
+          "--font-size": FIXED ? (this.state.presentation.scale * 30) + "px" : "",
+          //"zoom": FIXED ? this.state.presentation.scale : "",
         },
         onTouchMove: e => {
           var scale = e.nativeEvent.scale;
           if (scale && scale !== 1) {
             e.preventDefault();
             this.setState((state) => {
-              state.presentation.scale = state.presentation.scaled * scale;
+              state.presentation.scale = Math.min(2, Math.max(0.5, state.presentation.scaled * scale));
               return state;
             });
           }
@@ -307,6 +309,7 @@ class Game extends React.Component {
         onTouchEnd: e => {
           if (this.state.presentation.scaled === this.state.presentation.scale) return;
           this.setState((state) => {
+            state.presentation.scale = Math.round(state.presentation.scale*20)/20;
             state.presentation.scaled = state.presentation.scale;
             return state;
           })
@@ -317,6 +320,7 @@ class Game extends React.Component {
           e('td', {
             className: dat ? "" : "empty",
             ref: this.droppable(["grid",i,j]),
+            style: FIXED ? {} : {"position":"relative"},
             key: j, onClick: () => {
               this.setState((state) => {
                 const here = ["grid", i, j];
@@ -405,6 +409,7 @@ function bodyListener(ty, cb) {
 };
 
 var FRICTION = 3;
+var FIXED = true;
 
 class Drag extends React.Component {
   constructor(props) {
@@ -426,37 +431,43 @@ class Drag extends React.Component {
   }
 
   getDragData(e, initial) {
+    var dragging;
     if (e.touches) {
+      var touches;
       if (initial) {
-        var touches = e.targetTouches;
-      } else {
-        var touches = Array.from(e.touches).filter(t => t.identifier === this.state.dragging.touch);
+        touches = e.targetTouches;
+      } else if (this.state.dragging && this.state.dragging.touch !== undefined) {
+        touches = Array.from(e.touches).filter(t => t.identifier === this.state.dragging.touch);
       }
       if (touches && touches.length === 1) {
         var touch = touches[0];
-        var dragging = {x: touch.pageX, y: touch.pageY, touch: touch.identifier};
+        dragging = {x: touch.pageX, y: touch.pageY, touch: touch.identifier};
       }
-      if (e.scale !== 1) {
-        e.preventDefault();
-      }
-    } else if (initial || !this.state.dragging || !this.state.dragging.touch) {
-      var dragging = {x: e.pageX, y: e.pageY};
+      e.preventDefault();
+    } else if (initial || !this.state.dragging || this.state.dragging.touch === undefined) {
+      dragging = {x: e.pageX, y: e.pageY};
     }
     return dragging;
   }
 
   start(dragging) {
+    if (!dragging || dragging.x === undefined || dragging.y === undefined) return;
     if (this.props.onDrag) {
       this.setState(() => {
         var bb = this.ref.current.getBoundingClientRect();
-        this.state.x0 = this.ref.current.offsetTop;
-        this.state.y0 = this.ref.current.offsetLeft;
+        if (FIXED) {
+          this.state.x0 = bb.left;
+          this.state.y0 = bb.top;
+        } else {
+          this.state.x0 = this.ref.current.offsetTop;
+          this.state.y0 = this.ref.current.offsetLeft;
+        }
         this.state.dragging = dragging;
         var cx = (bb.left + bb.right)/2;
         var cy = (bb.top + bb.bottom)/2;
         this.state.dx = cx - dragging.x;
         this.state.dy = cy - dragging.y;
-        if (dragging.touch) {
+        if (dragging.touch !== undefined) {
           this.state.listeners.push(bodyListener("touchmove", e => this.move(this.getDragData(e))));
           this.state.listeners.push(bodyListener("touchend", e => this.end()));
         } else {
@@ -468,6 +479,7 @@ class Drag extends React.Component {
     }
   }
   move(dragging) {
+    if (!dragging || dragging.x === undefined || dragging.y === undefined) return;
     if (this.state.dragging && this.props.onDrag) {
       this.setState(() => {
         var x0 = this.state.x; var y0 = this.state.y;
@@ -518,14 +530,14 @@ class Drag extends React.Component {
         left: this.state.x0,
         top: this.state.y0,
         zIndex: 100,
-        position: "absolute",
+        position: FIXED ? "fixed" : "absolute",
       }),
-      onMouseDown: this.dragging ? null : e => this.start(this.getDragData(e, true)),
-      onTouchStart: this.draggin ? null : e => this.start(this.getDragData(e, true)),
-      onMouseMove: !this.dragging || this.dragging.touch ? null : e => this.move(this.getDragData(e, false)),
-      onTouchMove: !this.dragging || !this.dragging.touch ? null : e => this.move(this.getDragData(e, false)),
-      onMouseUp: !this.dragging || this.dragging.touch ? null : e => this.end(),
-      onTouchEnd: !this.dragging || !this.dragging.touch ? null : e => this.end(),
+      onMouseDown: e => this.start(this.getDragData(e, true)),
+      onTouchStart: e => this.start(this.getDragData(e, true)),
+      onMouseMove: e => this.move(this.getDragData(e, false)),
+      onTouchMove: e => this.move(this.getDragData(e, false)),
+      onMouseUp: e => this.end(),
+      onTouchEnd: e => this.end(),
       ref: this.ref,
     }, this.props), this.props.children);
   }
