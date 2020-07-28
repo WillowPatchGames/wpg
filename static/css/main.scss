@@ -1,5 +1,6 @@
 body {
   font-family: "Quicksand", sans-serif;
+  touch-action: manipulation;
 }
 
 @mixin noselect {
@@ -34,49 +35,52 @@ body {
   @include tile;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 table.word.grid {
   border-collapse: collapse;
   color: #550080;
   td {
     @include tile;
-
+    position: relative;
     &.empty {
       cursor: default;
+      &:hover {
+        background: #95e495;
+      }
       &:active:hover {
         background: #95e495;
       }
+      & > div {
+        width: 32px;
+        height: 32px;
+      }
     }
     &:not(.empty) {
-      background: #e0dfef;
       cursor: pointer;
     }
     &:not(.empty) > .tile {
       display: inline-block;
       box-sizing: content-box;
-      margin: 0;
-      border: none;
+      margin: -1px;
+      border: 1px solid #e0dfef;
       background: #e0dfef;
       &:hover, &:active {
         border: 1px solid #88a8e2;
         margin: -1px;
       }
       &:active {
-        transform: scale(1.1) translateY(-2px);
+        //transform: scale(1.1) translateY(-2px);
         &:hover {
           background: #95e495;
         }
       }
     }
     &[data-selected=true] {
-      background: #95e495;
+      &.empty {
+        background: #95e495;
+      }
       &:not(.empty) > .tile {
         background: #95e495;
+        border-color: #95e495;
         &:active:hover {
           background: #e0dfef;
         }
@@ -114,7 +118,7 @@ table.word.grid {
         margin: -1px;
       }
       &:active {
-        transform: scale(1.1) translateY(-2px);
+        //transform: scale(1.1) translateY(-2px);
         &:hover {
           background: #95e495;
         }
@@ -122,3 +126,47 @@ table.word.grid {
     }
   }
 }
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* FULL SCREEN MODE */
+
+//*
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+#game, .game-component {
+  width: 100%;
+  height: 100%;
+}
+
+.game-component > * {
+  width: 100%;
+  overflow: auto;
+}
+
+.game-component > .board {
+  height: 70%;
+}
+.game-component > .bank {
+  height: 30%;
+}
+.game-component > .bank > .bank {
+  height: 100%;
+}
+
+/**/

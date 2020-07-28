@@ -133,79 +133,102 @@ class Grid {
 }
 
 const defaultGrid = new Grid();
-defaultGrid.writeWord("APPLE", 3, 0, false, Letter);
+defaultGrid.writeWord("APPLET", 3, 0, false, Letter);
 defaultGrid.writeWord("TEACHER", 2, 4, true, Letter);
 defaultGrid.writeWord("MAC", 5, 2, false, Letter);
-defaultGrid.padding(2);
+defaultGrid.padding(5);
+
+var PADDING = 10;
+var SIZE = 35;
 
 class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       presentation: {
-        scroll: [0,0],
         selected: null,
         pos: {},
         dropped: null,
+        scale: 1,
+        scaled: 1,
       },
       data: {
         grid: defaultGrid,
         bank: [null].concat(["E","I","J","M","R","Q"].map(l => new Letter(l)))
       },
     };
+    this.board = React.createRef();
+    this.pending = {
+      scroll: [0,0],
+    }
   }
 
-  drop(where) {
+  droppable(where, area) {
     return (ref) => {
       if (ref) {
-        this.state.presentation.pos[where] = {ref, where};
+        this.state.presentation.pos[where] = {ref, where, area};
       } else {
         delete this.state.presentation.pos[where];
       }
     };
   }
+
   repad(state) {
     if (!state) state = this.state;
-    var adj = state.data.grid.padding(2);
-    state.presentation.scroll[0] -= adj[0];
-    state.presentation.scroll[1] -= adj[1];
+    var adj = state.data.grid.padding(PADDING);
+    this.pending.scroll[0] += adj[0];
+    this.pending.scroll[1] += adj[1];
     return state;
   }
 
-  intersect(a,b) {
-    if (String(a) == String(b)) return;
-    var l = this.state.presentation.pos[a].ref.current.getBoundingClientRect();
-    var r = this.state.presentation.pos[b].ref.current.getBoundingClientRect();
-    var disjoint =
-      l.left > r.right ||
-      l.right < r.left ||
-      l.top > r.bottom ||
-      l.bottom < r.top;
-    if (disjoint) return;
-    var center = bb => ({
-      x: (bb.left + bb.right)/2,
-      y: (bb.top + bb.bottom)/2
-    });
-    var cl = center(l), cr = center(r);
-    return Math.sqrt(
-      Math.pow(cl.x - cr.x, 2) +
-      Math.pow(cl.y - cr.y, 2)
-    );
+  includes(a,b) {
+    var x = Math.max(a.left, b.left);
+    var w = Math.min(a.right, b.right) - x;
+    var y = Math.max(a.top, b.top);
+    var h = Math.min(a.bottom, b.bottom) - y;
+    if (w < 0 || h < 0) return;
+    return new DOMRect(x, y, w, h);
+  }
+  intersect(l,r) {
+    var i = this.includes(l, r);
+    if (!i) return;
+    return i.width * i.height;
   }
 
-  drag(where) {
-    return (final) => {
-      var res = undefined, D = Infinity;
+  draggable(where) {
+    return (status, ref) => {
+      if (status !== "end") {
+        return;
+      }
+      var res = undefined, D = 0;
+      var here = ref.current.getBoundingClientRect();
+      var areas = [];
       for (let there in this.state.presentation.pos) {
-        var d = this.intersect(there, where);
+        var testing = this.state.presentation.pos[there].ref.getBoundingClientRect();
+        var parent = this.state.presentation.pos[there].ref.parentElement;
+        while (testing && parent) {
+          if (getComputedStyle(parent).overflow === "auto") {
+            testing = this.includes(parent.getBoundingClientRect(), testing);
+          }
+          parent = parent.parentElement;
+        }
+        if (!testing) continue;
+        var d = this.intersect(here, testing);
         if (d !== undefined) {
-          if (d < D) {
+          if (this.state.presentation.pos[there].area) {
+            areas.push(this.state.presentation.pos[there].where);
+          } else if (d > D) {
             D = d; res = this.state.presentation.pos[there].where;
           }
         }
       }
-      if (final && res) {
-        this.swap(where, res, true);
+      if (!res && areas.length === 1) {
+        res = areas[0];
+      }
+      if (status === "end" && res) {
+        if (!shallowEqual(res, where)) {
+          this.swap(where, res, true);
+        }
       }
       return res;
     };
@@ -250,17 +273,50 @@ class Game extends React.Component {
     })
   }
 
+  componentDidMount() {
+    this.setState(this.repad);
+  }
+  componentDidUpdate() {
+    if (this.pending.scroll[0]) {
+      this.board.current.scrollTop += SIZE*this.pending.scroll[0];
+      this.pending.scroll[0] = 0;
+    }
+    if (this.pending.scroll[1]) {
+      this.board.current.scrollLeft += SIZE*this.pending.scroll[1];
+      this.pending.scroll[1] = 0;
+    }
+  }
+
   render() {
-    let grid = e('table',
+    let grid = e('div', {key: "grid", className: "board", ref: this.board}, e('table',
       {
-        key: "grid", className: "word grid", style: {
-          //transform: "translate(" + (35*this.state.presentation.scroll[1]) + "px," + (35*this.state.presentation.scroll[0]) + "px)",
+        className: "word grid",
+        style: {
+          transform: "scale(" + this.state.presentation.scale + ")",
         },
+        onTouchMove: e => {
+          var scale = e.nativeEvent.scale;
+          if (scale && scale !== 1) {
+            e.preventDefault();
+            this.setState((state) => {
+              state.presentation.scale = state.presentation.scaled * scale;
+              return state;
+            });
+          }
+        },
+        onTouchEnd: e => {
+          if (this.state.presentation.scaled === this.state.presentation.scale) return;
+          this.setState((state) => {
+            state.presentation.scaled = state.presentation.scale;
+            return state;
+          })
+        }
       },
       e('tbody', {}, Array.from(this.state.data.grid.data).map((row, i) =>
         e('tr', {key: i}, Array.from(row).map((dat, j) =>
           e('td', {
             className: dat ? "" : "empty",
+            ref: this.droppable(["grid",i,j]),
             key: j, onClick: () => {
               this.setState((state) => {
                 const here = ["grid", i, j];
@@ -294,13 +350,14 @@ class Game extends React.Component {
               });
             },
             "data-selected": shallowEqual(this.state.presentation.selected, ["grid", i, j])
-          }, dat ? e(Drag, {className: "word tile", onDrop: this.drop(["grid", i, j]), onDrag: this.drag(["grid", i, j])}, dat.value) : e(Drag, {onDrop: this.drop(["grid", i, j])}))
+          }, dat ? e(Drag, {className: "word tile", onDrag: this.draggable(["grid", i, j])}, dat.value) : e('div', {}, "\xa0"))
         )
       )
-    )));
-    let bank = e('div', {key: "bank", className: "word bank"}, this.state.data.bank.map((letter, i) =>
+    ))));
+    let bank = e('div', {key: "bank", className: "word bank", ref: this.droppable(["bank",""], true)}, this.state.data.bank.map((letter, i) =>
       e('span', {
-        key: i, className: "letter " + (letter ? "" : "empty"),
+        key: i, className: "letter" + (letter ? " draggable" : " empty"),
+        ref: this.droppable(["bank", i]),
         onClick: () => {
           this.setState((state) => {
             const here = ["bank", i];
@@ -331,9 +388,9 @@ class Game extends React.Component {
             return state;
           });
         }, "data-selected": shallowEqual(this.state.presentation.selected, ["bank", i])
-      }, letter ? e(Drag, {className: "word tile", onDrop: this.drop(["bank", i]), onDrag: this.drag(["bank", i])}, letter.value) : e(Drag, {onDrop: this.drop(["bank", i])}))
+      }, letter ? e(Drag, {className: "word tile", onDrag: this.draggable(["bank", i])}, letter.value) : e(Drag, {onDrag: this.draggable(["bank", i])}))
     ));
-    return e('div', {}, [grid, bank]);
+    return e('div', {className: "game-component"}, [grid, bank]);
   }
 }
 
@@ -347,31 +404,25 @@ function bodyListener(ty, cb) {
   });
 };
 
+var FRICTION = 3;
+
 class Drag extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       x: 0, y: 0,
+      dx: 0, dy: 0,
+      x0: 0, y0: 0,
       dragging: null,
       listeners: [],
     };
     this.ref = React.createRef();
-    if (this.props.onDrop) {
-      this.props.onDrop(this.ref);
-    }
   }
 
-  componentDidMount() {
-    this.props.onDrop(this.ref);
-  }
-  componentDidUpdate() {
-    this.props.onDrop(this.ref);
-  }
   componentWillUnmount() {
     for (let l of this.state.listeners) {
       l();
     }
-    this.props.onDrop();
   }
 
   getDragData(e, initial) {
@@ -381,69 +432,100 @@ class Drag extends React.Component {
       } else {
         var touches = Array.from(e.touches).filter(t => t.identifier === this.state.dragging.touch);
       }
-      if (touches.length === 1) {
+      if (touches && touches.length === 1) {
         var touch = touches[0];
         var dragging = {x: touch.pageX, y: touch.pageY, touch: touch.identifier};
       }
-    } else {
+      if (e.scale !== 1) {
+        e.preventDefault();
+      }
+    } else if (initial || !this.state.dragging || !this.state.dragging.touch) {
       var dragging = {x: e.pageX, y: e.pageY};
     }
     return dragging;
   }
 
   start(dragging) {
-    this.setState(() => {
-      this.state.dragging = dragging;
-      if (dragging.touch) {
-        this.state.listeners.push(bodyListener("touchmove", e => this.move(this.getDragData(e))));
-        this.state.listeners.push(bodyListener("touchend", e => this.end()));
-      } else {
-        this.state.listeners.push(bodyListener("mousemove", e => this.move(this.getDragData(e))));
-        this.state.listeners.push(bodyListener("mouseup", e => this.end()));
-      }
-    });
+    if (this.props.onDrag) {
+      this.setState(() => {
+        var bb = this.ref.current.getBoundingClientRect();
+        this.state.x0 = this.ref.current.offsetTop;
+        this.state.y0 = this.ref.current.offsetLeft;
+        this.state.dragging = dragging;
+        var cx = (bb.left + bb.right)/2;
+        var cy = (bb.top + bb.bottom)/2;
+        this.state.dx = cx - dragging.x;
+        this.state.dy = cy - dragging.y;
+        if (dragging.touch) {
+          this.state.listeners.push(bodyListener("touchmove", e => this.move(this.getDragData(e))));
+          this.state.listeners.push(bodyListener("touchend", e => this.end()));
+        } else {
+          this.state.listeners.push(bodyListener("mousemove", e => this.move(this.getDragData(e))));
+          this.state.listeners.push(bodyListener("mouseup", e => this.end()));
+        }
+        this.props.onDrag("start", this.ref);
+      });
+    }
   }
   move(dragging) {
-    if (this.state.dragging) {
+    if (this.state.dragging && this.props.onDrag) {
       this.setState(() => {
+        var x0 = this.state.x; var y0 = this.state.y;
         this.state.x = dragging.x - this.state.dragging.x;
         this.state.y = dragging.y - this.state.dragging.y;
+        var clamp = (z,r) => Math.min(r, Math.max(-r, z));
+        var dx = clamp(this.state.dx, Math.abs(this.state.x - x0)/FRICTION);
+        var dy = clamp(this.state.dy, Math.abs(this.state.y - y0)/FRICTION);
+        this.state.dx -= dx;
+        this.state.x += dx;
+        this.state.dragging.x += dx;
+        this.state.dy -= dy;
+        this.state.y += dy;
+        this.state.dragging.y += dy;
         return this.state;
+      }, () => {
+        this.props.onDrag("move", this.ref);
       });
-      if (this.props.onDrag) this.props.onDrag();
     }
   }
   end() {
-    if (this.state.dragging) {
+    if (this.state.dragging && this.props.onDrag) {
       this.setState(() => {
         this.state.dragging = null;
         this.state.x = 0;
         this.state.y = 0;
+        this.state.dx = 0;
+        this.state.dy = 0;
+        this.state.x0 = 0;
+        this.state.y0 = 0;
         for (let l of this.state.listeners) {
           l();
         }
         this.state.listeners = [];
+        this.props.onDrag("end", this.ref);
         return this.state;
       });
-      if (this.props.onDrag) this.props.onDrag(true);
     }
   }
 
   render() {
     return e('div', mergeProps({
-      style: {
-        transform: "translate(" + this.state.x + "px, " + this.state.y + "px)",
-        zIndex: this.state.dragging ? 100 : 0,
-        position: this.state.dragging ? "relative" : "",
+      style: Object.assign({
         cursor: "pointer",
         touchAction: "none",
-      },
-      onMouseDown: e => this.start(this.getDragData(e, true)),
-      onTouchStart: e => this.start(this.getDragData(e, true)),
-      onMouseMove: e => this.move(this.getDragData(e, false)),
-      onTouchMove: e => this.move(this.getDragData(e, false)),
-      onMouseUp: e => this.end(),
-      onTouchEnd: e => this.end(),
+      }, !this.state.dragging ? {} : {
+        transform: "translate(" + this.state.x + "px, " + this.state.y + "px)",
+        left: this.state.x0,
+        top: this.state.y0,
+        zIndex: 100,
+        position: "absolute",
+      }),
+      onMouseDown: this.dragging ? null : e => this.start(this.getDragData(e, true)),
+      onTouchStart: this.draggin ? null : e => this.start(this.getDragData(e, true)),
+      onMouseMove: !this.dragging || this.dragging.touch ? null : e => this.move(this.getDragData(e, false)),
+      onTouchMove: !this.dragging || !this.dragging.touch ? null : e => this.move(this.getDragData(e, false)),
+      onMouseUp: !this.dragging || this.dragging.touch ? null : e => this.end(),
+      onTouchEnd: !this.dragging || !this.dragging.touch ? null : e => this.end(),
       ref: this.ref,
     }, this.props), this.props.children);
   }
