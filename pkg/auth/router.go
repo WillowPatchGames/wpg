@@ -11,5 +11,5 @@ import (
 )
 
 func BuildRouter(router *mux.Router) {
-	router.Handle("/", new(AuthHandler)).Methods("POST")
+	router.Handle("/auth", new(AuthHandler)).Methods("POST")
 }

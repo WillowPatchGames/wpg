@@ -34,7 +34,7 @@ type RegisterHandler struct {
 	requestType string
 }
 
-func (handle RegisterHandler) GetRequest() interface{} {
+func (handle *RegisterHandler) GetRequest() interface{} {
 	return &handle.req
 }
 
@@ -46,12 +46,12 @@ func (handle RegisterHandler) GetRequestType() string {
 	return handle.requestType
 }
 
-func (handle RegisterHandler) SetRequestType(requestType string) {
+func (handle *RegisterHandler) SetRequestType(requestType string) {
 	handle.requestType = requestType
 }
 
 func (handle RegisterHandler) verifyRequest() error {
-	if handle.req.Username == "" && handle.req.Email == "" {
+	if handle.req.Username == "" || handle.req.Email == "" {
 		return api_errors.ErrMissingUsernameOrEmail
 	}
 
@@ -107,5 +107,10 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	utils.SendResponse(w, r, handle)
+	handle.resp.UserID = user.Eid
+	handle.resp.Username = user.Username
+	handle.resp.Display = user.Display
+	handle.resp.Email = user.Email
+
+	utils.SendResponse(w, r, &handle)
 }

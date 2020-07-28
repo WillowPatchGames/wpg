@@ -11,6 +11,6 @@ import (
 )
 
 func BuildRouter(router *mux.Router) {
-	router.Handle("/{eid:[0-9]+}", new(QueryHandler)).Methods("GET")
-	router.Handle("/", new(RegisterHandler)).Methods("POST")
+	router.Handle("/user/{eid:[0-9]+}", new(QueryHandler)).Methods("GET")
+	router.Handle("/user", new(RegisterHandler)).Methods("POST")
 }

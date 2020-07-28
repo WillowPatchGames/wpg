@@ -5,6 +5,8 @@ import (
 
 	"git.cipherboy.com/WordCorp/api/internal/database"
 	"git.cipherboy.com/WordCorp/api/internal/utils"
+
+	"git.cipherboy.com/WordCorp/api/pkg/password"
 )
 
 type UserModel struct {
@@ -39,24 +41,39 @@ func (user *UserModel) Create(transaction *sql.Tx) error {
 
 	user.Eid = utils.RandomId()
 
-	result, err := stmt.Exec(user.Eid, user.Username, user.Display, user.Email)
+	err = stmt.QueryRow(user.Eid, user.Username, user.Display, user.Email).Scan(&user.Id)
 	if err != nil {
 		return err
 	}
-
-	lastId, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	user.Id = uint64(lastId)
 
 	return nil
 }
 
-func (user *UserModel) SetPassword(transaction *sql.Tx, password string) error {
+func (user *UserModel) SetPassword(transaction *sql.Tx, pass string) error {
 	if user.Id == 0 {
 		panic("Unitialized user object passed to SetPassword")
+	}
+
+	var crypter *password.Scrypt = password.NewScrypt()
+
+	err := crypter.Hash([]byte(pass))
+	if err != nil {
+		return err
+	}
+
+	serialized, err := crypter.Marshal()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := transaction.Prepare(database.SetPassword)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(user.Id, serialized)
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -48,6 +48,7 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHand
 	}
 
 	handle.SetRequestType(contentTypeSplit[0])
+
 	if !validContentType(handle.GetRequestType()) {
 		return api_errors.ErrUnknownContentType
 	}
@@ -74,8 +75,8 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHand
 	return nil
 }
 
-func SendResponse(w http.ResponseWriter, r *http.Request, obj interface{}) {
-	resp_data, err := json.Marshal(obj)
+func SendResponse(w http.ResponseWriter, r *http.Request, obj HTTPRequestHandler) {
+	resp_data, err := json.Marshal(obj.GetResponse())
 	if err != nil {
 		api_errors.WriteError(w, err, true)
 		return
