@@ -12,7 +12,7 @@ var DefaultId string = "scrypt"
 var DefaultN int = 1 << 15
 var DefaultR int = 8
 var DefaultP int = 1
-var DefaultLen int = 128 / 8
+var DefaultLen int = 256 / 8
 
 type Scrypt struct {
 	Crypt
@@ -38,7 +38,7 @@ func NewScrypt() *Scrypt {
 func (s *Scrypt) Hash(password []byte) error {
 	var err error
 
-	s.Salt, err = NewSalt()
+	s.Salt, err = NewSalt(s.Len)
 	if err != nil {
 		return err
 	}
@@ -208,13 +208,9 @@ func (s *Scrypt) unmarshalParseBase64(src []byte, index int) ([]byte, int, error
 	var dataLen = base64.URLEncoding.DecodedLen(endIndex - startIndex)
 	var data []byte = make([]byte, dataLen)
 
-	n, err := base64.URLEncoding.Decode(data, src[startIndex:endIndex])
+	_, err := base64.URLEncoding.Decode(data, src[startIndex:endIndex])
 	if err != nil {
 		return nil, index, err
-	}
-
-	if n != dataLen {
-		return nil, index, ErrInvalidSerialization
 	}
 
 	return data, endIndex, nil
@@ -253,6 +249,12 @@ func (s *Scrypt) Unmarshal(src []byte) error {
 		return err
 	}
 
+	if len(s.Salt) < s.Len {
+		return ErrInvalidSerialization
+	}
+
+	s.Salt = s.Salt[0:s.Len]
+
 	if len(src) <= index {
 		return ErrInvalidSerialization
 	}
@@ -266,6 +268,12 @@ func (s *Scrypt) Unmarshal(src []byte) error {
 	if err != nil {
 		return err
 	}
+
+	if len(s.Value) < s.Len {
+		return ErrInvalidSerialization
+	}
+
+	s.Value = s.Value[0:s.Len]
 
 	return nil
 }

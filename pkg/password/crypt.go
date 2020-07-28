@@ -5,8 +5,6 @@ import (
 	"errors"
 )
 
-var SaltBytes = 256 / 8
-
 var ErrPasswordMismatch = errors.New("provided password doesn't match hash")
 var ErrInvalidObject = errors.New("invalid or uninitialized object provided")
 var ErrInvalidSerialization = errors.New("invalid data provided to Unmarshal")
@@ -27,8 +25,8 @@ type Crypter interface {
 	Unmarshal([]byte) error
 }
 
-func NewSalt() ([]byte, error) {
-	var data []byte = make([]byte, SaltBytes)
+func NewSalt(length int) ([]byte, error) {
+	var data []byte = make([]byte, length)
 
 	_, err := rand.Read(data)
 	if err != nil {
@@ -47,8 +45,9 @@ func isBase64Digit(src []byte, index int) bool {
 	var lower = ('a' <= src[index]) && (src[index] <= 'z')
 	var upper = ('A' <= src[index]) && (src[index] <= 'Z')
 	var symbol = (src[index] == '-') || (src[index] == '_')
+	var padding = (src[index] == '=')
 
-	return digit || lower || upper || symbol
+	return digit || lower || upper || symbol || padding
 }
 
 func parseInt(src []byte, index int) (int, int, error) {

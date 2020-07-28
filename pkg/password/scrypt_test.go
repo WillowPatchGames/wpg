@@ -11,11 +11,11 @@ func TestMarshal(t *testing.T) {
 	obj.N = 1
 	obj.R = 2
 	obj.P = 3
-	obj.Len = 4
+	obj.Len = 3
 	obj.Salt = []byte{0, 1, 2}
 	obj.Value = []byte{3, 4, 5}
 
-	var expected = "$scrypt,N=1,r=2,p=3,len=4$AAEC$AwQF"
+	var expected = "$scrypt,N=1,r=2,p=3,len=3$AAEC$AwQF"
 	actual, err := obj.Marshal()
 
 	if err != nil {
@@ -28,7 +28,7 @@ func TestMarshal(t *testing.T) {
 }
 
 func TestUnmarshal(t *testing.T) {
-	var input = "$scrypt,N=1,r=2,p=3,len=4$AAEC$AwQF"
+	var input = "$scrypt,N=1,r=2,p=3,len=3$AAEC$AwQF"
 
 	var obj *Scrypt = NewScrypt()
 	err := obj.Unmarshal([]byte(input))
@@ -53,8 +53,8 @@ func TestUnmarshal(t *testing.T) {
 		t.Error("Expected Scrypt.P to be 3")
 	}
 
-	if obj.Len != 4 {
-		t.Error("Expected Scrypt.N to be 4")
+	if obj.Len != 3 {
+		t.Error("Expected Scrypt.Len to be 4")
 	}
 }
 
@@ -92,5 +92,42 @@ func TestCreateChecK(t *testing.T) {
 	err = obj.Compare(other)
 	if err != nil {
 		t.Error("Expected nil err attempting to compare same password!")
+	}
+}
+
+func TestEndToEnd(t *testing.T) {
+	var first *Scrypt = NewScrypt()
+	var second *Scrypt = NewScrypt()
+
+	var pass []byte = []byte("something")
+
+	err := first.Hash(pass)
+	if err != nil {
+		t.Error("Expected nil err!")
+	}
+
+	serialized, err := first.Marshal()
+	if err != nil {
+		t.Error("Expected nil err!")
+	}
+
+	err = second.Compare(pass)
+	if err != ErrPasswordMismatch {
+		t.Error("Expected ErrPasswordMismatch err attempting to compare password before Unmarshal!")
+	}
+
+	err = second.Unmarshal(serialized)
+	if err != nil {
+		t.Error("Expected nil err Unmarshaling: " + string(serialized))
+	}
+
+	err = first.Compare(pass)
+	if err != nil {
+		t.Error("Expected nil err!")
+	}
+
+	err = second.Compare(pass)
+	if err != nil {
+		t.Error("Expected nil err!")
 	}
 }
