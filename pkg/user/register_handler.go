@@ -9,6 +9,7 @@ import (
 	"git.cipherboy.com/WordCorp/api/internal/utils"
 
 	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
 type registerHandlerData struct {
@@ -28,6 +29,7 @@ type registerHandlerResponse struct {
 type RegisterHandler struct {
 	http.Handler
 	utils.HTTPRequestHandler
+	parsel.Parseltongue
 
 	req  registerHandlerData
 	resp registerHandlerResponse
@@ -49,6 +51,10 @@ func (handle RegisterHandler) GetRequestType() string {
 
 func (handle *RegisterHandler) SetRequestType(requestType string) {
 	handle.requestType = requestType
+}
+
+func (handle *RegisterHandler) GetObjectPointer() interface{} {
+	return handle.GetRequest()
 }
 
 func (handle RegisterHandler) verifyRequest() error {
