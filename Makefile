@@ -24,6 +24,10 @@ staticcheck:
 crypt: pkg/password/*.go
 	go test $(NAMESPACE)/pkg/password
 
+api:
+	$(PYTHON) -c 'import pytest' || $(PYTHON) -m pip install pytest
+	cd test/api && $(PYTHON) -m pytest
+
 install: install_database
 
 uninstall: remove_database
