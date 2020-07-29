@@ -33,10 +33,8 @@ func WriteError(w http.ResponseWriter, value error, fatal bool) {
 
 	code, present := stringToStatusCode[ret.Message]
 	if present {
-		log.Println("Returning:", code)
 		w.WriteHeader(code)
 	} else {
-		log.Println("Returning:", code)
 		w.WriteHeader(http.StatusBadRequest)
 	}
 

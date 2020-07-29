@@ -11,3 +11,6 @@ var ErrMultipleJSONObjects = errors.New("got multiple JSON objects when we only 
 
 var ErrMissingUsernameOrEmail = errors.New("missing username or email to describe new user")
 var ErrMissingPassword = errors.New("missing password")
+
+var ErrMissingRequest = errors.New("missing request paremeters")
+var ErrTooManySpecifiers = errors.New("too many specifiers present on the request")

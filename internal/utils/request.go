@@ -34,9 +34,7 @@ func validContentType(contentType string) bool {
 	return false
 }
 
-func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHandler) error {
-	var err error
-
+func parseHeaders(w http.ResponseWriter, r *http.Request, handle HTTPRequestHandler) error {
 	var contentTypeValue = r.Header.Get("Content-Type")
 	if contentTypeValue == "" {
 		return api_errors.ErrNoContentType
@@ -51,6 +49,17 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHand
 
 	if !validContentType(handle.GetRequestType()) {
 		return api_errors.ErrUnknownContentType
+	}
+
+	return nil
+}
+
+func ParseRequest(w http.ResponseWriter, r *http.Request, handle HTTPRequestHandler) error {
+	var err error
+
+	err = parseHeaders(w, r, handle)
+	if err != nil {
+		return err
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)

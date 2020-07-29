@@ -17,20 +17,61 @@ type UserModel struct {
 	Email    string
 }
 
-func FromEid(transaction *sql.Tx, id uint64) (*UserModel, error) {
-	var user *UserModel = new(UserModel)
-
+func (user *UserModel) FromEid(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetUserFromEID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return user, nil
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (user *UserModel) FromUsername(transaction *sql.Tx, name string) error {
+	stmt, err := transaction.Prepare(database.GetUserFromUsername)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.QueryRow(name).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (user *UserModel) FromEmail(transaction *sql.Tx, mail string) error {
+	stmt, err := transaction.Prepare(database.GetUserFromEmail)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.QueryRow(mail).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (user *UserModel) Create(transaction *sql.Tx) error {
@@ -46,7 +87,7 @@ func (user *UserModel) Create(transaction *sql.Tx) error {
 		return err
 	}
 
-	return nil
+	return stmt.Close()
 }
 
 func (user *UserModel) SetPassword(transaction *sql.Tx, pass string) error {
@@ -76,5 +117,5 @@ func (user *UserModel) SetPassword(transaction *sql.Tx, pass string) error {
 		return err
 	}
 
-	return nil
+	return stmt.Close()
 }
