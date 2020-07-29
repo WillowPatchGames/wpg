@@ -50,9 +50,13 @@ table.word.grid {
   border-collapse: collapse;
   color: #550080;
   --font-size: 30px;
+  margin: auto;
   td {
     @include tile;
     //position: relative;
+    &.unword {
+      color: red;
+    }
     &.empty {
       cursor: default;
       &:hover {
@@ -101,40 +105,71 @@ table.word.grid {
 }
 
 .word.bank {
-  .letter {
-    @include tile;
-    display: inline-block;
-    vertical-align: bottom;
-    border: 1px solid #88a8e2;
-    background: #e0dfef;
-    cursor: pointer;
-    &[data-selected=true] {
-      color: #053a05;
-      background: #95e495;
-      &:not(.empty) > .tile {
-        background: #95e495;
-        &:active:hover {
-          background: #e0dfef;
-        }
-      }
-    }
-    &:not(.empty) > .tile {
+  padding-top: 10px;
+  .letters {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    .letter {
+      @include tile;
+      margin: 5px;
       display: inline-block;
-      box-sizing: content-box;
-      margin: 0;
-      border: none;
+      vertical-align: bottom;
+      border: 1px solid #88a8e2;
       background: #e0dfef;
-      &:hover, &:active {
-        border: 1px solid #88a8e2;
-        margin: -1px;
-      }
-      &:active {
-        //transform: scale(1.1) translateY(-2px);
-        &:hover {
+      cursor: pointer;
+      &[data-selected=true] {
+        color: #053a05;
+        background: #95e495;
+        &:not(.empty) > .tile {
           background: #95e495;
+          &:active:hover {
+            background: #e0dfef;
+          }
+        }
+      }
+      &:not(.empty) > .tile {
+        display: inline-block;
+        box-sizing: content-box;
+        margin: 0;
+        border: none;
+        background: #e0dfef;
+        &:hover, &:active {
+          border: 1px solid #88a8e2;
+          margin: -1px;
+        }
+        &:active {
+          //transform: scale(1.1) translateY(-2px);
+          &:hover {
+            background: #95e495;
+          }
         }
       }
     }
+  }
+  .actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    flex-wrap: wrap;
+  }
+}
+
+button {
+  font: inherit;
+  font-size: var(--font-size);
+  border: 1px solid #88a8e2;
+  background: #e0dfef;
+  &:disabled, &.disabled {
+    color: gray;
+    &:focus {
+      outline: none;
+    }
+  }
+  &[data-selected=true] {
+    color: #053a05;
+    background: #95e495;
   }
 }
 
