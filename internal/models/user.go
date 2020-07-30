@@ -119,3 +119,45 @@ func (user *UserModel) SetPassword(transaction *sql.Tx, pass string) error {
 
 	return stmt.Close()
 }
+
+func (user *UserModel) getPassword(transaction *sql.Tx) (string, error) {
+	var result string
+	var err error
+
+	stmt, err := transaction.Prepare(database.GetPassword)
+	if err != nil {
+		return "", err
+	}
+
+	err = stmt.QueryRow(user.Id).Scan(&result)
+	if err != nil {
+		return "", err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
+func (user *UserModel) ComparePassword(transaction *sql.Tx, given string) error {
+	if user.Id == 0 {
+		panic("Uninitialized user object passed to ComparePassword")
+	}
+
+	serialization, err := user.getPassword(transaction)
+	if err != nil {
+		return err
+	}
+
+	var crypter *password.Scrypt = password.NewScrypt()
+
+	err = crypter.Unmarshal([]byte(serialization))
+	if err != nil {
+		return err
+	}
+
+	return crypter.Compare([]byte(given))
+}

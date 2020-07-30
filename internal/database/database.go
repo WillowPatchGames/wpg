@@ -17,7 +17,7 @@ func OpenDatabase(format string, conn string) error {
 
 	err = DB.Ping()
 	if err != nil {
-		DB.Close()
+		_ = DB.Close()
 		return err
 	}
 
