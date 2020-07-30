@@ -6,11 +6,11 @@ var t_auths = "authentication"
 // User Model
 
 var GetUserFromEID = "SELECT id, eid, username, display, email FROM " +
-	t_users + " WHERE eid=?"
+	t_users + " WHERE eid=$1"
 var GetUserFromUsername = "SELECT id, eid, username, display, email FROM " +
-	t_users + " WHERE username=?"
+	t_users + " WHERE username=$1"
 var GetUserFromEmail = "SELECT id, eid, username, display, email FROM " +
-	t_users + " WHERE email=?"
+	t_users + " WHERE email=$1"
 
 var InsertUser = "INSERT INTO " + t_users + " (eid, username, display, " +
 	"email) VALUES ($1, $2, $3, $4) RETURNING id"

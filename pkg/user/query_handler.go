@@ -9,10 +9,11 @@ import (
 	"git.cipherboy.com/WordCorp/api/internal/utils"
 
 	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
 type queryHandlerData struct {
-	UserID   uint64 `json:"id"`
+	UserID   uint64 `json:"id" query:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
@@ -27,6 +28,7 @@ type queryHandlerResponse struct {
 type QueryHandler struct {
 	http.Handler
 	utils.HTTPRequestHandler
+	parsel.Parseltongue
 
 	req  queryHandlerData
 	resp queryHandlerResponse
@@ -35,19 +37,23 @@ type QueryHandler struct {
 }
 
 func (handle *QueryHandler) GetRequest() interface{} {
-    return &handle.req
+	return &handle.req
 }
 
 func (handle QueryHandler) GetResponse() interface{} {
-    return handle.resp
+	return handle.resp
 }
 
 func (handle QueryHandler) GetRequestType() string {
-    return handle.requestType
+	return handle.requestType
 }
 
 func (handle *QueryHandler) SetRequestType(requestType string) {
-    handle.requestType = requestType
+	handle.requestType = requestType
+}
+
+func (handle *QueryHandler) GetObjectPointer() interface{} {
+	return handle.GetRequest()
 }
 
 func (handle QueryHandler) verifyRequest() error {
@@ -75,23 +81,19 @@ func (handle QueryHandler) verifyRequest() error {
 }
 
 func (handle QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    err := utils.ParseRequest(w, r, &handle)
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-        return
-    }
+	err := handle.verifyRequest()
+	if err != nil {
+		log.Println("Here")
+		api_errors.WriteError(w, err, true)
+		return
+	}
 
-    err = handle.verifyRequest()
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-        return
-    }
-
-    tx, err := database.GetTransaction()
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-        return
-    }
+	tx, err := database.GetTransaction()
+	if err != nil {
+		log.Println("Transaction?")
+		api_errors.WriteError(w, err, true)
+		return
+	}
 
 	var user models.UserModel
 	if handle.req.UserID != 0 {
@@ -103,24 +105,26 @@ func (handle QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-        if rollbackErr := tx.Rollback(); rollbackErr != nil {
-            log.Print("Unable to rollback:", rollbackErr)
-        }
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
 
-        api_errors.WriteError(w, err, true)
-        return
+		log.Println("Getting?", err)
+		api_errors.WriteError(w, err, true)
+		return
 	}
 
-    err = tx.Commit()
-    if err != nil {
-        api_errors.WriteError(w, err, true)
-        return
-    }
+	err = tx.Commit()
+	if err != nil {
+		log.Println("Commiting?")
+		api_errors.WriteError(w, err, true)
+		return
+	}
 
-    handle.resp.UserID = user.Eid
-    handle.resp.Username = user.Username
-    handle.resp.Display = user.Display
-    handle.resp.Email = user.Email
+	handle.resp.UserID = user.Eid
+	handle.resp.Username = user.Username
+	handle.resp.Display = user.Display
+	handle.resp.Email = user.Email
 
-    utils.SendResponse(w, r, &handle)
+	utils.SendResponse(w, r, &handle)
 }

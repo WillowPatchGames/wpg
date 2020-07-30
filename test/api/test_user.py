@@ -30,7 +30,7 @@ def test_create_get():
 
     create_user_data = resp.json()
 
-    resp = requests.get(f"{URL}/user")
+    resp = requests.get(f"{URL}/user?id={create_user_data['id']}")
 
     assert resp.status_code == 200
 
