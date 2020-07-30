@@ -13,6 +13,13 @@ package parsel
 // So for example, we take the user's object and walk it with a QueryVisitor
 // on the tag name "query" to allow for parsing query strings.
 
+import (
+	"errors"
+	"log"
+	"reflect"
+	"strconv"
+)
+
 func (p parselmouth) nestedReflect(obj interface{}, tag_key string, v visitor) error {
 	var v_obj reflect.Value = reflect.ValueOf(obj)
 

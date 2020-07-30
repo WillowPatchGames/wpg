@@ -26,13 +26,7 @@ package parsel
 // encoding/json, &c) as necessary.
 
 import (
-	// "encoding/json"
-	"errors"
-	"log"
 	"net/http"
-	"reflect"
-	"strconv"
-	// "github.com/gorilla/schema"
 )
 
 type Parseltongue interface {

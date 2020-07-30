@@ -10,10 +10,9 @@ package parsel
 // the unexported parselmouth type that holds the main implementation.
 
 import (
-	"errors"
 	"log"
 	"net/http"
-	"strconv"
+	"reflect"
 )
 
 type parselmouth struct {
