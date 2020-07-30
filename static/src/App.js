@@ -1,6 +1,9 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import 'rmwc/dist/styles'
+import '@rmwc/theme/styles';
+import { Button } from '@rmwc/button';
 
 function App() {
   return (
@@ -10,6 +13,7 @@ function App() {
         <p>
           Edit <code>src/App.js</code> and save to reload. Does it work?
         </p>
+        <Button raised>Hello, world!</Button>
         <a
           className="App-link"
           href="https://reactjs.org"
