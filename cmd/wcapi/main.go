@@ -13,8 +13,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 
 	"git.cipherboy.com/WordCorp/api/internal/database"
 	"git.cipherboy.com/WordCorp/api/pkg/auth"
