@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
 )
 
 type parselmouth struct {
@@ -25,15 +26,21 @@ type parselmouth struct {
 
 	innerFactory func() Parseltongue
 	config       ParselConfig
+
+	schemaDecoder *schema.Decoder
 }
 
 type visitor interface {
 	Visit(field reflect.Value, tag_data string, debug bool) error
 }
 
+func isContentType(header string, value string) bool {
+	return header == value || strings.HasPrefix(header, value + ";")
+}
+
 func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if p.config.DebugLogging {
-		log.Println("Got request: ")
+	if p.config.MaxBodyBytes > 0 {
+		r.Body = http.MaxBytesReader(w, r.Body, p.config.MaxBodyBytes)
 	}
 
 	var inner = p.innerFactory()
@@ -70,7 +77,10 @@ func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// All later requests are dependent upon content type.
 	var contentType = r.Header.Get("Content-Type")
-	var isJSONContent = strings.HasPrefix(contentType, "application/json")
+	var isJSONContent = isContentType(contentType, "application/json")
+	var isFormContent = isContentType(contentType, "application/x-www-form-urlencoded")
+	isFormContent = isFormContent || isContentType(contentType, "multipart/form-data")
+	isFormContent = isFormContent || isContentType(contentType, "text/plain")
 
 	if !p.config.SkipJSON && isJSONContent {
 		for _, method := range p.config.JSONMethods {
@@ -86,6 +96,23 @@ func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	}
+
+	if !p.config.SkipSchema && isFormContent {
+		for _, method := range p.config.SchemaMethods {
+			if r.Method != method {
+				continue
+			}
+
+			err := p.fromSchema(w, r, inner)
+			if err != nil {
+				if p.config.DebugLogging {
+					panic(err)
+				}
+				return
+			}
+		}
+
 	}
 
 	inner.ServeHTTP(w, r)
@@ -142,7 +169,7 @@ func (p parselmouth) fromMuxRoute(w http.ResponseWriter, r *http.Request, inner 
 func (p parselmouth) fromJSON(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
 	var obj = inner.GetObjectPointer()
 	if p.config.DebugLogging {
-		log.Println("parselmouth.fromMuxRoute(): Got object:", obj)
+		log.Println("parselmouth.fromJSON(): Got object:", obj)
 	}
 
 	var decoder = json.NewDecoder(r.Body)
@@ -177,4 +204,26 @@ func (p parselmouth) fromJSON(w http.ResponseWriter, r *http.Request, inner Pars
 	}
 
 	return nil
+}
+
+func (p parselmouth) fromSchema(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
+	var obj = inner.GetObjectPointer()
+	if p.config.DebugLogging {
+		log.Println("parselmouth.fromSchema(): Got object:", obj)
+	}
+
+	if p.schemaDecoder == nil {
+		p.schemaDecoder = schema.NewDecoder()
+	}
+
+	p.schemaDecoder.IgnoreUnknownKeys(!p.config.ForbidUnknownSchemaKeys)
+	p.schemaDecoder.SetAliasTag(p.config.SchemaTag)
+	p.schemaDecoder.ZeroEmpty(p.config.ZeroEmptySchema)
+
+	err := r.ParseForm()
+	if err != nil {
+		return err
+	}
+
+	return p.schemaDecoder.Decode(obj, r.PostForm)
 }

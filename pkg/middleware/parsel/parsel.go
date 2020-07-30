@@ -39,6 +39,7 @@ type Parseltongue interface {
 
 type ParselConfig struct {
 	DebugLogging bool
+	MaxBodyBytes int64
 
 	SkipHeader bool
 	HeaderTag  string
@@ -53,12 +54,22 @@ type ParselConfig struct {
 	AllowMultipleJSONObjects  bool
 	IgnoreMultipleJSONObjects bool
 	JSONMethods               []string
+
+	SkipSchema bool
+	SchemaMethods []string
+	ForbidUnknownSchemaKeys bool
+	ZeroEmptySchema bool
+	SchemaTag string
 }
 
 func Wrap(factory func() Parseltongue, config ParselConfig) http.Handler {
 	var ret = new(parselmouth)
 	ret.innerFactory = factory
 	ret.config = config
+
+	if ret.config.HeaderTag == "" {
+		ret.config.HeaderTag = "header"
+	}
 
 	if ret.config.QueryTag == "" {
 		ret.config.QueryTag = "query"
@@ -68,9 +79,20 @@ func Wrap(factory func() Parseltongue, config ParselConfig) http.Handler {
 		ret.config.RouteTag = "route"
 	}
 
+	if ret.config.SchemaTag == "" {
+		ret.config.SchemaTag = "schema"
+	}
+
 	var methods []string = []string{"POST", "PUT", "PATCH"}
 	if ret.config.JSONMethods == nil {
 		ret.config.JSONMethods = methods
+	}
+	if ret.config.SchemaMethods == nil {
+		ret.config.SchemaMethods = methods
+	}
+
+	if ret.config.MaxBodyBytes == 0 {
+		ret.config.MaxBodyBytes = 10*1024*1024
 	}
 
 	return ret
