@@ -6,6 +6,7 @@ import 'rmwc/dist/styles';
 import '@rmwc/icon/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
+import '@rmwc/dialog/styles';
 import '@rmwc/grid/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
@@ -13,19 +14,23 @@ import '@rmwc/theme/styles';
 
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
+import * as d from '@rmwc/dialog';
 import * as g from '@rmwc/grid';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 import * as bar from '@rmwc/top-app-bar';
 import { Theme, ThemeProvider } from '@rmwc/theme';
 
+// Application imports
+import { AuthedUserModel } from './user.js';
+
 class AuthedNavComponent extends React.Component {
-   render() {
-    if (this.props.authed) {
+  render() {
+    if (this.props.user !== null && this.props.user.authed) {
       return (
         <div>
-          <Button label="Profile" icon="person" unelevated />
-          <Button label="Logout" icon="logout" unelevated onClick={() => this.props.setAuth(!this.props.authed) } />
+          <Button label={ this.props.user.display } icon="person" unelevated />
+          <Button label="Logout" icon="logout" unelevated onClick={() => this.props.setUser(null) } />
           <Button label="About" icon="notes" unelevated />
         </div>
       );
@@ -33,7 +38,7 @@ class AuthedNavComponent extends React.Component {
 
     return (
       <div>
-        <Button label="Login" icon="login" unelevated onClick={() => this.props.setAuth(!this.props.authed) } />
+        <Button label="Login" icon="login" unelevated onClick={() => this.props.setPage('login') } />
         <Button label="Join" icon="person_add" unelevated />
         <Button label="About" icon="notes" unelevated />
       </div>
@@ -52,7 +57,7 @@ class Navigation extends React.Component {
               <bar.TopAppBarTitle>WordCorp</bar.TopAppBarTitle>
             </bar.TopAppBarSection>
             <bar.TopAppBarSection alignEnd>
-              <AuthedNavComponent authed={ this.props.authed } setAuth={ this.props.setAuth } />
+              <AuthedNavComponent user={ this.props.user } setPage={ this.props.setPage } setUser={ this.props.setUser } />
             </bar.TopAppBarSection>
           </bar.TopAppBarRow>
         </bar.TopAppBar>
@@ -65,18 +70,42 @@ class Navigation extends React.Component {
 }
 
 class LoginPage extends React.Component {
-  handleSubmit(event) {
+  constructor(props) {
+    super(props);
+
+    this.username = React.createRef();
+    this.password = React.createRef();
+
+    this.state = {
+      error: null
+    }
+  }
+
+  async handleSubmit(event) {
     event.preventDefault();
+
+    var user = new AuthedUserModel();
+    user.username = this.username.current.value;
+    await user.login(this.password.current.value);
+    if (user.authed) {
+      this.props.setUser(user);
+      this.props.setPage('home');
+    } else {
+      this.setError(user.error.message);
+    }
+  }
+
+  setError(message) {
+    this.setState(state => Object.assign({}, state, { error: message }));
   }
 
   render() {
+
     return (
       <div>
         <ThemeProvider
           options={{
-            primary: 'white',
-            surface: '#1397BD',
-            background: 'white',
+            surface: 'white',
           }}
         >
           <g.Grid fixedColumnWidth={ true }>
@@ -84,11 +113,18 @@ class LoginPage extends React.Component {
             <g.GridCell align="middle" span={6}>
               <c.Card>
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                  <form onSubmit={ this.handleSubmit }>
-                    <TextField fullwidth placeholder="username" name="username" /><br />
-                    <TextField fullwidth placeholder="password" name="password" /><br />
+                  <form onSubmit={ this.handleSubmit.bind(this) }>
+                    <TextField fullwidth placeholder="username" name="username" inputRef={ this.username } /><br />
+                    <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
                     <Button label="Login" raised />
                   </form>
+                  <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+                    <d.DialogTitle>Error!</d.DialogTitle>
+                    <d.DialogContent>{ this.state.error }</d.DialogContent>
+                    <d.DialogActions>
+                      <d.DialogButton action="close">OK</d.DialogButton>
+                    </d.DialogActions>
+                  </d.Dialog>
                 </div>
               </c.Card>
             </g.GridCell>
@@ -140,8 +176,8 @@ class Page extends React.Component {
   render() {
     return (
       <div>
-      { this.props.page === 'home' && <HomePage /> }
-      { this.props.page === 'login' && <LoginPage /> }
+        { this.props.page === 'home' && <HomePage setPage={ this.props.setPage } /> }
+        { this.props.page === 'login' && <LoginPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
       </div>
     );
   }
@@ -152,18 +188,18 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      authed: false,
-      page: 'home'
+      page: 'home',
+      user: null
     };
   }
 
-  setAuth(authed) {
-    if (authed && !this.state.authed) {
-      this.setState(state => Object.assign({}, state, { page: 'login'}));
-      return
+  setUser(user) {
+    if (user === null && this.state.user !== null) {
+      this.state.user.logout();
+      this.setPage('home');
     }
 
-    this.setState(state => Object.assign({}, state, { authed }));
+    this.setState(state => Object.assign({}, state, { user}));
   }
 
   setPage(page) {
@@ -182,8 +218,8 @@ class App extends React.Component {
           }}
         >
 
-        <Navigation authed={ this.state.authed } setAuth={ this.setAuth.bind(this) } setPage={ this.setPage.bind(this) } />
-        <Page page={ this.state.page } />
+        <Navigation user={ this.state.user } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
+        <Page page={ this.state.page } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } />
       </ThemeProvider>
 
       </div>
