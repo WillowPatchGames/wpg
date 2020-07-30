@@ -31,10 +31,22 @@ def test_create_get():
     create_user_data = resp.json()
 
     resp = requests.get(f"{URL}/user?id={create_user_data['id']}")
-
     assert resp.status_code == 200
-
     get_user_data = resp.json()
-
     for key in create_user_data:
         assert create_user_data[key] == get_user_data[key]
+
+    resp = requests.get(f"{URL}/user/{create_user_data['id']}")
+    assert resp.status_code == 200
+    get_user_data = resp.json()
+    for key in create_user_data:
+        assert create_user_data[key] == get_user_data[key]
+
+    resp = requests.get(f"{URL}/user?username={create_user_data['username']}")
+    assert resp.status_code == 200
+    get_user_data = resp.json()
+    for key in create_user_data:
+        assert create_user_data[key] == get_user_data[key]
+
+    resp = requests.get(f"{URL}/user?username={create_user_data['username']}zzzzz")
+    assert resp.status_code == 400

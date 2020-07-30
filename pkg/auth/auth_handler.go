@@ -10,7 +10,8 @@ import (
 	"net/http"
 
 	"git.cipherboy.com/WordCorp/api/internal/utils"
-	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
 type authHandlerData struct {
@@ -31,35 +32,20 @@ type authHandlerResponse struct {
 type AuthHandler struct {
 	http.Handler
 	utils.HTTPRequestHandler
+	parsel.Parseltongue
 
 	req  authHandlerData
 	resp authHandlerResponse
-
-	requestType string
-}
-
-func (handle AuthHandler) GetRequest() interface{} {
-	return &handle.req
 }
 
 func (handle AuthHandler) GetResponse() interface{} {
 	return handle.resp
 }
 
-func (handle AuthHandler) GetRequestType() string {
-	return handle.requestType
-}
-
-func (handle AuthHandler) SetRequestType(requestType string) {
-	handle.requestType = requestType
+func (handle *AuthHandler) GetObjectPointer() interface{} {
+	return &handle.req
 }
 
 func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := utils.ParseRequest(w, r, &handle)
-	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
-	}
-
 	utils.SendResponse(w, r, handle)
 }

@@ -15,8 +15,18 @@ import (
 func BuildRouter(router *mux.Router) {
 	var config parsel.ParselConfig
 	config.DebugLogging = true
+	config.ParseMuxRoute = true
 
-	router.Handle("/user/{UserID:[0-9]+}", parsel.Wrap(new(QueryHandler), config)).Methods("GET")
-	router.Handle("/user", parsel.Wrap(new(QueryHandler), config)).Methods("GET")
-	router.Handle("/users", parsel.Wrap(new(RegisterHandler), config)).Methods("POST")
+	var queryFactory = func() parsel.Parseltongue {
+		return new(QueryHandler)
+	}
+
+	var registerFactory = func() parsel.Parseltongue {
+		return new(RegisterHandler)
+	}
+
+	router.Handle("/user/{UserID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/user", parsel.Wrap(queryFactory, config)).Methods("GET")
+
+	router.Handle("/users", parsel.Wrap(registerFactory, config)).Methods("POST")
 }

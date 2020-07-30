@@ -13,9 +13,9 @@ import (
 )
 
 type queryHandlerData struct {
-	UserID   uint64 `json:"id" query:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	UserID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
+	Username string `json:"username,omitempty" query:"username,omitempty" route:"Username,omitempty"`
+	Email    string `json:"email,omitempty" query:"email,omitempty" route:"Email,omitempty"`
 }
 
 type queryHandlerResponse struct {
@@ -32,28 +32,14 @@ type QueryHandler struct {
 
 	req  queryHandlerData
 	resp queryHandlerResponse
-
-	requestType string
-}
-
-func (handle *QueryHandler) GetRequest() interface{} {
-	return &handle.req
 }
 
 func (handle QueryHandler) GetResponse() interface{} {
 	return handle.resp
 }
 
-func (handle QueryHandler) GetRequestType() string {
-	return handle.requestType
-}
-
-func (handle *QueryHandler) SetRequestType(requestType string) {
-	handle.requestType = requestType
-}
-
 func (handle *QueryHandler) GetObjectPointer() interface{} {
-	return handle.GetRequest()
+	return &handle.req
 }
 
 func (handle QueryHandler) verifyRequest() error {
@@ -80,7 +66,7 @@ func (handle QueryHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Println("Here")
@@ -126,5 +112,5 @@ func (handle QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handle.resp.Display = user.Display
 	handle.resp.Email = user.Email
 
-	utils.SendResponse(w, r, &handle)
+	utils.SendResponse(w, r, handle)
 }

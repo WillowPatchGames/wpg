@@ -33,28 +33,14 @@ type RegisterHandler struct {
 
 	req  registerHandlerData
 	resp registerHandlerResponse
-
-	requestType string
-}
-
-func (handle *RegisterHandler) GetRequest() interface{} {
-	return &handle.req
 }
 
 func (handle RegisterHandler) GetResponse() interface{} {
 	return handle.resp
 }
 
-func (handle RegisterHandler) GetRequestType() string {
-	return handle.requestType
-}
-
-func (handle *RegisterHandler) SetRequestType(requestType string) {
-	handle.requestType = requestType
-}
-
 func (handle *RegisterHandler) GetObjectPointer() interface{} {
-	return handle.GetRequest()
+	return &handle.req
 }
 
 func (handle RegisterHandler) verifyRequest() error {
@@ -70,13 +56,7 @@ func (handle RegisterHandler) verifyRequest() error {
 }
 
 func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := utils.ParseRequest(w, r, &handle)
-	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
-	}
-
-	err = handle.verifyRequest()
+	err := handle.verifyRequest()
 	if err != nil {
 		api_errors.WriteError(w, err, true)
 		return
