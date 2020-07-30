@@ -39,7 +39,9 @@ func WriteError(w http.ResponseWriter, value error, fatal bool) {
 	}
 
 	if data != nil {
-		w.Write(data)
-		w.Write([]byte{byte('\n')})
+		_, err = w.Write(data)
+		if err == nil {
+			_, _ = w.Write([]byte{byte('\n')})
+		}
 	}
 }

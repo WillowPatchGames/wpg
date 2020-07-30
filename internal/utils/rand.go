@@ -2,22 +2,33 @@ package utils
 
 import (
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 
 	crypto_rand "crypto/rand"
-	math_rand "math/rand"
 )
 
 var idMin uint64 = 1000000000000000
 var idMax uint64 = 9999999999999999
 
+var idBytes = 8
 var tokenBytes = 512 / 8
 
 func RandomId() uint64 {
-	var id = (math_rand.Uint64() % (idMax - idMin)) + idMin
+	var data []byte = make([]byte, idBytes)
+
+	_, err := crypto_rand.Read(data)
+	if err != nil {
+		panic(err)
+	}
+
+	var id = binary.BigEndian.Uint64(data)
+	id = (id % (idMax - idMin)) + idMin
+
 	if !IsValidId(id) {
 		panic("RandomId() generated an invalid identifier: " + fmt.Sprintf("%d", id))
 	}
+
 	return id
 }
 
