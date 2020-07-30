@@ -36,18 +36,23 @@ type Parseltongue interface {
 }
 
 type ParselConfig struct {
-	AllowUnmatchedFields   bool
-	DisallowUnmatchedQuery bool
-	DebugLogging           bool
-	SkipQuery              bool
-	QueryTag               string
-	ParseMuxRoute          bool
-	RouteTag               string
+	DebugLogging bool
+
+	SkipQuery bool
+	QueryTag  string
+
+	ParseMuxRoute bool
+	RouteTag      string
+
+	SkipJSON                  bool
+	AllowMultipleJSONObjects  bool
+	IgnoreMultipleJSONObjects bool
+	JSONMethods               []string
 }
 
-func Wrap(inner Parseltongue, config ParselConfig) http.Handler {
+func Wrap(factory func() Parseltongue, config ParselConfig) http.Handler {
 	var ret = new(parselmouth)
-	ret.inner = inner
+	ret.innerFactory = factory
 	ret.config = config
 
 	if ret.config.QueryTag == "" {
@@ -56,6 +61,11 @@ func Wrap(inner Parseltongue, config ParselConfig) http.Handler {
 
 	if ret.config.RouteTag == "" {
 		ret.config.RouteTag = "route"
+	}
+
+	var methods []string = []string{"POST", "PUT", "PATCH"}
+	if ret.config.JSONMethods == nil {
+		ret.config.JSONMethods = methods
 	}
 
 	return ret

@@ -111,7 +111,7 @@ func (q QueryVisitor) parseFieldTag(tag_data string) (string, int, int, bool, bo
 		if part == "omitempty" {
 			omitempty = true
 		} else {
-			panic("unkown tag part at index " + strconv.Itoa(index) + ": `" + tag_data + "`: " + part)
+			panic("unkown tag part at index " + strconv.Itoa(index+1) + ": `" + tag_data + "`: " + part)
 		}
 	}
 
@@ -212,6 +212,8 @@ func (q QueryVisitor) Visit(field reflect.Value, tag_data string, debug bool) er
 		}
 
 		field.SetFloat(f_value)
+	} else if field.Kind() == reflect.String {
+		field.SetString(s_value)
 	} else {
 		panic(a_value)
 	}
