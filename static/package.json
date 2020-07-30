@@ -1,0 +1,16 @@
+{
+  "name": "wordcorp-webui-static",
+  "version": "1.0.0",
+  "description": "WebUI for WordCorp",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "WordCorp",
+  "repository": "https://git.cipherboy.com/WordCorp/webui",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "material-components-web": "^7.0.0"
+  },
+  "devDependencies": {}
+}
