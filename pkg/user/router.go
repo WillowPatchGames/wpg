@@ -16,6 +16,7 @@ func BuildRouter(router *mux.Router, debug bool) {
 	var config parsel.ParselConfig
 	config.DebugLogging = debug
 	config.ParseMuxRoute = true
+	config.SchemaTag = "json"
 
 	var queryFactory = func() parsel.Parseltongue {
 		return new(QueryHandler)

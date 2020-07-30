@@ -32,4 +32,5 @@ Note that only one of `email` or `username` need to be present.
 }
 ```
 
-Token must be specified with all future requests over e.g., the game's websocket.
+Token must be specified with all future requests over e.g., the game's
+websocket or when creating the game.

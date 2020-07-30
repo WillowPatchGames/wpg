@@ -36,7 +36,7 @@ returned to other users and won't be available for sign in. By default, if
 
 Users should then [auth](auth.md).
 
-## `GET on /user/:eid`
+## `GET on /user/:eid` or `GET on /user` (passing `id`, `username`, or `email`)
 
 From an external identifier, returns identifying information about a user.
 

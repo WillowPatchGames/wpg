@@ -5,7 +5,7 @@ PYTHON?=python3
 all: build
 test: check
 
-check: vet staticcheck crypt
+check: vet gosec safesql staticcheck crypt
 
 fuzz:
 	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
