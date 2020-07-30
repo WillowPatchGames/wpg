@@ -32,11 +32,14 @@ type visitor interface {
 }
 
 func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("Got request: ")
+	if p.config.DebugLogging {
+		log.Println("Got request: ")
+	}
+
 	var inner = p.innerFactory()
 
-	if !p.config.SkipQuery {
-		err := p.fromQuery(w, r, inner)
+	if !p.config.SkipHeader {
+		err := p.fromHeader(w, r, inner)
 		if err != nil {
 			if p.config.DebugLogging {
 				panic(err)
@@ -47,6 +50,16 @@ func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if p.config.ParseMuxRoute {
 		err := p.fromMuxRoute(w, r, inner)
+		if err != nil {
+			if p.config.DebugLogging {
+				panic(err)
+			}
+			return
+		}
+	}
+
+	if !p.config.SkipQuery {
+		err := p.fromQuery(w, r, inner)
 		if err != nil {
 			if p.config.DebugLogging {
 				panic(err)
@@ -76,6 +89,22 @@ func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	inner.ServeHTTP(w, r)
+}
+
+func (p parselmouth) fromHeader(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
+	var obj = inner.GetObjectPointer()
+	if p.config.DebugLogging {
+		log.Println("parselmouth.fromHeader(): Got object:", obj)
+	}
+
+	var v HeaderVisitor
+	v.header = r.Header
+
+	if len(v.header) == 0 {
+		return nil
+	}
+
+	return p.nestedReflect(obj, p.config.HeaderTag, v)
 }
 
 func (p parselmouth) fromQuery(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {

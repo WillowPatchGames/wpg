@@ -16,14 +16,16 @@ package parsel
 // at runtime. This makes it impossible to use a single, unified field tag
 // across all encodings (query string, form data, JSON, XML, ...). Instead,
 // per-source tags must always be used:
-// - query, to access data in query strings,
 // - schema, to access form data per gorilla/schema rules,
 // - json, to access JSON data per encoding/json rules,
+// - configurable values for tags Parsel parses.
 // - &c.
 //
 // parsel also includes a few configuration options which make it nice to
 // use. These get propagated to helper libraries (gorilla/schema,
 // encoding/json, &c) as necessary.
+//
+// Parsing goes from header -> mux.Route -> query strings -> request body.
 
 import (
 	"net/http"
@@ -37,6 +39,9 @@ type Parseltongue interface {
 
 type ParselConfig struct {
 	DebugLogging bool
+
+	SkipHeader bool
+	HeaderTag  string
 
 	SkipQuery bool
 	QueryTag  string
