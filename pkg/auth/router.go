@@ -12,10 +12,10 @@ import (
 	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
-func BuildRouter(router *mux.Router) {
+func BuildRouter(router *mux.Router, debug bool) {
 	var config parsel.ParselConfig
-	config.DebugLogging = true
-	config.ParseMuxRoute = true
+	config.DebugLogging = debug
+	config.ParseMuxRoute = false
 
 	var authFactory = func() parsel.Parseltongue {
 		return new(AuthHandler)

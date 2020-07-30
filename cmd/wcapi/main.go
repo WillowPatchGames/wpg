@@ -66,10 +66,10 @@ func main() {
 	}
 	defer database.DB.Close()
 
-	// Add our user and authentication routers
+	// Add our main application routers
 	router := mux.NewRouter()
-	auth.BuildRouter(router)
-	user.BuildRouter(router)
+	auth.BuildRouter(router, debug)
+	user.BuildRouter(router, debug)
 
 	// Add proxy-headers middleware
 	handler := handlers.ProxyHeaders(router)

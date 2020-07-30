@@ -4,7 +4,7 @@ CREATE TABLE metadata (
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (1);
+INSERT INTO metadata (version) VALUES (2);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
@@ -25,6 +25,7 @@ CREATE TABLE authentication (
   category auth_source,
   key      VARCHAR(1024),
   value    VARCHAR(1024),
+  created  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   expires  TIMESTAMP WITH TIME ZONE,
 
   FOREIGN KEY (user_id) REFERENCES users(id),
