@@ -41,7 +41,9 @@ func main() {
 
 	var addr string
 	var dbconn string
+
 	var debug bool
+	var static_path string
 
 	flag.StringVar(&addr, "addr", "localhost:8042", "Address to listen for HTTP requests on")
 	flag.StringVar(&db_host, "db_host", "localhost", "Hostname to contact the database over")
@@ -51,6 +53,7 @@ func main() {
 	flag.StringVar(&db_name, "db_name", "wordcorpdb", "Database to connect to with")
 	flag.StringVar(&db_sslmode, "db_sslmode", "require", "SSL Validation mode (require, verify-full, verify-ca, or disable)")
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
+	flag.StringVar(&static_path, "static_path", "assets/webui/static", "Path to web UI static assets")
 	flag.Parse()
 
 	// Open Database connection first
@@ -70,6 +73,15 @@ func main() {
 	router := mux.NewRouter()
 	auth.BuildRouter(router, debug)
 	user.BuildRouter(router, debug)
+
+	if debug {
+		// Add static asset handler in debug mode
+		if _, err := os.Stat(static_path); err == nil {
+			log.Println("Adding static asset routing: " + static_path)
+			fileHandler := http.FileServer(http.Dir(static_path))
+			router.PathPrefix("/").Handler(fileHandler)
+		}
+	}
 
 	// Add proxy-headers middleware
 	handler := handlers.ProxyHeaders(router)
