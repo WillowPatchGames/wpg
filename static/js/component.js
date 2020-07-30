@@ -39,167 +39,7 @@ function shallowEqual(objA, objB) {
 
 const e = React.createElement;
 
-class Letter extends String {
-  constructor(value) {
-    super(value);
-    this.id = Letter.id++;
-  }
-}
-Letter.id = 0;
-
-class Grid {
-  constructor(data) {
-    if (!data) data = [];
-    this.data = data;
-    this.drift = [0,0];
-  }
-  get rows() {
-    return this.data.length;
-  }
-  set rows(len) {
-    this.data.length = len;
-    for (let i = 0; i < len; i++) {
-      if (!this.data[i]) {
-        this.data[i] = [];
-      }
-    }
-    this.cols = this.cols;
-  }
-  get cols() {
-    var res = 0;
-    for (let row in this.data) {
-      if (this.data[row].length > res) {
-        res = this.data[row].length;
-      }
-    }
-    return res;
-  }
-  set cols(len) {
-    for (let row in this.data) {
-      this.data[row].length = len;
-    }
-  }
-  writeWord(word, row, col, vert, cons) {
-    for (let letter of word) {
-      if (!this.data[row]) this.data[row] = [];
-      this.data[row][col] = cons ? new cons(letter) : cons;
-      if (vert) {
-        row += 1;
-      } else {
-        col += 1;
-      }
-    }
-    this.rows = this.rows;
-  }
-  padding(amt) {
-    if (!amt) amt = 0;
-    if (typeof amt === "number") {
-      amt = [amt, amt];
-    } else {
-      amt[0] = +amt[0];
-      amt[1] = +amt[1];
-    }
-    if (amt[0] < 0) amt[0] = 0;
-    if (amt[1] < 0) amt[1] = 0;
-
-    var i = this.rows, I = 0, j = this.cols, J = 0;
-    var empty = true;
-    for (let row in this.data) {
-      for (let col in this.data[row]) {
-        if (this.data[row][col]) {
-          empty = false;
-          i = Math.min(i, +row); I = Math.max(I, +row+1);
-          j = Math.min(j, +col); J = Math.max(J, +col+1);
-        }
-      }
-    }
-
-    if (empty) {
-      this.rows = amt[0];
-      this.cols = amt[1];
-    } else {
-      var more = [];
-      for (let row in this.data) {
-        more.length = Math.max(0, amt[1] - j);
-        this.data[row].splice(0, Math.max(0, j - amt[1]), ...more);
-      }
-      more.length = Math.max(0, amt[0] - i);
-      this.data.splice(0, Math.max(0, i - amt[0]), ...more);
-      this.rows = (I - i) + amt[0] + amt[0];
-      this.cols = (J - j) + amt[1] + amt[1];
-    }
-
-    this.drift[0] += amt[0] - i;
-    this.drift[1] += amt[1] - j;
-    return [amt[0] - i, amt[1] - j];
-  }
-  components() {
-    var components = [];
-    for (let row in this.data) {
-      for (let col in this.data[row]) {
-        if (!this.data[row][col]) continue;
-        var u = components.findIndex(c => c[row-1]?.[col]);
-        var l = components.findIndex(c => c[row]?.[col-1]);
-        if (u >= 0 && l >= 0 && u !== l) {
-          for (let i in components[l]) {
-            if (!components[u][i]) components[u][i] = {};
-            for (let j in components[l][i]) {
-              components[u][i][j] = components[l][i][j];
-            }
-          }
-          if (!components[u][row]) components[u][row] = {};
-          components[u][row][col] = true;
-          components.splice(l, 1);
-        } else if (u >= 0) {
-          var c = components[u];
-          if (!c[row]) c[row] = {};
-          c[row][col] = true;
-        } else if (l >= 0) {
-          var c = components[l];
-          if (!c[row]) c[row] = {};
-          c[row][col] = true;
-        } else {
-          var c = {};
-          c[row] = {};
-          c[row][col] = true;
-          components.push(c);
-        }
-      }
-    }
-    return components;
-  }
-  words() {
-    var words = [];
-    for (let row in this.data) {
-      for (let col in this.data[row]) {
-        var h = this.data[row]?.[col];
-        if (!h) continue;
-        var d = this.data[+row+1]?.[col];
-        if (!this.data[row-1]?.[col] && d) {
-          var word = [h,d];
-          var i = +row+1;
-          while (d = (this.data[++i]?.[col])) {
-            word.push(d);
-          }
-          words.push({ word, length: word.length, row: +row, col: +col, vertical: true });
-        }
-        var r = this.data[row]?.[+col+1];
-        if (!this.data[row]?.[col-1] && r) {
-          var word = [h,r];
-          var i = +col+1;
-          while (r = this.data[row]?.[++i]) {
-            word.push(r);
-          }
-          words.push({ word, length: word.length, row: +row, col: +col, vertical: false });
-        }
-      }
-    }
-    return words;
-  }
-}
-
 const defaultGrid = new Grid();
-//*
 defaultGrid.writeWord("APPLET", 3, 0, false, Letter);
 defaultGrid.writeWord("TEACHER", 2, 4, true, Letter);
 defaultGrid.writeWord("MAC", 5, 2, false, Letter);
@@ -207,26 +47,48 @@ defaultGrid.padding(5);
 
 var PADDING = [8,14];
 var SIZE = 35;
-var WORDLIST = [
-  "APPLE", "TEACHER", "MAC",
-  "QAT", "JAR", "PLEAT", "JAM",
-  "PRIME", "MATCH", "PEE",
-];
-
-function randomLetter() {
-  return new Letter("ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(26 * Math.random())]);
-}
+var INITIAL_DRAW = 10;
 
 function inword(word, row, col) {
   if (word.row == row && word.col == col) return true;
   if (word.vertical) {
-    if (word.row <= row && row <= +word.row + word.length && word.col == col)
+    if (word.row <= row && row <= +word.row + word.length && word.col == col) {
       return true;
+    }
   } else {
-    if (word.row == row && word.col <= col && col <= +word.col + word.length)
+    if (word.row == row && word.col <= col && col <= +word.col + word.length) {
       return true;
+    }
   }
   return false;
+}
+
+function randomLetter() {
+  // https://norvig.com/mayzner.html
+  var bias = [
+    8.04, 1.48, 3.34, 3.82, 12.49, 2.40, 1.87, 5.05, 7.57, 0.16, 0.54, 4.07, 2.51,
+    7.23, 7.64, 2.14, 0.12, 6.28, 6.51, 9.28, 2.73, 1.05, 1.68, 0.23, 1.66, 0.09,
+  ];
+  var sum = 0;
+  var cumulativeBias = bias.map(function(x) { sum += x; return sum; });
+  var choice = Math.random() * sum;
+  var chosenIndex = null;
+  cumulativeBias.some(function(el, i) {
+      return el > choice ? ((chosenIndex = i), true) : false;
+  });
+  var chosenElement = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[chosenIndex];
+  return new Letter(chosenElement);
+}
+
+function monitor(msg, promise) {
+  return promise.then(r => {
+    if (r === undefined || r === null) {
+      console.log(msg, r);
+    } else {
+      console.log(r);
+    }
+    return r;
+  }, console.log);
 }
 
 class Game extends React.Component {
@@ -241,15 +103,15 @@ class Game extends React.Component {
         scaled: 1,
         unwords: [],
       },
-      data: {
-        grid: defaultGrid,
-        bank: [null].concat(["E","I","J","M","R","Q"].map(l => new Letter(l)))
-      },
+      data: new GameInterface({
+        words: wordmanager,
+        tiles: tilemanager,
+      }),
     };
     this.board = React.createRef();
     this.pending = {
       scroll: [0,0],
-    }
+    };
   }
 
   droppable(where, area) {
@@ -267,10 +129,6 @@ class Game extends React.Component {
     var adj = state.data.grid.padding(PADDING);
     this.pending.scroll[0] += adj[0];
     this.pending.scroll[1] += adj[1];
-    for (let w of state.presentation.unwords) {
-      w.row += adj[0];
-      w.col += adj[1];
-    }
     return state;
   }
 
@@ -327,21 +185,14 @@ class Game extends React.Component {
     };
   }
 
-  discard(where,state) {
-    if (!state) state = this.state;
-    if (where[0] === "bank") {
-      state.data.bank.splice(where[1], 1);
-    } else if (where[0] === "grid") {
-      if (!state.data.grid.data[where[1]][where[2]]) {
-        return state;
-      }
-      delete state.data.grid.data[where[1]][where[2]];
-    }
-    state.data.bank.push(...[randomLetter(),randomLetter(),randomLetter()]);
-    return state;
+  discard(here) {
+    monitor("Could not discard", this.state.data.discard(here)).then(() => this.setState(state => state));
   }
 
   swap(here,there,dropped) {
+    if (there[0] === "discard") {
+      this.discard(here);
+    }
     this.setState((state) => {
       if (here[0] === "bank" && there[0] === "bank") {
       } else if (here[0] === "grid" && there[0] === "bank") {
@@ -355,8 +206,6 @@ class Game extends React.Component {
           this.repad(state);
           state.data.bank.splice(there[1]+1, 0, ...(dat ? [dat] : []));
         }
-        this.state.presentation.unwords =
-          this.state.presentation.unwords.filter(w => !inword(w, here[1], here[2]));
       } else if (here[0] === "bank" && there[0] === "grid") {
         var dat = state.data.grid.data[there[1]][there[2]];
         if (state.data.bank[here[1]]) {
@@ -368,17 +217,11 @@ class Game extends React.Component {
           this.repad(state);
           state.data.bank.splice(here[1]+1, 0, ...(dat ? [dat] : []));
         }
-        this.state.presentation.unwords =
-          this.state.presentation.unwords.filter(w => !inword(w, there[1], there[2]));
       } else if (here[0] === "grid" && there[0] === "grid") {
         var dat = state.data.grid.data[here[1]][here[2]];
         state.data.grid.data[here[1]][here[2]] = state.data.grid.data[there[1]][there[2]];
         state.data.grid.data[there[1]][there[2]] = dat;
         this.repad(state);
-        this.state.presentation.unwords =
-          this.state.presentation.unwords.filter(w => !inword(w, here[1], here[2]) && !inword(w, there[1], there[2]));
-      } else if (there[0] === "discard") {
-        state = this.discard(here, state);
       }
       if (dropped) {
         state.presentation.dropped = here;
@@ -390,6 +233,9 @@ class Game extends React.Component {
 
   componentDidMount() {
     this.setState(this.repad);
+    this.state.data.draw(INITIAL_DRAW).then(() => this.setState((state) => {
+      return state;
+    }));
   }
   componentDidUpdate() {
     if (this.pending.scroll[0]) {
@@ -432,10 +278,15 @@ class Game extends React.Component {
       e('tbody', {}, Array.from(this.state.data.grid.data).map((row, i) =>
         e('tr', {key: i}, Array.from(row).map((dat, j) =>
           e('td', {
-            className: dat ? (this.state.presentation.unwords.filter(w => inword(w, i, j)).length ? "unword" : "") : "empty",
+            className: dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.data.grid)).length ? "unword" : "") : "empty",
             ref: this.droppable(["grid",i,j]),
             style: FIXED ? {} : {"position":"relative"},
             key: j, onClick: () => {
+              if (this.state.presentation.selected) {
+                if (this.state.presentation.selected[0] === "discard") {
+                  this.discard(["grid", i, j]);
+                }
+              }
               this.setState((state) => {
                 const here = ["grid", i, j];
                 if (shallowEqual(here, state.presentation.dropped)) {
@@ -451,8 +302,6 @@ class Game extends React.Component {
                   state.data.grid.data[i][j] = state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]];
                   state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]] = dat;
                   this.repad(state);
-                  this.state.presentation.unwords =
-                    this.state.presentation.unwords.filter(w => !inword(w, i, j) && !inword(w, state.presentation.selected[1], state.presentation.selected[2]));
                   state.presentation.selected = dat || state.data.grid.data[i][j] ? null : here;
                 } else if (state.presentation.selected[0] === "bank") {
                   if (state.data.bank[state.presentation.selected[1]]) {
@@ -464,11 +313,8 @@ class Game extends React.Component {
                     this.repad(state);
                     state.data.bank.splice(state.presentation.selected[1]+1, 0, ...(dat ? [dat] : []));
                   }
-                  this.state.presentation.unwords =
-                    this.state.presentation.unwords.filter(w => !inword(w, i, j));
                   state.presentation.selected = null;
                 } else if (state.presentation.selected[0] === "discard") {
-                  state = this.discard(here, state);
                   state.presentation.selected = null;
                 }
                 return state;
@@ -486,6 +332,11 @@ class Game extends React.Component {
             key: i, className: "letter" + (letter ? " draggable" : " empty"),
             ref: this.droppable(["bank", i]),
             onClick: () => {
+              if (this.state.presentation.selected) {
+                if (this.state.presentation.selected[0] === "discard") {
+                  this.discard(["bank", i]);
+                }
+              }
               this.setState((state) => {
                 const here = ["bank", i];
                 if (shallowEqual(here, state.presentation.dropped)) {
@@ -510,11 +361,8 @@ class Game extends React.Component {
                     this.repad(state);
                     state.data.bank.splice(i+1, 0, ...(dat ? [dat] : []));
                   }
-                  this.state.presentation.unwords =
-                    this.state.presentation.unwords.filter(w => !inword(w, state.presentation.selected[1], state.presentation.selected[2]));
                   state.presentation.selected = null;
                 } else if (state.presentation.selected[0] === "discard") {
-                  state = this.discard(here, state);
                   state.presentation.selected = null;
                 }
                 return state;
@@ -527,29 +375,49 @@ class Game extends React.Component {
             e('button', {
               key: "draw",
               className: this.state.data.bank.length > 1 || this.state.data.grid.components().length > 1 ? "disabled" : "",
-              onClick: () => {
+              onClick: async () => {
                 var unwords;
                 if (this.state.data.bank.length > 1 || this.state.data.grid.components().length > 1) {
                   console.log("You must connect all of your tiles together before drawing!");
-                } else if ((unwords = this.state.data.grid.words().filter(w => !WORDLIST.includes(w.word.join("")))).length) {
-                  console.log("Invalid words: ", unwords.map(w => w.word.join("")));
+                } else if ((unwords = await this.state.data.check()).length) {
+                  console.log("Invalid words: ", unwords.map(String));
                   this.setState((state) => {
                     state.presentation.unwords = unwords;
                     return state;
-                  })
+                  });
                 } else {
+                  await monitor("Could not draw", this.state.data.draw());
                   this.setState((state) => {
-                    state.data.bank.push(randomLetter());
                     return state;
                   });
                 }
               },
             }, "Draw"),
             e('button', {
+              key: "check",
+              onClick: async () => {
+                var unwords = await this.state.data.check();
+                if (unwords.length) console.log("Invalid words: ", unwords.map(String));
+                this.setState((state) => {
+                  state.presentation.unwords = unwords;
+                  return state;
+                })
+              },
+            }, "Check"),
+            e('button', {
               key: "discard",
               "data-selected": shallowEqual(this.state.presentation.selected, ["discard"]),
               ref: this.droppable(["discard"]),
               onClick: () => {
+                if (this.state.presentation.selected) {
+                  if (this.state.presentation.selected[0] === "bank") {
+                    this.discard(this.state.presentation.selected);
+                  } else if (this.state.presentation.selected[0] === "grid") {
+                    if (state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]]) {
+                      this.discard(this.state.presentation.selected);
+                    }
+                  }
+                }
                 this.setState((state) => {
                   const here = ["discard"];
                   if (shallowEqual(state.presentation.selected, here)) {
@@ -557,11 +425,9 @@ class Game extends React.Component {
                   } else if (!state.presentation.selected) {
                     state.presentation.selected = here;
                   } else if (state.presentation.selected[0] === "bank") {
-                    state = this.discard(state.presentation.selected, state);
                     state.presentation.selected = null;
                   } else if (state.presentation.selected[0] === "grid") {
                     if (state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]]) {
-                      state = this.discard(state.presentation.selected, state);
                       state.presentation.selected = null;
                     } else {
                       state.presentation.selected = here;
@@ -713,7 +579,7 @@ class Drag extends React.Component {
         zIndex: 100,
         position: FIXED ? "fixed" : "absolute",
       }),
-      onMouseDown: e => this.start(this.getDragData(e, true)),
+      onMouseDown: e => (e.button === 1 || e.buttons === 1) ? this.start(this.getDragData(e, true)) : undefined,
       onTouchStart: e => this.start(this.getDragData(e, true)),
       onMouseMove: e => this.move(this.getDragData(e, false)),
       onTouchMove: e => this.move(this.getDragData(e, false)),
