@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 
 	"github.com/gorilla/handlers"
@@ -53,7 +55,7 @@ func main() {
 	flag.StringVar(&db_name, "db_name", "wordcorpdb", "Database to connect to with")
 	flag.StringVar(&db_sslmode, "db_sslmode", "require", "SSL Validation mode (require, verify-full, verify-ca, or disable)")
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
-	flag.StringVar(&static_path, "static_path", "assets/webui/static", "Path to web UI static assets")
+	flag.StringVar(&static_path, "static_path", "assets/webui/static/public", "Path to web UI static assets")
 	flag.Parse()
 
 	// Open Database connection first
@@ -80,6 +82,10 @@ func main() {
 			log.Println("Adding static asset routing: " + static_path)
 			fileHandler := http.FileServer(http.Dir(static_path))
 			router.PathPrefix("/").Handler(fileHandler)
+		} else if url, err := url.Parse(static_path); err == nil  {
+			log.Println("Adding proxied routing: " + static_path)
+			proxyHandler := httputil.NewSingleHostReverseProxy(url)
+			router.PathPrefix("/").Handler(proxyHandler)
 		}
 	}
 
