@@ -1,3 +1,4 @@
+DROP TABLE players;
 DROP TABLE games;
 DROP TABLE authentication;
 DROP TABLE users;

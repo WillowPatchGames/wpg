@@ -32,5 +32,35 @@ CREATE TABLE authentication (
   UNIQUE(user_id, key)
 );
 
+CREATE TYPE game_mode AS ENUM ('rush');
+
+CREATE TABLE games (
+  id        BIGSERIAL PRIMARY KEY,
+  eid       BIGINT,
+  owner_id  BIGSERIAL,
+  style     game_mode,
+  open_room BOOLEAN DEFAULT false,
+  join_code VARCHAR(1024),
+  config    TEXT DEFAULT '{}',
+  state     TEXT DEFAULT '{}',
+  finished  BOOLEAN DEFAULT false,
+
+  FOREIGN KEY (owner_id) REFERENCES users(id),
+  UNIQUE(eid),
+  UNIQUE(join_code)
+);
+
+CREATE TABLE players (
+  id          BIGSERIAL PRIMARY KEY,
+  game_id     BIGSERIAL,
+  user_id     BIGSERIAL,
+  invite_code VARCHAR(1024),
+  state       TEXT,
+
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(game_id, user_id),
+  UNIQUE(invite_code)
+);
+
 CREATE USER wordcorp WITH PASSWORD 'CHANGEME';
 GRANT ALL PRIVILEGES ON DATABASE wordcorpdb TO wordcorp;
