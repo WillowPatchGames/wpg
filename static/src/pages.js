@@ -283,7 +283,7 @@ class Page extends React.Component {
 
 class Footer extends React.Component {
   render() {
-    if (this.props.state != 'play') {
+    if (this.props.state !== 'play') {
       return (
         <div className="App-footer">
           <p style={{ fontSize: '0.85em' }} >

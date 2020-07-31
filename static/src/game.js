@@ -453,7 +453,7 @@ class Grid {
         if (!this.get(row-1, col) && d) {
           let letters = [h,d];
           let i = +row+1;
-          while (d = (this.get(++i, col))) {
+          while ((d = (this.get(++i, col))) > 0) {
             letters.push(d);
           }
           words.push(new Gridded({ letters, row: +row, col: +col, vertical: true, grid: this }));
@@ -462,7 +462,7 @@ class Grid {
         if (!this.get(row, col-1) && r) {
           let letters = [h,r];
           let i = +col+1;
-          while (r = this.get(row, ++i)) {
+          while ((r = this.get(row, ++i)) > 0) {
             letters.push(r);
           }
           words.push(new Gridded({ letters, row: +row, col: +col, vertical: false, grid: this }));
