@@ -5,12 +5,13 @@ function def(v) {
 }
 
 class Letter extends String {
-  constructor(value) {
+  constructor(value, id) {
     super(value);
-    this.id = Letter.id++;
+    if (!def(id)) this.id = Letter.id++;
+    else this.id = id;
   }
 }
-Letter.id = 0;
+Letter.id = 1;
 
 class GameData {
   constructor(old) {
@@ -83,10 +84,65 @@ class TileManager {
   }
 }
 
+class APITileManager extends TileManager {
+  constructor(conn) {
+    super();
+    this.conn = conn;
+    this.handler = this.handler.bind(this);
+    conn.addEventListener("message", this.handler);
+  }
+  handler({ data }) {
+    var data = JSON.parse(data);
+    if (!data) return;
+    if (data.type === "add" && this.onAdd) {
+      var letters = data.letters.map(l => new Letter(l.value, l.id));
+      this.onAdd(...letters);
+    }
+  }
+  async draw(n) {
+    if (n === 0) return;
+    if (!this.conn.readyState) {
+      await new Promise((resolve, reject) => {
+        let clean = () => {
+          this.conn.removeEventListener("open", good);
+          this.conn.removeEventListener("close", bad);
+          this.conn.removeEventListener("error", bad);
+        }
+        let good = (e) => {
+          resolve(e);
+          clean();
+        }
+        let bad = (e) => {
+          reject(e);
+          clean();
+        }
+        this.conn.addEventListener("open", good);
+        this.conn.addEventListener("close", bad);
+        this.conn.addEventListener("error", bad);
+      });
+    }
+    this.conn.send(JSON.stringify({
+      type: "draw",
+      n
+    }));
+    return;
+  }
+  async discard(letter) {
+    this.conn.send(JSON.stringify({
+      type: "discard",
+      letter: {
+        id: letter.id,
+        value: String(letter),
+      },
+    }));
+    return;
+  }
+}
+
 class JSTileManager extends TileManager {
   constructor(length) {
     super();
-    if (!def(length)) length = 100;
+    if (!def(length)) length = 50;
     // https://norvig.com/mayzner.html
     this.letterfreq = {
       "A": 8.04,
@@ -122,6 +178,7 @@ class JSTileManager extends TileManager {
     }
   }
   async draw(n) {
+    if (n === 0) return;
     var a = true;
     if (!def(n)) { n = 1; a = false; }
     if (this.drawpile.length < n) return;
@@ -190,15 +247,22 @@ var wordmanager = new JSWordManager();
 class GameInterface extends GameData {
   constructor(old) {
     super(old);
-    if (def(old?.tiles)) this.tiles = old.tiles;
-    if (def(old?.words)) this.words = old.words;
+    if (def(old?.tiles)) {
+      this.tiles = old.tiles;
+      this.tiles.onAdd = (...tiles) => this.add(...tiles);
+    }
+    if (def(old?.words)) {
+      this.words = old.words;
+    }
   }
   async draw(n) {
     let letters = await this.tiles.draw(n);
-    if (def(n)) {
-      this.add(...letters);
-    } else {
-      this.add(letters);
+    if (letters) {
+      if (def(n)) {
+        this.add(...letters);
+      } else {
+        this.add(letters);
+      }
     }
     return letters;
   }

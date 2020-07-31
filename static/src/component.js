@@ -47,7 +47,7 @@ defaultGrid.padding(5);
 
 var PADDING = [8,14];
 var SIZE = 35;
-var INITIAL_DRAW = 10;
+var INITIAL_DRAW = 0;
 
 function inword(word, row, col) {
   if (word.row == row && word.col == col) return true;
@@ -107,6 +107,11 @@ class Game extends React.Component {
         words: wordmanager,
         tiles: tilemanager,
       }),
+    };
+    var adder = tilemanager.onAdd;
+    tilemanager.onAdd = (...tiles) => {
+      adder.call(tilemanager, ...tiles);
+      this.setState(state => state);
     };
     this.board = React.createRef();
     this.pending = {

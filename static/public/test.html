@@ -32,10 +32,22 @@
       }
     });
   </script>
-  <script src="js/game.js"></script>
-  <script src="js/component.js"></script>
+  <script src="../src/game.js"></script>
+  <script src="../src/component.js"></script>
   <script>
   wordmanager.fromURL('csw15.txt');
+  var ws = new WebSocket("ws://" + document.location.host + "/game/ws");
+  ws.addEventListener("message", function({ data: buf }) {
+    console.log(buf);
+    var data = JSON.parse(buf);
+    if (!data) console.log("Error: ", buf);
+    if (data.type === "message") {
+      console.log(data.message);
+    } else if (data.error) {
+      console.error(data.error);
+    }
+  });
+  tilemanager = new APITileManager(ws);
   </script>
   <script>
   // Disable zoom (sorry!)
