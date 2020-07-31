@@ -1,9 +1,6 @@
 PYTHON?=python3
 
-all: build
+run: npm
 
-build: css
-
-css: static/css/*.scss
-	${PYTHON} -c "import sass" || ${PYTHON} -m pip install --user libsass
-	${PYTHON} -c 'import sass; sass.compile(dirname=("static/css","static/css"), output_style="expanded")'
+npm:
+	cd static && REACT_EDITOR=none BROWSER=none npm start
