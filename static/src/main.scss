@@ -1,10 +1,7 @@
-body {
-  font-family: "Quicksand", sans-serif;
-  //touch-action: manipulation;
-}
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --font-size: 30px;
+  --tile-size: 0.5in;
 }
 
 @mixin noselect {
@@ -24,9 +21,9 @@ body {
 }
 
 @mixin tile-size {
-  font-size: var(--font-size);
-  width: calc(var(--font-size) + 2px);
-  height: calc(var(--font-size) + 2px);
+  font-size: var(--tile-size);
+  width: calc(var(--tile-size) + 2px);
+  height: calc(var(--tile-size) + 2px);
   /* to force height to be respected */
   line-height: 100%;
   text-align: center;
@@ -49,7 +46,7 @@ body {
 table.word.grid {
   border-collapse: collapse;
   color: #550080;
-  --font-size: 30px;
+  --tile-size: 30px;
   margin: auto;
   td {
     @include tile;
@@ -152,24 +149,12 @@ table.word.grid {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    flex-wrap: wrap;
-  }
-}
-
-button {
-  font: inherit;
-  font-size: var(--font-size);
-  border: 1px solid #88a8e2;
-  background: #e0dfef;
-  &:disabled, &.disabled {
-    color: gray;
-    &:focus {
-      outline: none;
+    flex-wrap: wrap-reverse;
+    padding: 12px;
+    & > * {
+      margin: 6px;
+      --mdc-typography-button-font-size: 1.275rem;
     }
-  }
-  &[data-selected=true] {
-    color: #053a05;
-    background: #95e495;
   }
 }
 
@@ -188,10 +173,10 @@ button {
 }
 
 .game-component > .board {
-  height: 70%;
+  height: 65vh;
 }
 .game-component > .bank {
-  height: 30%;
+  height: 30vh;
 }
 .game-component > .bank > .bank {
   height: 100%;

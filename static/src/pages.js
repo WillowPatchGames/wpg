@@ -37,22 +37,24 @@ class RushGamePage extends React.Component {
       if (!data) console.log("Error: ", buf);
       if (data.type === "message" || data.type === "draw") {
         console.log(data.message);
+        this.snackbar.clearAll();
         this.snackbar.notify({
           title: <b>Message</b>,
           body: data.message,
           icon: 'info',
           dismissesOnAction: true,
-          timeout: 8000,
+          timeout: 6000,
           actions: [{ title: "Cool" }],
         });
       } else if (data.error) {
         console.error(data.error);
+        this.snackbar.clearAll();
         this.snackbar.notify({
           title: <b>Error</b>,
           body: data.error,
           icon: 'error_outline',
           dismissesOnAction: true,
-          timeout: 8000,
+          timeout: 6000,
           actions: [{ title: "Aw shucks" }],
         });
       }
@@ -284,7 +286,7 @@ class Footer extends React.Component {
     if (this.props.state != 'play') {
       return (
         <div className="App-footer">
-          <p style={{ 'font-size': '0.85em' }} >
+          <p style={{ fontSize: '0.85em' }} >
             Copyright (C) WordCorp<br />
             All Rights Reserved.<br />
           </p>

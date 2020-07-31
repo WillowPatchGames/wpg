@@ -28,6 +28,7 @@ class AuthedHeaderComponent extends React.Component {
         <div>
           <Button label={ this.props.user.display } icon="person" unelevated  onClick={ () => this.props.setPage('profile') } />
           <Button label="Logout" icon="logout" unelevated onClick={() => this.props.setUser(null) } />
+          <bar.TopAppBarActionItem icon="logout" onClick={() => this.props.setUser(null) } />
         </div>
       );
     }
@@ -37,6 +38,7 @@ class AuthedHeaderComponent extends React.Component {
         <Button label="Login" icon="login" unelevated onClick={() => this.props.setPage('login') } />
         <Button label="Join" icon="person_add" unelevated onClick={() => this.props.setPage('join') } />
         <Button label="About" icon="notes" unelevated onClick={() => this.props.setPage('about') } />
+        <bar.TopAppBarActionItem icon="login" onClick={() => this.props.setPage('login') } />
       </div>
     );
   }
@@ -98,11 +100,11 @@ class Navigation extends React.Component {
   render() {
     return (
       <header>
-        <bar.TopAppBar fixed>
+        <bar.TopAppBar fixed short>
           <bar.TopAppBarRow>
             <bar.TopAppBarSection>
               <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />
-              <Button label="WordCorp" onClick={() => this.props.setPage('home') } style={{ color: 'white' }} />
+              <Button className="App-Title" onClick={() => this.props.setPage('home') } style={{ color: 'white' }}>WordCorp</Button>
             </bar.TopAppBarSection>
             <bar.TopAppBarSection alignEnd className="App-AuthedHeaderComponent">
               <AuthedHeaderComponent user={ this.props.user } setPage={ this.props.setPage } setUser={ this.props.setUser } />

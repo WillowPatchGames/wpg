@@ -4,6 +4,8 @@ import mergeProps from 'react-merge-props';
 
 import './main.scss';
 
+import { Button } from '@rmwc/button';
+
 import {
   Letter,
   Grid,
@@ -197,7 +199,7 @@ class Game extends React.Component {
         className: "word grid",
         style: {
           transform: FIXED ? "none" : "scale(" + this.state.presentation.scale + ")",
-          "--font-size": FIXED ? (this.state.presentation.scale * 30) + "px" : "",
+          "--tile-size": FIXED ? (this.state.presentation.scale * 0.5) + "in" : "",
         },
         onTouchMove: e => {
           var scale = e.nativeEvent.scale;
@@ -315,9 +317,23 @@ class Game extends React.Component {
         )),
         e('div', {key: "after", className: "actions"},
           [
-            e('button', {
+            e(Button, {
+              raised: true,
+              key: "check",
+              theme: ['secondaryBg', 'onSecondary'],
+              onClick: async () => {
+                var unwords = await this.state.data.check();
+                if (unwords.length) console.log("Invalid words: ", unwords.map(String));
+                this.setState((state) => {
+                  state.presentation.unwords = unwords;
+                  return state;
+                });
+              },
+            }, "Check"),
+            e(Button, {
+              raised: true,
+              disabled: this.state.data.bank.length > 1 || this.state.data.grid.components().length > 1,
               key: "draw",
-              className: this.state.data.bank.length > 1 || this.state.data.grid.components().length > 1 ? "disabled" : "",
               onClick: async () => {
                 var unwords;
                 if (this.state.data.bank.length > 1 || this.state.data.grid.components().length > 1) {
@@ -336,20 +352,11 @@ class Game extends React.Component {
                 }
               },
             }, "Draw"),
-            e('button', {
-              key: "check",
-              onClick: async () => {
-                var unwords = await this.state.data.check();
-                if (unwords.length) console.log("Invalid words: ", unwords.map(String));
-                this.setState((state) => {
-                  state.presentation.unwords = unwords;
-                  return state;
-                })
-              },
-            }, "Check"),
-            e('button', {
+            e(Button, {
+              outlined: true,
+              danger: true,
               key: "discard",
-              "data-selected": shallowEqual(this.state.presentation.selected, ["discard"]),
+              unelevated: shallowEqual(this.state.presentation.selected, ["discard"]),
               ref: this.droppable(["discard"]),
               onClick: () => {
                 if (this.state.presentation.selected) {
@@ -429,11 +436,11 @@ class Drag extends React.Component {
       }
       if (touches && touches.length === 1) {
         var touch = touches[0];
-        dragging = {x: touch.pageX, y: touch.pageY, touch: touch.identifier};
+        dragging = {x: touch.clientX, y: touch.clientY, touch: touch.identifier};
       }
       e.preventDefault();
     } else if (initial || !this.state.dragging || this.state.dragging.touch === undefined) {
-      dragging = {x: e.pageX, y: e.pageY};
+      dragging = {x: e.clientX, y: e.clientY};
     }
     return dragging;
   }

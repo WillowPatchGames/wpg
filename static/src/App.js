@@ -1,6 +1,5 @@
 import React from 'react';
 
-import './App.css';
 import '@rmwc/top-app-bar/styles';
 import 'rmwc/dist/styles';
 import '@rmwc/icon/styles';
@@ -17,6 +16,9 @@ import { ThemeProvider } from '@rmwc/theme';
 // Application imports
 import { Navigation } from './nav.js';
 import { Page, Footer } from './pages.js';
+
+// CSS overrides last
+import './App.css';
 
 class App extends React.Component {
   constructor(props) {
@@ -56,7 +58,7 @@ class App extends React.Component {
             primaryBg: '#000',
             surface: '#19718A',
             onSurface: '#06313D',
-            secondary: '#18353D',
+            secondary: '#4CAF50',
             background: '#18353D',
             onSecondary: 'white'
           }}
