@@ -55,3 +55,9 @@ remove_database:
 
 clean:
 	rm -f wcapi
+
+submod:
+	git submodule init && git submodule update
+
+webui:
+	cd assets/webui && make run
