@@ -35,7 +35,7 @@ type visitor interface {
 }
 
 func isContentType(header string, value string) bool {
-	return header == value || strings.HasPrefix(header, value + ";")
+	return header == value || strings.HasPrefix(header, value+";")
 }
 
 func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {

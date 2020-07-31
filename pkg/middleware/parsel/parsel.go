@@ -55,11 +55,11 @@ type ParselConfig struct {
 	IgnoreMultipleJSONObjects bool
 	JSONMethods               []string
 
-	SkipSchema bool
-	SchemaMethods []string
+	SkipSchema              bool
+	SchemaMethods           []string
 	ForbidUnknownSchemaKeys bool
-	ZeroEmptySchema bool
-	SchemaTag string
+	ZeroEmptySchema         bool
+	SchemaTag               string
 }
 
 func Wrap(factory func() Parseltongue, config ParselConfig) http.Handler {
@@ -92,7 +92,7 @@ func Wrap(factory func() Parseltongue, config ParselConfig) http.Handler {
 	}
 
 	if ret.config.MaxBodyBytes == 0 {
-		ret.config.MaxBodyBytes = 10*1024*1024
+		ret.config.MaxBodyBytes = 10 * 1024 * 1024
 	}
 
 	return ret
