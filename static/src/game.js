@@ -13,20 +13,23 @@ Letter.id = 1;
 
 class GameData {
   constructor(old) {
-    this.grid = new Grid(old?.grid);
-    this.bank = new Bank(old?.bank);
+    this.grid = old?.grid ? new Grid(old.grid) : new Grid();
+    this.bank = old?.bank ? new Bank(old.bank) : new Bank();
   }
   get(here) {
     if (here[0] === "grid") {
-      return this.grid.get(here[1]);
+      return this.grid.get(...here.slice(1));
     } else if (here[0] === "bank") {
-      return this.bank.get(here[1]);
+      return this.bank.get(...here.slice(1));
     } else {
       throw new Error("Unrecognized GameData location: " + here[0]);
     }
   }
   delete(here) {
-    if (!this.get(here)) {
+    if (here instanceof Letter) {
+      here = this.find(here);
+    }
+    if (!here || !this.get(here)) {
       return;
     }
     if (here[0] === "grid") {
@@ -61,12 +64,36 @@ class GameData {
   swap(here, there) {
     var h = this.get(here);
     var t = this.get(there);
+    console.log(here, there, h, t);
     this.set(there, h);
     this.set(here, t);
     return this;
   }
   recall(here) {
     return this.swap(here, ["bank",Bank.blank]);
+  }
+  find(letter) {
+    var results = [];
+    for (let row in this.grid.data) {
+      for (let col in this.grid.data[row]) {
+        let here = ["grid",+row,+col];
+        if (this.get(here)?.id === letter.id) {
+          results.push(here);
+        }
+      }
+    }
+    for (let i in this.bank) {
+      let here = ["bank",+i];
+      if (this.get(here)?.id === letter.id) {
+        results.push(here);
+      }
+    }
+    if (results.length === 1) {
+      return results[0];
+    }
+    if (results.length !== 0) {
+      console.error("Too many instances of letter in game data", results, letter);
+    }
   }
 }
 
@@ -92,6 +119,9 @@ class APITileManager extends TileManager {
     if (data.type === "add" && this.onAdd) {
       var letters = data.letters.map(l => new Letter(l.value, l.id));
       this.onAdd(...letters);
+    } else if (data.type === "delete" && this.onDelete) {
+      var letters = data.letters.map(l => new Letter(l.value, l.id));
+      this.onDelete(...letters);
     }
   }
   async draw(n) {
@@ -241,6 +271,7 @@ class GameInterface extends GameData {
     if (def(old?.tiles)) {
       this.tiles = old.tiles;
       this.tiles.onAdd = (...tiles) => this.add(...tiles);
+      this.tiles.onDelete = (...tiles) => this.delete(...tiles);
     }
     if (def(old?.words)) {
       this.words = old.words;
@@ -260,6 +291,7 @@ class GameInterface extends GameData {
   async discard(where) {
     var letter = this.get(where);
     if (!letter) return null;
+    this.swap(where, ["bank",""]);
     var added = await this.tiles.discard(letter);
     if (!added) return;
     this.delete(where);
@@ -283,7 +315,7 @@ class Bank extends Array {
     return this[here];
   }
   set(here, value) {
-    if (here === Bank.blank) {
+    if (!this.get(here)) {
       return this.add(value);
     } else {
       this[here] = value;
@@ -295,7 +327,7 @@ class Bank extends Array {
     return this;
   }
   delete(here) {
-    if (here === Bank.blank) return;
+    if (!this.get(here)) return;
     this.splice(here, 1);
     return this;
   }
@@ -453,7 +485,7 @@ class Grid {
         if (!this.get(row-1, col) && d) {
           let letters = [h,d];
           let i = +row+1;
-          while ((d = (this.get(++i, col))) > 0) {
+          while (def(d = (this.get(++i, col)))) {
             letters.push(d);
           }
           words.push(new Gridded({ letters, row: +row, col: +col, vertical: true, grid: this }));
@@ -462,7 +494,7 @@ class Grid {
         if (!this.get(row, col-1) && r) {
           let letters = [h,r];
           let i = +col+1;
-          while ((r = this.get(row, ++i)) > 0) {
+          while (def(r = this.get(row, ++i))) {
             letters.push(r);
           }
           words.push(new Gridded({ letters, row: +row, col: +col, vertical: false, grid: this }));

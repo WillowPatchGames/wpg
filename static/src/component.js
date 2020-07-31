@@ -40,7 +40,6 @@ class Game extends React.Component {
     this.state = {
       presentation: {
         selected: null,
-        pos: {},
         dropped: null,
         scale: 1,
         scaled: 1,
@@ -51,8 +50,9 @@ class Game extends React.Component {
     var adder = this.state.data.tiles.onAdd;
     this.state.data.tiles.onAdd = (...tiles) => {
       adder.call(this.state.data.tiles, ...tiles);
-      this.setState(state => state);
+      this.setState(state => this.repad(state));
     };
+    this.droppoints = {};
     this.board = React.createRef();
     this.pending = {
       scroll: [0,0],
@@ -62,9 +62,9 @@ class Game extends React.Component {
   droppable(where, area) {
     return (ref) => {
       if (ref) {
-        this.state.presentation.pos[where] = {ref, where, area};
+        this.droppoints[where] = {ref, where, area};
       } else {
-        delete this.state.presentation.pos[where];
+        delete this.droppoints[where];
       }
     };
   }
@@ -99,9 +99,9 @@ class Game extends React.Component {
       var res = undefined, D = 0;
       var here = ref.current.getBoundingClientRect();
       var areas = [];
-      for (let there in this.state.presentation.pos) {
-        var testing = this.state.presentation.pos[there].ref.getBoundingClientRect();
-        var parent = this.state.presentation.pos[there].ref.parentElement;
+      for (let there in this.droppoints) {
+        var testing = this.droppoints[there].ref.getBoundingClientRect();
+        var parent = this.droppoints[there].ref.parentElement;
         while (testing && parent) {
           if (getComputedStyle(parent).overflow === "auto") {
             testing = this.includes(parent.getBoundingClientRect(), testing);
@@ -111,10 +111,10 @@ class Game extends React.Component {
         if (!testing) continue;
         var d = this.intersect(here, testing);
         if (d !== undefined) {
-          if (this.state.presentation.pos[there].area) {
-            areas.push(this.state.presentation.pos[there].where);
+          if (this.droppoints[there].area) {
+            areas.push(this.droppoints[there].where);
           } else if (d > D) {
-            D = d; res = this.state.presentation.pos[there].where;
+            D = d; res = this.droppoints[there].where;
           }
         }
       }
@@ -130,57 +130,92 @@ class Game extends React.Component {
     };
   }
 
+  handler(here) {
+    return () => {
+      if (shallowEqual(here, this.state.presentation.dropped)) {
+        this.setState(state => {
+          state.presentation.dropped = null;
+          return state;
+        });
+        return;
+      }
+      let there = this.state.presentation.selected;
+      if (!there) {
+        this.select(here);
+      } else if (there.length === 1) {
+        if (this.state.data.get(here)) {
+          this.swap(here, there);
+        }
+      } else if (here.length === 1) {
+        if (this.state.data.get(there)) {
+          this.swap(here, there);
+        }
+      } else {
+        this.swap(here, there);
+      }
+    };
+  }
+  select(here) {
+    this.setState(state => {
+      state = Object.assign({}, state);
+      state.presentation.selected = here;
+      return state;
+    });
+  }
+
   discard(here) {
     monitor("Could not discard", this.state.data.discard(here)).then(() => this.setState(state => state));
+  }
+  recall(here, dropped) {
+    this.swap(here, ["bank",""], dropped);
   }
 
   swap(here,there,dropped) {
     if (there[0] === "discard") {
-      this.discard(here);
+      return this.discard(here);
+    } else if (here[0] === "discard") {
+      return this.discard(there);
+    } else if (there[0] === "recall") {
+      if (here[0] === "bank") {
+        this.select(null);
+        return;
+      } else if (!this.state.data.get(here)) {
+        return;
+      }
+      there = ["bank",""];
+    } else if (here[0] === "recall") {
+      if (there[0] === "bank") {
+        this.select(null);
+        return;
+      } else if (!this.state.data.get(there)) {
+        return;
+      }
+      here = ["bank",""];
     }
-    this.setState((state) => {
-      if (here[0] === "bank" && there[0] === "bank") {
-      } else if (here[0] === "grid" && there[0] === "bank") {
-        let dat = state.data.grid.data[here[1]][here[2]];
-        if (state.data.bank[there[1]]) {
-          state.data.grid.data[here[1]][here[2]] = state.data.bank[there[1]];
-          this.repad(state);
-          state.data.bank.splice(there[1], 1, ...(dat ? [dat] : []));
-        } else {
-          delete state.data.grid.data[here[1]][here[2]];
-          this.repad(state);
-          state.data.bank.splice(there[1]+1, 0, ...(dat ? [dat] : []));
-        }
-      } else if (here[0] === "bank" && there[0] === "grid") {
-        let dat = state.data.grid.data[there[1]][there[2]];
-        if (state.data.bank[here[1]]) {
-          state.data.grid.data[there[1]][there[2]] = state.data.bank[here[1]];
-          this.repad(state);
-          state.data.bank.splice(here[1], 1, ...(dat ? [dat] : []));
-        } else {
-          delete state.data.grid.data[there[1]][there[2]];
-          this.repad(state);
-          state.data.bank.splice(here[1]+1, 0, ...(dat ? [dat] : []));
-        }
-      } else if (here[0] === "grid" && there[0] === "grid") {
-        let dat = state.data.grid.data[here[1]][here[2]];
-        state.data.grid.data[here[1]][here[2]] = state.data.grid.data[there[1]][there[2]];
-        state.data.grid.data[there[1]][there[2]] = dat;
-        this.repad(state);
+    this.setState(state => {
+      state = Object.assign({}, state);
+      if (dropped) state.presentation.dropped = here;
+      var ALEX = true;
+      if (ALEX && here[0] === "bank" && there[0] === "grid" && state.data.get(there)) {
+        state.presentation.selected = here;
+      } else if (ALEX && there[0] === "bank" && here[0] === "grid" && state.data.get(here)) {
+        state.presentation.selected = there;
+      } else {
+        state.presentation.selected = null;
       }
-      if (dropped) {
-        state.presentation.dropped = here;
-      }
-      state.presentation.selected = null;
+      state.data.swap(here,there);
+      state = this.repad(state);
       return state;
-    })
+    });
   }
 
   componentDidMount() {
     this.setState(this.repad);
+    /*
     this.state.data.draw(INITIAL_DRAW).then(() => this.setState((state) => {
       return state;
     }));
+    */
   }
   componentDidUpdate() {
     if (this.pending.scroll[0]) {
@@ -226,46 +261,8 @@ class Game extends React.Component {
             className: dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.data.grid)).length ? "unword" : "") : "empty",
             ref: this.droppable(["grid",i,j]),
             style: FIXED ? {} : {"position":"relative"},
-            key: j, onClick: () => {
-              if (this.state.presentation.selected) {
-                if (this.state.presentation.selected[0] === "discard") {
-                  this.discard(["grid", i, j]);
-                }
-              }
-              this.setState((state) => {
-                const here = ["grid", i, j];
-                if (shallowEqual(here, state.presentation.dropped)) {
-                  state.presentation.selected = null;
-                  state.presentation.dropped = null;
-                  return;
-                }
-                if (shallowEqual(state.presentation.selected, here)) {
-                  state.presentation.selected = null;
-                } else if (!state.presentation.selected) {
-                  state.presentation.selected = here;
-                } else if (state.presentation.selected[0] === "grid") {
-                  state.data.grid.data[i][j] = state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]];
-                  state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]] = dat;
-                  this.repad(state);
-                  state.presentation.selected = dat || state.data.grid.data[i][j] ? null : here;
-                } else if (state.presentation.selected[0] === "bank") {
-                  if (state.data.bank[state.presentation.selected[1]]) {
-                    state.data.grid.data[i][j] = state.data.bank[state.presentation.selected[1]];
-                    this.repad(state);
-                    state.data.bank.splice(state.presentation.selected[1], 1, ...(dat ? [dat] : []));
-                  } else {
-                    delete state.data.grid.data[i][j];
-                    this.repad(state);
-                    state.data.bank.splice(state.presentation.selected[1]+1, 0, ...(dat ? [dat] : []));
-                  }
-                  state.presentation.selected = null;
-                } else if (state.presentation.selected[0] === "discard") {
-                  state.presentation.selected = null;
-                }
-                return state;
-              });
-            },
-            "data-selected": shallowEqual(this.state.presentation.selected, ["grid", i, j])
+            key: j, onClick: this.handler(["grid",i,j]),
+            "data-selected": shallowEqual(this.state.presentation.selected, ["grid", i, j]),
           }, dat ? e(Drag, {className: "word tile", onDrag: this.draggable(["grid", i, j])}, dat) : e('div', {}, "\xa0"))
         )
       )
@@ -276,43 +273,8 @@ class Game extends React.Component {
           e('span', {
             key: i, className: "letter" + (letter ? " draggable" : " empty"),
             ref: this.droppable(["bank", i]),
-            onClick: () => {
-              if (this.state.presentation.selected) {
-                if (this.state.presentation.selected[0] === "discard") {
-                  this.discard(["bank", i]);
-                }
-              }
-              this.setState((state) => {
-                const here = ["bank", i];
-                if (shallowEqual(here, state.presentation.dropped)) {
-                  state.presentation.selected = null;
-                  state.presentation.dropped = null;
-                  return;
-                }
-                if (shallowEqual(state.presentation.selected, here)) {
-                  state.presentation.selected = null;
-                } else if (!state.presentation.selected) {
-                  state.presentation.selected = here;
-                } else if (state.presentation.selected[0] === "bank") {
-                  state.presentation.selected = here;
-                } else if (state.presentation.selected[0] === "grid") {
-                  var dat = state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]];
-                  if (state.data.bank[i]) {
-                    state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]] = state.data.bank[i];
-                    this.repad(state);
-                    state.data.bank.splice(i, 1, ...(dat ? [dat] : []));
-                  } else {
-                    delete state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]];
-                    this.repad(state);
-                    state.data.bank.splice(i+1, 0, ...(dat ? [dat] : []));
-                  }
-                  state.presentation.selected = null;
-                } else if (state.presentation.selected[0] === "discard") {
-                  state.presentation.selected = null;
-                }
-                return state;
-              });
-            }, "data-selected": shallowEqual(this.state.presentation.selected, ["bank", i])
+            onClick: this.handler(["bank",i]),
+            "data-selected": shallowEqual(this.state.presentation.selected, ["bank", i]),
           }, letter ? e(Drag, {className: "word tile", onDrag: this.draggable(["bank", i])}, letter) : e(Drag, {onDrag: this.draggable(["bank", i])}))
         )),
         e('div', {key: "after", className: "actions"},
@@ -332,11 +294,11 @@ class Game extends React.Component {
             }, "Check"),
             e(Button, {
               raised: true,
-              disabled: this.state.data.bank.length > 1 || this.state.data.grid.components().length > 1,
+              disabled: this.state.data.bank.filter(a=>a).length || this.state.data.grid.components().length > 1,
               key: "draw",
               onClick: async () => {
                 var unwords;
-                if (this.state.data.bank.length > 1 || this.state.data.grid.components().length > 1) {
+                if (this.state.data.bank.filter(a=>a).length || this.state.data.grid.components().length > 1) {
                   console.log("You must connect all of your tiles together before drawing!");
                 } else if ((unwords = await this.state.data.check()).length) {
                   console.log("Invalid words: ", unwords.map(String));
@@ -346,7 +308,7 @@ class Game extends React.Component {
                   });
                 } else {
                   await monitor("Could not draw", this.state.data.draw());
-                  this.setState((state) => {
+                  this.setState(state => {
                     return state;
                   });
                 }
@@ -354,38 +316,18 @@ class Game extends React.Component {
             }, "Draw"),
             e(Button, {
               outlined: true,
+              key: "recall",
+              unelevated: shallowEqual(this.state.presentation.selected, ["recall"]),
+              ref: this.droppable(["recall"]),
+              onClick: this.handler(["recall"]),
+            }, "Recall"),
+            e(Button, {
+              outlined: true,
               danger: true,
               key: "discard",
               unelevated: shallowEqual(this.state.presentation.selected, ["discard"]),
               ref: this.droppable(["discard"]),
-              onClick: () => {
-                if (this.state.presentation.selected) {
-                  if (this.state.presentation.selected[0] === "bank") {
-                    this.discard(this.state.presentation.selected);
-                  } else if (this.state.presentation.selected[0] === "grid") {
-                    if (this.state.data.grid.data[this.state.presentation.selected[1]][this.state.presentation.selected[2]]) {
-                      this.discard(this.state.presentation.selected);
-                    }
-                  }
-                }
-                this.setState((state) => {
-                  const here = ["discard"];
-                  if (shallowEqual(state.presentation.selected, here)) {
-                    state.presentation.selected = null;
-                  } else if (!state.presentation.selected) {
-                    state.presentation.selected = here;
-                  } else if (state.presentation.selected[0] === "bank") {
-                    state.presentation.selected = null;
-                  } else if (state.presentation.selected[0] === "grid") {
-                    if (state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]]) {
-                      state.presentation.selected = null;
-                    } else {
-                      state.presentation.selected = here;
-                    }
-                  }
-                  return state;
-                });
-              },
+              onClick: this.handler(["discard"]),
             }, "Discard"),
           ]
         )
@@ -419,6 +361,10 @@ class Drag extends React.Component {
     this.ref = React.createRef();
   }
 
+  setStateCpy(fn) {
+    this.setState(state => fn(Object.assign({}, state)));
+  }
+
   componentWillUnmount() {
     for (let l of this.state.listeners) {
       l();
@@ -448,48 +394,55 @@ class Drag extends React.Component {
   start(dragging) {
     if (!dragging) return;
     if (this.props.onDrag) {
-      this.setState(() => {
+      this.setState(state => {
+        state = Object.assign({}, state);
         var bb = this.ref.current.getBoundingClientRect();
         if (FIXED) {
-          this.state.x0 = bb.left;
-          this.state.y0 = bb.top;
+          state.x0 = bb.left;
+          state.y0 = bb.top;
         } else {
-          this.state.x0 = this.ref.current.offsetTop;
-          this.state.y0 = this.ref.current.offsetLeft;
+          state.x0 = this.ref.current.offsetTop;
+          state.y0 = this.ref.current.offsetLeft;
         }
-        this.state.dragging = dragging;
+        state.dragging = dragging;
         var cx = (bb.left + bb.right)/2;
         var cy = (bb.top + bb.bottom)/2;
-        this.state.dx = cx - dragging.x;
-        this.state.dy = cy - dragging.y;
+        state.dx = cx - dragging.x;
+        state.dy = cy - dragging.y;
         if (dragging.touch !== undefined) {
-          this.state.listeners.push(bodyListener("touchmove", e => this.move(this.getDragData(e))));
-          this.state.listeners.push(bodyListener("touchend", e => this.end()));
+          state.listeners = this.state.listeners.concat([
+            bodyListener("touchmove", e => this.move(this.getDragData(e))),
+            bodyListener("touchend", e => this.end()),
+          ]);
         } else {
-          this.state.listeners.push(bodyListener("mousemove", e => this.move(this.getDragData(e))));
-          this.state.listeners.push(bodyListener("mouseup", e => this.end()));
+          state.listeners = this.state.listeners.concat([
+            bodyListener("mousemove", e => this.move(this.getDragData(e))),
+            bodyListener("mouseup", e => this.end()),
+          ]);
         }
         this.props.onDrag("start", this.ref);
+        return state;
       });
     }
   }
   move(dragging) {
     if (!dragging) return;
     if (this.state.dragging && this.props.onDrag) {
-      this.setState(() => {
-        var x0 = this.state.x; var y0 = this.state.y;
-        this.state.x = dragging.x - this.state.dragging.x;
-        this.state.y = dragging.y - this.state.dragging.y;
+      this.setState(state => {
+        state = Object.assign({}, state);
+        var x0 = state.x; var y0 = state.y;
+        state.x = dragging.x - state.dragging.x;
+        state.y = dragging.y - state.dragging.y;
         var clamp = (z,r) => Math.min(r, Math.max(-r, z));
-        var dx = clamp(this.state.dx, Math.abs(this.state.x - x0)/FRICTION);
-        var dy = clamp(this.state.dy, Math.abs(this.state.y - y0)/FRICTION);
-        this.state.dx -= dx;
-        this.state.x += dx;
-        this.state.dragging.x += dx;
-        this.state.dy -= dy;
-        this.state.y += dy;
-        this.state.dragging.y += dy;
-        return this.state;
+        var dx = clamp(state.dx, Math.abs(state.x - x0)/FRICTION);
+        var dy = clamp(state.dy, Math.abs(state.y - y0)/FRICTION);
+        state.dx -= dx;
+        state.x += dx;
+        state.dragging.x += dx;
+        state.dy -= dy;
+        state.y += dy;
+        state.dragging.y += dy;
+        return state;
       }, () => {
         this.props.onDrag("move", this.ref);
       });
@@ -497,20 +450,21 @@ class Drag extends React.Component {
   }
   end() {
     if (this.state.dragging && this.props.onDrag) {
-      this.setState(() => {
-        this.state.dragging = null;
-        this.state.x = 0;
-        this.state.y = 0;
-        this.state.dx = 0;
-        this.state.dy = 0;
-        this.state.x0 = 0;
-        this.state.y0 = 0;
+      this.setState(state => {
+        state = Object.assign({}, state);
+        state.dragging = null;
+        state.x = 0;
+        state.y = 0;
+        state.dx = 0;
+        state.dy = 0;
+        state.x0 = 0;
+        state.y0 = 0;
         for (let l of this.state.listeners) {
           l();
         }
-        this.state.listeners = [];
+        state.listeners = [];
         this.props.onDrag("end", this.ref);
-        return this.state;
+        return state;
       });
     }
   }

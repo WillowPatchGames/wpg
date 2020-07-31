@@ -66,6 +66,7 @@ class RushGamePage extends React.Component {
       tiles: this.state.tilemanager,
       words: this.state.wordmanager,
     });
+    console.log(this.state.data.bank);
   }
   render () {
     return (
