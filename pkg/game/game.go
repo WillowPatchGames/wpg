@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+
+	"git.cipherboy.com/WordCorp/api/internal/utils"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -125,7 +127,7 @@ var letterfreq = map[string]float64{
 }
 
 func randomLetter() string {
-	i := rand.Float64() * 99.98
+	i := utils.RandomFloat64() * 99.98
 	for letter := range letterfreq {
 		i -= letterfreq[letter]
 		if i < 0.0 {
@@ -233,7 +235,6 @@ func (h *Hub) actOn(client *Client, buf string) {
 					message := "Player " + player.name + " won"
 					h.sendJSONToAll(Msgmessage{"gameover", message})
 				}
-			} else {
 			}
 		}
 	} else if cmd.Command == "discard" {

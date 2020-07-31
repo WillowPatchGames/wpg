@@ -5,7 +5,7 @@ PYTHON?=python3
 all: build
 test: check
 
-check: vet gosec safesql staticcheck crypt
+check: vet gosec safesql staticcheck crypt utils
 
 fuzz:
 	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
@@ -31,6 +31,9 @@ staticcheck:
 
 crypt: pkg/password/*.go
 	go test $(NAMESPACE)/pkg/password
+
+utils: internal/utils/*.go
+	go test $(NAMESPACE)/internal/utils
 
 api:
 	$(PYTHON) -c 'import pytest' || $(PYTHON) -m pip install pytest
