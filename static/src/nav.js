@@ -98,7 +98,7 @@ class Navigation extends React.Component {
           <bar.TopAppBarRow>
             <bar.TopAppBarSection>
               <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />
-              <bar.TopAppBarTitle>WordCorp</bar.TopAppBarTitle>
+              <Button label="WordCorp" onClick={() => this.props.setPage('home') } style={{ color: 'white' }} />
             </bar.TopAppBarSection>
             <bar.TopAppBarSection alignEnd className="App-AuthedHeaderComponent">
               <AuthedHeaderComponent user={ this.props.user } setPage={ this.props.setPage } setUser={ this.props.setUser } />

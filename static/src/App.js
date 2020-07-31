@@ -16,7 +16,7 @@ import { ThemeProvider } from '@rmwc/theme';
 
 // Application imports
 import { Navigation } from './nav.js';
-import { Page } from './pages.js';
+import { Page, Footer } from './pages.js';
 
 class App extends React.Component {
   constructor(props) {
@@ -64,6 +64,7 @@ class App extends React.Component {
 
         <Navigation user={ this.state.user } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
         <Page page={ this.state.page } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } />
+        <Footer page={ this.state.page } />
       </ThemeProvider>
 
       </div>

@@ -235,6 +235,19 @@ class Page extends React.Component {
   }
 }
 
-export {
-  Page
-};
+class Footer extends React.Component {
+  render() {
+    if (this.props.state != 'play') {
+      return (
+        <div className="App-footer">
+          <p style={{ 'font-size': '0.85em' }} >
+            Copyright (C) WordCorp<br />
+            All Rights Reserved.<br />
+          </p>
+        </div>
+      )
+    }
+  }
+}
+
+export { Page, Footer };

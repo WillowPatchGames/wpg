@@ -20,10 +20,18 @@
 
 .App-hero {
   background-color: var(--mdc-theme-primary);
+  padding-top: 50px;
 }
 
 .App-page {
   padding-top: 50px;
+}
+
+.App-footer {
+  background-color: lightgray;
+  color: gray;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
 
 @keyframes App-logo-spin {
