@@ -94,7 +94,7 @@ func loadWords() {
 	reader := bufio.NewReader(file)
 
 	line, isPrefix, err := reader.ReadLine()
-	for ; err == nil ; line, isPrefix, err = reader.ReadLine() {
+	for ; err == nil; line, isPrefix, err = reader.ReadLine() {
 		if isPrefix {
 			continue
 		}

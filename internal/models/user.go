@@ -17,6 +17,25 @@ type UserModel struct {
 	Email    string
 }
 
+func (user *UserModel) FromId(transaction *sql.Tx, id uint64) error {
+	stmt, err := transaction.Prepare(database.GetUserFromID)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (user *UserModel) FromEid(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetUserFromEID)
 	if err != nil {
