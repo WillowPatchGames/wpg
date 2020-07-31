@@ -1,41 +1,13 @@
-'use strict';
+import React from 'react';
+import shallowEqual from 'shallow-eq';
+import mergeProps from 'react-merge-props';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+import './main.scss';
 
-var hasOwn = Object.prototype.hasOwnProperty;
-function is(x, y) {
-    if (x === y) {
-        return x !== 0 || y !== 0 || 1 / x === 1 / y;
-    } else {
-        return x !== x && y !== y;
-    }
-}
-
-function shallowEqual(objA, objB) {
-    var excludes = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-
-    if (Object.is(objA, objB)) return true;
-    if ((typeof objA === "undefined" ? "undefined" : _typeof(objA)) !== 'object' || objA === null || (typeof objB === "undefined" ? "undefined" : _typeof(objB)) !== 'object' || objB === null) {
-        return false;
-    }
-    var keysA = Object.keys(objA).filter(function (key) {
-        return !excludes.some(function (excludeKey) {
-            return excludeKey === key;
-        });
-    });
-    var keysB = Object.keys(objB).filter(function (key) {
-        return !excludes.some(function (excludeKey) {
-            return excludeKey === key;
-        });
-    });
-    if (keysA.length !== keysB.length) return false;
-    for (var i = 0; i < keysA.length; i++) {
-        if (!hasOwn.call(objB, keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
-            return false;
-        }
-    }
-    return true;
-}
+import {
+  Letter,
+  Grid,
+} from './game.js';
 
 const e = React.createElement;
 
@@ -48,37 +20,6 @@ defaultGrid.padding(5);
 var PADDING = [8,14];
 var SIZE = 35;
 var INITIAL_DRAW = 0;
-
-function inword(word, row, col) {
-  if (word.row == row && word.col == col) return true;
-  if (word.vertical) {
-    if (word.row <= row && row <= +word.row + word.length && word.col == col) {
-      return true;
-    }
-  } else {
-    if (word.row == row && word.col <= col && col <= +word.col + word.length) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function randomLetter() {
-  // https://norvig.com/mayzner.html
-  var bias = [
-    8.04, 1.48, 3.34, 3.82, 12.49, 2.40, 1.87, 5.05, 7.57, 0.16, 0.54, 4.07, 2.51,
-    7.23, 7.64, 2.14, 0.12, 6.28, 6.51, 9.28, 2.73, 1.05, 1.68, 0.23, 1.66, 0.09,
-  ];
-  var sum = 0;
-  var cumulativeBias = bias.map(function(x) { sum += x; return sum; });
-  var choice = Math.random() * sum;
-  var chosenIndex = null;
-  cumulativeBias.some(function(el, i) {
-      return el > choice ? ((chosenIndex = i), true) : false;
-  });
-  var chosenElement = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[chosenIndex];
-  return new Letter(chosenElement);
-}
 
 function monitor(msg, promise) {
   return promise.then(r => {
@@ -103,14 +44,11 @@ class Game extends React.Component {
         scaled: 1,
         unwords: [],
       },
-      data: new GameInterface({
-        words: wordmanager,
-        tiles: tilemanager,
-      }),
+      data: props.data,
     };
-    var adder = tilemanager.onAdd;
-    tilemanager.onAdd = (...tiles) => {
-      adder.call(tilemanager, ...tiles);
+    var adder = this.state.data.tiles.onAdd;
+    this.state.data.tiles.onAdd = (...tiles) => {
+      adder.call(this.state.data.tiles, ...tiles);
       this.setState(state => state);
     };
     this.board = React.createRef();
@@ -201,7 +139,7 @@ class Game extends React.Component {
     this.setState((state) => {
       if (here[0] === "bank" && there[0] === "bank") {
       } else if (here[0] === "grid" && there[0] === "bank") {
-        var dat = state.data.grid.data[here[1]][here[2]];
+        let dat = state.data.grid.data[here[1]][here[2]];
         if (state.data.bank[there[1]]) {
           state.data.grid.data[here[1]][here[2]] = state.data.bank[there[1]];
           this.repad(state);
@@ -212,7 +150,7 @@ class Game extends React.Component {
           state.data.bank.splice(there[1]+1, 0, ...(dat ? [dat] : []));
         }
       } else if (here[0] === "bank" && there[0] === "grid") {
-        var dat = state.data.grid.data[there[1]][there[2]];
+        let dat = state.data.grid.data[there[1]][there[2]];
         if (state.data.bank[here[1]]) {
           state.data.grid.data[there[1]][there[2]] = state.data.bank[here[1]];
           this.repad(state);
@@ -223,7 +161,7 @@ class Game extends React.Component {
           state.data.bank.splice(here[1]+1, 0, ...(dat ? [dat] : []));
         }
       } else if (here[0] === "grid" && there[0] === "grid") {
-        var dat = state.data.grid.data[here[1]][here[2]];
+        let dat = state.data.grid.data[here[1]][here[2]];
         state.data.grid.data[here[1]][here[2]] = state.data.grid.data[there[1]][there[2]];
         state.data.grid.data[there[1]][there[2]] = dat;
         this.repad(state);
@@ -418,7 +356,7 @@ class Game extends React.Component {
                   if (this.state.presentation.selected[0] === "bank") {
                     this.discard(this.state.presentation.selected);
                   } else if (this.state.presentation.selected[0] === "grid") {
-                    if (state.data.grid.data[state.presentation.selected[1]][state.presentation.selected[2]]) {
+                    if (this.state.data.grid.data[this.state.presentation.selected[1]][this.state.presentation.selected[2]]) {
                       this.discard(this.state.presentation.selected);
                     }
                   }
@@ -449,8 +387,6 @@ class Game extends React.Component {
     return e('div', {className: "game-component"}, [grid, bank]);
   }
 }
-
-components['#game'] = Game;
 
 function bodyListener(ty, cb) {
   var listener = (...arg) => cb(...arg);
@@ -593,4 +529,9 @@ class Drag extends React.Component {
       ref: this.ref,
     }, this.props), this.props.children);
   }
+}
+
+export {
+  Game,
+  Drag,
 }

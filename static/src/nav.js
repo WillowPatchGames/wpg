@@ -69,6 +69,10 @@ class AuthedNavComponent extends React.Component {
           <l.ListItemGraphic icon="person_add" />
           <l.ListItemText>Join</l.ListItemText>
         </l.ListItem>
+        <l.ListItem onClick={ () => this.props.setPage('play') }>
+          <l.ListItemGraphic icon="games" />
+          <l.ListItemText>Play</l.ListItemText>
+        </l.ListItem>
         <l.ListItem onClick={ () => this.props.setPage('login') }>
           <l.ListItemGraphic icon="login" />
           <l.ListItemText>Login</l.ListItemText>

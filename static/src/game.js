@@ -1,5 +1,3 @@
-'use strict';
-
 function def(v) {
   return v !== undefined && v !== null;
 }
@@ -73,9 +71,6 @@ class GameData {
 }
 
 class TileManager {
-  constructor() {
-
-  }
   async draw(n) {
 
   }
@@ -91,8 +86,8 @@ class APITileManager extends TileManager {
     this.handler = this.handler.bind(this);
     conn.addEventListener("message", this.handler);
   }
-  handler({ data }) {
-    var data = JSON.parse(data);
+  handler({ data: buf }) {
+    var data = JSON.parse(buf);
     if (!data) return;
     if (data.type === "add" && this.onAdd) {
       var letters = data.letters.map(l => new Letter(l.value, l.id));
@@ -210,11 +205,8 @@ class JSTileManager extends TileManager {
     return new Letter(chosenElement);
   }
 }
-var tilemanager = new JSTileManager();
 
 class WordManager {
-  constructor() {
-  }
   async check(words) {
   }
 }
@@ -238,11 +230,10 @@ class JSWordManager extends WordManager {
       .flatMap(w => w.split(","))
       .flatMap(w => w.split(";"))
       .map(w => w.trim())
-      .filter(w => {let n = Number(w); return n !== n})
+      .filter(w => {let n = Number(w); return Number.isNaN(n)})
       ;
   }
 }
-var wordmanager = new JSWordManager();
 
 class GameInterface extends GameData {
   constructor(old) {
@@ -334,7 +325,7 @@ class Grid {
         this.data[i] = [];
       }
     }
-    this.cols = this.cols;
+    this.cols = (null, this.cols);
   }
   get cols() {
     var res = 0;
@@ -351,7 +342,7 @@ class Grid {
     }
   }
   get(row, col) {
-    return this.data[row]?.[col];
+    return this.data[row] && this.data[row][col];
   }
   set(row, col, value) {
     if (!value) this.delete(row, col);
@@ -373,7 +364,7 @@ class Grid {
         col += 1;
       }
     }
-    this.rows = this.rows;
+    this.rows = (null, this.rows);
   }
   padding(amt) {
     if (!amt) amt = 0;
@@ -435,15 +426,15 @@ class Grid {
           components[u][row][col] = true;
           components.splice(l, 1);
         } else if (u >= 0) {
-          var c = components[u];
+          let c = components[u];
           if (!c[row]) c[row] = {};
           c[row][col] = true;
         } else if (l >= 0) {
-          var c = components[l];
+          let c = components[l];
           if (!c[row]) c[row] = {};
           c[row][col] = true;
         } else {
-          var c = {};
+          let c = {};
           c[row] = {};
           c[row][col] = true;
           components.push(c);
@@ -456,22 +447,22 @@ class Grid {
     var words = [];
     for (let row in this.data) {
       for (let col in this.data[row]) {
-        var h = this.data[row]?.[col];
+        var h = this.get(row, col);
         if (!h) continue;
-        var d = this.data[+row+1]?.[col];
-        if (!this.data[row-1]?.[col] && d) {
-          var letters = [h,d];
-          var i = +row+1;
-          while (d = (this.data[++i]?.[col])) {
+        var d = this.get(+row+1, col);
+        if (!this.get(row-1, col) && d) {
+          let letters = [h,d];
+          let i = +row+1;
+          while (d = (this.get(++i, col))) {
             letters.push(d);
           }
           words.push(new Gridded({ letters, row: +row, col: +col, vertical: true, grid: this }));
         }
-        var r = this.data[row]?.[+col+1];
-        if (!this.data[row]?.[col-1] && r) {
-          var letters = [h,r];
-          var i = +col+1;
-          while (r = this.data[row]?.[++i]) {
+        var r = this.get(row, +col+1);
+        if (!this.get(row, col-1) && r) {
+          let letters = [h,r];
+          let i = +col+1;
+          while (r = this.get(row, ++i)) {
             letters.push(r);
           }
           words.push(new Gridded({ letters, row: +row, col: +col, vertical: false, grid: this }));
@@ -526,3 +517,17 @@ class Gridded extends String {
     return true;
   }
 }
+
+export {
+  Letter,
+  GameData,
+  TileManager,
+  APITileManager,
+  JSTileManager,
+  WordManager,
+  JSWordManager,
+  GameInterface,
+  Bank,
+  Grid,
+  Gridded,
+};

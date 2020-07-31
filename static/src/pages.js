@@ -11,6 +11,7 @@ import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/theme/styles';
 
+import { SnackbarQueue, createSnackbarQueue } from '@rmwc/snackbar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
@@ -21,12 +22,55 @@ import { Theme, ThemeProvider } from '@rmwc/theme';
 
 // Application imports
 import { AuthedUserModel } from './user.js';
+import { GameInterface, APITileManager, JSWordManager } from './game.js';
+import { Game } from './component.js';
 
 class RushGamePage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.snackbar = createSnackbarQueue();
+    this.state = {};
+    this.state.ws = new WebSocket("ws://" + document.location.host + "/game/ws");
+    this.state.ws.addEventListener("message", ({ data: buf }) => {
+      console.log(buf);
+      var data = JSON.parse(buf);
+      if (!data) console.log("Error: ", buf);
+      if (data.type === "message" || data.type === "draw") {
+        console.log(data.message);
+        this.snackbar.notify({
+          title: <b>Message</b>,
+          body: data.message,
+          icon: 'info',
+          dismissesOnAction: true,
+          timeout: 8000,
+          actions: [{ title: "Cool" }],
+        });
+      } else if (data.error) {
+        console.error(data.error);
+        this.snackbar.notify({
+          title: <b>Error</b>,
+          body: data.error,
+          icon: 'error_outline',
+          dismissesOnAction: true,
+          timeout: 8000,
+          actions: [{ title: "Aw shucks" }],
+        });
+      }
+    });
+    this.state.tilemanager = new APITileManager(this.state.ws);
+    this.state.wordmanager = new JSWordManager();
+    this.state.wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
+    this.state.data = new GameInterface({
+      tiles: this.state.tilemanager,
+      words: this.state.wordmanager,
+    });
+  }
   render () {
     return (
       <div>
-        <h1>My Cool Game Here</h1>
+        <h1>Ad-hoc game</h1>
+        <Game data={ this.state.data } />
+        <SnackbarQueue messages={ this.snackbar.messages } />
       </div>
     );
   }
