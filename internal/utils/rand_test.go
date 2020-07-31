@@ -23,3 +23,11 @@ func TestRandomFloat64(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkWords(b *testing.B) {
+	_ = RandomWords()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = RandomWords()
+	}
+}
