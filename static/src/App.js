@@ -12,17 +12,9 @@ import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/theme/styles';
 
-import { Button } from '@rmwc/button';
-import * as c from '@rmwc/card';
-import * as d from '@rmwc/dialog';
-import * as g from '@rmwc/grid';
-import { Typography } from '@rmwc/typography';
-import { TextField } from '@rmwc/textfield';
-import * as bar from '@rmwc/top-app-bar';
-import { Theme, ThemeProvider } from '@rmwc/theme';
+import { ThemeProvider } from '@rmwc/theme';
 
 // Application imports
-import { AuthedUserModel } from './user.js';
 import { Navigation } from './nav.js';
 import { Page } from './pages.js';
 
@@ -58,6 +50,10 @@ class App extends React.Component {
             onPrimary: 'white',
             primaryBg: '#000',
             surface: '#19718A',
+            onSurface: '#06313D',
+            secondary: '#18353D',
+            background: '#18353D',
+            onSecondary: 'white'
           }}
         >
 

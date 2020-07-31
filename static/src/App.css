@@ -34,3 +34,25 @@
     transform: rotate(360deg);
   }
 }
+
+@media (min-width: 0px) {
+  .App-AuthedHeaderComponent {
+    visibility: hidden;
+    display: none !important;
+  }
+}
+
+@media (min-width: 840px) {
+  .App-AuthedHeaderComponent {
+    visibility: visible;
+    display: inline-flex !important;
+  }
+}
+
+.mdc-top-app-bar {
+  max-width: 100vw !important;
+}
+
+.mdc-layout-grid {
+  max-width: 100vw !important;
+}

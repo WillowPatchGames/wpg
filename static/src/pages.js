@@ -1,7 +1,6 @@
 import React from 'react';
 
 import './App.css';
-import '@rmwc/top-app-bar/styles';
 import 'rmwc/dist/styles';
 import '@rmwc/icon/styles';
 import '@rmwc/button/styles';
@@ -18,7 +17,6 @@ import * as d from '@rmwc/dialog';
 import * as g from '@rmwc/grid';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
-import * as bar from '@rmwc/top-app-bar';
 import { Theme, ThemeProvider } from '@rmwc/theme';
 
 // Application imports
@@ -107,18 +105,17 @@ class HomePage extends React.Component {
           <Theme use={ 'onPrimary' } >
             <div className="styles.intro">
               <div>
-                <Typography use="headline1">
+                <Typography use="headline2">
                   Welcome to WordCorp!
                 </Typography>
               </div>
               <div>
-                <Typography use="headline2">
+                <Typography use="headline3">
                   Home of wonderful word games
                 </Typography>
               </div>
               <g.Grid fixedColumnWidth={ true }>
-                <g.GridCell align="left" span={2} />
-                <g.GridCell align="middle" span={8}>
+                <g.GridCell align="bottom">
                   <c.Card>
                     <c.CardPrimaryAction>
                       <p>
