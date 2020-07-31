@@ -20,6 +20,7 @@ import (
 
 	"git.cipherboy.com/WordCorp/api/internal/database"
 	"git.cipherboy.com/WordCorp/api/pkg/auth"
+	"git.cipherboy.com/WordCorp/api/pkg/game"
 	"git.cipherboy.com/WordCorp/api/pkg/user"
 )
 
@@ -75,6 +76,7 @@ func main() {
 	router := mux.NewRouter()
 	auth.BuildRouter(router, debug)
 	user.BuildRouter(router, debug)
+	game.BuildRouter(router, debug)
 
 	if debug {
 		// Add static asset handler in debug mode
@@ -82,7 +84,7 @@ func main() {
 			log.Println("Adding static asset routing: " + static_path)
 			fileHandler := http.FileServer(http.Dir(static_path))
 			router.PathPrefix("/").Handler(fileHandler)
-		} else if url, err := url.Parse(static_path); err == nil  {
+		} else if url, err := url.Parse(static_path); err == nil {
 			log.Println("Adding proxied routing: " + static_path)
 			proxyHandler := httputil.NewSingleHostReverseProxy(url)
 			router.PathPrefix("/").Handler(proxyHandler)
