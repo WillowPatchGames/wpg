@@ -35,8 +35,8 @@ class AuthedHeaderComponent extends React.Component {
     return (
       <div>
         <Button label="Login" icon="login" unelevated onClick={() => this.props.setPage('login') } />
-        <Button label="Join" icon="person_add" unelevated />
-        <Button label="About" icon="notes" unelevated />
+        <Button label="Join" icon="person_add" unelevated onClick={() => this.props.setPage('join') } />
+        <Button label="About" icon="notes" unelevated onClick={() => this.props.setPage('about') } />
       </div>
     );
   }

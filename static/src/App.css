@@ -22,8 +22,8 @@
   background-color: var(--mdc-theme-primary);
 }
 
-.App-link {
-  color: #61dafb;
+.App-page {
+  padding-top: 50px;
 }
 
 @keyframes App-logo-spin {

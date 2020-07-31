@@ -22,10 +22,14 @@ class App extends React.Component {
   constructor(props) {
     super(props);
 
+    const hash = window.location.hash.substring(1);
+
     this.state = {
-      page: 'home',
+      page: hash !== "" ? hash : 'home',
       user: null
     };
+
+    window.onhashchange = () => this.setPage(window.location.hash.substring(1));
   }
 
   setUser(user) {
@@ -39,6 +43,7 @@ class App extends React.Component {
 
   setPage(page) {
     this.setState(state => Object.assign({}, state, { page }));
+    window.location.hash = '#' + page;
   }
 
   render() {

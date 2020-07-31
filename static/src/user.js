@@ -1,3 +1,7 @@
+function nonempty(str) {
+  return str !== undefined && str !== null && str !== "";
+}
+
 class UserModel {
   constructor() {
     this.id = null;
@@ -41,14 +45,48 @@ class AuthedUserModel extends UserModel {
     this.authed = false;
     this.token = null;
     this.login_uri = this.api + '/auth';
+    this.create_uri = this.api + '/users';
     this.error = null;
+  }
+
+  async create(password) {
+    var request = {'password': password};
+    if (nonempty(this.username)) {
+      request['username'] = this.username;
+    }
+    if (nonempty(this.email)) {
+      request['email'] = this.email;
+    }
+    if (nonempty(this.display)) {
+      request['email'] = this.display;
+    }
+
+    const response = await fetch(this.create_uri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    const result = await response.json()
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    return this.login(password);
   }
 
   async login(password) {
     var request = {'password': password};
-    if (this.username !== null && this.username !== "") {
+    if (nonempty(this.username)) {
       request['username'] = this.username;
-    } else if (this.email !== null && this.email !== "") {
+    } else if (nonempty(this.email)) {
       request['email'] = this.email;
     }
 
@@ -82,6 +120,7 @@ class AuthedUserModel extends UserModel {
 
   async logout() {
     this.token = null;
+    this.authed = false;
   }
 }
 
