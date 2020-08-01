@@ -59,10 +59,10 @@ class Game extends React.Component {
     };
     this.kb = bodyListener("keyup", (e) => {
       console.log(e, e.key);
-      if (this.state.presentation.selected && this.state.presentation.selected[0] === "body") {
+      if (this.state.presentation.selected && this.state.presentation.selected[0] === "grid") {
         for (let i in this.state.data.bank) {
           if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
-            this.swap(["bank",i], this.state.presentation.selected);
+            this.interact(["bank",i], this.state.presentation.selected);
             break;
           }
         }
