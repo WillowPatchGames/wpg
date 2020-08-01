@@ -46,6 +46,7 @@ func main() {
 	var dbconn string
 
 	var debug bool
+	var proxy bool
 	var static_path string
 
 	flag.StringVar(&addr, "addr", "localhost:8042", "Address to listen for HTTP requests on")
@@ -56,6 +57,7 @@ func main() {
 	flag.StringVar(&db_name, "db_name", "wordcorpdb", "Database to connect to with")
 	flag.StringVar(&db_sslmode, "db_sslmode", "require", "SSL Validation mode (require, verify-full, verify-ca, or disable)")
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
+	flag.BoolVar(&proxy, "proxy", false, "Enable proxy")
 	flag.StringVar(&static_path, "static_path", "assets/webui/static/public", "Path to web UI static assets")
 	flag.Parse()
 
@@ -78,7 +80,7 @@ func main() {
 	user.BuildRouter(router, debug)
 	game.BuildRouter(router, debug)
 
-	if debug {
+	if debug || proxy {
 		// Add static asset handler in debug mode
 		if _, err := os.Stat(static_path); err == nil {
 			log.Println("Adding static asset routing: " + static_path)
