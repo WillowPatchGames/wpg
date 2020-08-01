@@ -57,8 +57,8 @@ type Msgdiscard struct {
 	Letter Letter `json:"letter"`
 }
 
-// Msgadd for add letter responses
-type Msgadd struct {
+// Msgletters for add/remove letter responses
+type Msgletters struct {
 	Command string   `json:"type"`
 	Letters []Letter `json:"letters"`
 }
@@ -151,6 +151,46 @@ func (g *Game) addLetter(letter Letter) {
 type Player struct {
 	name    string
 	letters []Letter
+	board   *map[Letter]Pos
+}
+
+// Pos of a tile in the player's board
+type Pos struct {
+	Area string `json:"area"`
+	Idx  []int  `json:"idx"`
+}
+
+func encodeBoard(board map[Letter]Pos) ([]byte, error) {
+	var assoc map[string]Pos
+	for l := range board {
+		k, err := json.Marshal(l)
+		if err != nil {
+			return []byte{}, err
+		}
+		assoc[string(k)] = board[l]
+	}
+	return json.Marshal(assoc)
+}
+
+func decodeBoard(buf []byte) (*map[Letter]Pos, error) {
+	var assoc map[string]Pos
+	var res map[Letter]Pos
+	err := json.Unmarshal(buf, &assoc)
+	if err != nil {
+		return &res, err
+	}
+	for k := range assoc {
+		var l Letter
+		err := json.Unmarshal([]byte(k), &l)
+		if err != nil {
+			return &res, err
+		}
+		res[l] = assoc[k]
+	}
+	return &res, nil
+}
+
+func applyBoard() {
 }
 
 func (h *Hub) deleteClient(client *Client) {
@@ -222,7 +262,7 @@ func (h *Hub) actOn(client *Client, buf string) {
 						l := h.game.letters[0]
 						h.game.letters = h.game.letters[1:]
 						h.clients[klient].letters = append(h.clients[klient].letters, l)
-						h.sendJSONToClient(klient, Msgadd{"add", []Letter{l}})
+						h.sendJSONToClient(klient, Msgletters{"add", []Letter{l}})
 						if klient == client {
 							h.sendJSONToClient(klient, Msgmessage{"draw", "You drew!"})
 						} else {
@@ -265,11 +305,14 @@ func (h *Hub) actOn(client *Client, buf string) {
 				}
 				h.game.addLetter(msg.Letter)
 
-				h.sendJSONToClient(client, Msgadd{"add", letters})
+				h.sendJSONToClient(client, Msgletters{"delete", []Letter{msg.Letter}})
+				h.sendJSONToClient(client, Msgletters{"add", letters})
 			} else {
 				h.sendErrToClient(client, "There are not enough letters left!")
 			}
 		}
+	} else if cmd.Command == "swap" {
+
 	} else {
 		h.sendErrToClient(client, "Unrecognized message type: "+cmd.Command+".")
 	}
@@ -284,11 +327,12 @@ func (h *Hub) Run() {
 				letters := h.game.letters[:initialdraw]
 				h.game.letters = h.game.letters[initialdraw:]
 				fmt.Println(letters)
-				player := Player{"Ready player " + strconv.Itoa(len(h.clients)+1), letters}
+				player := Player{"Ready player " + strconv.Itoa(len(h.clients)+1), letters, &map[Letter]Pos{}}
 				h.clients[client] = &player
-				h.sendJSONToClient(client, Msgadd{"add", letters})
+				h.sendJSONToClient(client, Msgletters{"add", letters})
 			} else {
 				h.sendErrToClient(client, "Game finished.")
+				h.game = newGame()
 				h.deleteClient(client)
 			}
 		case client := <-h.unregister:
