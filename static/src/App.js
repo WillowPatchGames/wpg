@@ -28,7 +28,8 @@ class App extends React.Component {
 
     this.state = {
       page: hash !== "" ? hash : 'home',
-      user: null
+      user: null,
+      game: null,
     };
 
     window.onhashchange = () => this.setPage(window.location.hash.substring(1));
@@ -70,7 +71,7 @@ class App extends React.Component {
         >
 
         <Navigation user={ this.state.user } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-        <Page user={ this.state.user } page={ this.state.page } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } />
+        <Page user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } />
         <Footer page={ this.state.page } />
       </ThemeProvider>
 

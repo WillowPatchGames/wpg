@@ -36,7 +36,9 @@ class RushGamePage extends React.Component {
     super(props);
     this.snackbar = createSnackbarQueue();
     this.state = {};
-    this.state.ws = new WebSocket("ws://" + document.location.host + "/game/ws");
+    this.state.ws_url = this.props.game?.endpoint || "ws://" + document.location.host + "/game/ws";
+    console.log(this.state.ws_url);
+    this.state.ws = new WebSocket(this.state.ws_url);
     this.state.ws.addEventListener("message", ({ data: buf }) => {
       console.log(buf);
       var data = JSON.parse(buf);
@@ -126,6 +128,7 @@ class CreateGameForm extends React.Component {
     if (game.error !== null) {
       this.setError(game.error);
     } else {
+      game.endpoint = "ws://" + document.location.host + "/game/" + game.id + "/ws?user_id=" + this.props.user.id;
       this.props.setGame(game);
     }
   }
@@ -585,7 +588,7 @@ class Page extends React.Component {
         { this.props.page === 'signup' && <SignupPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
         { this.props.page === 'create' && <CreateGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
         { this.props.page === 'join' && <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
-        { this.props.page === 'play' && <RushGamePage setPage={ this.props.setPage } /> }
+        { this.props.page === 'play' && <RushGamePage game={ this.props.game } setPage={ this.props.setPage } /> }
       </>
     );
   }
