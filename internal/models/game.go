@@ -77,6 +77,20 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 	return stmt.Close()
 }
 
+func (game *GameModel) Save(transaction *sql.Tx) error {
+	stmt, err := transaction.Prepare(database.SaveGame)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(game.Style, game.Lifecycle, game.Id)
+	if err != nil {
+		return err
+	}
+
+	return stmt.Close()
+}
+
 func (game *GameModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
 	err := user.FromId(transaction, game.OwnerId)

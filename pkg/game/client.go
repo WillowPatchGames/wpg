@@ -11,6 +11,12 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+
+	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
+
+	"git.cipherboy.com/WordCorp/api/internal/database"
+	"git.cipherboy.com/WordCorp/api/internal/models"
 )
 
 const (
@@ -46,6 +52,14 @@ type Client struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
+}
+
+// ClientRegister registers a client with the hub on a game
+type ClientRegister struct {
+	client *Client
+
+	gameid uint64
+	userid uint64
 }
 
 // ClientMessage holds messages from clients
@@ -129,29 +143,67 @@ func (c *Client) writePump() {
 	}
 }
 
-// ServeWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
-
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.writePump()
-	go client.readPump()
+type socketHandlerRequest struct {
+	GameID uint64 `query:"id,omitempty" route:"GameID,omitempty"`
+	UserID uint64 `query:"user_id,omitempty" route:"UserID,omitempty"`
 }
 
 // SocketHandler is a handler for game connections
 type SocketHandler struct {
 	http.Handler
+	parsel.Parseltongue
 
-	hubby *Hub
+	Hub *Hub
+
+	req socketHandlerRequest
+}
+
+func (handle *SocketHandler) GetObjectPointer() interface{} {
+	return &handle.req
 }
 
 func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ServeWs(handle.hubby, w, r)
+	tx, err := database.GetTransaction()
+	if err != nil {
+		log.Println(err)
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
+	// Verify user
+	var userdb models.UserModel
+	err = userdb.FromEid(tx, handle.req.UserID)
+	if err != nil {
+		log.Println(err)
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
+	// Verify game
+	var gamedb models.GameModel
+	err = gamedb.FromEid(tx, handle.req.GameID)
+	if err != nil {
+		log.Println(err)
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
+	// Initialize the Websocket connection
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
+	// Create Client, Player
+	client := &Client{hub: handle.Hub, conn: conn, send: make(chan []byte, 256)}
+
+	// Connect Player to ActiveGame, Client to Hub
+	client.hub.register <- ClientRegister{client, gamedb.Id, userdb.Id}
+
+	// Allow collection of memory referenced by the caller by doing all work in
+	// new goroutines.
+	go client.writePump()
+	go client.readPump()
 }

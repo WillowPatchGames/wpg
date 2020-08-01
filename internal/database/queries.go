@@ -38,6 +38,8 @@ const GetGameConfig = "SELECT config FROM " + t_games + " WHERE id=$1"
 const SetGameState = "UPDATE " + t_games + " SET state=$1 WHERE id=$2"
 const GetGameState = "SELECT state FROM " + t_games + " WHERE id=$1"
 
+const SaveGame = "UPDATE " + t_games + " SET style=$1, lifecycle=$2 WHERE id=$3"
+
 // Player Models
 
 const GetPlayerFromID = "SELECT id, game_id, user_id, class, invite_code FROM " + t_players + " WHERE id=$1"
