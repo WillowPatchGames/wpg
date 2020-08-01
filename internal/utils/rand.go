@@ -129,7 +129,7 @@ func RandomWords() string {
 	}
 	mask = mask - 1
 	for i := 0; i < numWords; i++ {
-		if index == 0 {
+		if index < mask {
 			index = cr.Uint64()
 		}
 
