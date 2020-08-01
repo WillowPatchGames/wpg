@@ -14,19 +14,19 @@ import (
 )
 
 type createHandlerData struct {
-	OwnerID uint64         `json:"owner"`
-	Style   string         `json:"style"`
-	Open    bool           `json:"open"`
+	OwnerID uint64          `json:"owner"`
+	Style   string          `json:"style"`
+	Open    bool            `json:"open"`
 	Config  *RushGameConfig `json:"config"`
 }
 
 type createHandlerResponse struct {
-	GameID   uint64 `json:"id"`
-	Owner    uint64 `json:"owner"`
-	Style    string `json:"style"`
-	Open     bool   `json:"open"`
-	Code     string `json:"code"`
-	Lifecycle string   `json:"lifecycle"`
+	GameID    uint64 `json:"id"`
+	Owner     uint64 `json:"owner"`
+	Style     string `json:"style"`
+	Open      bool   `json:"open"`
+	Code      string `json:"code"`
+	Lifecycle string `json:"lifecycle"`
 }
 
 type CreateHandler struct {

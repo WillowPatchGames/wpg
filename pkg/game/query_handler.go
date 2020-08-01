@@ -13,15 +13,15 @@ import (
 )
 
 type queryHandlerData struct {
-	GameID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"GameID,omitempty"`
+	GameID uint64 `json:"id,omitempty" query:"id,omitempty" route:"GameID,omitempty"`
 }
 
 type queryHandlerResponse struct {
-  GameID    uint64 `json:"id"`
-  Owner     uint64 `json:"owner"`
-  Style     string `json:"style"`
-  Open      bool   `json:"open"`
-  Lifecycle string `json:"lifecycle"`
+	GameID    uint64 `json:"id"`
+	Owner     uint64 `json:"owner"`
+	Style     string `json:"style"`
+	Open      bool   `json:"open"`
+	Lifecycle string `json:"lifecycle"`
 }
 
 type QueryHandler struct {
