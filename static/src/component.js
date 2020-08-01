@@ -57,6 +57,21 @@ class Game extends React.Component {
     this.pending = {
       scroll: [0,0],
     };
+    this.kb = bodyListener("keyup", (e) => {
+      console.log(e, e.key);
+      if (this.state.presentation.selected && this.state.presentation.selected[0] === "body") {
+        for (let i in this.state.data.bank) {
+          if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
+            this.swap(["bank",i], this.state.presentation.selected);
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    this.kb();
   }
 
   droppable(where, area) {
