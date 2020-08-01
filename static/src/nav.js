@@ -55,11 +55,7 @@ class AuthedNavComponent extends React.Component {
           </l.ListItem>
           <l.ListItem onClick={ () => this.props.setPage('join') }>
             <l.ListItemGraphic icon="games" />
-            <l.ListItemText>Join a game</l.ListItemText>
-          </l.ListItem>
-          <l.ListItem onClick={ () => this.props.setPage('create') }>
-            <l.ListItemGraphic icon="games" />
-            <l.ListItemText>Create a Game</l.ListItemText>
+            <l.ListItemText>Play a game</l.ListItemText>
           </l.ListItem>
           <l.ListItem onClick={ () => this.props.setUser(null) }>
             <l.ListItemGraphic icon="logout" />
@@ -75,13 +71,9 @@ class AuthedNavComponent extends React.Component {
           <l.ListItemGraphic icon="person_add" />
           <l.ListItemText>Sign up</l.ListItemText>
         </l.ListItem>
-        <l.ListItem onClick={ () => this.props.setPage('create') }>
-          <l.ListItemGraphic icon="games" />
-          <l.ListItemText>Create a Game</l.ListItemText>
-        </l.ListItem>
         <l.ListItem onClick={ () => this.props.setPage('join') }>
           <l.ListItemGraphic icon="games" />
-          <l.ListItemText>Join a game</l.ListItemText>
+          <l.ListItemText>Play a game</l.ListItemText>
         </l.ListItem>
         <l.ListItem onClick={ () => this.props.setPage('login') }>
           <l.ListItemGraphic icon="login" />

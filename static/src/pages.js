@@ -32,9 +32,8 @@ import { GameInterface, APITileManager, JSWordManager } from './game.js';
 import { Game } from './component.js';
 
 function loadGame(game) {
-  if (!game.endpoint)
-    game.endpoint = "ws://" + window.location.host + "/game/ws";
-  if (!game.ws)
+  if (!game || !game.endpoint) return null;
+  if (!game.ws || game.ws.url !== game.endpoint)
     game.ws = new WebSocket(game.endpoint);
   if (!game.tilemanager)
     game.tilemanager = new APITileManager(game.ws);
@@ -48,6 +47,7 @@ function loadGame(game) {
       words: game.wordmanager,
     });
   }
+  return game;
 }
 
 class RushGamePage extends React.Component {
@@ -55,37 +55,38 @@ class RushGamePage extends React.Component {
     super(props);
     this.snackbar = createSnackbarQueue();
     this.state = {};
-    this.game = this.props.game || {};
-    loadGame(this.game);
-    this.state.data = this.game.data;
-    this.game.ws.addEventListener("message", ({ data: buf }) => {
-      console.log(buf);
-      var data = JSON.parse(buf);
-      if (!data) console.log("Error: ", buf);
-      if (data.type === "message" || data.type === "draw") {
-        console.log(data.message);
-        this.snackbar.clearAll();
-        this.snackbar.notify({
-          title: <b>Message</b>,
-          body: data.message,
-          icon: 'info',
-          dismissesOnAction: true,
-          timeout: 6000,
-          actions: [{ title: "Cool" }],
-        });
-      } else if (data.error) {
-        console.error(data.error);
-        this.snackbar.clearAll();
-        this.snackbar.notify({
-          title: <b>Error</b>,
-          body: data.error,
-          icon: 'error_outline',
-          dismissesOnAction: true,
-          timeout: 6000,
-          actions: [{ title: "Aw shucks" }],
-        });
-      }
-    });
+    this.game = loadGame(this.props.game);
+    if (this.game) {
+      this.state.data = this.game.data;
+      this.game.ws.addEventListener("message", ({ data: buf }) => {
+        console.log(buf);
+        var data = JSON.parse(buf);
+        if (!data) console.log("Error: ", buf);
+        if (data.type === "message" || data.type === "draw") {
+          console.log(data.message);
+          this.snackbar.clearAll();
+          this.snackbar.notify({
+            title: <b>Message</b>,
+            body: data.message,
+            icon: 'info',
+            dismissesOnAction: true,
+            timeout: 6000,
+            actions: [{ title: "Cool" }],
+          });
+        } else if (data.error) {
+          console.error(data.error);
+          this.snackbar.clearAll();
+          this.snackbar.notify({
+            title: <b>Error</b>,
+            body: data.error,
+            icon: 'error_outline',
+            dismissesOnAction: true,
+            timeout: 6000,
+            actions: [{ title: "Aw shucks" }],
+          });
+        }
+      });
+    }
   }
   render() {
     return (
@@ -115,7 +116,9 @@ class PreGameUserPage extends React.Component {
     super(props);
     console.log(this.props);
     this.snackbar = createSnackbarQueue();
-    this.state = "pending";
+    this.state = {
+      status: "pending",
+    }
     this.game = this.props.game || {};
     loadGame(this.game);
     this.game.ws.addEventListener("message", ({ data: buf }) => {
@@ -134,7 +137,7 @@ class PreGameUserPage extends React.Component {
           actions: [{ title: "Cool" }],
         });
       } else if (data.type === "admitted") {
-        this.state = "waiting";
+        this.state.status = "waiting";
       } else if (data.type === "started") {
         this.props.setPage('playing');
       } else if (data.error) {
@@ -153,9 +156,9 @@ class PreGameUserPage extends React.Component {
   }
   render() {
     let message = "Game is in an unknown state.";
-    if (this.state === "pending") {
+    if (this.state.status === "pending") {
       message = "Please wait to be admitted to the game.";
-    } else if (this.state === "waiting") {
+    } else if (this.state.status === "waiting") {
       message = "Waiting for the game to start...";
     }
     return (
@@ -758,8 +761,8 @@ class Page extends React.Component {
         { this.props.page === 'signup' && <SignupPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
         { this.props.page === 'create' && <CreateGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
         { this.props.page === 'join' && <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
-        { this.props.page === 'playing' && <RushGamePage game={ this.props.game } setPage={ this.props.setPage } /> }
-        { this.props.page === 'play' && <PreGamePage user={ this.props.user } game={ this.props.game } setPage={ this.props.setPage } /> }
+        { this.props.page === 'play' && (this.props.game ? <PreGamePage user={ this.props.user } game={ this.props.game } setPage={ this.props.setPage } /> : <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } />) }
+        { this.props.page === 'playing' && (this.props.game ? <RushGamePage game={ this.props.game } setPage={ this.props.setPage } /> : <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } />) }
       </>
     );
   }
