@@ -124,6 +124,95 @@ class AuthedUserModel extends UserModel {
   }
 }
 
+class GameModel {
+  constructor(user) {
+    this.id = null;
+    this.user = user;
+    this.api = window.location.protocol + '//' + window.location.host;
+    this.create_uri = this.api + '/games';
+
+    this.mode = null;
+    this.open = null;
+    this.join_token = null;
+
+    this.spectators = null;
+    this.num_players = null;
+    this.num_tiles = null;
+    this.tiles_per_player = null;
+    this.start_size = null;
+    this.discard_penalty = null;
+  }
+
+  static async FromId(id) {
+    var ret = new GameModel();
+
+    var url = ret.api + '/game/' + id;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      ret.error = result;
+      return ret;
+    }
+
+    Object.assign(ret, result);
+    ret.error = null;
+    return ret;
+  }
+
+  async create() {
+    var request = {
+      'owner': this.user.id,
+      'style': this.mode,
+      'open': this.open,
+      'config': {
+        'spectators': this.spectators,
+        'num_tiles': this.num_tiles,
+        'start_size': this.start_size,
+        'draw_size': this.draw_size,
+        'discard_penalty': this.discard_penalty,
+        'num_players': this.num_players,
+        'tiles_per_player': this.tiles_per_player
+      }
+    };
+
+    const response = await fetch(this.create_uri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    const result = await response.json()
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    this.error = null;
+    delete result["config"];
+    Object.assign(this, result);
+    return this;
+  }
+}
+
 export {
-  AuthedUserModel
+  UserModel,
+  AuthedUserModel,
+  GameModel
 };

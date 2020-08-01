@@ -109,3 +109,7 @@
 .mdc-layout-grid {
   max-width: 100vw;
 }
+
+a, a:visited {
+  color: black;
+}

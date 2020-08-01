@@ -36,7 +36,7 @@ class AuthedHeaderComponent extends React.Component {
     return (
       <div>
         <Button label="Login" icon="login" unelevated onClick={() => this.props.setPage('login') } />
-        <Button label="Join" icon="person_add" unelevated onClick={() => this.props.setPage('join') } />
+        <Button label="Sign up" icon="person_add" unelevated onClick={() => this.props.setPage('signup') } />
         <Button label="About" icon="notes" unelevated onClick={() => this.props.setPage('about') } />
         <bar.TopAppBarActionItem icon="login" onClick={() => this.props.setPage('login') } />
       </div>
@@ -53,9 +53,13 @@ class AuthedNavComponent extends React.Component {
             <l.ListItemGraphic icon="person" />
             <l.ListItemText>{ this.props.user.display }</l.ListItemText>
           </l.ListItem>
-          <l.ListItem onClick={ () => this.props.setPage('play') }>
+          <l.ListItem onClick={ () => this.props.setPage('join') }>
             <l.ListItemGraphic icon="games" />
-            <l.ListItemText>Play</l.ListItemText>
+            <l.ListItemText>Join a game</l.ListItemText>
+          </l.ListItem>
+          <l.ListItem onClick={ () => this.props.setPage('create') }>
+            <l.ListItemGraphic icon="games" />
+            <l.ListItemText>Create a Game</l.ListItemText>
           </l.ListItem>
           <l.ListItem onClick={ () => this.props.setUser(null) }>
             <l.ListItemGraphic icon="logout" />
@@ -67,13 +71,17 @@ class AuthedNavComponent extends React.Component {
 
     return (
       <>
-        <l.ListItem onClick={ () => this.props.setPage('join') }>
+        <l.ListItem onClick={ () => this.props.setPage('signup') }>
           <l.ListItemGraphic icon="person_add" />
-          <l.ListItemText>Join</l.ListItemText>
+          <l.ListItemText>Sign up</l.ListItemText>
         </l.ListItem>
-        <l.ListItem onClick={ () => this.props.setPage('play') }>
+        <l.ListItem onClick={ () => this.props.setPage('create') }>
           <l.ListItemGraphic icon="games" />
-          <l.ListItemText>Play</l.ListItemText>
+          <l.ListItemText>Create a Game</l.ListItemText>
+        </l.ListItem>
+        <l.ListItem onClick={ () => this.props.setPage('join') }>
+          <l.ListItemGraphic icon="games" />
+          <l.ListItemText>Join a game</l.ListItemText>
         </l.ListItem>
         <l.ListItem onClick={ () => this.props.setPage('login') }>
           <l.ListItemGraphic icon="login" />

@@ -48,6 +48,10 @@ class App extends React.Component {
     window.location.hash = '#' + page;
   }
 
+  setGame(game) {
+    this.setState(state => Object.assign({}, state, { game }));
+  }
+
   render() {
     return (
       <div className="App">
@@ -65,7 +69,7 @@ class App extends React.Component {
         >
 
         <Navigation user={ this.state.user } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-        <Page page={ this.state.page } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } />
+        <Page user={ this.state.user } page={ this.state.page } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } />
         <Footer page={ this.state.page } />
       </ThemeProvider>
 
