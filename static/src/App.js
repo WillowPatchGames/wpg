@@ -49,6 +49,7 @@ class App extends React.Component {
   }
 
   setGame(game) {
+    console.log(game);
     this.setState(state => Object.assign({}, state, { game }));
   }
 

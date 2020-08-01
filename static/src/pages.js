@@ -84,7 +84,7 @@ class RushGamePage extends React.Component {
   }
 }
 
-class CreateGamePage extends React.Component {
+class CreateGameForm extends React.Component {
   constructor(props) {
     super(props);
 
@@ -155,6 +155,73 @@ class CreateGamePage extends React.Component {
     var pl = (num, name) => (""+num+" "+name+(+num === 1 ? "" : "s"));
 
     return (
+      <c.Card>
+        <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+
+          <form onSubmit={ this.handleSubmit.bind(this) }>
+            <l.List twoLine>
+              <l.ListGroup>
+                <l.ListGroupSubheader>Player Options</l.ListGroupSubheader>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label="Open for anyone to join (or just those invited)" checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("spectators") }><Switch label="Allow spectators" checked={ this.state.spectators } onChange={ () => this.toggle("spectators", true) } /></l.ListItem>
+                <l.ListItem><TextField fullwidth type="number" label="Number of players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" /></l.ListItem>
+              </l.ListGroup>
+              <br />
+              <br />
+              <l.ListGroup>
+                <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+                <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") } options={
+                  [
+                    {
+                      label: 'Rush (Fast-Paced Game)',
+                      value: 'rush',
+                    }
+                  ]
+                } />
+                <br/>
+                {
+                  this.state.mode === 'rush' ?
+                  <p>In rush mode, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!</p>
+                  : <></>
+                }
+                <l.ListItem><TextField fullwidth type="number" label="Number of tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" /></l.ListItem>
+                <l.ListItem>
+                  <Switch label="Tiles per player or in total" name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } />
+                </l.ListItem>
+                { this.state.tiles_per_player
+                  ? <p>There will be { this.state.num_tiles } tiles per player</p>
+                  : <p>There will be { this.state.num_tiles } tiles overall</p>
+                }
+                <br />
+                <l.ListItem>
+                  <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="4" max="15" step="1" />
+                  <p></p>
+                </l.ListItem>
+                <l.ListItem><TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="3" step="1" /></l.ListItem>
+                <l.ListItem><TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" /></l.ListItem>
+                <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
+                <br/>
+              </l.ListGroup>
+            </l.List>
+
+            <Button label="Create" raised />
+          </form>
+          <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+            <d.DialogTitle>Error!</d.DialogTitle>
+            <d.DialogContent>{ this.state.error }</d.DialogContent>
+            <d.DialogActions>
+              <d.DialogButton action="close">OK</d.DialogButton>
+            </d.DialogActions>
+          </d.Dialog>
+        </div>
+      </c.Card>
+    );
+  }
+}
+
+class CreateGamePage extends React.Component {
+  render() {
+    return (
       <div className="App-page">
         <ThemeProvider
           options={{
@@ -172,66 +239,7 @@ class CreateGamePage extends React.Component {
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} />
             <g.GridCell align="middle" span={6}>
-              <c.Card>
-                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-
-                  <form onSubmit={ this.handleSubmit.bind(this) }>
-                    <l.List twoLine>
-                      <l.ListGroup>
-                        <l.ListGroupSubheader>Player Options</l.ListGroupSubheader>
-                        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label="Open for anyone to join (or just those invited)" checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
-                        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("spectators") }><Switch label="Allow spectators" checked={ this.state.spectators } onChange={ () => this.toggle("spectators", true) } /></l.ListItem>
-                        <l.ListItem><TextField fullwidth type="number" label="Number of players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" /></l.ListItem>
-                      </l.ListGroup>
-                      <br />
-                      <br />
-                      <l.ListGroup>
-                        <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-                        <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") } options={
-                          [
-                            {
-                              label: 'Rush (Fast-Paced Game)',
-                              value: 'rush',
-                            }
-                          ]
-                        } />
-                        <br/>
-                        {
-                          this.state.mode === 'rush' ?
-                          <p>In rush mode, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!</p>
-                          : <></>
-                        }
-                        <l.ListItem><TextField fullwidth type="number" label="Number of tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" /></l.ListItem>
-                        <l.ListItem>
-                          <Switch label="Tiles per player or in total" name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } />
-                        </l.ListItem>
-                        { this.state.tiles_per_player
-                          ? <p>There will be { this.state.num_tiles } tiles per player</p>
-                          : <p>There will be { this.state.num_tiles } tiles overall</p>
-                        }
-                        <br />
-                        <l.ListItem>
-                          <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="4" max="15" step="1" />
-                          <p></p>
-                        </l.ListItem>
-                        <l.ListItem><TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="3" step="1" /></l.ListItem>
-                        <l.ListItem><TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" /></l.ListItem>
-                        <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
-                        <br/>
-                      </l.ListGroup>
-                    </l.List>
-
-                    <Button label="Create" raised />
-                  </form>
-                  <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
-                    <d.DialogTitle>Error!</d.DialogTitle>
-                    <d.DialogContent>{ this.state.error }</d.DialogContent>
-                    <d.DialogActions>
-                      <d.DialogButton action="close">OK</d.DialogButton>
-                    </d.DialogActions>
-                  </d.Dialog>
-                </div>
-              </c.Card>
+              <CreateGameForm {...this.props} />
             </g.GridCell>
           </g.Grid>
         </ThemeProvider>
@@ -246,7 +254,7 @@ class JoinGamePage extends React.Component {
 
     this.state = {
       error: null,
-      token: '',
+      code: new URLSearchParams(window.location.search).get('code') || "",
     }
   }
 
@@ -258,17 +266,8 @@ class JoinGamePage extends React.Component {
       return;
     }
 
-    var game = new GameModel(this.props.user);
-    game.mode = this.state.mode;
-    game.open = this.state.open;
-    game.spectators = this.state.spectators;
-    game.num_players = this.state.num_players;
-    game.num_tiles = this.state.num_tiles;
-    game.tiles_per_player = this.state.tiles_per_player;
-    game.start_size = this.state.start_size;
-    game.discard_penalty = this.state.discard_penalty;
-
-    await game.create();
+    var game = await GameModel.FromCode(this.props.user, this.state.code);
+    game.code = this.state.code;
 
     if (game.error !== null) {
       console.error(game.error);
@@ -310,23 +309,29 @@ class JoinGamePage extends React.Component {
           }}
         >
           <div>
-            <Typography use="headline2">Join a Game</Typography>
+            <Typography use="headline2">Play a Game</Typography>
             <p>
-              Good luck, and may the odds be ever in your favor!<br /><br />
-              <a href="#create">Looking to make a new game room? Create one here!</a>
+              Whether or not you're looking to start a new game or join an
+              existing one, you've found the right place.
             </p>
           </div>
           <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} />
-            <g.GridCell align="middle" span={6}>
+            <g.GridCell align="left" span={6}>
               <c.Card>
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                  <div>
+                    <Typography use="headline2">Join a Game</Typography>
+                    <p>
+                      Good luck, and may the odds be ever in your favor!<br /><br />
+                      <a href="#create">Looking to make a new game room? Create one here!</a>
+                    </p>
+                  </div>
 
                   <form onSubmit={ this.handleSubmit.bind(this) }>
                     <l.List twoLine>
                       <l.ListGroup>
                         <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
-                        <l.ListItem><TextField fullwidth label="Token" name="num_players" value={ this.state.token } onChange={ this.inputHandler("token") } /></l.ListItem>
+                        <l.ListItem><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
                       </l.ListGroup>
                     </l.List>
 
@@ -339,6 +344,18 @@ class JoinGamePage extends React.Component {
                       <d.DialogButton action="close">OK</d.DialogButton>
                     </d.DialogActions>
                   </d.Dialog>
+                </div>
+              </c.Card>
+            </g.GridCell>
+            <g.GridCell align="right" span={6}>
+              <c.Card>
+                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                  <div>
+                    <Typography use="headline2">Create a Game</Typography>
+                    <p>
+                      <a href="#create">Looking to make a new game room? Create one here!</a>
+                    </p>
+                  </div>
                 </div>
               </c.Card>
             </g.GridCell>
@@ -544,54 +561,15 @@ class AboutPage extends React.Component {
   render() {
     return (
       <div className="App-page">
-        <article>
-          <Typography use="headline2">About WordCorp!</Typography>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse auctor vel lacus et volutpat. Nulla ullamcorper, leo ac egestas ullamcorper, erat neque efficitur libero, sed pretium velit eros luctus leo. Fusce ullamcorper tristique elit, ut gravida tortor vestibulum blandit. Curabitur egestas sagittis feugiat. Nam vitae lorem at lorem consectetur cursus. Mauris ipsum erat, dapibus eget finibus ut, eleifend non sem. Vivamus malesuada sit amet ex in egestas.</p>
-          <p>Mauris convallis, risus eget vulputate eleifend, erat neque aliquet ligula, nec suscipit odio neque quis mi. Curabitur varius erat in mi aliquam dapibus. Fusce dictum nibh vitae ipsum porta luctus. Quisque dignissim facilisis egestas. Aliquam iaculis neque sed arcu faucibus, at placerat velit pulvinar. Vivamus imperdiet, libero in laoreet malesuada, leo velit viverra velit, rutrum vestibulum leo mauris sed odio. Donec tincidunt quam lacinia velit mollis porta. Curabitur sed eros scelerisque, molestie ante scelerisque, interdum dui. Vestibulum sit amet volutpat nulla. Suspendisse porttitor ex sit amet hendrerit consequat. Aliquam eros ipsum, fermentum vitae erat sed, pulvinar hendrerit diam. Nullam id dolor mauris. In id porttitor augue, sed commodo turpis. Donec aliquam purus risus, a pellentesque lectus mattis et. Vivamus egestas ultricies suscipit.</p>
-          <p>Mauris non aliquet ante, a porta justo. Aenean iaculis urna sed lorem fermentum convallis. Vestibulum auctor, elit nec semper aliquet, mauris erat tincidunt mauris, sed tincidunt odio massa in nunc. Phasellus in facilisis diam. Duis porta maximus arcu. Praesent cursus vel justo sit amet luctus. Donec vitae dictum ligula.</p>
-          <p>Nulla et mi rhoncus, vulputate enim vel, feugiat nibh. Aenean quam urna, tempus et sem et, auctor congue metus. Aenean consequat condimentum nibh sit amet eleifend. Donec massa justo, vehicula quis ex ac, porttitor maximus lacus. Praesent rhoncus venenatis turpis, ac elementum libero ultricies vitae. In gravida varius enim ac luctus. Aliquam augue justo, blandit at rutrum quis, rutrum sed lacus. Fusce at velit tortor. Nam vitae imperdiet leo. Proin aliquam iaculis justo, ut aliquet tellus consectetur ac. Donec elementum, velit at tristique bibendum, diam nisl pretium nisi, et cursus nibh odio a nisi. Sed ullamcorper pellentesque lacus, ut aliquet tortor eleifend egestas.</p>
-          <p>Proin luctus augue vel faucibus gravida. Integer vehicula feugiat justo, sit amet congue leo sodales et. Maecenas ac fringilla elit. Nulla vitae ultrices enim. Etiam eleifend augue sapien, a vestibulum enim dignissim in. Integer laoreet diam eu dui dictum suscipit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vivamus tempus diam eu tellus fringilla varius. Donec tempor auctor condimentum. Sed quis purus luctus, placerat eros et, venenatis mauris. Donec aliquam est urna, eu finibus lectus placerat vitae. Nam id est vitae odio pulvinar ornare et ac mi. Donec tincidunt orci at felis gravida fermentum.</p>
-          <p>Aenean nec iaculis urna. Mauris mollis vestibulum ex a rhoncus. Cras eget ligula non tellus mattis luctus eu at enim. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque quis lectus nibh. Mauris pharetra quam nunc, ut auctor odio tristique vel. Vivamus gravida leo ex, sed luctus arcu volutpat eget. Sed rhoncus maximus rutrum. Curabitur bibendum tellus sit amet lorem condimentum, in sodales nisi dapibus.</p>
-          <p>Nulla facilisi. Mauris porta leo ut lectus euismod finibus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Fusce quis sagittis massa. Mauris vitae gravida mi, et suscipit lectus. Etiam eu lectus maximus, porttitor ante vel, porttitor purus. Nullam auctor purus ut ipsum luctus, non cursus ex congue.</p>
-          <p>Integer sem dolor, suscipit nec est at, ultricies venenatis risus. Quisque sollicitudin enim lectus, quis euismod est vulputate scelerisque. Pellentesque vel vestibulum dui. Vivamus sit amet placerat odio. Aenean non lobortis mi. Donec condimentum lorem condimentum mauris venenatis, condimentum viverra tortor pellentesque. Integer scelerisque libero et quam placerat, at aliquet erat porttitor. Pellentesque eu arcu vitae velit porta consectetur volutpat id urna. Sed vehicula finibus nunc, vel egestas dolor imperdiet ut. Donec dapibus ante erat, eu convallis augue egestas ut. Praesent sodales malesuada nisi eu ullamcorper. Sed vel posuere magna. Pellentesque nec justo ante. Nullam turpis massa, ultrices tempus eleifend ac, tempus id nulla. Suspendisse fermentum quam a molestie interdum.</p>
-          <p>Nam tristique viverra purus a tincidunt. Curabitur scelerisque purus tempor, sagittis dolor et, vehicula enim. Nam condimentum sem nec enim dictum placerat. Cras quis nulla ut risus ornare egestas. Sed faucibus eleifend nibh, vel aliquet elit. Nullam vel nunc est. Nam blandit sagittis nunc sit amet egestas. In suscipit sodales tortor eu porta. Quisque euismod risus at luctus iaculis. Nulla tincidunt tempus tortor, vel aliquam velit mollis faucibus.</p>
-          <p>Cras fringilla et dolor in gravida. Curabitur id consectetur mi, tincidunt dictum libero. Donec sed sem et lorem efficitur posuere at in ante. Integer sit amet orci bibendum, vestibulum erat ac, pellentesque massa. Curabitur pellentesque dictum nisl. Donec non velit nec eros interdum consequat. Aenean rhoncus, nulla sed scelerisque commodo, elit diam convallis lacus, non malesuada enim magna eu enim. Integer a tempor lacus, vel ornare arcu. Pellentesque ultrices tristique elit quis consequat.</p>
-          <p>Donec pretium, magna nec tincidunt consectetur, lectus justo dignissim nisl, vitae ornare arcu velit eget risus. Proin aliquet neque a venenatis porttitor. Nunc vestibulum lacus magna, quis elementum nisl congue id. Fusce a elit vel elit scelerisque scelerisque at facilisis diam. Sed dapibus ante eget nisl lobortis porta. Suspendisse sed nunc a urna consequat viverra. Integer consequat velit in ante hendrerit fringilla vel in nisl. Quisque venenatis molestie massa. Aliquam rhoncus magna non diam consectetur bibendum. Nulla bibendum vitae metus vel sagittis. Morbi gravida id purus id consectetur. Vestibulum pellentesque neque ac nisl viverra facilisis sit amet eu felis. Mauris luctus dui eu mauris tempor, a scelerisque orci vulputate. Nulla convallis leo in augue cursus faucibus. In et cursus mi.</p>
-          <p>Sed mollis risus eu ex elementum porta. Curabitur auctor nunc quis molestie auctor. Suspendisse sit amet urna hendrerit, varius orci sit amet, vulputate enim. Ut lacus purus, molestie volutpat nibh a, viverra volutpat dolor. Sed dignissim posuere orci, non rhoncus dolor cursus a. Nunc sed neque convallis, egestas sapien non, varius mi. Phasellus venenatis id magna sit amet vestibulum. Donec placerat nibh mauris, a tempor nisl rhoncus gravida. Cras vel elementum lorem. In eget varius odio. Aliquam neque nisl, porta vel tempor ac, posuere molestie nulla. Morbi dolor magna, finibus sed semper ac, scelerisque a turpis. Quisque dictum nisi pulvinar eros sodales, et dictum eros aliquam. Donec semper rutrum lectus quis lobortis. Aenean eget dolor ut diam cursus venenatis.</p>
-          <p>Mauris convallis, risus eget vulputate eleifend, erat neque aliquet ligula, nec suscipit odio neque quis mi. Curabitur varius erat in mi aliquam dapibus. Fusce dictum nibh vitae ipsum porta luctus. Quisque dignissim facilisis egestas. Aliquam iaculis neque sed arcu faucibus, at placerat velit pulvinar. Vivamus imperdiet, libero in laoreet malesuada, leo velit viverra velit, rutrum vestibulum leo mauris sed odio. Donec tincidunt quam lacinia velit mollis porta. Curabitur sed eros scelerisque, molestie ante scelerisque, interdum dui. Vestibulum sit amet volutpat nulla. Suspendisse porttitor ex sit amet hendrerit consequat. Aliquam eros ipsum, fermentum vitae erat sed, pulvinar hendrerit diam. Nullam id dolor mauris. In id porttitor augue, sed commodo turpis. Donec aliquam purus risus, a pellentesque lectus mattis et. Vivamus egestas ultricies suscipit.</p>
-          <p>Mauris non aliquet ante, a porta justo. Aenean iaculis urna sed lorem fermentum convallis. Vestibulum auctor, elit nec semper aliquet, mauris erat tincidunt mauris, sed tincidunt odio massa in nunc. Phasellus in facilisis diam. Duis porta maximus arcu. Praesent cursus vel justo sit amet luctus. Donec vitae dictum ligula.</p>
-          <p>Nulla et mi rhoncus, vulputate enim vel, feugiat nibh. Aenean quam urna, tempus et sem et, auctor congue metus. Aenean consequat condimentum nibh sit amet eleifend. Donec massa justo, vehicula quis ex ac, porttitor maximus lacus. Praesent rhoncus venenatis turpis, ac elementum libero ultricies vitae. In gravida varius enim ac luctus. Aliquam augue justo, blandit at rutrum quis, rutrum sed lacus. Fusce at velit tortor. Nam vitae imperdiet leo. Proin aliquam iaculis justo, ut aliquet tellus consectetur ac. Donec elementum, velit at tristique bibendum, diam nisl pretium nisi, et cursus nibh odio a nisi. Sed ullamcorper pellentesque lacus, ut aliquet tortor eleifend egestas.</p>
-          <p>Proin luctus augue vel faucibus gravida. Integer vehicula feugiat justo, sit amet congue leo sodales et. Maecenas ac fringilla elit. Nulla vitae ultrices enim. Etiam eleifend augue sapien, a vestibulum enim dignissim in. Integer laoreet diam eu dui dictum suscipit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vivamus tempus diam eu tellus fringilla varius. Donec tempor auctor condimentum. Sed quis purus luctus, placerat eros et, venenatis mauris. Donec aliquam est urna, eu finibus lectus placerat vitae. Nam id est vitae odio pulvinar ornare et ac mi. Donec tincidunt orci at felis gravida fermentum.</p>
-          <p>Aenean nec iaculis urna. Mauris mollis vestibulum ex a rhoncus. Cras eget ligula non tellus mattis luctus eu at enim. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque quis lectus nibh. Mauris pharetra quam nunc, ut auctor odio tristique vel. Vivamus gravida leo ex, sed luctus arcu volutpat eget. Sed rhoncus maximus rutrum. Curabitur bibendum tellus sit amet lorem condimentum, in sodales nisi dapibus.</p>
-          <p>Nulla facilisi. Mauris porta leo ut lectus euismod finibus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Fusce quis sagittis massa. Mauris vitae gravida mi, et suscipit lectus. Etiam eu lectus maximus, porttitor ante vel, porttitor purus. Nullam auctor purus ut ipsum luctus, non cursus ex congue.</p>
-          <p>Integer sem dolor, suscipit nec est at, ultricies venenatis risus. Quisque sollicitudin enim lectus, quis euismod est vulputate scelerisque. Pellentesque vel vestibulum dui. Vivamus sit amet placerat odio. Aenean non lobortis mi. Donec condimentum lorem condimentum mauris venenatis, condimentum viverra tortor pellentesque. Integer scelerisque libero et quam placerat, at aliquet erat porttitor. Pellentesque eu arcu vitae velit porta consectetur volutpat id urna. Sed vehicula finibus nunc, vel egestas dolor imperdiet ut. Donec dapibus ante erat, eu convallis augue egestas ut. Praesent sodales malesuada nisi eu ullamcorper. Sed vel posuere magna. Pellentesque nec justo ante. Nullam turpis massa, ultrices tempus eleifend ac, tempus id nulla. Suspendisse fermentum quam a molestie interdum.</p>
-          <p>Nam tristique viverra purus a tincidunt. Curabitur scelerisque purus tempor, sagittis dolor et, vehicula enim. Nam condimentum sem nec enim dictum placerat. Cras quis nulla ut risus ornare egestas. Sed faucibus eleifend nibh, vel aliquet elit. Nullam vel nunc est. Nam blandit sagittis nunc sit amet egestas. In suscipit sodales tortor eu porta. Quisque euismod risus at luctus iaculis. Nulla tincidunt tempus tortor, vel aliquam velit mollis faucibus.</p>
-          <p>Cras fringilla et dolor in gravida. Curabitur id consectetur mi, tincidunt dictum libero. Donec sed sem et lorem efficitur posuere at in ante. Integer sit amet orci bibendum, vestibulum erat ac, pellentesque massa. Curabitur pellentesque dictum nisl. Donec non velit nec eros interdum consequat. Aenean rhoncus, nulla sed scelerisque commodo, elit diam convallis lacus, non malesuada enim magna eu enim. Integer a tempor lacus, vel ornare arcu. Pellentesque ultrices tristique elit quis consequat.</p>
-          <p>Donec pretium, magna nec tincidunt consectetur, lectus justo dignissim nisl, vitae ornare arcu velit eget risus. Proin aliquet neque a venenatis porttitor. Nunc vestibulum lacus magna, quis elementum nisl congue id. Fusce a elit vel elit scelerisque scelerisque at facilisis diam. Sed dapibus ante eget nisl lobortis porta. Suspendisse sed nunc a urna consequat viverra. Integer consequat velit in ante hendrerit fringilla vel in nisl. Quisque venenatis molestie massa. Aliquam rhoncus magna non diam consectetur bibendum. Nulla bibendum vitae metus vel sagittis. Morbi gravida id purus id consectetur. Vestibulum pellentesque neque ac nisl viverra facilisis sit amet eu felis. Mauris luctus dui eu mauris tempor, a scelerisque orci vulputate. Nulla convallis leo in augue cursus faucibus. In et cursus mi.</p>
-          <p>Sed mollis risus eu ex elementum porta. Curabitur auctor nunc quis molestie auctor. Suspendisse sit amet urna hendrerit, varius orci sit amet, vulputate enim. Ut lacus purus, molestie volutpat nibh a, viverra volutpat dolor. Sed dignissim posuere orci, non rhoncus dolor cursus a. Nunc sed neque convallis, egestas sapien non, varius mi. Phasellus venenatis id magna sit amet vestibulum. Donec placerat nibh mauris, a tempor nisl rhoncus gravida. Cras vel elementum lorem. In eget varius odio. Aliquam neque nisl, porta vel tempor ac, posuere molestie nulla. Morbi dolor magna, finibus sed semper ac, scelerisque a turpis. Quisque dictum nisi pulvinar eros sodales, et dictum eros aliquam. Donec semper rutrum lectus quis lobortis. Aenean eget dolor ut diam cursus venenatis.</p>
-          <p>Mauris convallis, risus eget vulputate eleifend, erat neque aliquet ligula, nec suscipit odio neque quis mi. Curabitur varius erat in mi aliquam dapibus. Fusce dictum nibh vitae ipsum porta luctus. Quisque dignissim facilisis egestas. Aliquam iaculis neque sed arcu faucibus, at placerat velit pulvinar. Vivamus imperdiet, libero in laoreet malesuada, leo velit viverra velit, rutrum vestibulum leo mauris sed odio. Donec tincidunt quam lacinia velit mollis porta. Curabitur sed eros scelerisque, molestie ante scelerisque, interdum dui. Vestibulum sit amet volutpat nulla. Suspendisse porttitor ex sit amet hendrerit consequat. Aliquam eros ipsum, fermentum vitae erat sed, pulvinar hendrerit diam. Nullam id dolor mauris. In id porttitor augue, sed commodo turpis. Donec aliquam purus risus, a pellentesque lectus mattis et. Vivamus egestas ultricies suscipit.</p>
-          <p>Mauris non aliquet ante, a porta justo. Aenean iaculis urna sed lorem fermentum convallis. Vestibulum auctor, elit nec semper aliquet, mauris erat tincidunt mauris, sed tincidunt odio massa in nunc. Phasellus in facilisis diam. Duis porta maximus arcu. Praesent cursus vel justo sit amet luctus. Donec vitae dictum ligula.</p>
-          <p>Nulla et mi rhoncus, vulputate enim vel, feugiat nibh. Aenean quam urna, tempus et sem et, auctor congue metus. Aenean consequat condimentum nibh sit amet eleifend. Donec massa justo, vehicula quis ex ac, porttitor maximus lacus. Praesent rhoncus venenatis turpis, ac elementum libero ultricies vitae. In gravida varius enim ac luctus. Aliquam augue justo, blandit at rutrum quis, rutrum sed lacus. Fusce at velit tortor. Nam vitae imperdiet leo. Proin aliquam iaculis justo, ut aliquet tellus consectetur ac. Donec elementum, velit at tristique bibendum, diam nisl pretium nisi, et cursus nibh odio a nisi. Sed ullamcorper pellentesque lacus, ut aliquet tortor eleifend egestas.</p>
-          <p>Proin luctus augue vel faucibus gravida. Integer vehicula feugiat justo, sit amet congue leo sodales et. Maecenas ac fringilla elit. Nulla vitae ultrices enim. Etiam eleifend augue sapien, a vestibulum enim dignissim in. Integer laoreet diam eu dui dictum suscipit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vivamus tempus diam eu tellus fringilla varius. Donec tempor auctor condimentum. Sed quis purus luctus, placerat eros et, venenatis mauris. Donec aliquam est urna, eu finibus lectus placerat vitae. Nam id est vitae odio pulvinar ornare et ac mi. Donec tincidunt orci at felis gravida fermentum.</p>
-          <p>Aenean nec iaculis urna. Mauris mollis vestibulum ex a rhoncus. Cras eget ligula non tellus mattis luctus eu at enim. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque quis lectus nibh. Mauris pharetra quam nunc, ut auctor odio tristique vel. Vivamus gravida leo ex, sed luctus arcu volutpat eget. Sed rhoncus maximus rutrum. Curabitur bibendum tellus sit amet lorem condimentum, in sodales nisi dapibus.</p>
-          <p>Nulla facilisi. Mauris porta leo ut lectus euismod finibus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Fusce quis sagittis massa. Mauris vitae gravida mi, et suscipit lectus. Etiam eu lectus maximus, porttitor ante vel, porttitor purus. Nullam auctor purus ut ipsum luctus, non cursus ex congue.</p>
-          <p>Integer sem dolor, suscipit nec est at, ultricies venenatis risus. Quisque sollicitudin enim lectus, quis euismod est vulputate scelerisque. Pellentesque vel vestibulum dui. Vivamus sit amet placerat odio. Aenean non lobortis mi. Donec condimentum lorem condimentum mauris venenatis, condimentum viverra tortor pellentesque. Integer scelerisque libero et quam placerat, at aliquet erat porttitor. Pellentesque eu arcu vitae velit porta consectetur volutpat id urna. Sed vehicula finibus nunc, vel egestas dolor imperdiet ut. Donec dapibus ante erat, eu convallis augue egestas ut. Praesent sodales malesuada nisi eu ullamcorper. Sed vel posuere magna. Pellentesque nec justo ante. Nullam turpis massa, ultrices tempus eleifend ac, tempus id nulla. Suspendisse fermentum quam a molestie interdum.</p>
-          <p>Nam tristique viverra purus a tincidunt. Curabitur scelerisque purus tempor, sagittis dolor et, vehicula enim. Nam condimentum sem nec enim dictum placerat. Cras quis nulla ut risus ornare egestas. Sed faucibus eleifend nibh, vel aliquet elit. Nullam vel nunc est. Nam blandit sagittis nunc sit amet egestas. In suscipit sodales tortor eu porta. Quisque euismod risus at luctus iaculis. Nulla tincidunt tempus tortor, vel aliquam velit mollis faucibus.</p>
-          <p>Cras fringilla et dolor in gravida. Curabitur id consectetur mi, tincidunt dictum libero. Donec sed sem et lorem efficitur posuere at in ante. Integer sit amet orci bibendum, vestibulum erat ac, pellentesque massa. Curabitur pellentesque dictum nisl. Donec non velit nec eros interdum consequat. Aenean rhoncus, nulla sed scelerisque commodo, elit diam convallis lacus, non malesuada enim magna eu enim. Integer a tempor lacus, vel ornare arcu. Pellentesque ultrices tristique elit quis consequat.</p>
-          <p>Donec pretium, magna nec tincidunt consectetur, lectus justo dignissim nisl, vitae ornare arcu velit eget risus. Proin aliquet neque a venenatis porttitor. Nunc vestibulum lacus magna, quis elementum nisl congue id. Fusce a elit vel elit scelerisque scelerisque at facilisis diam. Sed dapibus ante eget nisl lobortis porta. Suspendisse sed nunc a urna consequat viverra. Integer consequat velit in ante hendrerit fringilla vel in nisl. Quisque venenatis molestie massa. Aliquam rhoncus magna non diam consectetur bibendum. Nulla bibendum vitae metus vel sagittis. Morbi gravida id purus id consectetur. Vestibulum pellentesque neque ac nisl viverra facilisis sit amet eu felis. Mauris luctus dui eu mauris tempor, a scelerisque orci vulputate. Nulla convallis leo in augue cursus faucibus. In et cursus mi.</p>
-          <p>Sed mollis risus eu ex elementum porta. Curabitur auctor nunc quis molestie auctor. Suspendisse sit amet urna hendrerit, varius orci sit amet, vulputate enim. Ut lacus purus, molestie volutpat nibh a, viverra volutpat dolor. Sed dignissim posuere orci, non rhoncus dolor cursus a. Nunc sed neque convallis, egestas sapien non, varius mi. Phasellus venenatis id magna sit amet vestibulum. Donec placerat nibh mauris, a tempor nisl rhoncus gravida. Cras vel elementum lorem. In eget varius odio. Aliquam neque nisl, porta vel tempor ac, posuere molestie nulla. Morbi dolor magna, finibus sed semper ac, scelerisque a turpis. Quisque dictum nisi pulvinar eros sodales, et dictum eros aliquam. Donec semper rutrum lectus quis lobortis. Aenean eget dolor ut diam cursus venenatis.</p>
-          <p>Mauris convallis, risus eget vulputate eleifend, erat neque aliquet ligula, nec suscipit odio neque quis mi. Curabitur varius erat in mi aliquam dapibus. Fusce dictum nibh vitae ipsum porta luctus. Quisque dignissim facilisis egestas. Aliquam iaculis neque sed arcu faucibus, at placerat velit pulvinar. Vivamus imperdiet, libero in laoreet malesuada, leo velit viverra velit, rutrum vestibulum leo mauris sed odio. Donec tincidunt quam lacinia velit mollis porta. Curabitur sed eros scelerisque, molestie ante scelerisque, interdum dui. Vestibulum sit amet volutpat nulla. Suspendisse porttitor ex sit amet hendrerit consequat. Aliquam eros ipsum, fermentum vitae erat sed, pulvinar hendrerit diam. Nullam id dolor mauris. In id porttitor augue, sed commodo turpis. Donec aliquam purus risus, a pellentesque lectus mattis et. Vivamus egestas ultricies suscipit.</p>
-          <p>Mauris non aliquet ante, a porta justo. Aenean iaculis urna sed lorem fermentum convallis. Vestibulum auctor, elit nec semper aliquet, mauris erat tincidunt mauris, sed tincidunt odio massa in nunc. Phasellus in facilisis diam. Duis porta maximus arcu. Praesent cursus vel justo sit amet luctus. Donec vitae dictum ligula.</p>
-          <p>Nulla et mi rhoncus, vulputate enim vel, feugiat nibh. Aenean quam urna, tempus et sem et, auctor congue metus. Aenean consequat condimentum nibh sit amet eleifend. Donec massa justo, vehicula quis ex ac, porttitor maximus lacus. Praesent rhoncus venenatis turpis, ac elementum libero ultricies vitae. In gravida varius enim ac luctus. Aliquam augue justo, blandit at rutrum quis, rutrum sed lacus. Fusce at velit tortor. Nam vitae imperdiet leo. Proin aliquam iaculis justo, ut aliquet tellus consectetur ac. Donec elementum, velit at tristique bibendum, diam nisl pretium nisi, et cursus nibh odio a nisi. Sed ullamcorper pellentesque lacus, ut aliquet tortor eleifend egestas.</p>
-          <p>Proin luctus augue vel faucibus gravida. Integer vehicula feugiat justo, sit amet congue leo sodales et. Maecenas ac fringilla elit. Nulla vitae ultrices enim. Etiam eleifend augue sapien, a vestibulum enim dignissim in. Integer laoreet diam eu dui dictum suscipit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vivamus tempus diam eu tellus fringilla varius. Donec tempor auctor condimentum. Sed quis purus luctus, placerat eros et, venenatis mauris. Donec aliquam est urna, eu finibus lectus placerat vitae. Nam id est vitae odio pulvinar ornare et ac mi. Donec tincidunt orci at felis gravida fermentum.</p>
-          <p>Aenean nec iaculis urna. Mauris mollis vestibulum ex a rhoncus. Cras eget ligula non tellus mattis luctus eu at enim. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque quis lectus nibh. Mauris pharetra quam nunc, ut auctor odio tristique vel. Vivamus gravida leo ex, sed luctus arcu volutpat eget. Sed rhoncus maximus rutrum. Curabitur bibendum tellus sit amet lorem condimentum, in sodales nisi dapibus.</p>
-          <p>Nulla facilisi. Mauris porta leo ut lectus euismod finibus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Fusce quis sagittis massa. Mauris vitae gravida mi, et suscipit lectus. Etiam eu lectus maximus, porttitor ante vel, porttitor purus. Nullam auctor purus ut ipsum luctus, non cursus ex congue.</p>
-          <p>Integer sem dolor, suscipit nec est at, ultricies venenatis risus. Quisque sollicitudin enim lectus, quis euismod est vulputate scelerisque. Pellentesque vel vestibulum dui. Vivamus sit amet placerat odio. Aenean non lobortis mi. Donec condimentum lorem condimentum mauris venenatis, condimentum viverra tortor pellentesque. Integer scelerisque libero et quam placerat, at aliquet erat porttitor. Pellentesque eu arcu vitae velit porta consectetur volutpat id urna. Sed vehicula finibus nunc, vel egestas dolor imperdiet ut. Donec dapibus ante erat, eu convallis augue egestas ut. Praesent sodales malesuada nisi eu ullamcorper. Sed vel posuere magna. Pellentesque nec justo ante. Nullam turpis massa, ultrices tempus eleifend ac, tempus id nulla. Suspendisse fermentum quam a molestie interdum.</p>
-          <p>Nam tristique viverra purus a tincidunt. Curabitur scelerisque purus tempor, sagittis dolor et, vehicula enim. Nam condimentum sem nec enim dictum placerat. Cras quis nulla ut risus ornare egestas. Sed faucibus eleifend nibh, vel aliquet elit. Nullam vel nunc est. Nam blandit sagittis nunc sit amet egestas. In suscipit sodales tortor eu porta. Quisque euismod risus at luctus iaculis. Nulla tincidunt tempus tortor, vel aliquam velit mollis faucibus.</p>
-          <p>Cras fringilla et dolor in gravida. Curabitur id consectetur mi, tincidunt dictum libero. Donec sed sem et lorem efficitur posuere at in ante. Integer sit amet orci bibendum, vestibulum erat ac, pellentesque massa. Curabitur pellentesque dictum nisl. Donec non velit nec eros interdum consequat. Aenean rhoncus, nulla sed scelerisque commodo, elit diam convallis lacus, non malesuada enim magna eu enim. Integer a tempor lacus, vel ornare arcu. Pellentesque ultrices tristique elit quis consequat.</p>
-          <p>Donec pretium, magna nec tincidunt consectetur, lectus justo dignissim nisl, vitae ornare arcu velit eget risus. Proin aliquet neque a venenatis porttitor. Nunc vestibulum lacus magna, quis elementum nisl congue id. Fusce a elit vel elit scelerisque scelerisque at facilisis diam. Sed dapibus ante eget nisl lobortis porta. Suspendisse sed nunc a urna consequat viverra. Integer consequat velit in ante hendrerit fringilla vel in nisl. Quisque venenatis molestie massa. Aliquam rhoncus magna non diam consectetur bibendum. Nulla bibendum vitae metus vel sagittis. Morbi gravida id purus id consectetur. Vestibulum pellentesque neque ac nisl viverra facilisis sit amet eu felis. Mauris luctus dui eu mauris tempor, a scelerisque orci vulputate. Nulla convallis leo in augue cursus faucibus. In et cursus mi.</p>
-          <p>Sed mollis risus eu ex elementum porta. Curabitur auctor nunc quis molestie auctor. Suspendisse sit amet urna hendrerit, varius orci sit amet, vulputate enim. Ut lacus purus, molestie volutpat nibh a, viverra volutpat dolor. Sed dignissim posuere orci, non rhoncus dolor cursus a. Nunc sed neque convallis, egestas sapien non, varius mi. Phasellus venenatis id magna sit amet vestibulum. Donec placerat nibh mauris, a tempor nisl rhoncus gravida. Cras vel elementum lorem. In eget varius odio. Aliquam neque nisl, porta vel tempor ac, posuere molestie nulla. Morbi dolor magna, finibus sed semper ac, scelerisque a turpis. Quisque dictum nisi pulvinar eros sodales, et dictum eros aliquam. Donec semper rutrum lectus quis lobortis. Aenean eget dolor ut diam cursus venenatis.</p>
-        </article>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="middle" span={6}>
+            <article>
+              <Typography use="headline2">About WordCorp!</Typography>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse auctor vel lacus et volutpat. Nulla ullamcorper, leo ac egestas ullamcorper, erat neque efficitur libero, sed pretium velit eros luctus leo. Fusce ullamcorper tristique elit, ut gravida tortor vestibulum blandit. Curabitur egestas sagittis feugiat. Nam vitae lorem at lorem consectetur cursus. Mauris ipsum erat, dapibus eget finibus ut, eleifend non sem. Vivamus malesuada sit amet ex in egestas.</p>
+            </article>
+          </g.GridCell>
+        </g.Grid>
       </div>
     );
   }
@@ -606,7 +584,7 @@ class Page extends React.Component {
         { this.props.page === 'login' && <LoginPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
         { this.props.page === 'signup' && <SignupPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
         { this.props.page === 'create' && <CreateGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
-        { this.props.page === 'join' && <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } /> }
+        { this.props.page === 'join' && <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
         { this.props.page === 'play' && <RushGamePage setPage={ this.props.setPage } /> }
       </>
     );

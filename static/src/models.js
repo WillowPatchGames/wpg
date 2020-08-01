@@ -133,7 +133,7 @@ class GameModel {
 
     this.mode = null;
     this.open = null;
-    this.join_token = null;
+    this.code = null;
 
     this.spectators = null;
     this.num_players = null;
