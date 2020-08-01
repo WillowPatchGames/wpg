@@ -64,7 +64,6 @@ class GameData {
   swap(here, there) {
     var h = this.get(here);
     var t = this.get(there);
-    console.log(here, there, h, t);
     this.set(there, h);
     this.set(here, t);
     return this;
@@ -95,15 +94,21 @@ class GameData {
       console.error("Too many instances of letter in game data", results, letter);
     }
   }
+  empty() {
+    return this.grid.empty() && this.bank.empty();
+  }
+  letterPosse() {
+    return [].concat(
+      this.grid.letterPosse().map(l => (l.pos.unshift("grid"), l)),
+      this.bank.letterPosse().map(l => (l.pos.unshift("bank"), l)),
+    );
+  }
 }
 
 class TileManager {
-  async draw(n) {
-
-  }
-  async discard(letter) {
-
-  }
+  async draw(n) {}
+  async discard(letter) {}
+  swap(here, there) {}
 }
 
 class APITileManager extends TileManager {
@@ -161,6 +166,12 @@ class APITileManager extends TileManager {
       },
     }));
     return;
+  }
+  swap(here, there) {
+    this.conn.send(JSON.stringify({
+      type: "swap",
+      here, there,
+    }));
   }
 }
 
@@ -276,6 +287,20 @@ class GameInterface extends GameData {
     if (def(old?.words)) {
       this.words = old.words;
     }
+    this.history = [];
+    if (!this.empty()) {
+      this.history.push({
+        type: "init",
+        snapshot: {
+          grid: new Grid(this.grid),
+          bank: new Bank(this.bank),
+        },
+      });
+    }
+  }
+  swap(here, there) {
+    super.swap(here, there);
+    this.tiles.swap(here, there);
   }
   async draw(n) {
     let letters = await this.tiles.draw(n);
@@ -330,6 +355,18 @@ class Bank extends Array {
     if (!this.get(here)) return;
     this.splice(here, 1);
     return this;
+  }
+  empty() {
+    return !this.letterPosse().length;
+  }
+  letterPosse() {
+    var letters = [];
+    for (let i in this) {
+      var h = this[i];
+      if (!h) continue;
+      letters.push({ letter: h, pos: [i] });
+    }
+    return letters;
   }
 }
 Bank.blank = "";
@@ -502,6 +539,20 @@ class Grid {
       }
     }
     return words;
+  }
+  empty() {
+    return !this.letterPosse().length;
+  }
+  letterPosse() {
+    var letters = [];
+    for (let row in this.data) {
+      for (let col in this.data[row][col]) {
+        var h = this.get(row, col);
+        if (!h) continue;
+        letters.push({ letter: h, pos: [row,col] });
+      }
+    }
+    return letters;
   }
 }
 

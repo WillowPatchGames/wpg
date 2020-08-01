@@ -123,7 +123,7 @@ class Game extends React.Component {
       }
       if (status === "end" && res) {
         if (!shallowEqual(res, where)) {
-          this.swap(where, res, true);
+          this.interact(where, res, true);
         }
       }
       return res;
@@ -142,16 +142,20 @@ class Game extends React.Component {
       let there = this.state.presentation.selected;
       if (!there) {
         this.select(here);
+      } else if (shallowEqual(there, here)) {
+        this.select(null);
+      } else if (there.length === 1 && here.length === 1) {
+        this.select(here);
       } else if (there.length === 1) {
         if (this.state.data.get(here)) {
-          this.swap(here, there);
+          this.interact(here, there);
         }
       } else if (here.length === 1) {
         if (this.state.data.get(there)) {
-          this.swap(here, there);
+          this.interact(here, there);
         }
       } else {
-        this.swap(here, there);
+        this.interact(here, there);
       }
     };
   }
@@ -167,10 +171,10 @@ class Game extends React.Component {
     monitor("Could not discard", this.state.data.discard(here)).then(() => this.setState(state => state));
   }
   recall(here, dropped) {
-    this.swap(here, ["bank",""], dropped);
+    this.interact(here, ["bank",""], dropped);
   }
 
-  swap(here,there,dropped) {
+  interact(here,there,dropped) {
     if (there[0] === "discard") {
       return this.discard(here);
     } else if (here[0] === "discard") {
@@ -287,6 +291,7 @@ class Game extends React.Component {
                 var unwords = await this.state.data.check();
                 if (unwords.length) console.log("Invalid words: ", unwords.map(String));
                 this.setState((state) => {
+                  state.presentation.selected = null;
                   state.presentation.unwords = unwords;
                   return state;
                 });
@@ -294,19 +299,24 @@ class Game extends React.Component {
             }, "Check"),
             e(Button, {
               raised: true,
-              disabled: this.state.data.bank.filter(a=>a).length || this.state.data.grid.components().length > 1,
+              disabled: !this.state.data.bank.empty() || this.state.data.grid.components().length > 1,
               key: "draw",
               onClick: async () => {
                 var unwords;
-                if (this.state.data.bank.filter(a=>a).length || this.state.data.grid.components().length > 1) {
+                if (!this.state.data.bank.empty() || this.state.data.grid.components().length > 1) {
                   console.log("You must connect all of your tiles together before drawing!");
                 } else if ((unwords = await this.state.data.check()).length) {
                   console.log("Invalid words: ", unwords.map(String));
                   this.setState((state) => {
                     state.presentation.unwords = unwords;
+                    state.presentation.selected = null;
                     return state;
                   });
                 } else {
+                  this.setState(state => {
+                    state.presentation.selected = null;
+                    return state;
+                  })
                   await monitor("Could not draw", this.state.data.draw());
                   this.setState(state => {
                     return state;
