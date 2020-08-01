@@ -22,12 +22,13 @@ import * as g from '@rmwc/grid';
 import * as l from '@rmwc/list';
 import { Select } from '@rmwc/select';
 import { Switch } from '@rmwc/switch';
+import { Checkbox } from '@rmwc/checkbox';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 import { Theme, ThemeProvider } from '@rmwc/theme';
 
 // Application imports
-import { AuthedUserModel, GameModel } from './models.js';
+import { AuthedUserModel, GameModel, normalizeCode } from './models.js';
 import { GameInterface, APITileManager, JSWordManager } from './game.js';
 import { Game } from './component.js';
 
@@ -137,7 +138,7 @@ class PreGameUserPage extends React.Component {
           actions: [{ title: "Cool" }],
         });
       } else if (data.type === "admitted") {
-        this.state.status = "waiting";
+        this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
       } else if (data.type === "started") {
         this.props.setPage('playing');
       } else if (data.error) {
@@ -215,6 +216,7 @@ class PreGameAdminPage extends React.Component {
       }
     });
     this.code_ref = React.createRef();
+    this.link_ref = React.createRef();
   }
   toggleAdmitted(user) {
     for (let u in this.state.waitlist) {
@@ -250,19 +252,28 @@ class PreGameAdminPage extends React.Component {
                     <l.ListItem disabled>
                       <p>Share this code to let users join:</p>
                     </l.ListItem>
-                    <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.snackbar.notify({title: "Copied to cliboard", body: "Game invite code copied!", timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+                    <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
                       <l.ListItemText className="App-game-code">
                         <TextField fullwidth readOnly value={ this.game.code } inputRef={ this.code_ref } />
                       </l.ListItemText>
                       <l.ListItemMeta icon="content_copy" />
                     </l.ListItem>
+                    <l.ListItem disabled>
+                      <p>Or have them visit this link:</p>
+                    </l.ListItem>
+                    <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
+                      <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
+                    </l.ListItem>
                   </l.ListGroup>
                   <l.ListGroup>
+                    <l.ListItem disabled>
+                      <p>Users in this game:</p>
+                    </l.ListItem>
                     { this.state.waitlist.map((user, i) =>
-                        <l.ListItem key={user.name} onClick={ user.admitted ? null : () => this.toggleAdmitted(user) } >
+                        <l.ListItem key={user.name} >
                         {user.name}
                         <l.ListItemMeta>
-                          <Switch checked={user.admitted} readOnly />
+                          <Checkbox checked={user.admitted} label="Admitted" onChange={ user.admitted ? () => this.setState(state => state) : () => this.toggleAdmitted(user) } />
                         </l.ListItemMeta>
                         </l.ListItem>
                     )}
@@ -321,6 +332,7 @@ class CreateGameForm extends React.Component {
     if (game.error !== null) {
       this.setError(game.error.message);
     } else {
+      this.props.setCode(game.code);
       this.props.setGame(game);
       this.props.setPage('play');
     }
@@ -442,7 +454,7 @@ class JoinGamePage extends React.Component {
 
     this.state = {
       error: null,
-      code: new URLSearchParams(window.location.search).get('code') || "",
+      code: normalizeCode(undefined, true) || "",
     }
   }
 
@@ -455,12 +467,12 @@ class JoinGamePage extends React.Component {
     }
 
     var game = await GameModel.FromCode(this.props.user, this.state.code);
-    game.code = this.state.code;
 
     if (game.error !== null) {
       console.error(game.error);
       this.setError(game.error.message);
     } else {
+      this.props.setCode(game.code);
       this.props.setGame(game);
       this.props.setPage('play');
     }
@@ -651,7 +663,9 @@ class LoginPage extends React.Component {
 
     if (user.authed) {
       this.props.setUser(user);
-      this.props.setPage('join');
+      if (!this.props.page || this.props.page === 'login') {
+        this.props.setPage('join');
+      }
     } else {
       this.setError(user.error.message);
     }
@@ -751,20 +765,27 @@ class AboutPage extends React.Component {
   }
 }
 
+class ErrorPage extends React.Component {
+  render() {
+    return "Sorry, an unknown error occurred.";
+  }
+}
+
 class Page extends React.Component {
   render() {
-    return (
-      <>
-        { this.props.page === 'home' && <HomePage setPage={ this.props.setPage } /> }
-        { this.props.page === 'about' && <AboutPage setPage={ this.props.setPage } /> }
-        { this.props.page === 'login' && <LoginPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
-        { this.props.page === 'signup' && <SignupPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
-        { this.props.page === 'create' && <CreateGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
-        { this.props.page === 'join' && <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
-        { this.props.page === 'play' && (this.props.game ? <PreGamePage user={ this.props.user } game={ this.props.game } setPage={ this.props.setPage } /> : <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } />) }
-        { this.props.page === 'playing' && (this.props.game ? <RushGamePage game={ this.props.game } setPage={ this.props.setPage } /> : <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } />) }
-      </>
-    );
+    var component = ErrorPage;
+    switch (this.props.page) {
+      case 'home': component = HomePage; break;
+      case 'about': component = AboutPage; break;
+      case 'login': component = LoginPage; break;
+      case 'signup': component = SignupPage; break;
+      case 'create': component = this.props.user ? CreateGamePage : LoginPage; break;
+      case 'playing': component = this.props.game ? RushGamePage : JoinGamePage; break;
+      case 'play': component = this.props.game ? PreGamePage : JoinGamePage; break;
+      case 'join': component = JoinGamePage; break;
+      default: component = ErrorPage;
+    }
+    return React.createElement(component, this.props, this.props.children);
   }
 }
 

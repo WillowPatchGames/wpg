@@ -16,6 +16,7 @@ import { ThemeProvider } from '@rmwc/theme';
 // Application imports
 import { Navigation } from './nav.js';
 import { Page, Footer } from './pages.js';
+import { normalizeCode } from './models.js';
 
 // CSS overrides last
 import './App.css';
@@ -54,6 +55,13 @@ class App extends React.Component {
     this.setState(state => Object.assign({}, state, { game }));
   }
 
+  setCode(code) {
+    code = normalizeCode(code);
+    var params = new URLSearchParams(window.location.search);
+    params.set("code", code);
+    window.history.pushState(null, '', window.location.pathname + '?' + params.toString());
+  }
+
   render() {
     return (
       <div className="App">
@@ -73,7 +81,7 @@ class App extends React.Component {
         >
 
         <Navigation user={ this.state.user } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-        <Page user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } />
+        <Page user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } />
         <Footer page={ this.state.page } />
       </ThemeProvider>
 

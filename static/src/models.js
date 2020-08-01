@@ -2,6 +2,18 @@ function nonempty(str) {
   return str !== undefined && str !== null && str !== "";
 }
 
+function normalizeCode(str, pretty) {
+  if (str === undefined) {
+    str = new URLSearchParams(window.location.search).get('code') || "";
+  }
+  var words = [...str.matchAll(/\w+/g)].map(w => w[0].toLowerCase()).filter(w => w.length > 1);
+  if (!pretty) {
+    return words.join("-");
+  } else {
+    return words.map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
+  }
+}
+
 class UserModel {
   constructor() {
     this.id = null;
@@ -173,9 +185,11 @@ class GameModel {
   }
 
   static async FromCode(user, code) {
+    code = normalizeCode(code);
     var ret = new GameModel(user);
+    ret.code = code;
 
-    var url = ret.api + '/game/find?join=' + code.toLowerCase();
+    var url = ret.api + '/game/find?join=' + code;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -247,5 +261,6 @@ class GameModel {
 export {
   UserModel,
   AuthedUserModel,
-  GameModel
+  GameModel,
+  normalizeCode,
 };

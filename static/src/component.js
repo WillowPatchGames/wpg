@@ -21,7 +21,6 @@ defaultGrid.padding(5);
 
 var PADDING = [8,14];
 var SIZE = 35;
-var INITIAL_DRAW = 0;
 
 function monitor(msg, promise) {
   return promise.then(r => {
@@ -58,7 +57,6 @@ class Game extends React.Component {
       scroll: [0,0],
     };
     this.kb = bodyListener("keyup", (e) => {
-      console.log(e, e.key);
       if (this.state.presentation.selected && this.state.presentation.selected[0] === "grid") {
         for (let i in this.state.data.bank) {
           if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
@@ -230,11 +228,6 @@ class Game extends React.Component {
 
   componentDidMount() {
     this.setState(this.repad);
-    /*
-    this.state.data.draw(INITIAL_DRAW).then(() => this.setState((state) => {
-      return state;
-    }));
-    */
   }
   componentDidUpdate() {
     if (this.pending.scroll[0]) {
