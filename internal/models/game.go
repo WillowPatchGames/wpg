@@ -56,6 +56,25 @@ func (game *GameModel) FromEid(transaction *sql.Tx, id uint64) error {
 	return nil
 }
 
+func (game *GameModel) FromJoinCode(transaction *sql.Tx, code string) error {
+	stmt, err := transaction.Prepare(database.GetGameFromCode)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.QueryRow(code).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (game *GameModel) Create(transaction *sql.Tx) error {
 	stmt, err := transaction.Prepare(database.InsertGame)
 	if err != nil {

@@ -20,6 +20,7 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return new(QueryHandler)
 	}
 
+	router.Handle("/game/find", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/game/{GameID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/game", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/games", parsel.Wrap(createFactory, config)).Methods("POST")

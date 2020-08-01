@@ -27,8 +27,9 @@ const CreateAPIToken = "INSERT INTO " + t_auths + " (user_id, category, key, exp
 
 // Game Model
 
-const GetGameFromID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
-const GetGameFromEID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
+const GetGameFromID =   "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
+const GetGameFromEID =  "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
+const GetGameFromCode = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE join_code=$1"
 
 const InsertGame = "INSERT INTO " + t_games + " (eid, owner_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 

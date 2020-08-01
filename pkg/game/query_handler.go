@@ -14,6 +14,7 @@ import (
 
 type queryHandlerData struct {
 	GameID uint64 `json:"id,omitempty" query:"id,omitempty" route:"GameID,omitempty"`
+	JoinCode string `json:"join,omitempty" query:"join,omitempty" route:"JoinCode,omitempty"`
 }
 
 type queryHandlerResponse struct {
@@ -42,7 +43,7 @@ func (handle *QueryHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !utils.IsValidId(handle.req.GameID) {
+	if !utils.IsValidId(handle.req.GameID) && handle.req.JoinCode == "" {
 		api_errors.WriteError(w, api_errors.ErrMissingRequest, true)
 		return
 	}
@@ -55,7 +56,13 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var game models.GameModel
-	err = game.FromEid(tx, handle.req.GameID)
+
+	if handle.req.GameID > 0 {
+		err = game.FromEid(tx, handle.req.GameID)
+	} else {
+		err = game.FromJoinCode(tx, handle.req.JoinCode)
+	}
+
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			log.Print("Unable to rollback:", rollbackErr)

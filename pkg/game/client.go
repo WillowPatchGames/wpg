@@ -196,6 +196,15 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
+	log.Println("ServeHTTP - ", handle.Hub)
+
 	// Create Client, Player
 	client := &Client{hub: handle.Hub, conn: conn, send: make(chan []byte, 256)}
 

@@ -112,6 +112,7 @@ func (hub *Hub) connectGame(gameid uint64) (*ActiveGame, error) {
 	var gamedb models.GameModel
 	err = gamedb.FromId(tx, gameid)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -125,6 +126,7 @@ func (hub *Hub) connectGame(gameid uint64) (*ActiveGame, error) {
 		return nil, err
 	}
 
+  game.model = gamedb
 	hub.games[gameid] = game
 	return game, nil
 }
@@ -315,6 +317,7 @@ type MsgDiscard struct {
 }
 
 func (h *Hub) actOn(client *Client, buf string) {
+	log.Println("actOn - ", h)
 	var cmd MsgType
 	err := json.Unmarshal([]byte(buf), &cmd)
 	if err != nil {
@@ -324,56 +327,115 @@ func (h *Hub) actOn(client *Client, buf string) {
 	if cmd.Type == "draw" {
 		if player, ok := h.getPlayer(client); ok {
 			game := player.game
+			log.Println(game)
+			log.Println(game.model)
+			log.Println(game.model.Lifecycle)
 			if game.model.Lifecycle == "finished" {
 				h.sendErrToClient(client, "Game finished.")
 				return
 			}
-			if len(game.state.Letters) >= game.config.DrawSize*len(game.players) {
-				tx, err := game.txs.GetTx()
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				defer game.txs.ReleaseTx(tx)
+			if game.model.Lifecycle == "pending" {
+				if len(game.state.Letters) >= game.config.StartSize*len(game.players) {
+					tx, err := game.txs.GetTx()
+					if err != nil {
+						log.Println(err)
+						return
+					}
+					defer game.txs.ReleaseTx(tx)
 
-				for i := range game.players {
-					p := game.players[i]
-					drawn := game.state.Letters[:game.config.DrawSize]
-					game.state.Letters = game.state.Letters[game.config.DrawSize:]
-					p.state.Letters = append(p.state.Letters, drawn...)
-					err := p.model.SetState(tx, &p.state)
+					for i := range game.players {
+						p := game.players[i]
+						drawn := game.state.Letters[:game.config.StartSize]
+						game.state.Letters = game.state.Letters[game.config.StartSize:]
+						p.state.Letters = append(p.state.Letters, drawn...)
+						err := p.model.SetState(tx, &p.state)
+						if err != nil {
+							log.Println(err)
+							// no return
+						}
+						h.sendJSONToClient(p.client, MsgLetters{"add", drawn})
+						if p.client == client {
+							h.sendJSONToClient(p.client, MsgMessage{"gamestart", "You drew first!"})
+						} else {
+							h.sendJSONToClient(p.client, MsgMessage{"gamestart", player.name + " drew first!"})
+						}
+					}
+					err = game.model.SetState(tx, &game.state)
+					if err != nil {
+						log.Println(err)
+						return
+					}
+					game.model.Lifecycle = "playing"
+					err = game.model.Save(tx)
 					if err != nil {
 						log.Println(err)
 						// no return
 					}
-					h.sendJSONToClient(p.client, MsgLetters{"add", drawn})
-					if p.client == client {
-						h.sendJSONToClient(p.client, MsgMessage{"draw", "You drew!"})
-					} else {
-						h.sendJSONToClient(p.client, MsgMessage{"draw", player.name + " drew!"})
+				} else {
+					tx, err := game.txs.GetTx()
+					if err != nil {
+						log.Println(err)
+						return
 					}
-				}
-				err = game.model.SetState(tx, &game.state)
-				if err != nil {
-					log.Println(err)
-					return
+					defer game.txs.ReleaseTx(tx)
+
+					game.model.Lifecycle = "finished"
+					err = game.model.Save(tx)
+					if err != nil {
+						log.Println(err)
+						// no return
+					}
+					message := "Player " + player.name + " won"
+					h.sendJSONToGame(game, MsgMessage{"gameover", message})
 				}
 			} else {
-				tx, err := game.txs.GetTx()
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				defer game.txs.ReleaseTx(tx)
+				if len(game.state.Letters) >= game.config.DrawSize*len(game.players) {
+					tx, err := game.txs.GetTx()
+					if err != nil {
+						log.Println(err)
+						return
+					}
+					defer game.txs.ReleaseTx(tx)
 
-				game.model.Lifecycle = "finished"
-				err = game.model.Save(tx)
-				if err != nil {
-					log.Println(err)
-					// no return
+					for i := range game.players {
+						p := game.players[i]
+						drawn := game.state.Letters[:game.config.DrawSize]
+						game.state.Letters = game.state.Letters[game.config.DrawSize:]
+						p.state.Letters = append(p.state.Letters, drawn...)
+						err := p.model.SetState(tx, &p.state)
+						if err != nil {
+							log.Println(err)
+							// no return
+						}
+						h.sendJSONToClient(p.client, MsgLetters{"add", drawn})
+						if p.client == client {
+							h.sendJSONToClient(p.client, MsgMessage{"draw", "You drew!"})
+						} else {
+							h.sendJSONToClient(p.client, MsgMessage{"draw", player.name + " drew!"})
+						}
+					}
+					err = game.model.SetState(tx, &game.state)
+					if err != nil {
+						log.Println(err)
+						return
+					}
+				} else {
+					tx, err := game.txs.GetTx()
+					if err != nil {
+						log.Println(err)
+						return
+					}
+					defer game.txs.ReleaseTx(tx)
+
+					game.model.Lifecycle = "finished"
+					err = game.model.Save(tx)
+					if err != nil {
+						log.Println(err)
+						// no return
+					}
+					message := "Player " + player.name + " won"
+					h.sendJSONToGame(game, MsgMessage{"gameover", message})
 				}
-				message := "Player " + player.name + " won"
-				h.sendJSONToGame(game, MsgMessage{"gameover", message})
 			}
 		}
 	} else if cmd.Type == "discard" {
