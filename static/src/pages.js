@@ -31,15 +31,34 @@ import { AuthedUserModel, GameModel } from './models.js';
 import { GameInterface, APITileManager, JSWordManager } from './game.js';
 import { Game } from './component.js';
 
+function loadGame(game) {
+  if (!game.endpoint)
+    game.endpoint = "ws://" + window.location.host + "/game/ws";
+  if (!game.ws)
+    game.ws = new WebSocket(game.endpoint);
+  if (!game.tilemanager)
+    game.tilemanager = new APITileManager(game.ws);
+  if (!game.wordmanager) {
+    game.wordmanager = new JSWordManager();
+    game.wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
+  }
+  if (!game.data) {
+    game.data = new GameInterface({
+      tiles: game.tilemanager,
+      words: game.wordmanager,
+    });
+  }
+}
+
 class RushGamePage extends React.Component {
   constructor(props) {
     super(props);
     this.snackbar = createSnackbarQueue();
     this.state = {};
-    this.state.ws_url = this.props.game?.endpoint || "ws://" + document.location.host + "/game/ws";
-    console.log(this.state.ws_url);
-    this.state.ws = new WebSocket(this.state.ws_url);
-    this.state.ws.addEventListener("message", ({ data: buf }) => {
+    this.game = this.props.game || {};
+    loadGame(this.game);
+    this.state.data = this.game.data;
+    this.game.ws.addEventListener("message", ({ data: buf }) => {
       console.log(buf);
       var data = JSON.parse(buf);
       if (!data) console.log("Error: ", buf);
@@ -67,22 +86,193 @@ class RushGamePage extends React.Component {
         });
       }
     });
-    this.state.tilemanager = new APITileManager(this.state.ws);
-    this.state.wordmanager = new JSWordManager();
-    this.state.wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
-    this.state.data = new GameInterface({
-      tiles: this.state.tilemanager,
-      words: this.state.wordmanager,
-    });
   }
-  render () {
+  render() {
     return (
       <div>
-        <h1>Ad-hoc game</h1>
+        <h1>Rush! game</h1>
         <Game data={ this.state.data } />
         <SnackbarQueue messages={ this.snackbar.messages } />
       </div>
     );
+  }
+}
+
+class PreGamePage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = null;
+    this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
+    console.log(this.admin, this.props);
+  }
+  render() {
+    return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
+  }
+}
+
+class PreGameUserPage extends React.Component {
+  constructor(props) {
+    super(props);
+    console.log(this.props);
+    this.snackbar = createSnackbarQueue();
+    this.state = "pending";
+    this.game = this.props.game || {};
+    loadGame(this.game);
+    this.game.ws.addEventListener("message", ({ data: buf }) => {
+      console.log(buf);
+      var data = JSON.parse(buf);
+      if (!data) console.log("Error: ", buf);
+      if (data.type === "message" || data.type === "draw") {
+        console.log(data.message);
+        this.snackbar.clearAll();
+        this.snackbar.notify({
+          title: <b>Message</b>,
+          body: data.message,
+          icon: 'info',
+          dismissesOnAction: true,
+          timeout: 6000,
+          actions: [{ title: "Cool" }],
+        });
+      } else if (data.type === "admitted") {
+        this.state = "waiting";
+      } else if (data.type === "started") {
+        this.props.setPage('playing');
+      } else if (data.error) {
+        console.error(data.error);
+        this.snackbar.clearAll();
+        this.snackbar.notify({
+          title: <b>Error</b>,
+          body: data.error,
+          icon: 'error_outline',
+          dismissesOnAction: true,
+          timeout: 6000,
+          actions: [{ title: "Aw shucks" }],
+        });
+      }
+    });
+  }
+  render() {
+    let message = "Game is in an unknown state.";
+    if (this.state === "pending") {
+      message = "Please wait to be admitted to the game.";
+    } else if (this.state === "waiting") {
+      message = "Waiting for the game to start...";
+    }
+    return (
+      <div>
+        <p>{ message }</p>
+        <SnackbarQueue messages={ this.snackbar.messages } />
+      </div>
+    );
+  }
+}
+
+class PreGameAdminPage extends React.Component {
+  constructor(props) {
+    super(props);
+    console.log(this.props);
+    this.snackbar = createSnackbarQueue();
+    this.state = {
+      waitlist: [],
+    };
+    this.game = this.props.game || {};
+    loadGame(this.game);
+    this.game.ws.addEventListener("message", ({ data: buf }) => {
+      console.log(buf);
+      var data = JSON.parse(buf);
+      if (!data) console.log("Error: ", buf);
+      if (data.type === "message" || data.type === "draw") {
+        console.log(data.message);
+        this.snackbar.clearAll();
+        this.snackbar.notify({
+          title: <b>Message</b>,
+          body: data.message,
+          icon: 'info',
+          dismissesOnAction: true,
+          timeout: 6000,
+          actions: [{ title: "Cool" }],
+        });
+      } else if (data.type === "invite") {
+        console.log(data.user);
+        this.state.waitlist.push(Object.assign(data.user, { admitted: false }));
+        this.setState(state => state);
+      } else if (data.type === "started") {
+        this.props.setPage('playing');
+      } else if (data.error) {
+        console.error(data.error);
+        this.snackbar.clearAll();
+        this.snackbar.notify({
+          title: <b>Error</b>,
+          body: data.error,
+          icon: 'error_outline',
+          dismissesOnAction: true,
+          timeout: 6000,
+          actions: [{ title: "Aw shucks" }],
+        });
+      }
+    });
+    this.code_ref = React.createRef();
+  }
+  toggleAdmitted(user) {
+    for (let u in this.state.waitlist) {
+      if (this.state.waitlist[u] === user) {
+        if (user.admitted === false) {
+          user.admitted = true;
+          this.setState(state => state);
+          this.game.ws.send(JSON.stringify({
+            "type": "admit",
+            "user": user.id,
+          }));
+        }
+      }
+    }
+  }
+  start() {
+    this.game.ws.send(JSON.stringify({
+      "type": "start",
+    }));
+    this.props.setPage('playing');
+  }
+  render() {
+    return (
+      <div>
+        <h1>Users to be admitted</h1>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="right" span={6}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                <l.List twoLine>
+                  <l.ListGroup>
+                    <l.ListItem disabled>
+                      <p>Share this code to let users join:</p>
+                    </l.ListItem>
+                    <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.snackbar.notify({title: "Copied to cliboard", body: "Game invite code copied!", timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+                      <l.ListItemText className="App-game-code">
+                        <TextField fullwidth readOnly value={ this.game.code } inputRef={ this.code_ref } />
+                      </l.ListItemText>
+                      <l.ListItemMeta icon="content_copy" />
+                    </l.ListItem>
+                  </l.ListGroup>
+                  <l.ListGroup>
+                    { this.state.waitlist.map((user, i) =>
+                        <l.ListItem key={user.name} onClick={ user.admitted ? null : () => this.toggleAdmitted(user) } >
+                        {user.name}
+                        <l.ListItemMeta>
+                          <Switch checked={user.admitted} readOnly />
+                        </l.ListItemMeta>
+                        </l.ListItem>
+                    )}
+                  </l.ListGroup>
+                </l.List>
+                <Button onClick={ () => this.start() } label="Start" raised />
+              </div>
+            </c.Card>
+          </g.GridCell>
+        </g.Grid>
+        <SnackbarQueue messages={ this.snackbar.messages } />
+      </div>
+    )
   }
 }
 
@@ -116,20 +306,20 @@ class CreateGameForm extends React.Component {
     game.mode = this.state.mode;
     game.open = this.state.open;
     game.spectators = this.state.spectators;
-    game.num_players = this.state.num_players;
-    game.num_tiles = this.state.num_tiles;
+    game.num_players = +this.state.num_players;
+    game.num_tiles = +this.state.num_tiles;
     game.tiles_per_player = this.state.tiles_per_player;
-    game.start_size = this.state.start_size;
-    game.draw_size = this.state.draw_size;
-    game.discard_penalty = this.state.discard_penalty;
+    game.start_size = +this.state.start_size;
+    game.draw_size = +this.state.draw_size;
+    game.discard_penalty = +this.state.discard_penalty;
 
     await game.create();
 
     if (game.error !== null) {
-      this.setError(game.error);
+      this.setError(game.error.message);
     } else {
-      game.endpoint = "ws://" + document.location.host + "/game/" + game.id + "/ws?user_id=" + this.props.user.id;
       this.props.setGame(game);
+      this.props.setPage('play');
     }
   }
 
@@ -226,26 +416,18 @@ class CreateGamePage extends React.Component {
   render() {
     return (
       <div className="App-page">
-        <ThemeProvider
-          options={{
-            surface: 'white',
-            onSurface: 'black',
-            textPrimaryOnBackground: 'black'
-          }}
-        >
-          <div>
-            <Typography use="headline2">Create a Game</Typography>
-            <p>
-              Invite your friends to play online with you!<br />
-            </p>
-          </div>
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} />
-            <g.GridCell align="middle" span={6}>
-              <CreateGameForm {...this.props} />
-            </g.GridCell>
-          </g.Grid>
-        </ThemeProvider>
+        <div>
+          <Typography use="headline2">Create a Game</Typography>
+          <p>
+            Invite your friends to play online with you!<br />
+          </p>
+        </div>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="middle" span={6}>
+            <CreateGameForm {...this.props} />
+          </g.GridCell>
+        </g.Grid>
       </div>
     );
   }
@@ -274,8 +456,9 @@ class JoinGamePage extends React.Component {
 
     if (game.error !== null) {
       console.error(game.error);
-      this.setError(game.error);
+      this.setError(game.error.message);
     } else {
+      this.props.setGame(game);
       this.props.setPage('play');
     }
   }
@@ -304,66 +487,58 @@ class JoinGamePage extends React.Component {
   render() {
     return (
       <div className="App-page">
-        <ThemeProvider
-          options={{
-            surface: 'white',
-            onSurface: 'black',
-            textPrimaryOnBackground: 'black'
-          }}
-        >
-          <div>
-            <Typography use="headline2">Play a Game</Typography>
-            <p>
-              Whether or not you're looking to start a new game or join an
-              existing one, you've found the right place.
-            </p>
-          </div>
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={6}>
-              <c.Card>
-                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                  <div>
-                    <Typography use="headline2">Join a Game</Typography>
-                    <p>
-                      Good luck, and may the odds be ever in your favor!<br /><br />
-                      <a href="#create">Looking to make a new game room? Create one here!</a>
-                    </p>
-                  </div>
-
-                  <form onSubmit={ this.handleSubmit.bind(this) }>
-                    <l.List twoLine>
-                      <l.ListGroup>
-                        <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
-                        <l.ListItem><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
-                      </l.ListGroup>
-                    </l.List>
-
-                    <Button label="Join" raised />
-                  </form>
-                  <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
-                    <d.DialogTitle>Error!</d.DialogTitle>
-                    <d.DialogContent>{ this.state.error?.message || this.state.error }</d.DialogContent>
-                    <d.DialogActions>
-                      <d.DialogButton action="close">OK</d.DialogButton>
-                    </d.DialogActions>
-                  </d.Dialog>
+        <div>
+          <Typography use="headline2">Play a Game</Typography>
+          <p>
+            Whether or not you're looking to start a new game or join an
+            existing one, you've found the right place.
+          </p>
+        </div>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={6}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                <div>
+                  <Typography use="headline2">Join a Game</Typography>
+                  <p>
+                    Good luck, and may the odds be ever in your favor!<br /><br />
+                    <a href="#create">Looking to make a new game room? Create one here!</a>
+                  </p>
                 </div>
-              </c.Card>
-            </g.GridCell>
-            <g.GridCell align="right" span={6}>
-              <c.Card>
-                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                  <div>
-                    <Typography use="headline2">Create a Game</Typography>
-                    <p>
-                      <a href="#create">Looking to make a new game room? Create one here!</a>
-                    </p>
-                  </div>
+
+                <form onSubmit={ this.handleSubmit.bind(this) }>
+                  <l.List twoLine>
+                    <l.ListGroup>
+                      <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
+                      <l.ListItem><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
+                    </l.ListGroup>
+                  </l.List>
+
+                  <Button label="Join" raised />
+                </form>
+                <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+                  <d.DialogTitle>Error!</d.DialogTitle>
+                  <d.DialogContent>{ this.state.error?.message || this.state.error }</d.DialogContent>
+                  <d.DialogActions>
+                    <d.DialogButton action="close">OK</d.DialogButton>
+                  </d.DialogActions>
+                </d.Dialog>
+              </div>
+            </c.Card>
+          </g.GridCell>
+          <g.GridCell align="right" span={6}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                <div>
+                  <Typography use="headline2">Create a Game</Typography>
+                  <p>
+                    <a href="#create">Looking to make a new game room? Create one here!</a>
+                  </p>
                 </div>
-              </c.Card>
-            </g.GridCell>
-          </g.Grid>
-        </ThemeProvider>
+              </div>
+            </c.Card>
+          </g.GridCell>
+        </g.Grid>
       </div>
     );
   }
@@ -409,44 +584,38 @@ class SignupPage extends React.Component {
 
     return (
       <div className="App-page">
-        <ThemeProvider
-          options={{
-            surface: 'white',
-          }}
-        >
-          <div>
-            <Typography use="headline2">Sign up!</Typography>
-            <p>
-              We&apos;re happy you&apos;re joining WordCorp!<br /><br />
-              We only need a username or an email (or both, if you&apos;d like account recovery or notifications) and a password.<br /><br />
-              If you&apos;re not happy with your display name being your username, feel free to set one.
-            </p>
-          </div>
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} />
-            <g.GridCell align="middle" span={6}>
-              <c.Card>
-                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+        <div>
+          <Typography use="headline2">Sign up!</Typography>
+          <p>
+            We&apos;re happy you&apos;re joining WordCorp!<br /><br />
+            We only need a username or an email (or both, if you&apos;d like account recovery or notifications) and a password.<br /><br />
+            If you&apos;re not happy with your display name being your username, feel free to set one.
+          </p>
+        </div>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="middle" span={6}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
 
-                  <form onSubmit={ this.handleSubmit.bind(this) }>
-                    <TextField fullwidth placeholder="username" name="username" inputRef={ this.username } /><br />
-                    <TextField fullwidth placeholder="email" name="email" type="email" inputRef={ this.email } /><br />
-                    <TextField fullwidth placeholder="display" name="display" inputRef={ this.display } /><br />
-                    <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
-                    <Button label="Sign up" raised />
-                  </form>
-                  <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
-                    <d.DialogTitle>Error!</d.DialogTitle>
-                    <d.DialogContent>{ this.state.error }</d.DialogContent>
-                    <d.DialogActions>
-                      <d.DialogButton action="close">OK</d.DialogButton>
-                    </d.DialogActions>
-                  </d.Dialog>
-                </div>
-              </c.Card>
-            </g.GridCell>
-          </g.Grid>
-        </ThemeProvider>
+                <form onSubmit={ this.handleSubmit.bind(this) }>
+                  <TextField fullwidth placeholder="username" name="username" inputRef={ this.username } /><br />
+                  <TextField fullwidth placeholder="email" name="email" type="email" inputRef={ this.email } /><br />
+                  <TextField fullwidth placeholder="display" name="display" inputRef={ this.display } /><br />
+                  <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
+                  <Button label="Sign up" raised />
+                </form>
+                <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+                  <d.DialogTitle>Error!</d.DialogTitle>
+                  <d.DialogContent>{ this.state.error }</d.DialogContent>
+                  <d.DialogActions>
+                    <d.DialogButton action="close">OK</d.DialogButton>
+                  </d.DialogActions>
+                </d.Dialog>
+              </div>
+            </c.Card>
+          </g.GridCell>
+        </g.Grid>
       </div>
     );
   }
@@ -479,7 +648,7 @@ class LoginPage extends React.Component {
 
     if (user.authed) {
       this.props.setUser(user);
-      this.props.setPage('home');
+      this.props.setPage('join');
     } else {
       this.setError(user.error.message);
     }
@@ -493,40 +662,34 @@ class LoginPage extends React.Component {
 
     return (
       <div className="App-page">
-        <ThemeProvider
-          options={{
-            surface: 'white',
-          }}
-        >
-          <div>
-            <Typography use="headline2">Login</Typography>
-            <p>
-              Enter your username or email and password to log into WordCorp.<br/><br/>
-              <a href="#signup">New user? Sign up instead!</a>
-            </p>
-          </div>
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} />
-            <g.GridCell align="middle" span={6}>
-              <c.Card>
-                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                  <form onSubmit={ this.handleSubmit.bind(this) }>
-                    <TextField fullwidth placeholder="identifier" name="identifier" inputRef={ this.identifier } /><br />
-                    <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
-                    <Button label="Login" raised />
-                  </form>
-                  <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
-                    <d.DialogTitle>Error!</d.DialogTitle>
-                    <d.DialogContent>{ this.state.error }</d.DialogContent>
-                    <d.DialogActions>
-                      <d.DialogButton action="close">OK</d.DialogButton>
-                    </d.DialogActions>
-                  </d.Dialog>
-                </div>
-              </c.Card>
-            </g.GridCell>
-          </g.Grid>
-        </ThemeProvider>
+        <div>
+          <Typography use="headline2">Login</Typography>
+          <p>
+            Enter your username or email and password to log into WordCorp.<br/><br/>
+            <a href="#signup">New user? Sign up instead!</a>
+          </p>
+        </div>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="middle" span={6}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                <form onSubmit={ this.handleSubmit.bind(this) }>
+                  <TextField fullwidth placeholder="identifier" name="identifier" inputRef={ this.identifier } /><br />
+                  <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
+                  <Button label="Login" raised />
+                </form>
+                <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+                  <d.DialogTitle>Error!</d.DialogTitle>
+                  <d.DialogContent>{ this.state.error }</d.DialogContent>
+                  <d.DialogActions>
+                    <d.DialogButton action="close">OK</d.DialogButton>
+                  </d.DialogActions>
+                </d.Dialog>
+              </div>
+            </c.Card>
+          </g.GridCell>
+        </g.Grid>
       </div>
     );
   }
@@ -536,25 +699,32 @@ class HomePage extends React.Component {
   render() {
     return (
       <div className="App-hero App-page">
-        <Theme use={ 'onPrimary' } >
-          <div className="styles.intro">
-            <div>
-              <Typography use="headline2">
-                Welcome to WordCorp!
-              </Typography>
+        <ThemeProvider
+          options={{
+            surface: '#19718A',
+            onSurface: '#06313D'
+          }}
+        >
+          <Theme use={ 'onPrimary' } >
+            <div className="styles.intro">
+              <div>
+                <Typography use="headline2">
+                  Welcome to WordCorp!
+                </Typography>
+              </div>
+              <div>
+                <Typography use="headline3">
+                  Home of wonderful word games
+                </Typography>
+              </div>
+              <p>
+                Hi! I&apos;m Alex and he&apos;s Nick and we&apos;ve created a fun website to play games on.
+                <br /><br />
+                At least, we think it is fun.
+              </p>
             </div>
-            <div>
-              <Typography use="headline3">
-                Home of wonderful word games
-              </Typography>
-            </div>
-            <p>
-              Hi! I&apos;m Alex and he&apos;s Nick and we&apos;ve created a fun website to play games on.
-              <br /><br />
-              At least, we think it is fun.
-            </p>
-          </div>
-        </Theme>
+          </Theme>
+        </ThemeProvider>
       </div>
     );
   }
@@ -588,7 +758,8 @@ class Page extends React.Component {
         { this.props.page === 'signup' && <SignupPage setPage={ this.props.setPage } setUser={ this.props.setUser } /> }
         { this.props.page === 'create' && <CreateGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
         { this.props.page === 'join' && <JoinGamePage user={ this.props.user } setPage={ this.props.setPage } setGame={ this.props.setGame } /> }
-        { this.props.page === 'play' && <RushGamePage game={ this.props.game } setPage={ this.props.setPage } /> }
+        { this.props.page === 'playing' && <RushGamePage game={ this.props.game } setPage={ this.props.setPage } /> }
+        { this.props.page === 'play' && <PreGamePage user={ this.props.user } game={ this.props.game } setPage={ this.props.setPage } /> }
       </>
     );
   }

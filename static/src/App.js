@@ -62,11 +62,13 @@ class App extends React.Component {
             primary: '#1397BD',
             onPrimary: 'white',
             primaryBg: '#000',
-            surface: '#19718A',
-            onSurface: '#06313D',
+            surface: 'white',
+            onSurface: 'black',
             secondary: '#4CAF50',
             background: '#18353D',
-            onSecondary: 'white'
+            onSecondary: 'white',
+            textPrimaryOnBackground: 'black',
+            textHintOnBackground: 'black'
           }}
         >
 

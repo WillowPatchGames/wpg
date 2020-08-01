@@ -151,7 +151,8 @@ class GameModel {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'X-Auth-Token': ret.user.token,
       },
       redirect: 'follow'
     });
@@ -167,6 +168,36 @@ class GameModel {
 
     Object.assign(ret, result);
     ret.error = null;
+    ret.endpoint = "ws://" + document.location.host + "/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+    return ret;
+  }
+
+  static async FromCode(user, code) {
+    var ret = new GameModel(user);
+
+    var url = ret.api + '/game/find?join=' + code.toLowerCase();
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Auth-Token': ret.user.token,
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      ret.error = result;
+      return ret;
+    }
+
+    Object.assign(ret, result);
+    ret.error = null;
+    ret.endpoint = "ws://" + document.location.host + "/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
     return ret;
   }
 
@@ -190,7 +221,8 @@ class GameModel {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
       },
       redirect: 'follow',
       body: JSON.stringify(request)
@@ -207,6 +239,7 @@ class GameModel {
     this.error = null;
     delete result["config"];
     Object.assign(this, result);
+    this.endpoint = "ws://" + document.location.host + "/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
     return this;
   }
 }
