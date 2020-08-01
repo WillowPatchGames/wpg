@@ -52,3 +52,5 @@ const InsertPlayer = "INSERT INTO " + t_players + " (game_id, user_id, class, in
 
 const SetPlayerState = "UPDATE " + t_players + " SET state=$1 WHERE id=$2"
 const GetPlayerState = "SELECT state FROM " + t_players + " WHERE id=$1"
+
+const SavePlayer = "UPDATE " + t_players + " SET class=$1 WHERE id=$2"

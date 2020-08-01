@@ -50,14 +50,14 @@ type ActiveGame struct {
 	model   models.GameModel
 	config  RushGameConfig
 	state   *GameState
-	players []*ActivePlayer
+	players map[uint64]*ActivePlayer
 	txs     GameTxs
 }
 
 // ActivePlayer state
 type ActivePlayer struct {
 	model  models.PlayerModel
-	name   string
+	user   models.UserModel
 	state  *PlayerState
 	game   *ActiveGame
 	client *Client
@@ -127,6 +127,7 @@ func (hub *Hub) connectGame(gameid uint64) (*ActiveGame, error) {
 	}
 
 	game.model = gamedb
+	game.players = make(map[uint64]*ActivePlayer)
 	hub.games[gameid] = game
 	return game, nil
 }
@@ -173,9 +174,13 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 	}
 
 	// Maybe the player exists in the game already
-	for i := range game.players {
-		if game.players[i].model.UserId == userid {
-			return game.players[i], nil
+	player, present = game.players[userid]
+	if present {
+		if player.client == nil {
+			player.client = client
+			return player, nil
+		} else {
+			return nil, errors.New("Player was already connected with different connection")
 		}
 	}
 
@@ -233,13 +238,13 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 
 	player = &ActivePlayer{
 		model:  playerdb,
-		name:   userdb.Display,
+		user:   userdb,
 		state:  state,
 		game:   game,
 		client: client,
 	}
 
-	game.players = append(game.players, player)
+	game.players[userdb.Id] = player
 	hub.clients[client] = player
 
 	return player, nil
@@ -254,7 +259,11 @@ func (h *Hub) getPlayer(client *Client) (*ActivePlayer, bool) {
 }
 
 func (h *Hub) deleteClient(client *Client) {
-	delete(h.clients, client)
+	player, present := h.clients[client]
+	if present {
+		player.client = nil
+		delete(h.clients, client)
+	}
 	close(client.send)
 }
 
@@ -283,8 +292,10 @@ func (h *Hub) sendErrToClient(client *Client, err string) {
 }
 
 func (h *Hub) sendToGame(game *ActiveGame, message string) {
-	for i := range game.players {
-		h.sendToClient(game.players[i].client, message)
+	for _, player := range game.players {
+		if player.client != nil {
+			h.sendToClient(player.client, message)
+		}
 	}
 }
 
@@ -318,6 +329,22 @@ type MsgMessage struct {
 type MsgDiscard struct {
 	Type   string `json:"type"`
 	Letter Letter `json:"letter"`
+}
+
+// MsgInvite for admining users
+type MsgInvite struct {
+	Type   string `json:"type"`
+	User MsgUser `json:"user"`
+}
+
+type MsgUser struct {
+	Name string `json:"name"`
+	Id uint64 `json:"id"`
+}
+
+type MsgAdmit struct {
+	Type string `json:"type"`
+	User uint64 `json:"user"`
 }
 
 func (h *Hub) actOn(client *Client, buf string) {
@@ -361,11 +388,13 @@ func (h *Hub) actOn(client *Client, buf string) {
 							log.Println(err)
 							// no return
 						}
-						h.sendJSONToClient(p.client, MsgLetters{"add", drawn})
-						if p.client == client {
-							h.sendJSONToClient(p.client, MsgMessage{"gamestart", "You drew first!"})
-						} else {
-							h.sendJSONToClient(p.client, MsgMessage{"gamestart", player.name + " drew first!"})
+						if p.client != nil {
+							h.sendJSONToClient(p.client, MsgLetters{"add", drawn})
+							if p.client == client {
+								h.sendJSONToClient(p.client, MsgMessage{"gamestart", "You drew first!"})
+							} else {
+								h.sendJSONToClient(p.client, MsgMessage{"gamestart", player.user.Display + " drew first!"})
+							}
 						}
 					}
 					err = game.model.SetState(tx, &game.state)
@@ -393,7 +422,7 @@ func (h *Hub) actOn(client *Client, buf string) {
 						log.Println(err)
 						// no return
 					}
-					message := "Player " + player.name + " won"
+					message := "Player " + player.user.Display + " won"
 					h.sendJSONToGame(game, MsgMessage{"gameover", message})
 				}
 			} else {
@@ -415,11 +444,13 @@ func (h *Hub) actOn(client *Client, buf string) {
 							log.Println(err)
 							// no return
 						}
-						h.sendJSONToClient(p.client, MsgLetters{"add", drawn})
-						if p.client == client {
-							h.sendJSONToClient(p.client, MsgMessage{"draw", "You drew!"})
-						} else {
-							h.sendJSONToClient(p.client, MsgMessage{"draw", player.name + " drew!"})
+						if p.client != nil {
+							h.sendJSONToClient(p.client, MsgLetters{"add", drawn})
+							if p.client == client {
+								h.sendJSONToClient(p.client, MsgMessage{"draw", "You drew!"})
+							} else {
+								h.sendJSONToClient(p.client, MsgMessage{"draw", player.user.Display + " drew!"})
+							}
 						}
 					}
 					err = game.model.SetState(tx, &game.state)
@@ -441,7 +472,7 @@ func (h *Hub) actOn(client *Client, buf string) {
 						log.Println(err)
 						// no return
 					}
-					message := "Player " + player.name + " won"
+					message := "Player " + player.user.Display + " won"
 					h.sendJSONToGame(game, MsgMessage{"gameover", message})
 				}
 			}
@@ -504,8 +535,46 @@ func (h *Hub) actOn(client *Client, buf string) {
 			}
 		}
 	} else if cmd.Type == "swap" {
-	} else if cmd.Type == "" {
+	} else if cmd.Type == "admit" {
+		var msg MsgAdmit
+		err := json.Unmarshal([]byte(buf), &msg)
+		if err != nil {
+			h.sendErrToClient(client, err.Error())
+			return
+		}
 
+		if player, ok := h.getPlayer(client); ok {
+			game := player.game
+			admitted, ok := game.players[msg.User]
+			if ok {
+				admitted.model.Class = "player"
+				tx, err := game.txs.GetTx()
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				defer game.txs.ReleaseTx(tx)
+				err = player.model.Save(tx)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				if admitted.client != nil {
+					h.sendJSONToClient(admitted.client, MsgMessage{"admitted", "You are admitted to the game. Please wait."})
+				}
+			} else {
+				h.sendErrToClient(client, "Unknown user")
+			}
+		}
+	} else if cmd.Type == "start" {
+		if player, ok := h.getPlayer(client); ok {
+			game := player.game
+			for _, player := range game.players {
+				if player.client != nil {
+					h.sendJSONToClient(player.client, MsgMessage{"started", "The game is starting now!"})
+				}
+			}
+		}
 	} else {
 		h.sendErrToClient(client, "Unrecognized message type: "+cmd.Type+".")
 	}
@@ -528,12 +597,22 @@ func (h *Hub) Run() {
 }
 
 func (h *Hub) registerClient(news ClientRegister) {
-	_, err := h.connectPlayer(news.client, news.gameid, news.userid)
+	player, err := h.connectPlayer(news.client, news.gameid, news.userid)
 	if err != nil {
 		log.Println(err)
 		h.sendErrToClient(news.client, err.Error())
 		return
 	}
-	h.sendJSONToClient(news.client, MsgMessage{"admitted", "You are admitted to the game. Please wait."})
+	h.sendJSONToClient(news.client, MsgMessage{"message", "HI"})
+	game := player.game
+	if player.user.Id != game.model.OwnerId {
+		h.sendJSONToClient(news.client, MsgMessage{"pending", "You will be admitted to the game shortly."})
+		admin, present := game.players[game.model.OwnerId]
+		if present && player.model.Class == "pending" && admin.client != nil {
+			h.sendJSONToClient(admin.client, MsgInvite{"invite", MsgUser{player.user.Display, player.user.Id}})
+		}
+	} else {
+		h.sendJSONToClient(news.client, MsgMessage{"admitted", "Welcome, game admin!."})
+	}
 	// TODO: send join notification to clients
 }

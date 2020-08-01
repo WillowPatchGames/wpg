@@ -71,6 +71,20 @@ func (player *PlayerModel) Create(transaction *sql.Tx) error {
 	return stmt.Close()
 }
 
+func (player *PlayerModel) Save(transaction *sql.Tx) error {
+	stmt, err := transaction.Prepare(database.SavePlayer)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(player.Class, player.Id)
+	if err != nil {
+		return err
+	}
+
+	return stmt.Close()
+}
+
 func (player *PlayerModel) GetGame(transaction *sql.Tx) (*GameModel, error) {
 	var game *GameModel = new(GameModel)
 	err := game.FromId(transaction, player.GameId)
