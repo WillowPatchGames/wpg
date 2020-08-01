@@ -348,7 +348,6 @@ type MsgAdmit struct {
 }
 
 func (h *Hub) actOn(client *Client, buf string) {
-	log.Println("actOn - ", h)
 	var cmd MsgType
 	err := json.Unmarshal([]byte(buf), &cmd)
 	if err != nil {
@@ -362,9 +361,6 @@ func (h *Hub) actOn(client *Client, buf string) {
 				return
 			}
 			game := player.game
-			log.Println(game)
-			log.Println(game.model)
-			log.Println(game.model.Lifecycle)
 			if game.model.Lifecycle == "finished" {
 				h.sendErrToClient(client, "Game finished.")
 				return

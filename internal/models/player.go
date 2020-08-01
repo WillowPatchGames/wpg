@@ -60,7 +60,9 @@ func (player *PlayerModel) Create(transaction *sql.Tx) error {
 		return err
 	}
 
-	player.Class = "pending"
+	if player.Class == "" {
+		player.Class = "pending"
+	}
 	player.InviteCode = utils.RandomWords()
 
 	err = stmt.QueryRow(player.GameId, player.UserId, player.Class, player.InviteCode).Scan(&player.Id)
