@@ -9,13 +9,13 @@ import (
 )
 
 type GameModel struct {
-	Id       uint64
-	Eid      uint64
-	OwnerId  uint64
-	Style    string
-	Open     bool
-	JoinCode string
-	Finished bool
+	Id        uint64
+	Eid       uint64
+	OwnerId   uint64
+	Style     string
+	Open      bool
+	JoinCode  string
+	Lifecycle string
 }
 
 func (game *GameModel) FromEid(transaction *sql.Tx, id uint64) error {
@@ -24,7 +24,7 @@ func (game *GameModel) FromEid(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.Style, &game.Open, &game.JoinCode, &game.Finished)
+	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
@@ -47,6 +47,8 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 	if game.Open {
 		game.JoinCode = utils.RandomWords()
 	}
+
+	game.Lifecycle = "pending"
 
 	err = stmt.QueryRow(game.Eid, game.OwnerId, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
 	if err != nil {

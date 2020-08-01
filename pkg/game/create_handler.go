@@ -26,7 +26,7 @@ type createHandlerResponse struct {
 	Style    string `json:"style"`
 	Open     bool   `json:"open"`
 	Code     string `json:"code"`
-	Finished bool   `json:"finished"`
+	Lifecycle string   `json:"lifecycle"`
 }
 
 type CreateHandler struct {
@@ -120,11 +120,11 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handle.resp.GameID = game.Eid
-	handle.resp.Owner = game.OwnerId
+	handle.resp.Owner = user.Eid
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open
 	handle.resp.Code = game.JoinCode
-	handle.resp.Finished = game.Finished
+	handle.resp.Lifecycle = game.Lifecycle
 
 	data, _ = json.Marshal(handle.resp)
 	log.Println("Response:", string(data))

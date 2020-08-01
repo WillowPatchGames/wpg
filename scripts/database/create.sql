@@ -4,7 +4,7 @@ CREATE TABLE metadata (
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (2);
+INSERT INTO metadata (version) VALUES (4);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
@@ -12,6 +12,7 @@ CREATE TABLE users (
   username VARCHAR (512) NOT NULL,
   display  VARCHAR (512),
   email    VARCHAR (512),
+  created  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(eid),
   UNIQUE(username),
   UNIQUE(email)
@@ -33,6 +34,7 @@ CREATE TABLE authentication (
 );
 
 CREATE TYPE game_mode AS ENUM ('rush');
+CREATE TYPE game_lifecycle AS ENUM ('pending', 'playing', 'finished');
 
 CREATE TABLE games (
   id        BIGSERIAL PRIMARY KEY,
@@ -43,7 +45,8 @@ CREATE TABLE games (
   join_code VARCHAR(1024),
   config    TEXT DEFAULT '{}',
   state     TEXT DEFAULT '{}',
-  finished  BOOLEAN DEFAULT false,
+  lifecycle game_lifecycle DEFAULT 'pending',
+  created   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (owner_id) REFERENCES users(id),
   UNIQUE(eid),

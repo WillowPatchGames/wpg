@@ -18,7 +18,12 @@ func BuildRouter(router *mux.Router, debug bool) {
 	var createFactory = func() parsel.Parseltongue {
 		return new(CreateHandler)
 	}
+	var queryFactory = func() parsel.Parseltongue {
+		return new(QueryHandler)
+	}
 
+	router.Handle("/game/{GameID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/game", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/games", parsel.Wrap(createFactory, config)).Methods("POST")
 
 	var sake SocketHandler
