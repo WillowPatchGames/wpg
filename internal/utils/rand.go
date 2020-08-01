@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -85,10 +86,15 @@ func RandomToken() string {
 }
 
 func loadWords() {
-	var wordfile = "/usr/share/dict/words"
+	var wordfile = "assets/wordlist.txt"
 	file, err := os.Open(wordfile)
 	if err != nil {
-		panic(err)
+		wordfile = "/usr/share/dict/words"
+		file, err = os.Open(wordfile)
+		if err != nil {
+			panic(err)
+		}
+		log.Println("Using fallback dictionary")
 	}
 
 	reader := bufio.NewReader(file)
