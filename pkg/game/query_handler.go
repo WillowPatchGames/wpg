@@ -9,12 +9,14 @@ import (
 	"git.cipherboy.com/WordCorp/api/internal/utils"
 
 	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/auth"
 	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
 type queryHandlerData struct {
-	GameID uint64 `json:"id,omitempty" query:"id,omitempty" route:"GameID,omitempty"`
+	GameID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"GameID,omitempty"`
 	JoinCode string `json:"join,omitempty" query:"join,omitempty" route:"JoinCode,omitempty"`
+	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type queryHandlerResponse struct {
@@ -29,9 +31,11 @@ type QueryHandler struct {
 	http.Handler
 	utils.HTTPRequestHandler
 	parsel.Parseltongue
+	auth.Authed
 
 	req  queryHandlerData
 	resp queryHandlerResponse
+	user *models.UserModel
 }
 
 func (handle QueryHandler) GetResponse() interface{} {
@@ -40,6 +44,14 @@ func (handle QueryHandler) GetResponse() interface{} {
 
 func (handle *QueryHandler) GetObjectPointer() interface{} {
 	return &handle.req
+}
+
+func (handle *QueryHandler) GetToken() string {
+	return handle.req.ApiToken
+}
+
+func (handle *QueryHandler) SetUser(user *models.UserModel) {
+	handle.user = user
 }
 
 func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

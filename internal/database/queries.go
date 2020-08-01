@@ -25,10 +25,12 @@ const GetPassword = "SELECT value FROM " + t_auths + " WHERE user_id=$1 AND cate
 // Auth Model
 const CreateAPIToken = "INSERT INTO " + t_auths + " (user_id, category, key, expires) VALUES ($1, 'api_token', $2, (NOW() + interval '7 days'))"
 
+const FromAPIToken = "SELECT user_id FROM authentication WHERE category='api_token' AND key=$1 AND expires > NOW()"
+
 // Game Model
 
-const GetGameFromID =   "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
-const GetGameFromEID =  "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
+const GetGameFromID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
+const GetGameFromEID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
 const GetGameFromCode = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE join_code=$1"
 
 const InsertGame = "INSERT INTO " + t_games + " (eid, owner_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5) RETURNING id"

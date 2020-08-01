@@ -93,6 +93,16 @@ func (user *UserModel) FromEmail(transaction *sql.Tx, mail string) error {
 	return nil
 }
 
+func (user *UserModel) FromAPIToken(transaction *sql.Tx, token string) error {
+	var auth AuthModel
+	err := auth.FromAPIToken(transaction, token)
+	if err != nil {
+		return err
+	}
+
+	return user.FromId(transaction, auth.UserId)
+}
+
 func (user *UserModel) Create(transaction *sql.Tx) error {
 	stmt, err := transaction.Prepare(database.InsertUser)
 	if err != nil {

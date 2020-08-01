@@ -126,7 +126,7 @@ func (hub *Hub) connectGame(gameid uint64) (*ActiveGame, error) {
 		return nil, err
 	}
 
-  game.model = gamedb
+	game.model = gamedb
 	hub.games[gameid] = game
 	return game, nil
 }
@@ -196,10 +196,14 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 		return nil, err
 	}
 
+	class := "pending"
+	if userid == game.model.OwnerId {
+		class = "player"
+	}
 	playerdb := models.PlayerModel{
 		GameId: gameid,
 		UserId: userid,
-		Class:  "player", // TODO: pending
+		Class:  class,
 	}
 	var state *PlayerState
 	// Maybe the player exists in the database already
@@ -326,6 +330,10 @@ func (h *Hub) actOn(client *Client, buf string) {
 	}
 	if cmd.Type == "draw" {
 		if player, ok := h.getPlayer(client); ok {
+			if player.model.Class != "player" {
+				h.sendErrToClient(client, "Sorry, you cannot draw.")
+				return
+			}
 			game := player.game
 			log.Println(game)
 			log.Println(game.model)
@@ -440,6 +448,10 @@ func (h *Hub) actOn(client *Client, buf string) {
 		}
 	} else if cmd.Type == "discard" {
 		if player, ok := h.getPlayer(client); ok {
+			if player.model.Class != "player" {
+				h.sendErrToClient(client, "Sorry, you cannot discard.")
+				return
+			}
 			game := player.game
 			if len(game.state.Letters) >= game.config.DiscardPenalty {
 				var msg MsgDiscard
@@ -492,6 +504,7 @@ func (h *Hub) actOn(client *Client, buf string) {
 			}
 		}
 	} else if cmd.Type == "swap" {
+	} else if cmd.Type == "" {
 
 	} else {
 		h.sendErrToClient(client, "Unrecognized message type: "+cmd.Type+".")

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	re "regexp"
+	"strings"
 )
 
 // This program attempts to reverse engineer useful frequencies for letters
@@ -122,8 +122,6 @@ func main() {
 
 	loadWords(wordlist)
 	fmt.Println("Loaded:", len(words), "words")
-
-
 
 	// Special case: two
 	specialCaseTwo()

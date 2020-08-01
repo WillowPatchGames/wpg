@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/auth"
 	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 
 	"git.cipherboy.com/WordCorp/api/internal/database"
@@ -144,22 +145,33 @@ func (c *Client) writePump() {
 }
 
 type socketHandlerRequest struct {
-	GameID uint64 `query:"id,omitempty" route:"GameID,omitempty"`
-	UserID uint64 `query:"user_id,omitempty" route:"UserID,omitempty"`
+	GameID   uint64 `query:"id,omitempty" route:"GameID,omitempty"`
+	UserID   uint64 `query:"user_id,omitempty" route:"UserID,omitempty"`
+	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 // SocketHandler is a handler for game connections
 type SocketHandler struct {
 	http.Handler
 	parsel.Parseltongue
+	auth.Authed
 
 	Hub *Hub
 
-	req socketHandlerRequest
+	req  socketHandlerRequest
+	user *models.UserModel
 }
 
 func (handle *SocketHandler) GetObjectPointer() interface{} {
 	return &handle.req
+}
+
+func (handle *SocketHandler) GetToken() string {
+	return handle.req.ApiToken
+}
+
+func (handle *SocketHandler) SetUser(user *models.UserModel) {
+	handle.user = user
 }
 
 func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

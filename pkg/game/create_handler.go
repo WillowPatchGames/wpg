@@ -10,14 +10,16 @@ import (
 	"git.cipherboy.com/WordCorp/api/internal/utils"
 
 	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/auth"
 	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
 type createHandlerData struct {
-	OwnerID uint64          `json:"owner"`
-	Style   string          `json:"style"`
-	Open    bool            `json:"open"`
-	Config  *RushGameConfig `json:"config"`
+	OwnerID  uint64          `json:"owner"`
+	Style    string          `json:"style"`
+	Open     bool            `json:"open"`
+	Config   *RushGameConfig `json:"config"`
+	ApiToken string          `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type createHandlerResponse struct {
@@ -33,9 +35,11 @@ type CreateHandler struct {
 	http.Handler
 	utils.HTTPRequestHandler
 	parsel.Parseltongue
+	auth.Authed
 
 	req  createHandlerData
 	resp createHandlerResponse
+	user *models.UserModel
 }
 
 func (handle CreateHandler) GetResponse() interface{} {
@@ -44,6 +48,14 @@ func (handle CreateHandler) GetResponse() interface{} {
 
 func (handle *CreateHandler) GetObjectPointer() interface{} {
 	return &handle.req
+}
+
+func (handle *CreateHandler) GetToken() string {
+	return handle.req.ApiToken
+}
+
+func (handle *CreateHandler) SetUser(user *models.UserModel) {
+	handle.user = user
 }
 
 func (handle CreateHandler) verifyRequest() error {

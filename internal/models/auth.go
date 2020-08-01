@@ -3,12 +3,14 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"git.cipherboy.com/WordCorp/api/internal/database"
 	"git.cipherboy.com/WordCorp/api/internal/utils"
 )
 
 type AuthModel struct {
+	UserId   uint64
 	ApiToken string
 }
 
@@ -25,10 +27,28 @@ func (token *AuthModel) FromPassword(transaction *sql.Tx, user UserModel, passwo
 
 	stmt, err := transaction.Prepare(database.CreateAPIToken)
 	if err != nil {
+		log.Println("AuthModel.FromPassword(): Preparing query? ", err)
 		return err
 	}
 
 	_, err = stmt.Exec(user.Id, token.ApiToken)
+	if err != nil {
+		log.Println("AuthModel.FromPassword(): Creating token? ", err)
+		return err
+	}
+
+	token.UserId = user.Id
+
+	return stmt.Close()
+}
+
+func (token *AuthModel) FromAPIToken(transaction *sql.Tx, value string) error {
+	stmt, err := transaction.Prepare(database.FromAPIToken)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.QueryRow(value).Scan(&token.UserId)
 	if err != nil {
 		return err
 	}

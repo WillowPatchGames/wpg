@@ -113,6 +113,12 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
 	handle.resp.UserID = user.Eid
 	handle.resp.Username = user.Username
 	handle.resp.Email = user.Email
