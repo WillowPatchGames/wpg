@@ -4,7 +4,7 @@ CREATE TABLE metadata (
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (4);
+INSERT INTO metadata (version) VALUES (5);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
@@ -53,13 +53,17 @@ CREATE TABLE games (
   UNIQUE(join_code)
 );
 
+CREATE TYPE player_type AS ENUM ('pending', 'spectator', 'player');
+
 CREATE TABLE players (
   id          BIGSERIAL PRIMARY KEY,
   game_id     BIGSERIAL,
   user_id     BIGSERIAL,
+  class       player_type DEFAULT 'pending',
   invite_code VARCHAR(1024),
-  state       TEXT,
+  state       TEXT DEFAULT '{}',
 
+  FOREIGN KEY (game_id) REFERENCES games(id),
   FOREIGN KEY (user_id) REFERENCES users(id),
   UNIQUE(game_id, user_id),
   UNIQUE(invite_code)

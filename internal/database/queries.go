@@ -3,6 +3,7 @@ package database
 const t_users = "users"
 const t_auths = "authentication"
 const t_games = "games"
+const t_players = "players"
 
 // User Model
 
@@ -26,12 +27,23 @@ const CreateAPIToken = "INSERT INTO " + t_auths + " (user_id, category, key, exp
 
 // Game Model
 
+const GetGameFromID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
 const GetGameFromEID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
 
 const InsertGame = "INSERT INTO " + t_games + " (eid, owner_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 
-const SetConfig = "UPDATE games SET config=$1 WHERE id=$2"
-const GetConfig = "SELECT config FROM games WHERE id=$1"
+const SetGameConfig = "UPDATE " + t_games + " SET config=$1 WHERE id=$2"
+const GetGameConfig = "SELECT config FROM " + t_games + " WHERE id=$1"
 
-const SetState = "UPDATE games SET state=$1 WHERE id=$2"
-const GetState = "SELECT state FROM games WHERE id=$1"
+const SetGameState = "UPDATE " + t_games + " SET state=$1 WHERE id=$2"
+const GetGameState = "SELECT state FROM " + t_games + " WHERE id=$1"
+
+// Player Models
+
+const GetPlayerFromID = "SELECT id, game_id, user_id, class, invite_code FROM " + t_players + " WHERE id=$1"
+const GetPlayerFromIDs = "SELECT id, game_id, user_id, class, invite_code FROM " + t_players + " WHERE game_id=$1 AND user_id=$2"
+
+const InsertPlayer = "INSERT INTO " + t_players + " (game_id, user_id, class, invite_code) VALUES ($1, $2, $3, $4) RETURNING id"
+
+const SetPlayerState = "UPDATE " + t_players + " SET state=$1 WHERE id=$2"
+const GetPlayerState = "SELECT state FROM " + t_players + " WHERE id=$1"

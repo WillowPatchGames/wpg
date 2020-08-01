@@ -4,5 +4,9 @@ DROP TABLE authentication;
 DROP TABLE users;
 DROP TABLE metadata;
 
+DROP TYPE game_mode;
+DROP TYPE game_lifecycle;
+DROP TYPE player_type;
+
 DROP OWNED BY wordcorp;
 DROP USER wordcorp;

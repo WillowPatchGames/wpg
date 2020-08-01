@@ -18,6 +18,25 @@ type GameModel struct {
 	Lifecycle string
 }
 
+func (game *GameModel) FromId(transaction *sql.Tx, id uint64) error {
+	stmt, err := transaction.Prepare(database.GetGameFromID)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (game *GameModel) FromEid(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetGameFromEID)
 	if err != nil {
@@ -58,7 +77,7 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 	return stmt.Close()
 }
 
-func (game *GameModel) GetUser(transaction *sql.Tx) (*UserModel, error) {
+func (game *GameModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
 	err := user.FromId(transaction, game.OwnerId)
 	return user, err
@@ -67,7 +86,7 @@ func (game *GameModel) GetUser(transaction *sql.Tx) (*UserModel, error) {
 func (game *GameModel) GetConfig(transaction *sql.Tx, object interface{}) error {
 	var serialized string
 
-	stmt, err := transaction.Prepare(database.GetConfig)
+	stmt, err := transaction.Prepare(database.GetGameConfig)
 	if err != nil {
 		return err
 	}
@@ -93,7 +112,7 @@ func (game *GameModel) SetConfig(transaction *sql.Tx, object interface{}) error 
 		return err
 	}
 
-	stmt, err := transaction.Prepare(database.SetConfig)
+	stmt, err := transaction.Prepare(database.SetGameConfig)
 	if err != nil {
 		return err
 	}
@@ -109,7 +128,7 @@ func (game *GameModel) SetConfig(transaction *sql.Tx, object interface{}) error 
 func (game *GameModel) GetState(transaction *sql.Tx, object interface{}) error {
 	var serialized string
 
-	stmt, err := transaction.Prepare(database.GetState)
+	stmt, err := transaction.Prepare(database.GetGameState)
 	if err != nil {
 		return err
 	}
@@ -135,7 +154,7 @@ func (game *GameModel) SetState(transaction *sql.Tx, object interface{}) error {
 		return err
 	}
 
-	stmt, err := transaction.Prepare(database.SetState)
+	stmt, err := transaction.Prepare(database.SetGameState)
 	if err != nil {
 		return err
 	}
