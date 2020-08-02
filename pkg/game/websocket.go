@@ -342,14 +342,27 @@ type MsgInvite struct {
 
 // MsgUser is a JSON user entry
 type MsgUser struct {
-	Name string `json:"name"`
-	Id   uint64 `json:"id"`
+	Display string `json:"display"`
+	Id      uint64 `json:"id"`
 }
 
 // MsgAdmit to admit a user
 type MsgAdmit struct {
 	Type string `json:"type"`
 	User uint64 `json:"user"`
+}
+
+type MsgSnapshot struct {
+	Snapshot []PlayerPlank `json:"snapshot"`
+}
+
+type MsgPeek struct {
+	Snapshots []UserSnapshot `json:"snapshots"`
+}
+
+type UserSnapshot struct {
+	User     MsgUser       `json:"user"`
+	Snapshot []PlayerPlank `json:"snapshot"`
 }
 
 func (hub *Hub) actOn(client *Client, buf string) {
@@ -359,13 +372,20 @@ func (hub *Hub) actOn(client *Client, buf string) {
 		hub.sendErrToClient(client, err.Error())
 		return
 	}
-	if cmd.Type == "draw" {
-		if player, ok := hub.getPlayer(client); ok {
+	if player, ok := hub.getPlayer(client); ok {
+		game := player.game
+
+		var snapshot MsgSnapshot
+		err = json.Unmarshal([]byte(buf), &snapshot)
+		if err == nil && len(snapshot.Snapshot) > 0 {
+			player.state.Board = snapshot.Snapshot
+		}
+
+		if cmd.Type == "draw" {
 			if player.model.Class != "player" {
 				hub.sendErrToClient(client, "Sorry, you cannot draw.")
 				return
 			}
-			game := player.game
 			if game.model.Lifecycle == "finished" {
 				hub.sendErrToClient(client, "Game finished.")
 				return
@@ -379,8 +399,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 					}
 					defer game.txs.ReleaseTx(tx)
 
-					for i := range game.players {
-						p := game.players[i]
+					for _, p := range game.players {
 						drawn := game.state.Letters[:game.config.StartSize]
 						game.state.Letters = game.state.Letters[game.config.StartSize:]
 						p.state.Letters = append(p.state.Letters, drawn...)
@@ -473,13 +492,18 @@ func (hub *Hub) actOn(client *Client, buf string) {
 						log.Println(err)
 						// no return
 					}
+					for _, participant := range game.players {
+						err := participant.model.SetState(tx, participant.state)
+						if err != nil {
+							log.Println(err)
+							// no return
+						}
+					}
 					message := "Player " + player.user.Display + " won"
 					hub.sendJSONToGame(game, MsgMessage{"gameover", message})
 				}
 			}
-		}
-	} else if cmd.Type == "discard" {
-		if player, ok := hub.getPlayer(client); ok {
+		} else if cmd.Type == "discard" {
 			if player.model.Class != "player" {
 				hub.sendErrToClient(client, "Sorry, you cannot discard.")
 				return
@@ -534,50 +558,64 @@ func (hub *Hub) actOn(client *Client, buf string) {
 			} else {
 				hub.sendErrToClient(client, "There are not enough letters left!")
 			}
-		}
-	} else if cmd.Type == "swap" {
-	} else if cmd.Type == "admit" {
-		var msg MsgAdmit
-		err := json.Unmarshal([]byte(buf), &msg)
-		if err != nil {
-			hub.sendErrToClient(client, err.Error())
-			return
-		}
+		} else if cmd.Type == "swap" {
+		} else if cmd.Type == "admit" {
+			var msg MsgAdmit
+			err := json.Unmarshal([]byte(buf), &msg)
+			if err != nil {
+				hub.sendErrToClient(client, err.Error())
+				return
+			}
 
-		if player, ok := hub.getPlayer(client); ok {
-			game := player.game
-			admitted, ok := game.players[msg.User]
-			if ok {
-				admitted.model.Class = "player"
-				tx, err := game.txs.GetTx()
-				if err != nil {
-					log.Println(err)
-					return
+			if player, ok := hub.getPlayer(client); ok {
+				game := player.game
+				found := false
+				for _, admitted := range game.players {
+					if admitted.user.Eid == msg.User {
+						admitted.model.Class = "player"
+						found = true
+						tx, err := game.txs.GetTx()
+						if err != nil {
+							log.Println(err)
+							return
+						}
+						defer game.txs.ReleaseTx(tx)
+						err = player.model.Save(tx)
+						if err != nil {
+							log.Println(err)
+							return
+						}
+						if admitted.client != nil {
+							hub.sendJSONToClient(admitted.client, MsgMessage{"admitted", "You are admitted to the game. Please wait."})
+						}
+					}
 				}
-				defer game.txs.ReleaseTx(tx)
-				err = player.model.Save(tx)
-				if err != nil {
-					log.Println(err)
-					return
+				if !found {
+					hub.sendErrToClient(client, "Unknown user")
 				}
-				if admitted.client != nil {
-					hub.sendJSONToClient(admitted.client, MsgMessage{"admitted", "You are admitted to the game. Please wait."})
-				}
-			} else {
-				hub.sendErrToClient(client, "Unknown user")
 			}
-		}
-	} else if cmd.Type == "start" {
-		if player, ok := hub.getPlayer(client); ok {
-			game := player.game
+		} else if cmd.Type == "start" {
+			if player, ok := hub.getPlayer(client); ok {
+				game := player.game
+				for _, player := range game.players {
+					if player.client != nil {
+						hub.sendJSONToClient(player.client, MsgMessage{"started", "The game is starting now!"})
+					}
+				}
+			}
+		} else if cmd.Type == "peek" {
+			snapshots := make([]UserSnapshot, len(game.players))
 			for _, player := range game.players {
-				if player.client != nil {
-					hub.sendJSONToClient(player.client, MsgMessage{"started", "The game is starting now!"})
+				if player.state != nil {
+					snapshots = append(snapshots, UserSnapshot{MsgUser{player.user.Display, player.user.Eid}, player.state.Board})
 				}
 			}
+			hub.sendJSONToClient(client, MsgPeek{snapshots})
+		} else {
+			hub.sendErrToClient(client, "Unrecognized message type: "+cmd.Type+".")
 		}
 	} else {
-		hub.sendErrToClient(client, "Unrecognized message type: "+cmd.Type+".")
+		hub.sendErrToClient(client, "Sorry, who are you again?")
 	}
 }
 
@@ -608,7 +646,7 @@ func (hub *Hub) registerClient(news ClientRegister) {
 		hub.sendJSONToClient(news.client, MsgMessage{"pending", "You will be admitted to the game shortly."})
 		admin, present := game.players[game.model.OwnerId]
 		if present && player.model.Class == "pending" && admin.client != nil {
-			hub.sendJSONToClient(admin.client, MsgInvite{"invite", MsgUser{player.user.Display, player.user.Id}})
+			hub.sendJSONToClient(admin.client, MsgInvite{"invite", MsgUser{player.user.Display, player.user.Eid}})
 		}
 	} else {
 		hub.sendJSONToClient(news.client, MsgMessage{"admitted", "Welcome, game admin!."})

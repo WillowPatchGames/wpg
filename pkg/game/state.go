@@ -1,7 +1,6 @@
 package game
 
 import (
-	"encoding/json"
 	"math/rand"
 
 	"git.cipherboy.com/WordCorp/api/internal/utils"
@@ -57,53 +56,47 @@ func (g *GameState) addLetter(letter Letter) {
 	g.Letters = append(g.Letters, letter)
 }
 
+// PlayerState snapshots
 type PlayerState struct {
-	Letters []Letter `json:"letters"`
-	//board   *map[Letter]JSONPos
+	Letters []Letter      `json:"letters"`
+	Board   []PlayerPlank `json:"board"`
+}
+
+type PlayerPlank struct {
+	Letter Letter  `json:"letter"`
+	Pos    JSONPos `json:"pos"`
 }
 
 func newPlayerState() *PlayerState {
 	return &PlayerState{
 		Letters: make([]Letter, 0),
+		Board:   make([]PlayerPlank, 0),
 	}
 }
 
-// Pos of a tile in the player's board
+// JSONPos of a tile in the player's board
 type JSONPos struct {
 	Area string `json:"area"`
 	Idx  []int  `json:"idx"`
 }
 
-func encodeBoard(board map[Letter]JSONPos) ([]byte, error) {
-	var assoc map[string]JSONPos
-	for l := range board {
-		k, err := json.Marshal(l)
-		if err != nil {
-			return []byte{}, err
-		}
-		assoc[string(k)] = board[l]
+func encodeBoard(board map[Letter]JSONPos) []PlayerPlank {
+	planks := make([]PlayerPlank, len(board))
+	for letter, pos := range board {
+		planks = append(planks, PlayerPlank{letter, pos})
 	}
-	return json.Marshal(assoc)
+	return planks
 }
 
-func decodeBoard(buf []byte) (*map[Letter]JSONPos, error) {
-	var assoc map[string]JSONPos
-	var res map[Letter]JSONPos
-	err := json.Unmarshal(buf, &assoc)
-	if err != nil {
-		return &res, err
+func decodeBoard(planks []PlayerPlank) map[Letter]JSONPos {
+	board := make(map[Letter]JSONPos)
+	for _, plank := range planks {
+		board[plank.Letter] = plank.Pos
 	}
-	for k := range assoc {
-		var l Letter
-		err := json.Unmarshal([]byte(k), &l)
-		if err != nil {
-			return &res, err
-		}
-		res[l] = assoc[k]
-	}
-	return &res, nil
+	return board
 }
 
+// GameState snapshots
 type GameState struct {
 	Initialized bool     `json:"initialized"`
 	Letters     []Letter `json:"letters"`
