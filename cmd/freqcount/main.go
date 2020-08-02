@@ -22,6 +22,7 @@ var totals uint64
 var pattern *re.Regexp = re.MustCompile("^[a-z]{2,}$")
 
 func loadWords(wordfile string) {
+	// #nosec G304
 	file, err := os.Open(wordfile)
 	if err != nil {
 		panic(err)

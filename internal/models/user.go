@@ -12,9 +12,12 @@ import (
 type UserModel struct {
 	Id       uint64
 	Eid      uint64
+	username sql.NullString
 	Username string
 	Display  string
+	email    sql.NullString
 	Email    string
+	Guest    bool
 }
 
 func (user *UserModel) FromId(transaction *sql.Tx, id uint64) error {
@@ -23,9 +26,17 @@ func (user *UserModel) FromId(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
+	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
+	}
+
+	if user.username.Valid {
+		user.Username = user.username.String
+	}
+
+	if user.email.Valid {
+		user.Email = user.email.String
 	}
 
 	err = stmt.Close()
@@ -42,9 +53,17 @@ func (user *UserModel) FromEid(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
+	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
+	}
+
+	if user.username.Valid {
+		user.Username = user.username.String
+	}
+
+	if user.email.Valid {
+		user.Email = user.email.String
 	}
 
 	err = stmt.Close()
@@ -61,9 +80,17 @@ func (user *UserModel) FromUsername(transaction *sql.Tx, name string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(name).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
+	err = stmt.QueryRow(name).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
+	}
+
+	if user.username.Valid {
+		user.Username = user.username.String
+	}
+
+	if user.email.Valid {
+		user.Email = user.email.String
 	}
 
 	err = stmt.Close()
@@ -80,9 +107,17 @@ func (user *UserModel) FromEmail(transaction *sql.Tx, mail string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(mail).Scan(&user.Id, &user.Eid, &user.Username, &user.Display, &user.Email)
+	err = stmt.QueryRow(mail).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
+	}
+
+	if user.username.Valid {
+		user.Username = user.username.String
+	}
+
+	if user.email.Valid {
+		user.Email = user.email.String
 	}
 
 	err = stmt.Close()
@@ -104,14 +139,28 @@ func (user *UserModel) FromAPIToken(transaction *sql.Tx, token string) error {
 }
 
 func (user *UserModel) Create(transaction *sql.Tx) error {
-	stmt, err := transaction.Prepare(database.InsertUser)
+	user.Eid = utils.RandomId()
+
+	if (!user.Guest) {
+		stmt, err := transaction.Prepare(database.InsertUser)
+		if err != nil {
+			return err
+		}
+
+		err = stmt.QueryRow(user.Eid, user.Username, user.Display, user.Email, user.Guest).Scan(&user.Id)
+		if err != nil {
+			return err
+		}
+
+		return stmt.Close()
+	}
+
+	stmt, err := transaction.Prepare(database.InsertGuest)
 	if err != nil {
 		return err
 	}
 
-	user.Eid = utils.RandomId()
-
-	err = stmt.QueryRow(user.Eid, user.Username, user.Display, user.Email).Scan(&user.Id)
+	err = stmt.QueryRow(user.Eid, user.Display, user.Guest).Scan(&user.Id)
 	if err != nil {
 		return err
 	}

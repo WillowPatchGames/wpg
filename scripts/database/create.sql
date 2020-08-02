@@ -1,17 +1,18 @@
-CREATE TABLE metadata (
+CREATE TABLE metadata IF NOT EXISTS (
   version BIGSERIAL,
   upgraded TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (5);
+INSERT INTO metadata (version) VALUES (6);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
   eid      BIGINT,
-  username VARCHAR (512) NOT NULL,
+  username VARCHAR (512),
   display  VARCHAR (512),
   email    VARCHAR (512),
+  guest    BOOLEAN DEFAULT false,
   created  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(eid),
   UNIQUE(username),
@@ -62,6 +63,7 @@ CREATE TABLE players (
   class       player_type DEFAULT 'pending',
   invite_code VARCHAR(1024),
   state       TEXT DEFAULT '{}',
+  created   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (game_id) REFERENCES games(id),
   FOREIGN KEY (user_id) REFERENCES users(id),

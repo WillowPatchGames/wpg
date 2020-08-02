@@ -25,6 +25,7 @@ type queryHandlerResponse struct {
 	Username string `json:"username,omitempty"`
 	Display  string `json:"display,omitempty"`
 	Email    string `json:"email,omitempty"`
+	Guest    bool   `json:"guest"`
 }
 
 type QueryHandler struct {
@@ -125,6 +126,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if handle.user != nil && handle.user.Id == user.Id {
 		handle.resp.Username = user.Username
 		handle.resp.Email = user.Email
+		handle.resp.Guest = user.Guest
 	}
 
 	utils.SendResponse(w, r, handle)

@@ -4,12 +4,9 @@ from common import *
 
 def test_create_get_game():
     # Sending the first request should be fine
-    req = {'username': 'three', 'email': 'three@alpha.net', 'password': 'letmein'}
-    resp = requests.post(URL + "/users", json=req)
+    user_data, token = auth_user('three')
 
-    assert resp.status_code == 200
-
-    user_data = resp.json()
+    headers = {'X-Auth-Token': token}
 
     req = {
         'owner': user_data['id'],
@@ -20,7 +17,7 @@ def test_create_get_game():
         }
     }
 
-    resp = requests.post(URL + "/games", json=req)
+    resp = requests.post(URL + "/games", json=req, headers=headers)
 
     print(resp, resp.json())
 
@@ -34,7 +31,7 @@ def test_create_get_game():
     assert 'open' in game_data and game_data['open'] == True
     assert 'lifecycle' in game_data and game_data['lifecycle'] == 'pending'
 
-    resp = requests.get(URL + "/game/" + str(game_data['id']))
+    resp = requests.get(URL + "/game/" + str(game_data['id']), headers=headers)
 
     assert resp.status_code == 200
 

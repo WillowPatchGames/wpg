@@ -17,6 +17,7 @@ type registerHandlerData struct {
 	Email    string `json:"email"`
 	Display  string `json:"display"`
 	Password string `json:"password"`
+	Guest    bool   `json:"guest"`
 }
 
 type registerHandlerResponse struct {
@@ -24,6 +25,8 @@ type registerHandlerResponse struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Display  string `json:"display"`
+	Guest    bool   `json:"guest"`
+	Token    string `json:"token,omitempty"`
 }
 
 type RegisterHandler struct {
@@ -44,11 +47,11 @@ func (handle *RegisterHandler) GetObjectPointer() interface{} {
 }
 
 func (handle RegisterHandler) verifyRequest() error {
-	if handle.req.Username == "" || handle.req.Email == "" {
+	if (handle.req.Username == "" || handle.req.Email == "") && !handle.req.Guest {
 		return api_errors.ErrMissingUsernameOrEmail
 	}
 
-	if handle.req.Password == "" {
+	if handle.req.Password == "" && !handle.req.Guest {
 		return api_errors.ErrMissingPassword
 	}
 
@@ -75,6 +78,7 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if user.Display == "" && user.Username != "" {
 		user.Display = user.Username
 	}
+	user.Guest = handle.req.Guest
 
 	err = user.Create(tx)
 	if err != nil {
@@ -86,14 +90,31 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = user.SetPassword(tx, handle.req.Password)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+	if user.Guest {
+		var auth models.AuthModel
+		err = auth.GuestToken(tx, user)
+
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Print("Unable to rollback:", rollbackErr)
+			}
+
+			log.Println("")
+			api_errors.WriteError(w, err, true)
+			return
 		}
 
-		api_errors.WriteError(w, err, true)
-		return
+		handle.resp.Token = auth.ApiToken
+	} else {
+		err = user.SetPassword(tx, handle.req.Password)
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Print("Unable to rollback:", rollbackErr)
+			}
+
+			api_errors.WriteError(w, err, true)
+			return
+		}
 	}
 
 	err = tx.Commit()
@@ -106,6 +127,8 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	handle.resp.Username = user.Username
 	handle.resp.Display = user.Display
 	handle.resp.Email = user.Email
+	handle.resp.Guest = user.Guest
+	// handle.resp.Token set above if the user is a guest user.
 
 	utils.SendResponse(w, r, &handle)
 }

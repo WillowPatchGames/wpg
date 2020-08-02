@@ -42,6 +42,33 @@ func (token *AuthModel) FromPassword(transaction *sql.Tx, user UserModel, passwo
 	return stmt.Close()
 }
 
+func (token *AuthModel) GuestToken(transaction *sql.Tx, user UserModel) error {
+	if !user.Guest {
+		return nil
+	}
+
+	token.ApiToken = utils.RandomToken()
+	if token.ApiToken == "" {
+		return errors.New("unable to generate token")
+	}
+
+	stmt, err := transaction.Prepare(database.CreateGuestToken)
+	if err != nil {
+		log.Println("AuthModel.GuestToken(): Preparing query? ", err)
+		return err
+	}
+
+	_, err = stmt.Exec(user.Id, token.ApiToken)
+	if err != nil {
+		log.Println("AuthModel.FromPassword(): Creating token? ", err)
+		return err
+	}
+
+	token.UserId = user.Id
+
+	return stmt.Close()
+}
+
 func (token *AuthModel) FromAPIToken(transaction *sql.Tx, value string) error {
 	stmt, err := transaction.Prepare(database.FromAPIToken)
 	if err != nil {

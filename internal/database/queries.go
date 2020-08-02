@@ -7,24 +7,29 @@ const t_players = "players"
 
 // User Model
 
-const GetUserFromID = "SELECT id, eid, username, display, email FROM " +
+const GetUserFromID = "SELECT id, eid, username, display, email, guest FROM " +
 	t_users + " WHERE id=$1"
-const GetUserFromEID = "SELECT id, eid, username, display, email FROM " +
+const GetUserFromEID = "SELECT id, eid, username, display, email, guest FROM " +
 	t_users + " WHERE eid=$1"
-const GetUserFromUsername = "SELECT id, eid, username, display, email FROM " +
+const GetUserFromUsername = "SELECT id, eid, username, display, email, guest FROM " +
 	t_users + " WHERE username=$1"
-const GetUserFromEmail = "SELECT id, eid, username, display, email FROM " +
+const GetUserFromEmail = "SELECT id, eid, username, display, email, guest FROM " +
 	t_users + " WHERE email=$1"
 
 const InsertUser = "INSERT INTO " + t_users + " (eid, username, display, " +
-	"email) VALUES ($1, $2, $3, $4) RETURNING id"
+	"email, guest) VALUES ($1, $2, $3, $4, $5) RETURNING id"
+
+const InsertGuest = "INSERT INTO " + t_users + " (eid, display, " +
+	"guest) VALUES ($1, $2, $3) RETURNING id"
 
 const SetPassword = "INSERT INTO " + t_auths + " (user_id, category, key, value) VALUES ($1, 'password', 'current-password', $2)"
 const GetPassword = "SELECT value FROM " + t_auths + " WHERE user_id=$1 AND category='password' AND key='current-password'"
 
 // Auth Model
 const CreateAPIToken = "INSERT INTO " + t_auths + " (user_id, category, key, expires) VALUES ($1, 'api_token', $2, (NOW() + interval '7 days'))"
+const CreateGuestToken = "INSERT INTO " + t_auths + " (user_id, category, key, expires) VALUES ($1, 'api_token', $2, (NOW() + interval '6 months'))"
 
+// #nosec G101
 const FromAPIToken = "SELECT user_id FROM authentication WHERE category='api_token' AND key=$1 AND expires > NOW()"
 
 // Game Model
