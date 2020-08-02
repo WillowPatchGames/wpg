@@ -16,12 +16,12 @@ func BuildRouter(router *mux.Router, debug bool) {
 
 	var createFactory = func() parsel.Parseltongue {
 		inner := new(CreateHandler)
-		return auth.Wrap(inner)
+		return auth.Require(inner)
 	}
 
 	var queryFactory = func() parsel.Parseltongue {
 		inner := new(QueryHandler)
-		return auth.Wrap(inner)
+		return auth.Require(inner)
 	}
 
 	router.Handle("/game/find", parsel.Wrap(queryFactory, config)).Methods("GET")
@@ -35,7 +35,7 @@ func BuildRouter(router *mux.Router, debug bool) {
 	var socketFactory = func() parsel.Parseltongue {
 		ret := new(SocketHandler)
 		ret.Hub = gamehub
-		return auth.Wrap(ret)
+		return auth.Require(ret)
 	}
 
 	router.Handle("/game/{GameID:[0-9]+}/ws", parsel.Wrap(socketFactory, config)).Methods("GET")

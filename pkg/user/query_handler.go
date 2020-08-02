@@ -9,6 +9,7 @@ import (
 	"git.cipherboy.com/WordCorp/api/internal/utils"
 
 	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/auth"
 	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
@@ -16,22 +17,25 @@ type queryHandlerData struct {
 	UserID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
 	Username string `json:"username,omitempty" query:"username,omitempty" route:"Username,omitempty"`
 	Email    string `json:"email,omitempty" query:"email,omitempty" route:"Email,omitempty"`
+	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type queryHandlerResponse struct {
 	UserID   uint64 `json:"id"`
-	Username string `json:"username"`
-	Display  string `json:"display"`
-	Email    string `json:"email"`
+	Username string `json:"username,omitempty"`
+	Display  string `json:"display,omitempty"`
+	Email    string `json:"email,omitempty"`
 }
 
 type QueryHandler struct {
 	http.Handler
 	utils.HTTPRequestHandler
 	parsel.Parseltongue
+	auth.Authed
 
 	req  queryHandlerData
 	resp queryHandlerResponse
+	user *models.UserModel
 }
 
 func (handle QueryHandler) GetResponse() interface{} {
@@ -40,6 +44,14 @@ func (handle QueryHandler) GetResponse() interface{} {
 
 func (handle *QueryHandler) GetObjectPointer() interface{} {
 	return &handle.req
+}
+
+func (handle *QueryHandler) GetToken() string {
+	return handle.req.ApiToken
+}
+
+func (handle *QueryHandler) SetUser(user *models.UserModel) {
+	handle.user = user
 }
 
 func (handle QueryHandler) verifyRequest() error {
@@ -108,9 +120,12 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handle.resp.UserID = user.Eid
-	handle.resp.Username = user.Username
 	handle.resp.Display = user.Display
-	handle.resp.Email = user.Email
+
+	if handle.user != nil && handle.user.Id == user.Id {
+		handle.resp.Username = user.Username
+		handle.resp.Email = user.Email
+	}
 
 	utils.SendResponse(w, r, handle)
 }

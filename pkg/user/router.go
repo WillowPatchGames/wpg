@@ -9,6 +9,7 @@ package user
 import (
 	"github.com/gorilla/mux"
 
+	"git.cipherboy.com/WordCorp/api/pkg/middleware/auth"
 	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
 )
 
@@ -19,7 +20,8 @@ func BuildRouter(router *mux.Router, debug bool) {
 	config.SchemaTag = "json"
 
 	var queryFactory = func() parsel.Parseltongue {
-		return new(QueryHandler)
+		inner := new(QueryHandler)
+		return auth.Allow(inner)
 	}
 
 	var registerFactory = func() parsel.Parseltongue {
