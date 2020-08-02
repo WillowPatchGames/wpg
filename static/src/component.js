@@ -60,14 +60,55 @@ class Game extends React.Component {
       scroll: [0,0],
     };
     if (!this.state.presentation.readOnly) {
-      this.kb = bodyListener("keyup", (e) => {
+      this.kb1 = bodyListener("keydown", (e) => {
+        if (e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+        }
+      });
+      this.kb2 = bodyListener("keyup", (e) => {
         if (this.state.presentation.selected && this.state.presentation.selected[0] === "grid") {
           for (let i in this.state.data.bank) {
             if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
-              this.interact(["bank",i], this.state.presentation.selected);
-              break;
+              this.interact(["bank",+i], this.state.presentation.selected);
+              return;
             }
           }
+        } else if (!this.state.presentation.selected) {
+          for (let i in this.state.data.bank) {
+            if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
+              this.setState(state => {
+                state.presentation.selected = ["bank",+i];
+                return state;
+              });
+              return;
+            }
+          }
+        }
+        switch (e.key) {
+          case "Esc": case "Escape":
+            if (this.state.presentation.selected) {
+              this.setState(state => {
+                return Object.assign({}, state, {
+                  presentation: Object.assign({}, state.presentation, { selected: null}),
+                });
+              });
+            }
+            break;
+          case "Del": case "Delete":
+          case "Backspace":
+            if (this.state.presentation.selected) {
+              this.recall(this.state.presentation.selected);
+            }
+            break;
+          case "Enter":
+            this.draw();
+            e.preventDefault();
+            break;
+          case " ": case "Spacebar": case "Tab":
+            this.check();
+            e.preventDefault();
+            break;
+          default: break;
         }
       });
     } else {
@@ -76,7 +117,8 @@ class Game extends React.Component {
   }
 
   componentWillUnmount() {
-    this.kb();
+    this.kb1();
+    this.kb2();
   }
 
   droppable(where, area) {
@@ -193,6 +235,36 @@ class Game extends React.Component {
   }
   recall(here, dropped) {
     this.interact(here, ["bank",""], dropped);
+  }
+  async draw() {
+    var unwords;
+    if (!this.state.data.bank.empty() || this.state.data.grid.components().length > 1) {
+      console.log("You must connect all of your tiles together before drawing!");
+    } else if ((unwords = await this.state.data.check()).length) {
+      console.log("Invalid words: ", unwords.map(String));
+      this.setState((state) => {
+        state.presentation.unwords = unwords;
+        state.presentation.selected = null;
+        return state;
+      });
+    } else {
+      this.setState(state => {
+        state.presentation.selected = null;
+        return state;
+      });
+      await monitor("Could not draw", this.state.data.draw());
+      this.setState(state => {
+        return state;
+      });
+    }
+  }
+  async check() {
+    var unwords = await this.state.data.check();
+    if (unwords.length) console.log("Invalid words: ", unwords.map(String));
+    this.setState((state) => {
+      state.presentation.unwords = unwords;
+      return state;
+    });
   }
 
   interact(here,there,dropped) {
@@ -319,28 +391,7 @@ class Game extends React.Component {
               raised: true,
               disabled: !this.state.data.bank.empty() || this.state.data.grid.components().length > 1,
               key: "draw",
-              onClick: async () => {
-                var unwords;
-                if (!this.state.data.bank.empty() || this.state.data.grid.components().length > 1) {
-                  console.log("You must connect all of your tiles together before drawing!");
-                } else if ((unwords = await this.state.data.check()).length) {
-                  console.log("Invalid words: ", unwords.map(String));
-                  this.setState((state) => {
-                    state.presentation.unwords = unwords;
-                    state.presentation.selected = null;
-                    return state;
-                  });
-                } else {
-                  this.setState(state => {
-                    state.presentation.selected = null;
-                    return state;
-                  })
-                  await monitor("Could not draw", this.state.data.draw());
-                  this.setState(state => {
-                    return state;
-                  });
-                }
-              },
+              onClick: this.draw.bind(this),
             }, "Draw"),
             e(Button, {
               outlined: true,
