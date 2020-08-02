@@ -30,8 +30,21 @@ class GameData {
         }
       });
     });
-    console.log(letters);
     return letters;
+  }
+  static deserialize(letters) {
+    var grids = [], banks = [];
+    for (let letter of letters) {
+      if (letter.pos.area === "grid") {
+        grids.push({ letter: letter.letter, pos: letter.pos.idx });
+      } else if (letter.pos.area === "bank") {
+        banks.push({ letter: letter.letter, pos: letter.pos.idx });
+      }
+    }
+    return new GameData({
+      grid: Grid.deserialize(grids),
+      bank: Bank.deserialize(banks),
+    });
   }
   get(here) {
     if (here[0] === "grid") {
@@ -388,6 +401,13 @@ class Bank extends Array {
     }
     return letters;
   }
+  static deserialize(letters) {
+    var ret = new Bank();
+    for (let letter of letters) {
+      ret.set(...letter.pos, new Letter(letter.letter.value, letter.letter.id));
+    }
+    return ret;
+  }
 }
 Bank.blank = "";
 
@@ -573,6 +593,32 @@ class Grid {
       }
     }
     return letters;
+  }
+  static deserialize(letters) {
+    var adj = [
+      -Math.min(...letters.map(l => l.pos[0])),
+      -Math.min(...letters.map(l => l.pos[1])),
+    ];
+    if (!isFinite(adj[0])) adj[0] = 0;
+    if (!isFinite(adj[1])) adj[1] = 0;
+    var jda = [
+      Math.max(...letters.map(l => l.pos[0])),
+      Math.max(...letters.map(l => l.pos[1])),
+    ];
+    if (!isFinite(jda[0])) jda[0] = 0;
+    if (!isFinite(jda[1])) jda[1] = 0;
+    //console.log(adj, jda, letters);
+    var ret = new Grid();
+    if (!letters.length) return ret;
+    ret.rows = jda[0] + adj[0];
+    ret.cols = jda[1] + adj[1];
+    for (let letter of letters) {
+      let pos = letter.pos;
+      pos[0] += adj[0];
+      pos[1] += adj[1];
+      ret.set(...pos, new Letter(letter.letter.value, letter.letter.id));
+    }
+    return ret;
   }
 }
 

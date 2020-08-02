@@ -29,7 +29,7 @@ import { Theme, ThemeProvider } from '@rmwc/theme';
 
 // Application imports
 import { UserModel, GameModel, normalizeCode } from './models.js';
-import { GameInterface, APITileManager, JSWordManager } from './game.js';
+import { GameData, GameInterface, APITileManager, JSWordManager } from './game.js';
 import { Game } from './component.js';
 
 function loadGame(game) {
@@ -64,7 +64,6 @@ class RushGamePage extends React.Component {
         var data = JSON.parse(buf);
         if (!data) console.log("Error: ", buf);
         if (data.type === "message" || data.type === "draw") {
-          console.log(data.message);
           this.snackbar.clearAll();
           this.snackbar.notify({
             title: <b>Message</b>,
@@ -85,6 +84,11 @@ class RushGamePage extends React.Component {
             timeout: 6000,
             actions: [{ title: "Aw shucks" }],
           });
+        } else if (data.type === "gameover") {
+          this.game.ws.send(JSON.stringify({
+            snapshot: this.game.data.serialize(),
+          }));
+          this.props.setPage('afterparty');
         }
       });
     }
@@ -105,17 +109,58 @@ class PreGamePage extends React.Component {
     super(props);
     this.state = null;
     this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
-    console.log(this.admin, this.props);
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
   }
 }
 
+class AfterPartyPage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.game = this.props.game;
+    this.state = {
+      snapshots: null,
+    };
+  }
+  componentDidMount() {
+    this.game.ws.addEventListener("message", ({ data: buf }) => {
+      console.log(buf);
+      var data = JSON.parse(buf);
+      if (data.snapshots) {
+        data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
+        for (let snapshot of data.snapshots) {
+          snapshot.game = GameData.deserialize(snapshot.snapshot);
+          snapshot.game.grid.padding(0);
+        }
+        this.setState(state => Object.assign({}, state, { snapshots: data.snapshots }));
+      }
+    });
+    this.game.ws.send(JSON.stringify({"type": "peek"}));
+  }
+  render() {
+    return (
+      <div>
+        <h1>That was fun, wasn't it?</h1>
+        <ol className="results">
+          { this.state.snapshots
+          ? this.state.snapshots.map(snapshot =>
+              <li key={ snapshot.user.display }>
+                <h1>{ snapshot.user.display }</h1>
+                <Game data={ snapshot.game } readOnly={ true } />
+              </li>
+            )
+          : <p>Loading results …</p>
+          }
+        </ol>
+      </div>
+    );
+  }
+}
+
 class PreGameUserPage extends React.Component {
   constructor(props) {
     super(props);
-    console.log(this.props);
     this.snackbar = createSnackbarQueue();
     this.state = {
       status: "pending",
@@ -174,7 +219,6 @@ class PreGameUserPage extends React.Component {
 class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
-    console.log(this.props);
     this.snackbar = createSnackbarQueue();
     this.state = {
       waitlist: [],
@@ -270,8 +314,8 @@ class PreGameAdminPage extends React.Component {
                       <p>Users in this game:</p>
                     </l.ListItem>
                     { this.state.waitlist.map((user, i) =>
-                        <l.ListItem key={user.name} >
-                        {user.name}
+                        <l.ListItem key={user.display} >
+                        {user.display}
                         <l.ListItemMeta>
                           <Checkbox checked={user.admitted} label="Admitted" onChange={ user.admitted ? () => this.setState(state => state) : () => this.toggleAdmitted(user) } />
                         </l.ListItemMeta>
@@ -344,14 +388,12 @@ class CreateGameForm extends React.Component {
 
   inputHandler(name, checky) {
     return (e) => {
-      console.log("input");
       var v = checky ? e.target.checked : e.target.value;
       return this.newState(() => ({ [name]: v }));
     };
   }
 
   toggle(name) {
-    console.log("toggle");
     this.newState(state => ({ [name]: !state[name] }));
   }
 
@@ -484,14 +526,12 @@ class JoinGamePage extends React.Component {
 
   inputHandler(name, checky) {
     return (e) => {
-      console.log("input");
       var v = checky ? e.target.checked : e.target.value;
       return this.newState(() => ({ [name]: v }));
     };
   }
 
   toggle(name) {
-    console.log("toggle");
     this.newState(state => ({ [name]: !state[name] }));
   }
 
@@ -782,6 +822,7 @@ class Page extends React.Component {
       case 'create': component = this.props.user ? CreateGamePage : LoginPage; break;
       case 'playing': component = this.props.game ? RushGamePage : JoinGamePage; break;
       case 'play': component = this.props.game ? PreGamePage : JoinGamePage; break;
+      case 'afterparty': component = this.props.game ? AfterPartyPage : JoinGamePage; break;
       case 'join': component = JoinGamePage; break;
       default: component = ErrorPage;
     }

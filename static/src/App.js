@@ -33,6 +33,8 @@ class App extends React.Component {
       game: null,
     };
 
+    window.App = this;
+
     window.onhashchange = () => this.setPage(window.location.hash.substring(1));
   }
 

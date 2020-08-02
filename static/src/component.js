@@ -43,29 +43,36 @@ class Game extends React.Component {
         scale: 1,
         scaled: 1,
         unwords: [],
+        readOnly: this.props.readOnly,
       },
       data: props.data,
     };
-    var adder = this.state.data.tiles.onAdd;
-    this.state.data.tiles.onAdd = (...tiles) => {
-      adder.call(this.state.data.tiles, ...tiles);
-      this.setState(state => this.repad(state));
-    };
+    if (this.state.data.tiles && !this.state.presentation.readOnly) {
+      var adder = this.state.data.tiles.onAdd;
+      this.state.data.tiles.onAdd = (...tiles) => {
+        adder.call(this.state.data.tiles, ...tiles);
+        this.setState(state => this.repad(state));
+      };
+    }
     this.droppoints = {};
     this.board = React.createRef();
     this.pending = {
       scroll: [0,0],
     };
-    this.kb = bodyListener("keyup", (e) => {
-      if (this.state.presentation.selected && this.state.presentation.selected[0] === "grid") {
-        for (let i in this.state.data.bank) {
-          if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
-            this.interact(["bank",i], this.state.presentation.selected);
-            break;
+    if (!this.state.presentation.readOnly) {
+      this.kb = bodyListener("keyup", (e) => {
+        if (this.state.presentation.selected && this.state.presentation.selected[0] === "grid") {
+          for (let i in this.state.data.bank) {
+            if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
+              this.interact(["bank",i], this.state.presentation.selected);
+              break;
+            }
           }
         }
-      }
-    });
+      });
+    } else {
+      this.kb = () => {};
+    }
   }
 
   componentWillUnmount() {
@@ -144,6 +151,7 @@ class Game extends React.Component {
   }
 
   handler(here) {
+    if (this.state.presentation.readOnly) return null;
     return () => {
       if (shallowEqual(here, this.state.presentation.dropped)) {
         this.setState(state => {
@@ -227,7 +235,9 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
-    this.setState(this.repad);
+    if (!this.state.presentation.readOnly) {
+      this.setState(this.repad);
+    }
   }
   componentDidUpdate() {
     if (this.pending.scroll[0]) {
@@ -275,7 +285,7 @@ class Game extends React.Component {
             style: FIXED ? {} : {"position":"relative"},
             key: j, onClick: this.handler(["grid",i,j]),
             "data-selected": shallowEqual(this.state.presentation.selected, ["grid", i, j]),
-          }, dat ? e(Drag, {className: "word tile", onDrag: this.draggable(["grid", i, j])}, dat) : e('div', {}, "\xa0"))
+          }, this.state.presentation.readOnly ? e('div', {}, dat ? String(dat) : "\xa0") : (dat ? e(Drag, {className: "word tile", onDrag: this.draggable(["grid", i, j])}, String(dat)) : e('div', {}, "\xa0")))
         )
       )
     ))));
@@ -287,9 +297,9 @@ class Game extends React.Component {
             ref: this.droppable(["bank", i]),
             onClick: this.handler(["bank",i]),
             "data-selected": shallowEqual(this.state.presentation.selected, ["bank", i]),
-          }, letter ? e(Drag, {className: "word tile", onDrag: this.draggable(["bank", i])}, letter) : e(Drag, {onDrag: this.draggable(["bank", i])}))
+          }, this.state.presentation.readOnly ? e('div', {}, String(letter)) : (letter ? e(Drag, {className: "word tile", onDrag: this.draggable(["bank", i])}, String(letter)) : e(Drag, {onDrag: this.draggable(["bank", i])})))
         )),
-        e('div', {key: "after", className: "actions"},
+        this.state.presentation.readOnly ? null : e('div', {key: "after", className: "actions"},
           [
             e(Button, {
               raised: true,
