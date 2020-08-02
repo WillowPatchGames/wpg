@@ -27,6 +27,8 @@ class UserModel {
     this.login_uri = this.api + '/auth';
     this.create_uri = this.api + '/users';
     this.error = null;
+
+    this.guest = false;
   }
 
   static FromJSON(serialization) {
@@ -91,7 +93,7 @@ class UserModel {
       request['email'] = this.email;
     }
     if (nonempty(this.display)) {
-      request['email'] = this.display;
+      request['display'] = this.display;
     }
 
     const response = await fetch(this.create_uri, {
@@ -113,6 +115,44 @@ class UserModel {
     }
 
     return this.login(password);
+  }
+
+  async createGuest() {
+    var request = {'guest': true};
+    if (nonempty(this.display)) {
+      request['display'] = this.display;
+    }
+
+    const response = await fetch(this.create_uri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    const result = await response.json()
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+    if (this.token) {
+      this.authed = true;
+    }
+
+    this.saveGuest();
+    return this;
+  }
+
+  saveGuest() {
+    var guest = {'display': this.display, 'token': this.token, 'id': this.id, 'authed': true};
+    localStorage.setItem('guest', JSON.stringify(guest));
   }
 
   async login(password) {

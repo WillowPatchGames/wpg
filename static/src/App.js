@@ -47,7 +47,12 @@ class App extends React.Component {
 
     var serialization = localStorage.getItem('user');
     if (!serialization) {
-      return;
+      var guest_serialization = localStorage.getItem('guest');
+      if (!guest_serialization) {
+        return;
+      }
+      serialization = guest_serialization;
+      console.log("Using: " + guest_serialization)
     }
 
     var user = UserModel.FromJSON(serialization);
@@ -65,6 +70,7 @@ class App extends React.Component {
     if (verified_user.error || verified_user.authed === false) {
       console.log("LoadUser() - Got error: " + verified_user.error);
       localStorage.removeItem('user');
+      localStorage.removeItem('guest');
       this.setUser(null);
     }
 

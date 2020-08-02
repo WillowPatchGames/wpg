@@ -498,13 +498,15 @@ class JoinGamePage extends React.Component {
       error: null,
       code: normalizeCode(undefined, true) || "",
     }
+
+    this.guest = React.createRef();
   }
 
   async handleSubmit(event) {
     event.preventDefault();
 
     if (this.props.user === null || !this.props.user.authed) {
-      this.setError("Need to have a user account before doing this action!");
+      this.setError("Need to have a user account before doing this action! Perhaps you'd like to play as a guest?");
       return;
     }
 
@@ -517,6 +519,22 @@ class JoinGamePage extends React.Component {
       this.props.setCode(game.code);
       this.props.setGame(game);
       this.props.setPage('play');
+    }
+  }
+
+  async handleGuestSubmit(event) {
+    event.preventDefault();
+
+    var user = new UserModel()
+    user.display = this.guest.current.value;
+
+    await user.createGuest();
+
+    if (user.error !== null) {
+      console.error(user.error);
+      this.setError(user.error.message);
+    } else {
+      this.props.setUser(user);
     }
   }
 
@@ -540,6 +558,52 @@ class JoinGamePage extends React.Component {
   }
 
   render() {
+    let inner = <g.GridRow>
+      <g.GridCell align="left" span={6}>
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <div>
+              <Typography use="headline2">Join a Game</Typography>
+              <p>
+                Good luck, and may the odds be ever in your favor!<br /><br />
+                <a href="#create">Looking to make a new game room? Create one here!</a>
+              </p>
+            </div>
+
+            <form onSubmit={ this.handleSubmit.bind(this) }>
+              <l.List twoLine>
+                <l.ListGroup>
+                  <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
+                  <l.ListItem><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
+                </l.ListGroup>
+              </l.List>
+
+              <Button label="Join" raised />
+            </form>
+            <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+              <d.DialogTitle>Error!</d.DialogTitle>
+              <d.DialogContent>{ this.state.error?.message || this.state.error }</d.DialogContent>
+              <d.DialogActions>
+                <d.DialogButton action="close">OK</d.DialogButton>
+              </d.DialogActions>
+            </d.Dialog>
+          </div>
+        </c.Card>
+      </g.GridCell>
+      <g.GridCell align="right" span={6}>
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <div>
+              <Typography use="headline2">Create a Game</Typography>
+              <p>
+                <a href="#create">Looking to make a new game room? Create one here!</a>
+              </p>
+            </div>
+          </div>
+        </c.Card>
+      </g.GridCell>
+    </g.GridRow>;
+
     return (
       <div className="App-page">
         <div>
@@ -549,51 +613,27 @@ class JoinGamePage extends React.Component {
             existing one, you've found the right place.
           </p>
         </div>
-        <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={6}>
-            <c.Card>
-              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                <div>
-                  <Typography use="headline2">Join a Game</Typography>
+        {
+          !this.props.user ? <g.Grid fixedColumnWidth={ true }><g.GridRow>
+            <g.GridCell align="left" span={3} />
+            <g.GridCell align="middle" span={6}>
+              <c.Card>
+                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
                   <p>
-                    Good luck, and may the odds be ever in your favor!<br /><br />
-                    <a href="#create">Looking to make a new game room? Create one here!</a>
+                    Since you're not <a href="#login">logged in</a>, how about
+                    playing as a guest for now? You can always upgrade your
+                    account later.
                   </p>
+                  <form onSubmit={ this.handleGuestSubmit.bind(this) }>
+                    <TextField fullwidth placeholder="name" name="guest" inputRef={ this.guest } /><br />
+                    <Button label="Play as Guest" raised />
+                  </form>
                 </div>
-
-                <form onSubmit={ this.handleSubmit.bind(this) }>
-                  <l.List twoLine>
-                    <l.ListGroup>
-                      <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
-                      <l.ListItem><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
-                    </l.ListGroup>
-                  </l.List>
-
-                  <Button label="Join" raised />
-                </form>
-                <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
-                  <d.DialogTitle>Error!</d.DialogTitle>
-                  <d.DialogContent>{ this.state.error?.message || this.state.error }</d.DialogContent>
-                  <d.DialogActions>
-                    <d.DialogButton action="close">OK</d.DialogButton>
-                  </d.DialogActions>
-                </d.Dialog>
-              </div>
-            </c.Card>
-          </g.GridCell>
-          <g.GridCell align="right" span={6}>
-            <c.Card>
-              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                <div>
-                  <Typography use="headline2">Create a Game</Typography>
-                  <p>
-                    <a href="#create">Looking to make a new game room? Create one here!</a>
-                  </p>
-                </div>
-              </div>
-            </c.Card>
-          </g.GridCell>
-        </g.Grid>
+              </c.Card>
+            </g.GridCell>
+          </g.GridRow>
+          <br /><br />{ inner }</g.Grid> : <g.Grid fixedColumnWidth={ true }>{ inner }</g.Grid>
+        }
       </div>
     );
   }
