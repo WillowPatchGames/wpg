@@ -16,6 +16,23 @@ class GameData {
     this.grid = old?.grid ? new Grid(old.grid) : new Grid();
     this.bank = old?.bank ? new Bank(old.bank) : new Bank();
   }
+  serialize() {
+    var letters = [];
+    this.letterPosse().forEach(({ letter, pos }) => {
+      letters.push({
+        letter: {
+          id: letter.id,
+          value: String(letter),
+        },
+        pos: {
+          area: pos[0],
+          idx: pos.slice(1).map(Number),
+        }
+      });
+    });
+    console.log(letters);
+    return letters;
+  }
   get(here) {
     if (here[0] === "grid") {
       return this.grid.get(...here.slice(1));
@@ -129,7 +146,7 @@ class APITileManager extends TileManager {
       this.onDelete(...letters);
     }
   }
-  async draw(n) {
+  async draw(n, data) {
     if (n === 0) return;
     if (!this.conn.readyState) {
       await new Promise((resolve, reject) => {
@@ -153,24 +170,27 @@ class APITileManager extends TileManager {
     }
     this.conn.send(JSON.stringify({
       type: "draw",
-      n
+      n,
+      snapshot: data ? data.serialize() : undefined,
     }));
     return;
   }
-  async discard(letter) {
+  async discard(letter, data) {
     this.conn.send(JSON.stringify({
       type: "discard",
       letter: {
         id: letter.id,
         value: String(letter),
       },
+      snapshot: data ? data.serialize() : undefined,
     }));
     return;
   }
-  swap(here, there) {
+  swap(here, there, data) {
     this.conn.send(JSON.stringify({
       type: "swap",
       here, there,
+      snapshot: data ? data.serialize() : undefined,
     }));
   }
 }
@@ -300,10 +320,10 @@ class GameInterface extends GameData {
   }
   swap(here, there) {
     super.swap(here, there);
-    this.tiles.swap(here, there);
+    this.tiles.swap(here, there, this);
   }
   async draw(n) {
-    let letters = await this.tiles.draw(n);
+    let letters = await this.tiles.draw(n, this);
     if (letters) {
       if (def(n)) {
         this.add(...letters);
@@ -317,7 +337,7 @@ class GameInterface extends GameData {
     var letter = this.get(where);
     if (!letter) return null;
     this.swap(where, ["bank",""]);
-    var added = await this.tiles.discard(letter);
+    var added = await this.tiles.discard(letter, this);
     if (!added) return;
     this.delete(where);
     this.add(...added);
@@ -546,7 +566,7 @@ class Grid {
   letterPosse() {
     var letters = [];
     for (let row in this.data) {
-      for (let col in this.data[row][col]) {
+      for (let col in this.data[row]) {
         var h = this.get(row, col);
         if (!h) continue;
         letters.push({ letter: h, pos: [row,col] });
