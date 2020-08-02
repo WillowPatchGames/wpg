@@ -21,18 +21,47 @@ class UserModel {
     this.email = null;
     this.display = null;
     this.api = window.location.protocol + '//' + window.location.host;
+
+    this.authed = false;
+    this.token = null;
+    this.login_uri = this.api + '/auth';
+    this.create_uri = this.api + '/users';
+    this.error = null;
   }
 
-  static async FromId(id) {
+  static FromJSON(serialization) {
+    var ret = new UserModel();
+    try {
+      var obj = JSON.parse(serialization);
+    } catch (e) {
+      return null;
+    }
+    Object.assign(ret, obj);
+    return ret;
+  }
+
+  ToJSON() {
+    return JSON.stringify(this);
+  }
+
+  static async FromId(id, token) {
     var ret = new UserModel();
 
     var url = ret.api + '/user/' + id;
 
+    var headers = {
+      'Accept': 'application/json',
+    };
+
+    if (token) {
+      headers['X-Auth-Token'] = token;
+    } else if (this.token) {
+      headers['X-Auth-Token'] = this.token;
+    }
+
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
+      headers: headers,
       redirect: 'follow'
     });
 
@@ -46,19 +75,11 @@ class UserModel {
     }
 
     Object.assign(ret, result);
+    if ((ret.username !== '' || ret.email !== '') && token) {
+      ret.authed = true;
+      ret.token = token;
+    }
     return ret;
-  }
-}
-
-class AuthedUserModel extends UserModel {
-  constructor() {
-    super();
-
-    this.authed = false;
-    this.token = null;
-    this.login_uri = this.api + '/auth';
-    this.create_uri = this.api + '/users';
-    this.error = null;
   }
 
   async create(password) {
@@ -124,7 +145,7 @@ class AuthedUserModel extends UserModel {
 
     this.authed = true;
 
-    const other = await UserModel.FromId(this.id);
+    const other = await UserModel.FromId(this.id, this.token);
     Object.assign(this, other);
 
     return this;
@@ -133,6 +154,7 @@ class AuthedUserModel extends UserModel {
   async logout() {
     this.token = null;
     this.authed = false;
+    localStorage.removeItem('user');
   }
 }
 
@@ -260,7 +282,6 @@ class GameModel {
 
 export {
   UserModel,
-  AuthedUserModel,
   GameModel,
   normalizeCode,
 };

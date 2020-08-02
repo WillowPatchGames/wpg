@@ -28,7 +28,7 @@ import { TextField } from '@rmwc/textfield';
 import { Theme, ThemeProvider } from '@rmwc/theme';
 
 // Application imports
-import { AuthedUserModel, GameModel, normalizeCode } from './models.js';
+import { UserModel, GameModel, normalizeCode } from './models.js';
 import { GameInterface, APITileManager, JSWordManager } from './game.js';
 import { Game } from './component.js';
 
@@ -576,7 +576,7 @@ class SignupPage extends React.Component {
   async handleSubmit(event) {
     event.preventDefault();
 
-    var user = new AuthedUserModel();
+    var user = new UserModel();
     user.username = this.username.current.value;
     user.email = this.email.current.value;
     user.display = this.display.current.value;
@@ -651,7 +651,7 @@ class LoginPage extends React.Component {
   async handleSubmit(event) {
     event.preventDefault();
 
-    var user = new AuthedUserModel();
+    var user = new UserModel();
     var identifier = this.identifier.current.value;
     if (identifier.includes("@")) {
       user.email = identifier;
@@ -661,7 +661,7 @@ class LoginPage extends React.Component {
 
     await user.login(this.password.current.value);
 
-    if (user.authed) {
+    if (!user.error) {
       this.props.setUser(user);
       if (!this.props.page || this.props.page === 'login') {
         this.props.setPage('join');

@@ -16,7 +16,7 @@ import { ThemeProvider } from '@rmwc/theme';
 // Application imports
 import { Navigation } from './nav.js';
 import { Page, Footer } from './pages.js';
-import { normalizeCode } from './models.js';
+import { normalizeCode, UserModel } from './models.js';
 
 // CSS overrides last
 import './App.css';
@@ -36,7 +36,46 @@ class App extends React.Component {
     window.onhashchange = () => this.setPage(window.location.hash.substring(1));
   }
 
+  componentDidMount() {
+    this.loadUser();
+  }
+
+  async loadUser() {
+    console.log("LoadUser()");
+
+    var serialization = localStorage.getItem('user');
+    if (!serialization) {
+      return;
+    }
+
+    var user = UserModel.FromJSON(serialization);
+    if (!user || user.token == null) {
+      console.log("Bad user? " + user.ToJSON());
+      return;
+    }
+
+    this.setUser(user);
+
+    var user_id = user.id;
+    var token = user.token;
+
+    var verified_user = await UserModel.FromId(user_id, token);
+    if (verified_user.error || verified_user.authed === false) {
+      console.log("LoadUser() - Got error: " + verified_user.error);
+      localStorage.removeItem('user');
+      this.setUser(null);
+    }
+
+    if (verified_user.display !== user.display || verified_user.username !== user.username || verified_user.email !== user.email) {
+      this.setUser(verified_user);
+    }
+  }
+
   setUser(user) {
+    if (user && user.authed) {
+      localStorage.setItem('user', user.ToJSON());
+    }
+
     if (user === null && this.state.user !== null) {
       this.state.user.logout();
       this.setPage('home');
