@@ -73,3 +73,9 @@ CREATE TABLE players (
 
 CREATE USER wordcorp WITH PASSWORD 'CHANGEME';
 GRANT ALL PRIVILEGES ON DATABASE wordcorpdb TO wordcorp;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO wordcorp;
+ALTER TABLE metadata OWNER TO wordcorp;
+ALTER TABLE users OWNER TO wordcorp;
+ALTER TABLE authentication OWNER TO wordcorp;
+ALTER TABLE games OWNER TO wordcorp;
+ALTER TABLE players OWNER TO wordcorp;
