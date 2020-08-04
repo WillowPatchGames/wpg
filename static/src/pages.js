@@ -528,6 +528,10 @@ class JoinGamePage extends React.Component {
     var user = new UserModel()
     user.display = this.guest.current.value;
 
+    if (!user.display) {
+      this.setError("Please specify a name for the guest account");
+    }
+
     await user.createGuest();
 
     if (user.error !== null) {
@@ -625,7 +629,7 @@ class JoinGamePage extends React.Component {
                     account later.
                   </p>
                   <form onSubmit={ this.handleGuestSubmit.bind(this) }>
-                    <TextField fullwidth placeholder="name" name="guest" inputRef={ this.guest } /><br />
+                    <TextField fullwidth placeholder="name" name="guest" inputRef={ this.guest } required /><br />
                     <Button label="Play as Guest" raised />
                   </form>
                 </div>
