@@ -28,7 +28,8 @@ class AuthedHeaderComponent extends React.Component {
         <div>
           <Button label={ this.props.user.display } icon="person" unelevated  onClick={ () => this.props.setPage('profile') } />
           <Button label="Logout" icon="logout" unelevated onClick={() => this.props.setUser(null) } />
-          <bar.TopAppBarActionItem icon="logout" onClick={() => this.props.setUser(null) } />
+          <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('playing')} />
+          <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing') } />
         </div>
       );
     }
@@ -38,7 +39,8 @@ class AuthedHeaderComponent extends React.Component {
         <Button label="Login" icon="login" unelevated onClick={() => this.props.setPage('login') } />
         <Button label="Sign up" icon="person_add" unelevated onClick={() => this.props.setPage('signup') } />
         <Button label="About" icon="notes" unelevated onClick={() => this.props.setPage('about') } />
-        <bar.TopAppBarActionItem icon="login" onClick={() => this.props.setPage('login') } />
+        <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('playing')} />
+        <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing') } />
       </div>
     );
   }
@@ -55,7 +57,7 @@ class AuthedNavComponent extends React.Component {
           </l.ListItem>
           <l.ListItem onClick={ () => this.props.setPage('join') }>
             <l.ListItemGraphic icon="games" />
-            <l.ListItemText>Play a game</l.ListItemText>
+            <l.ListItemText>Play a new game</l.ListItemText>
           </l.ListItem>
           <l.ListItem onClick={ () => this.props.setUser(null) }>
             <l.ListItemGraphic icon="logout" />
