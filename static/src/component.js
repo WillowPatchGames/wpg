@@ -61,7 +61,8 @@ class Game extends React.Component {
     };
     if (!this.state.presentation.readOnly) {
       this.kb1 = bodyListener("keydown", (e) => {
-        if (e.key === " " || e.key === "Spacebar") {
+        var handled = [" ", "Spacebar", "Backspace", "Del", "Delete"];
+        if (handled.includes(e.key)) {
           e.preventDefault();
         }
       });
@@ -104,7 +105,7 @@ class Game extends React.Component {
             this.draw();
             e.preventDefault();
             break;
-          case " ": case "Spacebar": case "Tab":
+          case " ": case "Spacebar":
             this.check();
             e.preventDefault();
             break;
@@ -112,7 +113,7 @@ class Game extends React.Component {
         }
       });
     } else {
-      this.kb = () => {};
+      this.kb1 = this.kb2 = () => {};
     }
   }
 
@@ -217,6 +218,8 @@ class Game extends React.Component {
         if (this.state.data.get(there)) {
           this.interact(here, there);
         }
+      } else if (!this.state.data.get(here) && !this.state.data.get(there)) {
+        this.select(here);
       } else {
         this.interact(here, there);
       }
@@ -231,7 +234,13 @@ class Game extends React.Component {
   }
 
   discard(here) {
-    monitor("Could not discard", this.state.data.discard(here)).then(() => this.setState(state => state));
+    if (here && this.state.data.get(here)) {
+      this.state.data.discard(here).then(() => this.setState(state => state));
+      this.setState((state) => {
+        state.presentation.selected = null;
+        return state;
+      });
+    }
   }
   recall(here, dropped) {
     this.interact(here, ["bank",""], dropped);
