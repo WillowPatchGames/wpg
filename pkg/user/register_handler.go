@@ -55,6 +55,10 @@ func (handle RegisterHandler) verifyRequest() error {
 		return api_errors.ErrMissingPassword
 	}
 
+	if handle.req.Username == "" && handle.req.Display == "" && handle.req.Guest {
+		return api_errors.ErrMissingDisplay
+	}
+
 	return nil
 }
 

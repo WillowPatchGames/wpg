@@ -10,6 +10,7 @@ var ErrUnknownContentType = errors.New("unknown or unsupported Content-Type head
 var ErrMultipleJSONObjects = errors.New("got multiple JSON objects when we only expected one")
 
 var ErrMissingUsernameOrEmail = errors.New("missing username or email to describe new user")
+var ErrMissingDisplay = errors.New("missing display name on new user")
 var ErrMissingPassword = errors.New("missing password")
 
 var ErrMissingRequest = errors.New("missing request paremeters")
