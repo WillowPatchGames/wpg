@@ -289,13 +289,18 @@ class JSWordManager extends WordManager {
   constructor() {
     super();
     this.words = [];
+    this.loading = null;
   }
   async check(words, stringify) {
     if (!stringify) stringify = String;
+    if (this.loading) await this.loading;
     return words.filter(w => !this.words.includes(stringify(w)));
   }
   async fromURL(url) {
-    this.setWords(await (await fetch(url)).text());
+    this.loading = (async () => {
+      return this.setWords(await (await fetch(url)).text());
+    })();
+    return this.loading;
   }
   setWords(words) {
     if (typeof words === "string") words = [words];
@@ -306,6 +311,7 @@ class JSWordManager extends WordManager {
       .map(w => w.trim())
       .filter(w => {let n = Number(w); return Number.isNaN(n)})
       ;
+    this.loading = null;
   }
 }
 

@@ -131,6 +131,8 @@ class Game extends React.Component {
         state.presentation.size = size;
         return state;
       });
+    } else if (this.state.data.words) {
+      this.check();
     }
   }
   componentDidUpdate() {
@@ -369,12 +371,12 @@ class Game extends React.Component {
       e('tbody', {}, Array.from(this.state.data.grid.data).map((row, i) =>
         e('tr', {key: i}, Array.from(row).map((dat, j) =>
           e('td', {
-            className: dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.data.grid)).length ? "unword" : "") : "empty",
+            className: (dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.data.grid)).length ? "unword" : "") : "empty") + (this.state.presentation.readOnly ? " read-only" : ""),
             ref: this.droppable(["grid",i,j]),
             style: FIXED ? {} : {"position":"relative"},
             key: j, onClick: this.handler(["grid",i,j]),
             "data-selected": shallowEqual(this.state.presentation.selected, ["grid", i, j]),
-          }, this.state.presentation.readOnly ? e('div', {}, dat ? String(dat) : "\xa0") : (dat ? e(Drag, {className: "word tile", onDrag: this.draggable(["grid", i, j])}, String(dat)) : e('div', {}, "\xa0")))
+          }, this.state.presentation.readOnly ? e('div', {className: "read-only"}, dat ? String(dat) : "\xa0") : (dat ? e(Drag, {className: "word tile", onDrag: this.draggable(["grid", i, j])}, String(dat)) : e('div', {}, "\xa0")))
         )
       )
     ))));
@@ -386,7 +388,7 @@ class Game extends React.Component {
             ref: this.droppable(["bank", i]),
             onClick: this.handler(["bank",i]),
             "data-selected": shallowEqual(this.state.presentation.selected, ["bank", i]),
-          }, this.state.presentation.readOnly ? e('div', {}, String(letter)) : (letter ? e(Drag, {className: "word tile", onDrag: this.draggable(["bank", i])}, String(letter)) : e(Drag, {onDrag: this.draggable(["bank", i])})))
+          }, this.state.presentation.readOnly ? e('div', {className: "read-only"}, String(letter)) : (letter ? e(Drag, {className: "word tile", onDrag: this.draggable(["bank", i])}, String(letter)) : e(Drag, {onDrag: this.draggable(["bank", i])})))
         )),
         this.state.presentation.readOnly ? null : e('div', {key: "after", className: "actions"},
           [

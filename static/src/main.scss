@@ -55,17 +55,17 @@ table.word.grid {
     }
     &.empty {
       cursor: default;
-      &:hover {
+      &:not(.read-only):hover {
         background: #95e495;
       }
-      &:active:hover {
+      &:not(.read-only):active:hover {
         background: #95e495;
       }
       & > div {
         @extend .tile-size;
       }
     }
-    &:not(.empty) {
+    &:not(.read-only):not(.empty) {
       cursor: pointer;
     }
     &:not(.empty) > .tile {
@@ -74,11 +74,11 @@ table.word.grid {
       margin: -1px;
       border: 1px solid #e0dfef;
       background: #e0dfef;
-      &:hover, &:active {
+      &:not(.read-only):hover, &:not(.read-only):active {
         border: 1px solid #88a8e2;
         margin: -1px;
       }
-      &:active {
+      &:not(.read-only):active {
         //transform: scale(1.1) translateY(-2px);
         &:hover {
           background: #95e495;
@@ -92,7 +92,7 @@ table.word.grid {
       &:not(.empty) > .tile {
         background: #95e495;
         border-color: #95e495;
-        &:active:hover {
+        &:not(.read-only):active:hover {
           background: #e0dfef;
         }
       }
@@ -183,6 +183,11 @@ table.word.grid {
 
 .results .game-component > .board, .results .game-component > .bank {
   height: initial;
+  overflow: initial;
+}
+
+.results table.word.grid {
+    --tile-size: 0.35in;
 }
 
 /**/

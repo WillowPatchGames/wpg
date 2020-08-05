@@ -130,7 +130,11 @@ class AfterPartyPage extends React.Component {
       if (data.snapshots) {
         data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
         for (let snapshot of data.snapshots) {
-          snapshot.game = GameData.deserialize(snapshot.snapshot);
+          var wordmanager = new JSWordManager();
+          wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
+          snapshot.game = new GameInterface(
+            Object.assign(GameData.deserialize(snapshot.snapshot), {words: wordmanager})
+          );
           snapshot.game.grid.padding(0);
         }
         this.setState(state => Object.assign({}, state, { snapshots: data.snapshots }));
