@@ -296,6 +296,15 @@ func (hub *Hub) sendErrToClient(client *Client, err string) {
 	hub.sendJSONToClient(client, data)
 }
 
+func (hub *Hub) sendErrToClientFor(client *Client, err string, req string) {
+	data := map[string]string{
+		"type":    "error",
+		"message": err,
+		"request": req,
+	}
+	hub.sendJSONToClient(client, data)
+}
+
 func (hub *Hub) sendToGame(game *ActiveGame, message string) {
 	for _, player := range game.players {
 		if player.client != nil {
@@ -313,33 +322,16 @@ func (hub *Hub) sendJSONToGame(game *ActiveGame, data interface{}) {
 	}
 }
 
-// MsgType struct contains a message type
-type MsgType struct {
-	Type string `json:"type"`
-}
-
-// MsgLetters for add/remove letter responses
-type MsgLetters struct {
-	Type    string   `json:"type"`
-	Letters []Letter `json:"letters"`
-}
-
-// MsgMessage to send a message
-type MsgMessage struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-}
-
-// MsgDiscard for discard type messages
-type MsgDiscard struct {
-	Type   string `json:"type"`
-	Letter Letter `json:"letter"`
-}
-
-// MsgUser for sending a message with a user
-type MsgUser struct {
-	Type string   `json:"type"`
-	User JSONUser `json:"user"`
+// Message is the umbrella JSON schema of fields and their types
+type Message struct {
+	Type      string         `json:"type"`
+	Message   string         `json:"message,omitempty"`
+	Letters   []Letter       `json:"letters,omitempty"`
+	Letter    *Letter        `json:"letter,omitempty"`
+	User      *JSONUser      `json:"user,omitempty"`
+	Snapshot  []PlayerPlank  `json:"snapshot,omitempty"`
+	Snapshots []UserSnapshot `json:"snapshots,omitempty"`
+	Request   string         `json:"request,omitempty"`
 }
 
 // JSONUser is a JSON user entry
@@ -348,28 +340,14 @@ type JSONUser struct {
 	Id      uint64 `json:"id"`
 }
 
-// MsgAdmit to admit a user
-type MsgAdmit struct {
-	Type string `json:"type"`
-	User uint64 `json:"user"`
-}
-
-type MsgSnapshot struct {
-	Snapshot []PlayerPlank `json:"snapshot"`
-}
-
-type MsgPeek struct {
-	Type      string         `json:"type"`
-	Snapshots []UserSnapshot `json:"snapshots"`
-}
-
+// UserSnapshot is a snapshot paired with its user
 type UserSnapshot struct {
 	User     JSONUser      `json:"user"`
 	Snapshot []PlayerPlank `json:"snapshot"`
 }
 
 func (hub *Hub) actOn(client *Client, buf string) {
-	var cmd MsgType
+	var cmd Message
 	err := json.Unmarshal([]byte(buf), &cmd)
 	if err != nil {
 		hub.sendErrToClient(client, err.Error())
@@ -378,19 +356,17 @@ func (hub *Hub) actOn(client *Client, buf string) {
 	if player, ok := hub.getPlayer(client); ok {
 		game := player.game
 
-		var snapshot MsgSnapshot
-		err = json.Unmarshal([]byte(buf), &snapshot)
-		if err == nil && len(snapshot.Snapshot) > 0 {
-			player.state.Board = snapshot.Snapshot
+		if len(cmd.Snapshot) > 0 {
+			player.state.Board = cmd.Snapshot
 		}
 
 		if cmd.Type == "draw" {
 			if player.model.Class != "player" {
-				hub.sendErrToClient(client, "Sorry, you cannot draw.")
+				hub.sendErrToClientFor(client, "Sorry, you cannot draw.", cmd.Request)
 				return
 			}
 			if game.model.Lifecycle == "finished" {
-				hub.sendErrToClient(client, "Game finished.")
+				hub.sendErrToClientFor(client, "Game finished.", cmd.Request)
 				return
 			}
 			if game.model.Lifecycle == "pending" {
@@ -412,8 +388,11 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							// no return
 						}
 						if p.client != nil {
-							hub.sendJSONToClient(p.client, MsgLetters{"add", drawn})
-							hub.sendJSONToClient(p.client, MsgUser{"gamestart", JSONUser{player.user.Display, player.user.Eid}})
+							req := cmd.Request
+							if p.user.Id != player.user.Id {
+								req = ""
+							}
+							hub.sendJSONToClient(p.client, Message{Type: "gamestart", User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
 						}
 					}
 					err = game.model.SetState(tx, &game.state)
@@ -441,7 +420,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 						log.Println(err)
 						// no return
 					}
-					hub.sendJSONToGame(game, MsgUser{"gameover", JSONUser{player.user.Display, player.user.Eid}})
+					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Eid}})
 				}
 			} else {
 				if len(game.state.Letters) >= game.config.DrawSize*len(game.players) {
@@ -463,8 +442,11 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							// no return
 						}
 						if p.client != nil {
-							hub.sendJSONToClient(p.client, MsgLetters{"add", drawn})
-							hub.sendJSONToClient(p.client, MsgUser{"draw", JSONUser{player.user.Display, player.user.Eid}})
+							req := cmd.Request
+							if p.user.Id != player.user.Id {
+								req = ""
+							}
+							hub.sendJSONToClient(p.client, Message{Type: "draw", User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
 						}
 					}
 					err = game.model.SetState(tx, &game.state)
@@ -493,30 +475,24 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							// no return
 						}
 					}
-					hub.sendJSONToGame(game, MsgUser{"gameover", JSONUser{player.user.Display, player.user.Eid}})
+					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Eid}})
 				}
 			}
 		} else if cmd.Type == "discard" {
 			if player.model.Class != "player" {
-				hub.sendErrToClient(client, "Sorry, you cannot discard.")
+				hub.sendErrToClientFor(client, "Sorry, you cannot discard.", cmd.Request)
 				return
 			}
 			game := player.game
 			if len(game.state.Letters) >= game.config.DiscardPenalty {
-				var msg MsgDiscard
-				err := json.Unmarshal([]byte(buf), &msg)
-				if err != nil {
-					hub.sendErrToClient(client, err.Error())
-					return
-				}
 				found := -1
 				for i := range player.state.Letters {
-					if msg.Letter == player.state.Letters[i] {
+					if *cmd.Letter == player.state.Letters[i] {
 						found = i
 					}
 				}
 				if found == -1 {
-					hub.sendErrToClient(client, "The letter was not assigned to you.")
+					hub.sendErrToClientFor(client, "The letter was not assigned to you.", cmd.Request)
 					return
 				}
 				player.state.Letters = append(player.state.Letters[:found], player.state.Letters[found+1:]...)
@@ -526,7 +502,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 					letters = append(letters, l)
 					player.state.Letters = append(player.state.Letters, l)
 				}
-				game.state.addLetter(msg.Letter)
+				game.state.addLetter(*cmd.Letter)
 
 				tx, err := game.txs.GetTx()
 				if err != nil {
@@ -546,25 +522,22 @@ func (hub *Hub) actOn(client *Client, buf string) {
 					return
 				}
 
-				hub.sendJSONToClient(client, MsgLetters{"delete", []Letter{msg.Letter}})
-				hub.sendJSONToClient(client, MsgLetters{"add", letters})
+				hub.sendJSONToClient(client, Message{
+					Type:    "discard",
+					Letters: letters,
+					Letter:  cmd.Letter,
+					Request: cmd.Request,
+				})
 			} else {
-				hub.sendErrToClient(client, "There are not enough letters left!")
+				hub.sendErrToClientFor(client, "There are not enough letters left!", cmd.Request)
 			}
 		} else if cmd.Type == "swap" {
 		} else if cmd.Type == "admit" {
-			var msg MsgAdmit
-			err := json.Unmarshal([]byte(buf), &msg)
-			if err != nil {
-				hub.sendErrToClient(client, err.Error())
-				return
-			}
-
 			if player, ok := hub.getPlayer(client); ok {
 				game := player.game
 				found := false
 				for _, admitted := range game.players {
-					if admitted.user.Eid == msg.User {
+					if admitted.user.Eid == cmd.User.Id {
 						admitted.model.Class = "player"
 						found = true
 						tx, err := game.txs.GetTx()
@@ -579,7 +552,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							return
 						}
 						if admitted.client != nil {
-							hub.sendJSONToClient(admitted.client, MsgMessage{"admitted", "You are admitted to the game. Please wait."})
+							hub.sendJSONToClient(admitted.client, Message{Type: "admitted", Message: "You are admitted to the game. Please wait."})
 						}
 					}
 				}
@@ -592,7 +565,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 				game := player.game
 				for _, player := range game.players {
 					if player.client != nil {
-						hub.sendJSONToClient(player.client, MsgMessage{"started", "The game is starting now!"})
+						hub.sendJSONToClient(player.client, Message{Type: "started", Message: "The game is starting now!"})
 					}
 				}
 			}
@@ -603,12 +576,16 @@ func (hub *Hub) actOn(client *Client, buf string) {
 					snapshots = append(snapshots, UserSnapshot{JSONUser{player.user.Display, player.user.Eid}, player.state.Board})
 				}
 			}
-			hub.sendJSONToClient(client, MsgPeek{"snapshots", snapshots})
+			hub.sendJSONToClient(client, Message{
+				Type:      "snapshots",
+				Snapshots: snapshots,
+				Request:   cmd.Request,
+			})
 		} else if cmd.Type != "snapshot" {
-			hub.sendErrToClient(client, "Unrecognized message type: "+cmd.Type+".")
+			hub.sendErrToClientFor(client, "Unrecognized message type: "+cmd.Type+".", cmd.Request)
 		}
 	} else {
-		hub.sendErrToClient(client, "Sorry, who are you again?")
+		hub.sendErrToClientFor(client, "Sorry, who are you again?", cmd.Request)
 	}
 }
 
@@ -633,16 +610,16 @@ func (hub *Hub) registerClient(news ClientRegister) {
 		hub.sendErrToClient(news.client, err.Error())
 		return
 	}
-	hub.sendJSONToClient(news.client, MsgMessage{"message", "HI"})
+	hub.sendJSONToClient(news.client, Message{Type: "message", Message: "HI"})
 	game := player.game
 	if player.user.Id != game.model.OwnerId {
-		hub.sendJSONToClient(news.client, MsgMessage{"pending", "You will be admitted to the game shortly."})
+		hub.sendJSONToClient(news.client, Message{Type: "pending", Message: "You will be admitted to the game shortly."})
 		admin, present := game.players[game.model.OwnerId]
 		if present && player.model.Class == "pending" && admin.client != nil {
-			hub.sendJSONToClient(admin.client, MsgUser{"invite", JSONUser{player.user.Display, player.user.Eid}})
+			hub.sendJSONToClient(admin.client, Message{Type: "invite", User: &JSONUser{player.user.Display, player.user.Eid}})
 		}
 	} else {
-		hub.sendJSONToClient(news.client, MsgMessage{"admitted", "Welcome, game admin!."})
+		hub.sendJSONToClient(news.client, Message{Type: "admitted", Message: "Welcome, game admin!."})
 	}
 	// TODO: send join notification to clients
 }
