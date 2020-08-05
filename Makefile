@@ -3,7 +3,10 @@ GO?=go
 PYTHON?=python3
 
 all: build
+
 test: check
+
+dist: distui tarball
 
 check: vet gosec safesql staticcheck crypt utils
 
@@ -64,3 +67,9 @@ submod:
 
 webui:
 	cd assets/webui && make run
+
+distui:
+	cd assets/webui && make build
+
+tarball: distui
+	tar -cJf build.tar.xz wcapi assets/wordlist.txt -C assets/webui/static build
