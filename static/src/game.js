@@ -152,10 +152,10 @@ class APITileManager extends TileManager {
     var data = JSON.parse(buf);
     if (!data) return;
     if (data.type === "add" && this.onAdd) {
-      var letters = data.letters.map(l => new Letter(l.value, l.id));
+      let letters = data.letters.map(l => new Letter(l.value, l.id));
       this.onAdd(...letters);
     } else if (data.type === "delete" && this.onDelete) {
-      var letters = data.letters.map(l => new Letter(l.value, l.id));
+      let letters = data.letters.map(l => new Letter(l.value, l.id));
       this.onDelete(...letters);
     }
   }

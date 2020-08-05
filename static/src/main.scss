@@ -46,7 +46,6 @@
 table.word.grid {
   border-collapse: collapse;
   color: #550080;
-  --tile-size: 30px;
   margin: auto;
   td {
     @include tile;

@@ -42,6 +42,7 @@ class Game extends React.Component {
         dropped: null,
         scale: 1,
         scaled: 1,
+        size: null,
         unwords: [],
         readOnly: this.props.readOnly,
       },
@@ -120,6 +121,27 @@ class Game extends React.Component {
   componentWillUnmount() {
     this.kb1();
     this.kb2();
+  }
+
+  componentDidMount() {
+    if (!this.state.presentation.readOnly) {
+      this.setState(this.repad);
+      var size = window.getComputedStyle(this.board.current).getPropertyValue("--tile-size");
+      this.setState(state => {
+        state.presentation.size = size;
+        return state;
+      });
+    }
+  }
+  componentDidUpdate() {
+    if (this.pending.scroll[0]) {
+      this.board.current.scrollTop += SIZE*this.pending.scroll[0];
+      this.pending.scroll[0] = 0;
+    }
+    if (this.pending.scroll[1]) {
+      this.board.current.scrollLeft += SIZE*this.pending.scroll[1];
+      this.pending.scroll[1] = 0;
+    }
   }
 
   droppable(where, area) {
@@ -315,29 +337,15 @@ class Game extends React.Component {
     });
   }
 
-  componentDidMount() {
-    if (!this.state.presentation.readOnly) {
-      this.setState(this.repad);
-    }
-  }
-  componentDidUpdate() {
-    if (this.pending.scroll[0]) {
-      this.board.current.scrollTop += SIZE*this.pending.scroll[0];
-      this.pending.scroll[0] = 0;
-    }
-    if (this.pending.scroll[1]) {
-      this.board.current.scrollLeft += SIZE*this.pending.scroll[1];
-      this.pending.scroll[1] = 0;
-    }
-  }
-
   render() {
     let grid = e('div', {key: "grid", className: "board", ref: this.board}, e('table',
       {
-        className: "word grid",
+        className: "word grid" + (this.state.presentation.readOnly ? " read-only" : ""),
         style: {
           transform: FIXED ? "none" : "scale(" + this.state.presentation.scale + ")",
-          "--tile-size": FIXED ? (this.state.presentation.scale * 0.5) + "in" : "",
+          "--tile-size": FIXED && this.state.presentation.size
+            ? "calc(" + this.state.presentation.size + " * " + this.state.presentation.scale + ")"
+            : "",
         },
         onTouchMove: e => {
           var scale = e.nativeEvent.scale;
