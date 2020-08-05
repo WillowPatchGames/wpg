@@ -21,6 +21,7 @@ defaultGrid.padding(5);
 
 var PADDING = [8,14];
 var SIZE = 35;
+var ALLOW_SCALE = false;
 
 function monitor(msg, promise) {
   return promise.then(r => {
@@ -351,7 +352,7 @@ class Game extends React.Component {
         },
         onTouchMove: e => {
           var scale = e.nativeEvent.scale;
-          if (scale && scale !== 1) {
+          if (ALLOW_SCALE && scale && scale !== 1) {
             e.preventDefault();
             this.setState((state) => {
               state.presentation.scale = Math.min(2, Math.max(0.5, state.presentation.scaled * scale));

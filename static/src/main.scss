@@ -4,6 +4,14 @@
   --tile-size: 0.5in;
 }
 
+@mixin hover {
+  @media (hover: hover) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
 @mixin noselect {
     -webkit-touch-callout: none; /* iOS Safari */
       -webkit-user-select: none; /* Safari */
@@ -55,11 +63,15 @@ table.word.grid {
     }
     &.empty {
       cursor: default;
-      &:not(.read-only):hover {
-        background: #95e495;
+      &:not(.read-only) {
+        @include hover {
+          background: #95e495;
+        }
       }
-      &:not(.read-only):active:hover {
-        background: #95e495;
+      &:not(.read-only):active {
+        @include hover {
+          background: #95e495;
+        }
       }
       & > div {
         @extend .tile-size;
@@ -74,15 +86,21 @@ table.word.grid {
       margin: -1px;
       border: 1px solid #e0dfef;
       background: #e0dfef;
-      &:not(.read-only):hover, &:not(.read-only):active {
-        border: 1px solid #88a8e2;
-        margin: -1px;
+      &:not(.read-only) {
+        :active {
+          border: 1px solid #88a8e2;
+          margin: -1px;
+          @include hover {
+            background: #95e495;
+          }
+        }
+        @include hover {
+          border: 1px solid #88a8e2;
+          margin: -1px;
+        }
       }
       &:not(.read-only):active {
         //transform: scale(1.1) translateY(-2px);
-        &:hover {
-          background: #95e495;
-        }
       }
     }
     &[data-selected=true] {
@@ -92,8 +110,10 @@ table.word.grid {
       &:not(.empty) > .tile {
         background: #95e495;
         border-color: #95e495;
-        &:not(.read-only):active:hover {
-          background: #e0dfef;
+        &:not(.read-only):active {
+          @include hover {
+            background: #e0dfef;
+          }
         }
       }
     }
@@ -183,7 +203,7 @@ table.word.grid {
 
 .results .game-component > .board, .results .game-component > .bank {
   height: initial;
-  overflow: initial;
+  overflow-y: initial;
 }
 
 .results table.word.grid {
