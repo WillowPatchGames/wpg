@@ -849,6 +849,82 @@ class AboutPage extends React.Component {
   }
 }
 
+class ProfilePage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.email = React.createRef();
+    this.display = React.createRef();
+
+    this.state = {
+      nameError: null,
+      passwordError: null
+    };
+  }
+
+  handleNamesSubmit() {
+    return null;
+  }
+
+  handlePasswordSubmit() {
+    return null;
+  }
+
+  render() {
+    return (
+      <div className="App-page">
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="middle" span={6}>
+            <article>
+              <Typography use="headline2">Profile Preferences</Typography>
+              <p>Here you can configure your account and change several settings.</p>
+              <div>
+                <c.Card>
+                  <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                    <form onSubmit={ this.handleNamesSubmit.bind(this) }>
+                      <TextField fullwidth placeholder="email" name="email" inputRef={ this.email } /><br />
+                      <TextField fullwidth placeholder="display" name="display" inputRef={ this.display } /><br />
+                      <Button label="Change Names" raised />
+                    </form>
+                    <d.Dialog open={ this.state.nameError !== null } onClosed={() => this.setNameError(null) }>
+                      <d.DialogTitle>Error!</d.DialogTitle>
+                      <d.DialogContent>{ this.state.nameError }</d.DialogContent>
+                      <d.DialogActions>
+                        <d.DialogButton action="close">OK</d.DialogButton>
+                      </d.DialogActions>
+                    </d.Dialog>
+                  </div>
+                </c.Card>
+              </div>
+              <br /><br />
+              <div>
+                <c.Card>
+                  <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                    <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
+                      <TextField fullwidth placeholder="old password" name="old" inputRef={ this.oldPassword } /><br />
+                      <TextField fullwidth placeholder="new password" name="new" inputRef={ this.newPassword  } /><br />
+                      <TextField fullwidth placeholder="confirm password" name="confirm" inputRef={ this.confirmPassword } /><br />
+                      <Button label="Change Names" raised />
+                    </form>
+                    <d.Dialog open={ this.state.passwordError !== null } onClosed={() => this.setPasswordError(null) }>
+                      <d.DialogTitle>Error!</d.DialogTitle>
+                      <d.DialogContent>{ this.state.passwordError }</d.DialogContent>
+                      <d.DialogActions>
+                        <d.DialogButton action="close">OK</d.DialogButton>
+                      </d.DialogActions>
+                    </d.Dialog>
+                  </div>
+                </c.Card>
+              </div>
+            </article>
+          </g.GridCell>
+        </g.Grid>
+      </div>
+    );
+  }
+}
+
 class ErrorPage extends React.Component {
   render() {
     return "Sorry, an unknown error occurred.";
@@ -862,6 +938,7 @@ class Page extends React.Component {
       case 'home': component = HomePage; break;
       case 'about': component = AboutPage; break;
       case 'login': component = LoginPage; break;
+      case 'profile': component = ProfilePage; break;
       case 'signup': component = SignupPage; break;
       case 'create': component = this.props.user ? CreateGamePage : LoginPage; break;
       case 'playing': component = this.props.game ? RushGamePage : JoinGamePage; break;
