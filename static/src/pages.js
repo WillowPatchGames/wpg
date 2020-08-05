@@ -14,7 +14,6 @@ import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/theme/styles';
 
-import { SnackbarQueue, createSnackbarQueue } from '@rmwc/snackbar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
@@ -51,54 +50,73 @@ function loadGame(game) {
   return game;
 }
 
+function addEv(tgt, typ, cb, ...mod) {
+  let callback = (...arg) => cb(...arg);
+  tgt.addEventListener(typ, callback, ...mod);
+  return () => tgt.removeEventListener(typ, callback, ...mod);
+}
+function notify(snackbar, message, type) {
+  if (typeof snackbar === 'function') {
+    return snackbar(message, type);
+  }
+  snackbar.clearAll();
+  snackbar.notify({
+    body: message,
+    dismissesOnAction: true,
+    timeout: 3000,
+    actions: [{ title: type === "error" ? "Aw shucks" : "Cool" }],
+  });
+}
+function processor(processing) {
+  return ({ data: buf }) => {
+    console.log(buf);
+    var data = JSON.parse(buf);
+    if (!data) console.log("Error: ", buf);
+    if (processing[data.type]) {
+      processing[data.type](data);
+    }
+    if (processing[""]) {
+      processing[""](data);
+    }
+  }
+}
+
 class RushGamePage extends React.Component {
   constructor(props) {
     super(props);
-    this.snackbar = createSnackbarQueue();
     this.state = {};
     this.game = loadGame(this.props.game);
+    let user = usr => usr.id === this.props.user.id ? "You" : usr.display;
     if (this.game) {
       this.state.data = this.game.data;
-      this.game.ws.addEventListener("message", ({ data: buf }) => {
-        console.log(buf);
-        var data = JSON.parse(buf);
-        if (!data) console.log("Error: ", buf);
-        if (data.type === "message" || data.type === "draw") {
-          this.snackbar.clearAll();
-          this.snackbar.notify({
-            title: <b>Message</b>,
-            body: data.message,
-            icon: 'info',
-            dismissesOnAction: true,
-            timeout: 6000,
-            actions: [{ title: "Cool" }],
-          });
-        } else if (data.error) {
-          console.error(data.error);
-          this.snackbar.clearAll();
-          this.snackbar.notify({
-            title: <b>Error</b>,
-            body: data.error,
-            icon: 'error_outline',
-            dismissesOnAction: true,
-            timeout: 6000,
-            actions: [{ title: "Aw shucks" }],
-          });
-        } else if (data.type === "gameover") {
-          this.game.ws.send(JSON.stringify({
-            snapshot: this.game.data.serialize(),
-          }));
+      this.unmount = addEv(this.game.ws, "message", processor({
+        "gamestart": data => {
+          data.message = user(data.user) + " drew first!";
+        },
+        "draw": data => {
+          data.message = user(data.user) + " drew!";
+        },
+        "gameover": data => {
+          data.message = user(data.user) + " won!";
+          this.game.winner = data.user;
           this.props.setPage('afterparty');
-        }
-      });
+        },
+        "": data => {
+          if (data.message) {
+            notify(this.props.snackbar, data.message, data.type);
+          }
+        },
+      }));
     }
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
   }
   render() {
     return (
       <div>
         <h1>Rush! game</h1>
-        <Game data={ this.state.data } />
-        <SnackbarQueue messages={ this.snackbar.messages } />
+        <Game data={ this.state.data } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
     );
   }
@@ -121,31 +139,44 @@ class AfterPartyPage extends React.Component {
     this.game = this.props.game;
     this.state = {
       snapshots: null,
+      winner: this.game.winner,
     };
-  }
-  componentDidMount() {
-    this.game.ws.addEventListener("message", ({ data: buf }) => {
-      console.log(buf);
-      var data = JSON.parse(buf);
-      if (data.snapshots) {
-        data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
-        for (let snapshot of data.snapshots) {
+    this.unmount = addEv(this.game.ws, "message", processor({
+      "snapshots": data => {
+        if (data.snapshots) {
           var wordmanager = new JSWordManager();
           wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
-          snapshot.game = new GameInterface(
-            Object.assign(GameData.deserialize(snapshot.snapshot), {words: wordmanager})
-          );
-          snapshot.game.grid.padding(0);
+          data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
+          for (let snapshot of data.snapshots) {
+            snapshot.game = new GameInterface(
+              Object.assign(GameData.deserialize(snapshot.snapshot), {words: wordmanager})
+            );
+            snapshot.game.grid.padding(0);
+          }
+          this.setState(state => Object.assign({}, state, { snapshots: data.snapshots }));
         }
-        this.setState(state => Object.assign({}, state, { snapshots: data.snapshots }));
-      }
-    });
+      },
+      "": data => {
+        if (data.message) {
+          notify(this.props.snackbar, data.message, data.type);
+        }
+      },
+    }));
+  }
+  componentDidMount() {
     this.game.ws.send(JSON.stringify({"type": "peek"}));
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
   }
   render() {
     return (
       <div>
-        <h1>That was fun, wasn't it?</h1>
+        { this.state.winner
+        ? <h1>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
+        : <></>
+        }
+        <h2>That was fun, wasn't it?</h2>
         <ol className="results">
           { this.state.snapshots
           ? this.state.snapshots.map(snapshot =>
@@ -165,44 +196,27 @@ class AfterPartyPage extends React.Component {
 class PreGameUserPage extends React.Component {
   constructor(props) {
     super(props);
-    this.snackbar = createSnackbarQueue();
     this.state = {
       status: "pending",
     }
     this.game = this.props.game || {};
     loadGame(this.game);
-    this.game.ws.addEventListener("message", ({ data: buf }) => {
-      console.log(buf);
-      var data = JSON.parse(buf);
-      if (!data) console.log("Error: ", buf);
-      if (data.type === "message" || data.type === "draw") {
-        console.log(data.message);
-        this.snackbar.clearAll();
-        this.snackbar.notify({
-          title: <b>Message</b>,
-          body: data.message,
-          icon: 'info',
-          dismissesOnAction: true,
-          timeout: 6000,
-          actions: [{ title: "Cool" }],
-        });
-      } else if (data.type === "admitted") {
+    this.unmount = addEv(this.game.ws, "message", processor({
+      "admitted": data => {
         this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
-      } else if (data.type === "started") {
+      },
+      "started": data => {
         this.props.setPage('playing');
-      } else if (data.error) {
-        console.error(data.error);
-        this.snackbar.clearAll();
-        this.snackbar.notify({
-          title: <b>Error</b>,
-          body: data.error,
-          icon: 'error_outline',
-          dismissesOnAction: true,
-          timeout: 6000,
-          actions: [{ title: "Aw shucks" }],
-        });
-      }
-    });
+      },
+      "": data => {
+        if (data.message) {
+          notify(this.props.snackbar, data.message, data.type);
+        }
+      },
+    }));
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
   }
   render() {
     let message = "Game is in an unknown state.";
@@ -214,7 +228,6 @@ class PreGameUserPage extends React.Component {
     return (
       <div>
         <p>{ message }</p>
-        <SnackbarQueue messages={ this.snackbar.messages } />
       </div>
     );
   }
@@ -223,48 +236,31 @@ class PreGameUserPage extends React.Component {
 class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
-    this.snackbar = createSnackbarQueue();
     this.state = {
       waitlist: [],
     };
     this.game = this.props.game || {};
     loadGame(this.game);
-    this.game.ws.addEventListener("message", ({ data: buf }) => {
-      console.log(buf);
-      var data = JSON.parse(buf);
-      if (!data) console.log("Error: ", buf);
-      if (data.type === "message" || data.type === "draw") {
-        console.log(data.message);
-        this.snackbar.clearAll();
-        this.snackbar.notify({
-          title: <b>Message</b>,
-          body: data.message,
-          icon: 'info',
-          dismissesOnAction: true,
-          timeout: 6000,
-          actions: [{ title: "Cool" }],
-        });
-      } else if (data.type === "invite") {
+    this.unmount = addEv(this.game.ws, "message", processor({
+      "invite": data => {
         console.log(data.user);
         this.state.waitlist.push(Object.assign(data.user, { admitted: false }));
         this.setState(state => state);
-      } else if (data.type === "started") {
+      },
+      "started": data => {
         this.props.setPage('playing');
-      } else if (data.error) {
-        console.error(data.error);
-        this.snackbar.clearAll();
-        this.snackbar.notify({
-          title: <b>Error</b>,
-          body: data.error,
-          icon: 'error_outline',
-          dismissesOnAction: true,
-          timeout: 6000,
-          actions: [{ title: "Aw shucks" }],
-        });
-      }
-    });
+      },
+      "": data => {
+        if (data.message) {
+          notify(this.props.snackbar, data.message, data.type);
+        }
+      },
+    }));
     this.code_ref = React.createRef();
     this.link_ref = React.createRef();
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
   }
   toggleAdmitted(user) {
     for (let u in this.state.waitlist) {
@@ -300,7 +296,7 @@ class PreGameAdminPage extends React.Component {
                     <l.ListItem disabled>
                       <p>Share this code to let users join:</p>
                     </l.ListItem>
-                    <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+                    <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
                       <l.ListItemText className="App-game-code">
                         <TextField fullwidth readOnly value={ this.game.code } inputRef={ this.code_ref } />
                       </l.ListItemText>
@@ -309,7 +305,7 @@ class PreGameAdminPage extends React.Component {
                     <l.ListItem disabled>
                       <p>Or have them visit this link:</p>
                     </l.ListItem>
-                    <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
+                    <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
                       <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
                     </l.ListItem>
                   </l.ListGroup>
@@ -332,7 +328,6 @@ class PreGameAdminPage extends React.Component {
             </c.Card>
           </g.GridCell>
         </g.Grid>
-        <SnackbarQueue messages={ this.snackbar.messages } />
       </div>
     )
   }

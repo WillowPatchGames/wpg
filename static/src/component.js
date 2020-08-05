@@ -23,17 +23,6 @@ var PADDING = [8,14];
 var SIZE = 35;
 var ALLOW_SCALE = false;
 
-function monitor(msg, promise) {
-  return promise.then(r => {
-    if (r === undefined || r === null) {
-      console.log(msg, r);
-    } else {
-      console.log(r);
-    }
-    return r;
-  }, console.log);
-}
-
 class Game extends React.Component {
   constructor(props) {
     super(props);
@@ -122,6 +111,9 @@ class Game extends React.Component {
   componentWillUnmount() {
     this.kb1();
     this.kb2();
+    if (this.state.data.cancel) {
+      this.state.data.cancel();
+    }
   }
 
   componentDidMount() {
@@ -274,7 +266,17 @@ class Game extends React.Component {
     var unwords;
     if (!this.state.data.bank.empty() || this.state.data.grid.components().length > 1) {
       console.log("You must connect all of your tiles together before drawing!");
+      if (this.props.notify) {
+        this.props.notify("You must connect all of your tiles together before drawing!", "error");
+      }
     } else if ((unwords = await this.state.data.check()).length) {
+      if (this.props.notify) {
+        if (unwords.length === 1) {
+          this.props.notify('"' + unwords[0] + '"' + " is not a valid word!", "error");
+        } else {
+          this.props.notify("You have invalid words on the board", "error");
+        }
+      }
       console.log("Invalid words: ", unwords.map(String));
       this.setState((state) => {
         state.presentation.unwords = unwords;
@@ -286,7 +288,7 @@ class Game extends React.Component {
         state.presentation.selected = null;
         return state;
       });
-      await monitor("Could not draw", this.state.data.draw());
+      await this.state.data.draw();
       this.setState(state => {
         return state;
       });
@@ -397,15 +399,7 @@ class Game extends React.Component {
               raised: true,
               key: "check",
               theme: ['secondaryBg', 'onSecondary'],
-              onClick: async () => {
-                var unwords = await this.state.data.check();
-                if (unwords.length) console.log("Invalid words: ", unwords.map(String));
-                this.setState((state) => {
-                  state.presentation.selected = null;
-                  state.presentation.unwords = unwords;
-                  return state;
-                });
-              },
+              onClick: this.check.bind(this),
             }, "Check"),
             e(Button, {
               raised: true,

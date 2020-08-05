@@ -13,6 +13,8 @@ import '@rmwc/theme/styles';
 
 import { ThemeProvider } from '@rmwc/theme';
 
+import { SnackbarQueue, createSnackbarQueue } from '@rmwc/snackbar';
+
 // Application imports
 import { Navigation } from './nav.js';
 import { Page, Footer } from './pages.js';
@@ -32,6 +34,8 @@ class App extends React.Component {
       user: null,
       game: null,
     };
+
+    this.snackbar = createSnackbarQueue();
 
     window.App = this;
 
@@ -128,7 +132,8 @@ class App extends React.Component {
         >
 
         <Navigation user={ this.state.user } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-        <Page user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } />
+        <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } />
+        <SnackbarQueue messages={ this.snackbar.messages } />
         <Footer page={ this.state.page } />
       </ThemeProvider>
 

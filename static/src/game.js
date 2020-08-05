@@ -136,6 +136,7 @@ class GameData {
 }
 
 class TileManager {
+  cancel() {}
   async draw(n) {}
   async discard(letter) {}
   swap(here, there) {}
@@ -146,7 +147,10 @@ class APITileManager extends TileManager {
     super();
     this.conn = conn;
     this.handler = this.handler.bind(this);
-    conn.addEventListener("message", this.handler);
+    this.conn.addEventListener("message", this.handler);
+  }
+  cancel() {
+    this.conn.removeEventListener("message", this.handler);
   }
   handler({ data: buf }) {
     var data = JSON.parse(buf);
@@ -281,8 +285,8 @@ class JSTileManager extends TileManager {
 }
 
 class WordManager {
-  async check(words) {
-  }
+  cancel() {}
+  async check(words) {}
 }
 
 class JSWordManager extends WordManager {
@@ -336,6 +340,10 @@ class GameInterface extends GameData {
         },
       });
     }
+  }
+  cancel() {
+    if (this.tiles) this.tiles.cancel();
+    if (this.words) this.words.cancel();
   }
   swap(here, there) {
     super.swap(here, there);
