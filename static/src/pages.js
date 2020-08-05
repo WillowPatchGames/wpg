@@ -350,7 +350,7 @@ class CreateGameForm extends React.Component {
       num_players: 4,
       num_tiles: 75,
       tiles_per_player: false,
-      start_size: 7,
+      start_size: 12,
       draw_size: 1,
       discard_penalty: 3
     }
@@ -448,10 +448,10 @@ class CreateGameForm extends React.Component {
                 }
                 <br />
                 <l.ListItem>
-                  <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="4" max="15" step="1" />
+                  <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="7" max="25" step="1" />
                   <p></p>
                 </l.ListItem>
-                <l.ListItem><TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="3" step="1" /></l.ListItem>
+                <l.ListItem><TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="10" step="1" /></l.ListItem>
                 <l.ListItem><TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" /></l.ListItem>
                 <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
                 <br/>
