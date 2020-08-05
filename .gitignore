@@ -180,4 +180,3 @@ cython_debug/
 
 # Fuzzing data
 pkg/password/password-fuzz.zip
-assets/wordlist.txt

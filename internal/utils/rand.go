@@ -88,6 +88,10 @@ func RandomToken() string {
 func loadWords() {
 	var wordfile = "assets/wordlist.txt"
 	file, err := os.Open(wordfile)
+
+	// Assume wordfile was pre-processed
+	var fallback = false
+
 	if err != nil {
 		wordfile = "/usr/share/dict/words"
 		file, err = os.Open(wordfile)
@@ -95,6 +99,7 @@ func loadWords() {
 			panic(err)
 		}
 		log.Println("Using fallback dictionary")
+		fallback = true
 	}
 
 	reader := bufio.NewReader(file)
@@ -106,7 +111,7 @@ func loadWords() {
 		}
 
 		word := strings.ToLower(string(line))
-		if !strings.ContainsAny(word, "!&',-./0123456789 _`~\"?+") {
+		if !fallback || !strings.ContainsAny(word, "!&',-./0123456789 _`~\"?+") {
 			words = append(words, word)
 		}
 	}
