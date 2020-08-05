@@ -5,6 +5,7 @@ import mergeProps from 'react-merge-props';
 import './main.scss';
 
 import { Button } from '@rmwc/button';
+import { CircularProgress } from '@rmwc/circular-progress';
 
 import {
   Letter,
@@ -35,6 +36,8 @@ class Game extends React.Component {
         size: null,
         unwords: [],
         readOnly: this.props.readOnly,
+        drawing: false,
+        discarding: [],
       },
       data: props.data,
     };
@@ -250,19 +253,32 @@ class Game extends React.Component {
     });
   }
 
-  discard(here) {
-    if (here && this.state.data.get(here)) {
-      this.state.data.discard(here).then(() => this.setState(state => state));
-      this.setState((state) => {
-        state.presentation.selected = null;
-        return state;
-      });
-    }
-  }
   recall(here, dropped) {
     this.interact(here, ["bank",""], dropped);
   }
+  async discard(here) {
+    if (here && this.state.data.get(here) && !this.state.presentation.discarding.includes(this.state.data.get(here))) {
+      var letter = this.state.data.get(here);
+      this.setState((state) => {
+        state.presentation.selected = null;
+        state.presentation.discarding.push(letter);
+        return state;
+      });
+      try {
+        await this.state.data.discard(here);
+      } finally {
+        this.setState((state) => {
+          var i = state.presentation.discarding.indexOf(letter);
+          if (i > -1) {
+            state.presentation.discarding.splice(i, 1);
+          }
+          return state;
+        });
+      }
+    }
+  }
   async draw() {
+    if (this.state.presentation.drawing) return;
     var unwords;
     if (!this.state.data.bank.empty() || this.state.data.grid.components().length > 1) {
       console.log("You must connect all of your tiles together before drawing!");
@@ -286,12 +302,18 @@ class Game extends React.Component {
     } else {
       this.setState(state => {
         state.presentation.selected = null;
+        state.presentation.drawing = true;
         return state;
       });
-      await this.state.data.draw();
-      this.setState(state => {
-        return state;
-      });
+      try {
+        await this.state.data.draw();
+      } finally {
+        // NOTE: this technically leaks, and may execute after the component unmounts (especially on game over events)
+        this.setState(state => {
+          state.presentation.drawing = false;
+          return state;
+        });
+      }
     }
   }
   async check() {
@@ -374,7 +396,7 @@ class Game extends React.Component {
       e('tbody', {}, Array.from(this.state.data.grid.data).map((row, i) =>
         e('tr', {key: i}, Array.from(row).map((dat, j) =>
           e('td', {
-            className: (dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.data.grid)).length ? "unword" : "") : "empty") + (this.state.presentation.readOnly ? " read-only" : ""),
+            className: (dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.data.grid)).length ? "unword" : "") : "empty") + (this.state.presentation.readOnly ? " read-only" : "") + (this.state.presentation.discarding.includes(dat) ? " discarding" : ""),
             ref: this.droppable(["grid",i,j]),
             style: FIXED ? {} : {"position":"relative"},
             key: j, onClick: this.handler(["grid",i,j]),
@@ -387,7 +409,7 @@ class Game extends React.Component {
       [
         e('div', {key: "letters", className: "letters"}, this.state.data.bank.map((letter, i) =>
           e('span', {
-            key: i, className: "letter" + (letter ? " draggable" : " empty"),
+            key: i, className: "letter" + (letter ? (this.state.presentation.readOnly ? "" : " draggable") : " empty") + (this.state.presentation.discarding.includes(letter) ? " discarding" : ""),
             ref: this.droppable(["bank", i]),
             onClick: this.handler(["bank",i]),
             "data-selected": shallowEqual(this.state.presentation.selected, ["bank", i]),
@@ -406,6 +428,7 @@ class Game extends React.Component {
               disabled: !this.state.data.bank.empty() || this.state.data.grid.components().length > 1,
               key: "draw",
               onClick: this.draw.bind(this),
+              icon: this.state.presentation.drawing ? <CircularProgress /> : null,
             }, "Draw"),
             e(Button, {
               outlined: true,

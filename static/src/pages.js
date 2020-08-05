@@ -270,7 +270,7 @@ class PreGameAdminPage extends React.Component {
           this.setState(state => state);
           this.game.ws.send(JSON.stringify({
             "type": "admit",
-            "user": user.id,
+            "user": user,
           }));
         }
       }
@@ -538,6 +538,7 @@ class JoinGamePage extends React.Component {
       this.setError(user.error.message);
     } else {
       this.props.setUser(user);
+      this.props.setPage('play');
     }
   }
 

@@ -162,6 +162,9 @@ table.word.grid {
           }
         }
       }
+      &.discarding {
+        color: gray;
+      }
     }
   }
   .actions {

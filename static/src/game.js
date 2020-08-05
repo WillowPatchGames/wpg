@@ -2,11 +2,70 @@ function def(v) {
   return v !== undefined && v !== null;
 }
 
+function uid() {
+  return uid.counter++;
+}
+uid.counter = Math.random();
+
+function wsListeners(ws, evs) {
+  let clean = () => {
+    for (let ev in evs) {
+      ws.removeEventListener(ev, evs[ev]);
+    }
+  };
+  for (let ev in evs) {
+    ws.addEventListener(ev, evs[ev]);
+  }
+  return clean;
+}
+function wsPromise(ws, mkpromise) {
+  return new Promise((resolve, reject) => {
+    var cleaned = false;
+    var clean = ()=>{cleaned = true};
+    var wrap = fn => (...arg) => {
+      var ret = fn(...arg);
+      clean();
+      return ret;
+    };
+    var yes = wrap(resolve);
+    var no = wrap(reject);
+    var cbs = mkpromise(yes, no);
+    if (!cleaned) {
+      if (typeof cbs === 'function') {
+        cbs = {message: cbs};
+      }
+      if (!cbs.error && !cbs.close) {
+        cbs.error = cbs.close = no;
+      }
+      clean = wsListeners(ws, cbs);
+    }
+  });
+}
+
+function waitOpen(ws) {
+  if (!ws.readyState) {
+    return wsPromise(ws, resolve => ({ open: resolve }));
+  } else {
+    return Promise.resolve();
+  }
+}
+function waitResponse(ws, type) {
+  return wsPromise(ws, resolve => ({ data: buf }) => {
+    var data = JSON.parse(buf);
+    if (data.type === type) {
+      resolve(data);
+    }
+  });
+}
+
 class Letter extends String {
   constructor(value, id) {
     super(value);
     if (!def(id)) this.id = Letter.id++;
     else this.id = id;
+  }
+  static deserialize(data) {
+    return new Letter(data.value, data.id);
   }
 }
 Letter.id = 1;
@@ -137,7 +196,7 @@ class GameData {
 
 class TileManager {
   cancel() {}
-  async draw(n) {}
+  async draw() {}
   async discard(letter) {}
   swap(here, there) {}
 }
@@ -155,44 +214,31 @@ class APITileManager extends TileManager {
   handler({ data: buf }) {
     var data = JSON.parse(buf);
     if (!data) return;
-    if (data.type === "add" && this.onAdd) {
-      let letters = data.letters.map(l => new Letter(l.value, l.id));
+    if ((data.type === "draw" || data.type === "gamestart") && !data.request && this.onAdd) {
+      let letters = data.letters.map(Letter.deserialize);
       this.onAdd(...letters);
-    } else if (data.type === "delete" && this.onDelete) {
-      let letters = data.letters.map(l => new Letter(l.value, l.id));
-      this.onDelete(...letters);
     }
   }
-  async draw(n, data) {
-    if (n === 0) return;
-    if (!this.conn.readyState) {
-      await new Promise((resolve, reject) => {
-        let clean = () => {
-          this.conn.removeEventListener("open", good);
-          this.conn.removeEventListener("close", bad);
-          this.conn.removeEventListener("error", bad);
-        }
-        let good = (e) => {
-          resolve(e);
-          clean();
-        }
-        let bad = (e) => {
-          reject(e);
-          clean();
-        }
-        this.conn.addEventListener("open", good);
-        this.conn.addEventListener("close", bad);
-        this.conn.addEventListener("error", bad);
-      });
-    }
+  async draw(data) {
+    await waitOpen(this.conn);
+    var request = String(uid());
     this.conn.send(JSON.stringify({
       type: "draw",
-      n,
       snapshot: data ? data.serialize() : undefined,
+      request,
     }));
-    return;
+    var dat = await wsPromise(this.conn, (resolve, reject) => ({ data: buf }) => {
+      var data = JSON.parse(buf);
+      if (data.type === "error" && data.request === request) {
+        reject(data);
+      } else if ((data.type === "gamestart" || data.type === "draw" || data.type === "gameover") && data.request === request) {
+        resolve(data);
+      }
+    });
+    return dat.letters?.map(Letter.deserialize);
   }
   async discard(letter, data) {
+    var request = String(uid());
     this.conn.send(JSON.stringify({
       type: "discard",
       letter: {
@@ -200,8 +246,17 @@ class APITileManager extends TileManager {
         value: String(letter),
       },
       snapshot: data ? data.serialize() : undefined,
+      request,
     }));
-    return;
+    var dat = await wsPromise(this.conn, (resolve, reject) => ({ data: buf }) => {
+      var data = JSON.parse(buf);
+      if ((data.type === "error" && data.request === request) || data.type === "gameover") {
+        reject(data);
+      } else if (data.type === "discard" && data.request === request) {
+        resolve(data);
+      }
+    });
+    return dat.letters?.map(Letter.deserialize);
   }
   swap(here, there, data) {
     this.conn.send(JSON.stringify({
@@ -246,21 +301,20 @@ class JSTileManager extends TileManager {
       "Z": 0.09,
     };
     this.drawpile = [];
+    this.draw_size = 1;
+    this.discard_penalty = 3;
     for (var i=0; i<length; i++) {
       this.drawpile.push(this.randomLetter());
     }
   }
-  async draw(n) {
-    if (n === 0) return;
-    var a = true;
-    if (!def(n)) { n = 1; a = false; }
-    if (this.drawpile.length < n) return;
-    var drawn = this.drawpile.splice(0, n);
-    return a ? drawn : drawn[0];
+  async draw() {
+    if (this.drawpile.length < this.draw_size) return;
+    var drawn = this.drawpile.splice(0, this.draw_size);
+    return drawn;
   }
   async discard(letter) {
-    if (this.drawpile.length < 3) return;
-    var drawn = this.drawpile.splice(0, 3);
+    if (this.drawpile.length < this.discard_penalty) return;
+    var drawn = this.drawpile.splice(0, this.discard_penalty);
     this.drawpile.push(letter);
     // shuffle
     for (let i = this.drawpile.length - 1; i > 0; i--) {
@@ -349,14 +403,10 @@ class GameInterface extends GameData {
     super.swap(here, there);
     this.tiles.swap(here, there, this);
   }
-  async draw(n) {
-    let letters = await this.tiles.draw(n, this);
+  async draw() {
+    let letters = await this.tiles.draw(this);
     if (letters) {
-      if (def(n)) {
-        this.add(...letters);
-      } else {
-        this.add(letters);
-      }
+      this.add(...letters);
     }
     return letters;
   }
@@ -366,7 +416,7 @@ class GameInterface extends GameData {
     this.swap(where, ["bank",""]);
     var added = await this.tiles.discard(letter, this);
     if (!added) return;
-    this.delete(where);
+    this.delete(letter);
     this.add(...added);
     return added;
   }
