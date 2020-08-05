@@ -80,6 +80,7 @@ type JSONPos struct {
 	Idx  []int  `json:"idx"`
 }
 
+/*
 func encodeBoard(board map[Letter]JSONPos) []PlayerPlank {
 	planks := make([]PlayerPlank, len(board))
 	for letter, pos := range board {
@@ -95,6 +96,7 @@ func decodeBoard(planks []PlayerPlank) map[Letter]JSONPos {
 	}
 	return board
 }
+*/
 
 // GameState snapshots
 type GameState struct {

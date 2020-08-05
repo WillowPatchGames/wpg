@@ -164,7 +164,7 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 	// Make sure the player doesn't already have another client connection
 	for c := range hub.clients {
 		if hub.clients[c].model.GameId == gameid && hub.clients[c].model.UserId == userid {
-			return nil, errors.New("Player was already connected with different connection")
+			return nil, errors.New("player was already connected with different connection")
 		}
 	}
 
@@ -181,12 +181,12 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 			hub.clients[client] = player
 			return player, nil
 		}
-		return nil, errors.New("Player was already connected with different connection")
+		return nil, errors.New("player was already connected with different connection")
 	}
 
 	// If not, and the game is finished, we don't want to add more players
 	if game.model.Lifecycle == "finished" {
-		return nil, errors.New("Cannot add player to finished game")
+		return nil, errors.New("cannot add player to finished game")
 	}
 
 	tx, err := game.txs.GetTx()
