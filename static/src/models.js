@@ -49,7 +49,7 @@ class UserModel {
   static async FromId(id, token) {
     var ret = new UserModel();
 
-    var url = ret.api + '/user/' + id;
+    var uri = ret.api + '/user/' + id;
 
     var headers = {
       'Accept': 'application/json',
@@ -61,7 +61,7 @@ class UserModel {
       headers['X-Auth-Token'] = this.token;
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(uri, {
       method: 'GET',
       headers: headers,
       redirect: 'follow'
@@ -155,6 +155,48 @@ class UserModel {
     localStorage.setItem('guest', JSON.stringify(guest));
   }
 
+  async upgrade(username, email, display, password) {
+    var request = {
+      'password': password
+    };
+
+    if (nonempty(username)) {
+      request['username'] = username;
+    }
+    if (nonempty(email)) {
+      request['email'] = email;
+    }
+    if (nonempty(display)) {
+      request['display'] = display;
+    }
+
+    var upgrade_uri = this.api + '/user/' + this.id + '/upgrade';
+
+    const response = await fetch(upgrade_uri, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    const result = await response.json()
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    localStorage.removeItem('guest');
+
+    Object.assign(this, result);
+    return this.login(password);
+  }
+
   async login(password) {
     var request = {'password': password};
     if (nonempty(this.username)) {
@@ -220,9 +262,9 @@ class GameModel {
   static async FromId(id) {
     var ret = new GameModel();
 
-    var url = ret.api + '/game/' + id;
+    var uri = ret.api + '/game/' + id;
 
-    const response = await fetch(url, {
+    const response = await fetch(uri, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -251,9 +293,9 @@ class GameModel {
     var ret = new GameModel(user);
     ret.code = code;
 
-    var url = ret.api + '/game/find?join=' + code;
+    var uri = ret.api + '/game/find?join=' + code;
 
-    const response = await fetch(url, {
+    const response = await fetch(uri, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
