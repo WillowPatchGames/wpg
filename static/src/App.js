@@ -1,7 +1,6 @@
 import React from 'react';
 
 import '@rmwc/top-app-bar/styles';
-import 'rmwc/dist/styles';
 import '@rmwc/icon/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';

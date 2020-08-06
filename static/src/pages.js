@@ -1,7 +1,6 @@
 import React from 'react';
 
 import './App.css';
-import 'rmwc/dist/styles';
 import '@rmwc/icon/styles';
 
 import { AboutPage } from './pages/about.js';
