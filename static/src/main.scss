@@ -37,11 +37,17 @@
   text-align: center;
 }
 
+$selected: #95e495;
+$preselected: scale-color($selected, $lightness: +35%);
+$tile: #e0dfef;
+$tiletext: #550080;
+$tileborder: #88a8e2;
+
 @mixin tile {
   @extend .word;
   @extend .tile-size;
   @include noselect;
-  border: 1px solid #88a8e2;
+  border: 1px solid $tileborder;
 }
 .tile-size {
   @include tile-size;
@@ -53,7 +59,7 @@
 
 table.word.grid {
   border-collapse: collapse;
-  color: #550080;
+  color: $tiletext;
   margin: auto;
   td {
     @include tile;
@@ -65,12 +71,12 @@ table.word.grid {
       cursor: default;
       &:not(.read-only) {
         @include hover {
-          background: #95e495;
+          background: $preselected;
         }
       }
       &:not(.read-only):active {
         @include hover {
-          background: #95e495;
+          background: $selected;
         }
       }
       & > div {
@@ -84,18 +90,18 @@ table.word.grid {
       display: inline-block;
       box-sizing: content-box;
       margin: -1px;
-      border: 1px solid #e0dfef;
-      background: #e0dfef;
+      border: 1px solid $tile;
+      background: $tile;
       &:not(.read-only) {
         :active {
-          border: 1px solid #88a8e2;
+          border: 1px solid $tileborder;
           margin: -1px;
           @include hover {
-            background: #95e495;
+            background: $selected;
           }
         }
         @include hover {
-          border: 1px solid #88a8e2;
+          border: 1px solid $preselected;
           margin: -1px;
         }
       }
@@ -105,14 +111,22 @@ table.word.grid {
     }
     &[data-selected=true] {
       &.empty {
-        background: #95e495;
+        background: $selected;
+        &:not(.read-only) {
+          @include hover {
+            background: $selected;
+            &:active {
+              background: $preselected;
+            }
+          }
+        }
       }
       &:not(.empty) > .tile {
-        background: #95e495;
-        border-color: #95e495;
+        background: $selected;
+        border-color: $selected;
         &:not(.read-only):active {
           @include hover {
-            background: #e0dfef;
+            background: $preselected;
           }
         }
       }
@@ -132,16 +146,16 @@ table.word.grid {
       margin: 5px;
       display: inline-block;
       vertical-align: bottom;
-      border: 1px solid #88a8e2;
-      background: #e0dfef;
+      border: 1px solid $tileborder;
+      background: $tile;
       cursor: pointer;
       &[data-selected=true] {
         color: #053a05;
-        background: #95e495;
+        background: $selected;
         &:not(.empty) > .tile {
-          background: #95e495;
+          background: $selected;
           &:active:hover {
-            background: #e0dfef;
+            background: $tile;
           }
         }
       }
@@ -150,15 +164,15 @@ table.word.grid {
         box-sizing: content-box;
         margin: 0;
         border: none;
-        background: #e0dfef;
+        background: $tile;
         &:hover, &:active {
-          border: 1px solid #88a8e2;
+          border: 1px solid $tileborder;
           margin: -1px;
         }
         &:active {
           //transform: scale(1.1) translateY(-2px);
           &:hover {
-            background: #95e495;
+            background: $selected;
           }
         }
       }
