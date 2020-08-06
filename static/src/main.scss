@@ -220,7 +220,11 @@ table.word.grid {
 
 .results .game-component > .board, .results .game-component > .bank {
   height: initial;
-  overflow-y: initial;
+  overflow-y: hidden;
+}
+
+.results .game-component > .bank, .results .game-component .board {
+  height: initial;
 }
 
 .results table.word.grid {
