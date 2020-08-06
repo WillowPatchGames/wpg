@@ -4,6 +4,7 @@ import '../App.css';
 import '@rmwc/icon/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
+import '@rmwc/checkbox/styles';
 import '@rmwc/dialog/styles';
 import '@rmwc/grid/styles';
 import '@rmwc/list/styles';

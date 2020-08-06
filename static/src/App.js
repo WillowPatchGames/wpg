@@ -6,6 +6,7 @@ import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/dialog/styles';
 import '@rmwc/grid/styles';
+import '@rmwc/snackbar/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/theme/styles';
