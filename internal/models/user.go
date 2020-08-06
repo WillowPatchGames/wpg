@@ -141,7 +141,7 @@ func (user *UserModel) FromAPIToken(transaction *sql.Tx, token string) error {
 func (user *UserModel) Create(transaction *sql.Tx) error {
 	user.Eid = utils.RandomId()
 
-	if (!user.Guest) {
+	if !user.Guest {
 		stmt, err := transaction.Prepare(database.InsertUser)
 		if err != nil {
 			return err
@@ -161,6 +161,38 @@ func (user *UserModel) Create(transaction *sql.Tx) error {
 	}
 
 	err = stmt.QueryRow(user.Eid, user.Display, user.Guest).Scan(&user.Id)
+	if err != nil {
+		return err
+	}
+
+	return stmt.Close()
+}
+
+func (user *UserModel) Save(transaction *sql.Tx) error {
+	if user.Id == 0 {
+		panic("Unitialized user object passed to Save")
+	}
+
+	stmt, err := transaction.Prepare(database.UpdateUser)
+	if err != nil {
+		return err
+	}
+
+	if user.Username == "" {
+		user.username.Valid = false
+	} else {
+		user.username.String = user.Username
+		user.username.Valid = true
+	}
+
+	if user.Email == "" {
+		user.email.Valid = false
+	} else {
+		user.email.String = user.Email
+		user.email.Valid = true
+	}
+
+	_, err = stmt.Exec(user.username, user.email, user.Display, user.Guest, user.Id)
 	if err != nil {
 		return err
 	}

@@ -47,7 +47,7 @@ func (handle *RegisterHandler) GetObjectPointer() interface{} {
 }
 
 func (handle RegisterHandler) verifyRequest() error {
-	if (handle.req.Username == "" || handle.req.Email == "") && !handle.req.Guest {
+	if (handle.req.Username == "" && handle.req.Email == "") && !handle.req.Guest {
 		return api_errors.ErrMissingUsernameOrEmail
 	}
 

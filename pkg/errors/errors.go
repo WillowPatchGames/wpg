@@ -15,3 +15,5 @@ var ErrMissingPassword = errors.New("missing password")
 
 var ErrMissingRequest = errors.New("missing request paremeters")
 var ErrTooManySpecifiers = errors.New("too many specifiers present on the request")
+
+var ErrAccessDenied = errors.New("access denied to perform the specified action")

@@ -69,6 +69,22 @@ func (token *AuthModel) GuestToken(transaction *sql.Tx, user UserModel) error {
 	return stmt.Close()
 }
 
+func (token *AuthModel) Invalidate(transaction *sql.Tx) error {
+	stmt, err := transaction.Prepare(database.InvalidateToken)
+	if err != nil {
+		log.Println("AuthModel.GuestToken(): Preparing query? ", err)
+		return err
+	}
+
+	_, err = stmt.Exec(token.ApiToken)
+	if err != nil {
+		log.Println("AuthModel.FromPassword(): Creating token? ", err)
+		return err
+	}
+
+	return stmt.Close()
+}
+
 func (token *AuthModel) FromAPIToken(transaction *sql.Tx, value string) error {
 	stmt, err := transaction.Prepare(database.FromAPIToken)
 	if err != nil {
