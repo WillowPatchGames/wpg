@@ -1,0 +1,651 @@
+import React from 'react';
+
+import '../App.css';
+import 'rmwc/dist/styles';
+import '@rmwc/icon/styles';
+import '@rmwc/button/styles';
+import '@rmwc/card/styles';
+import '@rmwc/dialog/styles';
+import '@rmwc/grid/styles';
+import '@rmwc/list/styles';
+import '@rmwc/select/styles';
+import '@rmwc/switch/styles';
+import '@rmwc/typography/styles';
+import '@rmwc/textfield/styles';
+
+import { Button } from '@rmwc/button';
+import * as c from '@rmwc/card';
+import * as d from '@rmwc/dialog';
+import * as g from '@rmwc/grid';
+import * as l from '@rmwc/list';
+import { Select } from '@rmwc/select';
+import { Switch } from '@rmwc/switch';
+import { Checkbox } from '@rmwc/checkbox';
+import { Typography } from '@rmwc/typography';
+import { TextField } from '@rmwc/textfield';
+
+// Application imports
+import { UserModel, GameModel, normalizeCode } from '../models.js';
+import { GameData, GameInterface, APITileManager, JSWordManager } from '../game.js';
+import { Game } from '../component.js';
+
+function loadGame(game) {
+  if (!game || !game.endpoint) return null;
+  if (!game.ws || game.ws.url !== game.endpoint)
+    game.ws = new WebSocket(game.endpoint);
+  if (!game.tilemanager)
+    game.tilemanager = new APITileManager(game.ws);
+  if (!game.wordmanager) {
+    game.wordmanager = new JSWordManager();
+    game.wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
+  }
+  if (!game.data) {
+    game.data = new GameInterface({
+      tiles: game.tilemanager,
+      words: game.wordmanager,
+    });
+  }
+  return game;
+}
+
+function addEv(tgt, typ, cb, ...mod) {
+  let callback = (...arg) => cb(...arg);
+  tgt.addEventListener(typ, callback, ...mod);
+  return () => tgt.removeEventListener(typ, callback, ...mod);
+}
+
+function notify(snackbar, message, type) {
+  if (typeof snackbar === 'function') {
+    return snackbar(message, type);
+  }
+  snackbar.clearAll();
+  snackbar.notify({
+    body: message,
+    dismissesOnAction: true,
+    timeout: 3000,
+    actions: [{ title: type === "error" ? "Aw shucks" : "Cool" }],
+  });
+}
+function processor(processing) {
+  return ({ data: buf }) => {
+    console.log(buf);
+    var data = JSON.parse(buf);
+    if (!data) console.log("Error: ", buf);
+    if (processing[data.type]) {
+      processing[data.type](data);
+    }
+    if (processing[""]) {
+      processing[""](data);
+    }
+  }
+}
+
+class RushGamePage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+    this.game = loadGame(this.props.game);
+    let user = usr => usr.id === this.props.user.id ? "You" : usr.display;
+    if (this.game) {
+      this.state.data = this.game.data;
+      this.unmount = addEv(this.game.ws, "message", processor({
+        "gamestart": data => {
+          data.message = user(data.user) + " drew first!";
+        },
+        "draw": data => {
+          data.message = user(data.user) + " drew!";
+        },
+        "gameover": data => {
+          data.message = user(data.user) + " won!";
+          this.game.winner = data.user;
+          this.props.setPage('afterparty');
+        },
+        "": data => {
+          if (data.message) {
+            notify(this.props.snackbar, data.message, data.type);
+          }
+        },
+      }));
+    }
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
+  }
+  render() {
+    return (
+      <div>
+        <h1>Rush! game</h1>
+        <Game data={ this.state.data } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
+      </div>
+    );
+  }
+}
+
+class PreGamePage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = null;
+    this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
+  }
+  render() {
+    return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
+  }
+}
+
+class AfterPartyPage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.game = this.props.game;
+    this.state = {
+      snapshots: null,
+      winner: this.game.winner,
+    };
+    this.unmount = addEv(this.game.ws, "message", processor({
+      "snapshots": data => {
+        if (data.snapshots) {
+          var wordmanager = new JSWordManager();
+          wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
+          data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
+          for (let snapshot of data.snapshots) {
+            snapshot.game = new GameInterface(
+              Object.assign(GameData.deserialize(snapshot.snapshot), {words: wordmanager})
+            );
+            snapshot.game.grid.padding(0);
+          }
+          this.setState(state => Object.assign({}, state, { snapshots: data.snapshots }));
+        }
+      },
+      "": data => {
+        if (data.message) {
+          notify(this.props.snackbar, data.message, data.type);
+        }
+      },
+    }));
+  }
+  componentDidMount() {
+    this.game.ws.send(JSON.stringify({"type": "peek"}));
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
+  }
+  render() {
+    return (
+      <div>
+        { this.state.winner
+        ? <h1>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
+        : <></>
+        }
+        <h2>That was fun, wasn't it?</h2>
+        <ol className="results">
+          { this.state.snapshots
+          ? this.state.snapshots.map(snapshot =>
+              <li key={ snapshot.user.display }>
+                <h1>{ snapshot.user.display }</h1>
+                <Game data={ snapshot.game } readOnly={ true } />
+              </li>
+            )
+          : <p>Loading results …</p>
+          }
+        </ol>
+      </div>
+    );
+  }
+}
+
+class PreGameUserPage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      status: "pending",
+    }
+    this.game = this.props.game || {};
+    loadGame(this.game);
+    this.unmount = addEv(this.game.ws, "message", processor({
+      "admitted": data => {
+        this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
+      },
+      "started": data => {
+        this.props.setPage('playing');
+      },
+      "": data => {
+        if (data.message) {
+          notify(this.props.snackbar, data.message, data.type);
+        }
+      },
+    }));
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
+  }
+  render() {
+    let message = "Game is in an unknown state.";
+    if (this.state.status === "pending") {
+      message = "Please wait to be admitted to the game.";
+    } else if (this.state.status === "waiting") {
+      message = "Waiting for the game to start...";
+    }
+    return (
+      <div>
+        <p>{ message }</p>
+      </div>
+    );
+  }
+}
+
+class PreGameAdminPage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      waitlist: [],
+    };
+    this.game = this.props.game || {};
+    loadGame(this.game);
+    this.unmount = addEv(this.game.ws, "message", processor({
+      "invite": data => {
+        console.log(data.user);
+        this.state.waitlist.push(Object.assign(data.user, { admitted: false }));
+        this.setState(state => state);
+      },
+      "started": data => {
+        this.props.setPage('playing');
+      },
+      "": data => {
+        if (data.message) {
+          notify(this.props.snackbar, data.message, data.type);
+        }
+      },
+    }));
+    this.code_ref = React.createRef();
+    this.link_ref = React.createRef();
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
+  }
+  toggleAdmitted(user) {
+    for (let u in this.state.waitlist) {
+      if (this.state.waitlist[u] === user) {
+        if (user.admitted === false) {
+          user.admitted = true;
+          this.setState(state => state);
+          this.game.ws.send(JSON.stringify({
+            "type": "admit",
+            "user": user,
+          }));
+        }
+      }
+    }
+  }
+  start() {
+    this.game.ws.send(JSON.stringify({
+      "type": "start",
+    }));
+    this.props.setPage('playing');
+  }
+  render() {
+    return (
+      <div>
+        <h1>Users to be admitted</h1>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="right" span={6}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                <l.List twoLine>
+                  <l.ListGroup>
+                    <l.ListItem disabled>
+                      <p>Share this code to let users join:</p>
+                    </l.ListItem>
+                    <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+                      <l.ListItemText className="App-game-code">
+                        <TextField fullwidth readOnly value={ this.game.code } inputRef={ this.code_ref } />
+                      </l.ListItemText>
+                      <l.ListItemMeta icon="content_copy" />
+                    </l.ListItem>
+                    <l.ListItem disabled>
+                      <p>Or have them visit this link:</p>
+                    </l.ListItem>
+                    <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
+                      <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
+                    </l.ListItem>
+                  </l.ListGroup>
+                  <l.ListGroup>
+                    <l.ListItem disabled>
+                      <p>Users in this game:</p>
+                    </l.ListItem>
+                    { this.state.waitlist.map((user, i) =>
+                        <l.ListItem key={user.display} >
+                        {user.display}
+                        <l.ListItemMeta>
+                          <Checkbox checked={user.admitted} label="Admitted" onChange={ user.admitted ? () => this.setState(state => state) : () => this.toggleAdmitted(user) } />
+                        </l.ListItemMeta>
+                        </l.ListItem>
+                    )}
+                  </l.ListGroup>
+                </l.List>
+                <Button onClick={ () => this.start() } label="Start" raised />
+              </div>
+            </c.Card>
+          </g.GridCell>
+        </g.Grid>
+      </div>
+    )
+  }
+}
+
+class CreateGameForm extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      error: null,
+      mode: 'rush',
+      open: true,
+      spectators: true,
+      num_players: 4,
+      num_tiles: 75,
+      tiles_per_player: false,
+      start_size: 12,
+      draw_size: 1,
+      discard_penalty: 3
+    }
+  }
+
+  async handleSubmit(event) {
+    event.preventDefault();
+
+    if (this.props.user === null || !this.props.user.authed) {
+      this.setError("Need to have a user account before doing this action!");
+      return;
+    }
+
+    var game = new GameModel(this.props.user);
+    game.mode = this.state.mode;
+    game.open = this.state.open;
+    game.spectators = this.state.spectators;
+    game.num_players = +this.state.num_players;
+    game.num_tiles = +this.state.num_tiles;
+    game.tiles_per_player = this.state.tiles_per_player;
+    game.start_size = +this.state.start_size;
+    game.draw_size = +this.state.draw_size;
+    game.discard_penalty = +this.state.discard_penalty;
+
+    await game.create();
+
+    if (game.error !== null) {
+      this.setError(game.error.message);
+    } else {
+      this.props.setCode(game.code);
+      this.props.setGame(game);
+      this.props.setPage('play');
+    }
+  }
+
+  newState(fn, cb) {
+    return this.setState(state => Object.assign({}, state, fn(state)));
+  }
+
+  inputHandler(name, checky) {
+    return (e) => {
+      var v = checky ? e.target.checked : e.target.value;
+      return this.newState(() => ({ [name]: v }));
+    };
+  }
+
+  toggle(name) {
+    this.newState(state => ({ [name]: !state[name] }));
+  }
+
+  setError(message) {
+    this.setState(state => Object.assign({}, state, { error: message }));
+  }
+
+  render() {
+    var pl = (num, name) => (""+num+" "+name+(+num === 1 ? "" : "s"));
+
+    return (
+      <c.Card>
+        <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+
+          <form onSubmit={ this.handleSubmit.bind(this) }>
+            <l.List twoLine>
+              <l.ListGroup>
+                <l.ListGroupSubheader>Player Options</l.ListGroupSubheader>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label="Open for anyone to join (or just those invited)" checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("spectators") }><Switch label="Allow spectators" checked={ this.state.spectators } onChange={ () => this.toggle("spectators", true) } /></l.ListItem>
+                <l.ListItem><TextField fullwidth type="number" label="Number of players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" /></l.ListItem>
+              </l.ListGroup>
+              <br />
+              <br />
+              <l.ListGroup>
+                <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+                <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") } options={
+                  [
+                    {
+                      label: 'Rush (Fast-Paced Game)',
+                      value: 'rush',
+                    }
+                  ]
+                } />
+                <br/>
+                {
+                  this.state.mode === 'rush' ?
+                  <p>In rush mode, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!</p>
+                  : <></>
+                }
+                <l.ListItem><TextField fullwidth type="number" label="Number of tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" /></l.ListItem>
+                <l.ListItem>
+                  <Switch label="Tiles per player or in total" name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } />
+                </l.ListItem>
+                { this.state.tiles_per_player
+                  ? <p>There will be { this.state.num_tiles } tiles per player</p>
+                  : <p>There will be { this.state.num_tiles } tiles overall</p>
+                }
+                <br />
+                <l.ListItem>
+                  <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="7" max="25" step="1" />
+                  <p></p>
+                </l.ListItem>
+                <l.ListItem><TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="10" step="1" /></l.ListItem>
+                <l.ListItem><TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" /></l.ListItem>
+                <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
+                <br/>
+              </l.ListGroup>
+            </l.List>
+
+            <Button label="Create" raised />
+          </form>
+          <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+            <d.DialogTitle>Error!</d.DialogTitle>
+            <d.DialogContent>{ this.state.error }</d.DialogContent>
+            <d.DialogActions>
+              <d.DialogButton action="close">OK</d.DialogButton>
+            </d.DialogActions>
+          </d.Dialog>
+        </div>
+      </c.Card>
+    );
+  }
+}
+
+class CreateGamePage extends React.Component {
+  render() {
+    return (
+      <div className="App-page">
+        <div>
+          <Typography use="headline2">Create a Game</Typography>
+          <p>
+            Invite your friends to play online with you!<br />
+          </p>
+        </div>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="middle" span={6}>
+            <CreateGameForm {...this.props} />
+          </g.GridCell>
+        </g.Grid>
+      </div>
+    );
+  }
+}
+
+class JoinGamePage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      error: null,
+      code: normalizeCode(undefined, true) || "",
+    }
+
+    this.guest = React.createRef();
+  }
+
+  async handleSubmit(event) {
+    event.preventDefault();
+
+    if (this.props.user === null || !this.props.user.authed) {
+      this.setError("Need to have a user account before doing this action! Perhaps you'd like to play as a guest?");
+      return;
+    }
+
+    var game = await GameModel.FromCode(this.props.user, this.state.code);
+
+    if (game.error !== null) {
+      console.error(game.error);
+      this.setError(game.error.message);
+    } else {
+      this.props.setCode(game.code);
+      this.props.setGame(game);
+      this.props.setPage('play');
+    }
+  }
+
+  async handleGuestSubmit(event) {
+    event.preventDefault();
+
+    var user = new UserModel()
+    user.display = this.guest.current.value;
+
+    if (!user.display) {
+      this.setError("Please specify a name for the guest account");
+    }
+
+    await user.createGuest();
+
+    if (user.error !== null) {
+      console.error(user.error);
+      this.setError(user.error.message);
+    } else {
+      this.props.setUser(user);
+      this.props.setPage('play');
+    }
+  }
+
+  newState(fn, cb) {
+    return this.setState(state => Object.assign({}, state, fn(state)));
+  }
+
+  inputHandler(name, checky) {
+    return (e) => {
+      var v = checky ? e.target.checked : e.target.value;
+      return this.newState(() => ({ [name]: v }));
+    };
+  }
+
+  toggle(name) {
+    this.newState(state => ({ [name]: !state[name] }));
+  }
+
+  setError(message) {
+    this.setState(state => Object.assign({}, state, { error: message }));
+  }
+
+  render() {
+    let inner = <g.GridRow>
+      <g.GridCell align="left" span={6}>
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <div>
+              <Typography use="headline2">Join a Game</Typography>
+              <p>
+                Good luck, and may the odds be ever in your favor!<br /><br />
+                <a href="#create">Looking to make a new game room? Create one here!</a>
+              </p>
+            </div>
+
+            <form onSubmit={ this.handleSubmit.bind(this) }>
+              <l.List twoLine>
+                <l.ListGroup>
+                  <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
+                  <l.ListItem><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
+                </l.ListGroup>
+              </l.List>
+
+              <Button label="Join" raised />
+            </form>
+            <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+              <d.DialogTitle>Error!</d.DialogTitle>
+              <d.DialogContent>{ this.state.error?.message || this.state.error }</d.DialogContent>
+              <d.DialogActions>
+                <d.DialogButton action="close">OK</d.DialogButton>
+              </d.DialogActions>
+            </d.Dialog>
+          </div>
+        </c.Card>
+      </g.GridCell>
+      <g.GridCell align="right" span={6}>
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <div>
+              <Typography use="headline2">Create a Game</Typography>
+              <p>
+                <a href="#create">Looking to make a new game room? Create one here!</a>
+              </p>
+            </div>
+          </div>
+        </c.Card>
+      </g.GridCell>
+    </g.GridRow>;
+
+    return (
+      <div className="App-page">
+        <div>
+          <Typography use="headline2">Play a Game</Typography>
+          <p>
+            Whether or not you're looking to start a new game or join an
+            existing one, you've found the right place.
+          </p>
+        </div>
+        {
+          !this.props.user ? <g.Grid fixedColumnWidth={ true }><g.GridRow>
+            <g.GridCell align="left" span={3} />
+            <g.GridCell align="middle" span={6}>
+              <c.Card>
+                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                  <p>
+                    Since you're not <a href="#login">logged in</a>, how about
+                    playing as a guest for now? You can always upgrade your
+                    account later.
+                  </p>
+                  <form onSubmit={ this.handleGuestSubmit.bind(this) }>
+                    <TextField fullwidth placeholder="name" name="guest" inputRef={ this.guest } required /><br />
+                    <Button label="Play as Guest" raised />
+                  </form>
+                </div>
+              </c.Card>
+            </g.GridCell>
+          </g.GridRow>
+          <br /><br />{ inner }</g.Grid> : <g.Grid fixedColumnWidth={ true }>{ inner }</g.Grid>
+        }
+      </div>
+    );
+  }
+}
+
+export {
+  AfterPartyPage,
+  CreateGamePage,
+  JoinGamePage,
+  PreGamePage,
+  RushGamePage
+};
