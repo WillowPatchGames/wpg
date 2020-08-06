@@ -101,6 +101,7 @@ func decodeBoard(planks []PlayerPlank) map[Letter]JSONPos {
 // GameState snapshots
 type GameState struct {
 	Initialized bool     `json:"initialized"`
+	DrawNumber  int      `json:"draw_number"`
 	Letters     []Letter `json:"letters"`
 }
 
@@ -116,6 +117,7 @@ func newGameState(tilepile int) *GameState {
 
 	return &GameState{
 		true,
+		1,
 		letters,
 	}
 }

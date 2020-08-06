@@ -324,14 +324,15 @@ func (hub *Hub) sendJSONToGame(game *ActiveGame, data interface{}) {
 
 // Message is the umbrella JSON schema of fields and their types
 type Message struct {
-	Type      string         `json:"type"`
-	Message   string         `json:"message,omitempty"`
-	Letters   []Letter       `json:"letters,omitempty"`
-	Letter    *Letter        `json:"letter,omitempty"`
-	User      *JSONUser      `json:"user,omitempty"`
-	Snapshot  []PlayerPlank  `json:"snapshot,omitempty"`
-	Snapshots []UserSnapshot `json:"snapshots,omitempty"`
-	Request   string         `json:"request,omitempty"`
+	Type       string         `json:"type"`
+	Message    string         `json:"message,omitempty"`
+	Letters    []Letter       `json:"letters,omitempty"`
+	Letter     *Letter        `json:"letter,omitempty"`
+	User       *JSONUser      `json:"user,omitempty"`
+	Snapshot   []PlayerPlank  `json:"snapshot,omitempty"`
+	Snapshots  []UserSnapshot `json:"snapshots,omitempty"`
+	DrawNumber int            `json:"draw_number,omitempty"`
+	Request    string         `json:"request,omitempty"`
 }
 
 // JSONUser is a JSON user entry
@@ -371,6 +372,8 @@ func (hub *Hub) actOn(client *Client, buf string) {
 			}
 			if game.model.Lifecycle == "pending" {
 				if len(game.state.Letters) >= game.config.StartSize*len(game.players) {
+					game.state.DrawNumber = 2
+
 					tx, err := game.txs.GetTx()
 					if err != nil {
 						log.Println(err)
@@ -392,7 +395,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							if p.user.Id != player.user.Id {
 								req = ""
 							}
-							hub.sendJSONToClient(p.client, Message{Type: "gamestart", User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
+							hub.sendJSONToClient(p.client, Message{Type: "gamestart", DrawNumber: 1, User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
 						}
 					}
 					err = game.model.SetState(tx, &game.state)
@@ -424,6 +427,11 @@ func (hub *Hub) actOn(client *Client, buf string) {
 				}
 			} else {
 				if len(game.state.Letters) >= game.config.DrawSize*len(game.players) {
+					if cmd.DrawNumber != game.state.DrawNumber {
+						hub.sendErrToClientFor(client, "Someone beat you to the draw.", cmd.Request)
+						return
+					}
+
 					tx, err := game.txs.GetTx()
 					if err != nil {
 						log.Println(err)
@@ -441,14 +449,16 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							log.Println(err)
 							// no return
 						}
+
 						if p.client != nil {
 							req := cmd.Request
 							if p.user.Id != player.user.Id {
 								req = ""
 							}
-							hub.sendJSONToClient(p.client, Message{Type: "draw", User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
+							hub.sendJSONToClient(p.client, Message{Type: "draw", DrawNumber: cmd.DrawNumber, User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
 						}
 					}
+					game.state.DrawNumber++
 					err = game.model.SetState(tx, &game.state)
 					if err != nil {
 						log.Println(err)
