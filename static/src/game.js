@@ -207,6 +207,7 @@ class APITileManager extends TileManager {
     this.conn = conn;
     this.handler = this.handler.bind(this);
     this.conn.addEventListener("message", this.handler);
+    this.draw_number = 1;
   }
   cancel() {
     this.conn.removeEventListener("message", this.handler);
@@ -216,6 +217,9 @@ class APITileManager extends TileManager {
     if (!data) return;
     if ((data.type === "draw" || data.type === "gamestart") && !data.request && this.onAdd) {
       let letters = data.letters.map(Letter.deserialize);
+      if (data.draw_number) {
+        this.draw_number = +data.draw_number + 1;
+      }
       this.onAdd(...letters);
     }
   }
@@ -224,6 +228,7 @@ class APITileManager extends TileManager {
     var request = String(uid());
     this.conn.send(JSON.stringify({
       type: "draw",
+      draw_number: this.draw_number,
       snapshot: data ? data.serialize() : undefined,
       request,
     }));
@@ -233,6 +238,9 @@ class APITileManager extends TileManager {
         reject(data);
       } else if ((data.type === "gamestart" || data.type === "draw" || data.type === "gameover") && data.request === request) {
         resolve(data);
+        if (data.draw_number) {
+          this.draw_number = +data.draw_number + 1;
+        }
       }
     });
     return dat.letters?.map(Letter.deserialize);

@@ -428,7 +428,7 @@ class Game extends React.Component {
               disabled: !this.state.data.bank.empty() || this.state.data.grid.components().length > 1,
               key: "draw",
               onClick: this.draw.bind(this),
-              icon: this.state.presentation.drawing ? <CircularProgress /> : null,
+              icon: this.state.presentation.drawing ? <CircularProgress theme="secondary"/> : null,
             }, "Draw"),
             e(Button, {
               outlined: true,
