@@ -145,7 +145,7 @@ class AfterPartyPage extends React.Component {
     var wordmanager = new JSWordManager();
     wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
     this.unmount = addEv(this.game.ws, "message", processor({
-      "snapshots": data => {
+      "snapshots": async (data) => {
         if (data.snapshots) {
           data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
           for (let snapshot of data.snapshots) {
@@ -154,9 +154,16 @@ class AfterPartyPage extends React.Component {
             );
             snapshot.game.grid.padding(0);
           }
-          data.snapshots.sort(({ game: game1 }, { game: game2 }) => (
-            (game1.bank.length - game2.bank.length) ||
-            (game1.grid.components().length - game2.grid.components().length)
+          console.log(data.snapshots);
+          await Promise.all(data.snapshots.map(async (snapshot) => {
+            snapshot.unwords = await snapshot.game.check();
+            console.log(snapshot);
+          }));
+          data.snapshots.sort((a,b) => (
+            (-(a.user.display === this.state.winner.display) - - (b.user.display === this.state.winner.display)) ||
+            (a.game.bank.length - b.game.bank.length) ||
+            (a.game.grid.components().length - b.game.grid.components().length) ||
+            (a.unwords.length - b.unwords.length)
           ));
           this.setState(state => Object.assign({}, state, { snapshots: data.snapshots }));
         }
