@@ -246,13 +246,19 @@ table.word.grid {
   .App-footer, .mdc-top-app-bar--fixed-adjust {
     display: none;
   }
+  .mdc-drawer--modal {
+    margin-top: 32px;
+  }
+  .mdc-top-app-bar--short-collapsed.mdc-top-app-bar--short-has-action-item {
+    width: 56px;
+  }
   .game-component > .board {
     height: calc(0.64 * (100vh - 60px));
   }
   .game-component > .bank {
     height: calc(0.34 * (100vh - 60px));
     .actions {
-      margin-bottom: calc((0.44 * (100vh - 60px)) - 120px);
+      margin-bottom: calc((0.34 * (100vh - 60px)) - 120px);
     }
   }
   @media(max-width: 599px) {

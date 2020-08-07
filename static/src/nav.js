@@ -28,7 +28,9 @@ class AuthedHeaderComponent extends React.Component {
           <Button label={ this.props.user.display } icon="person" unelevated  onClick={ () => this.props.setPage('profile') } />
           <Button label="Logout" icon="logout" unelevated onClick={() => this.props.setUser(null) } />
           <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('playing')} />
-          <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing') } />
+          { this.props.immersive ? <></> :
+            <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing') } />
+          }
         </div>
       );
     }
@@ -39,7 +41,9 @@ class AuthedHeaderComponent extends React.Component {
         <Button label="Sign up" icon="person_add" unelevated onClick={() => this.props.setPage('signup') } />
         <Button label="About" icon="notes" unelevated onClick={() => this.props.setPage('about') } />
         <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('playing')} />
-        <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing') } />
+        { this.props.immersive ? <></> :
+          <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing') } />
+        }
       </div>
     );
   }
@@ -108,7 +112,7 @@ class Navigation extends React.Component {
               <Button className="App-Title" onClick={() => this.props.setPage('home') } style={{ color: 'white' }}>WordCorp</Button>
             </bar.TopAppBarSection>
             <bar.TopAppBarSection alignEnd className="App-AuthedHeaderComponent">
-              <AuthedHeaderComponent user={ this.props.user } setPage={ this.props.setPage } setUser={ this.props.setUser } />
+              <AuthedHeaderComponent user={ this.props.user } immersive={ this.props.immersive } setPage={ this.props.setPage } setUser={ this.props.setUser } />
             </bar.TopAppBarSection>
           </bar.TopAppBarRow>
         </bar.TopAppBar>

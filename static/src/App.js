@@ -48,8 +48,6 @@ class App extends React.Component {
   }
 
   async loadUser() {
-    console.log("LoadUser()");
-
     var serialization = localStorage.getItem('user');
     if (!serialization) {
       var guest_serialization = localStorage.getItem('guest');
@@ -103,7 +101,6 @@ class App extends React.Component {
   }
 
   setGame(game) {
-    console.log(game);
     this.setState(state => Object.assign({}, state, { game }));
   }
 
@@ -125,7 +122,6 @@ class App extends React.Component {
           behavior: 'smooth',
         });
       }
-      document.body.style.overflow = immersive ? "hidden" : "";
     }
   }
 
