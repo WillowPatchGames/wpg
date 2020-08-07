@@ -622,14 +622,23 @@ func (hub *Hub) registerClient(news ClientRegister) {
 	}
 	hub.sendJSONToClient(news.client, Message{Type: "message", Message: "HI"})
 	game := player.game
-	if player.user.Id != game.model.OwnerId {
-		hub.sendJSONToClient(news.client, Message{Type: "pending", Message: "You will be admitted to the game shortly."})
-		admin, present := game.players[game.model.OwnerId]
-		if present && player.model.Class == "pending" && admin.client != nil {
-			hub.sendJSONToClient(admin.client, Message{Type: "invite", User: &JSONUser{player.user.Display, player.user.Eid}})
+	if game.model.Lifecycle == "pending" {
+		if player.user.Id != game.model.OwnerId {
+			hub.sendJSONToClient(news.client, Message{Type: "pending", Message: "You will be admitted to the game shortly."})
+			admin, present := game.players[game.model.OwnerId]
+			if present && player.model.Class == "pending" && admin.client != nil {
+				hub.sendJSONToClient(admin.client, Message{Type: "invite", User: &JSONUser{player.user.Display, player.user.Eid}})
+			}
+		} else {
+			hub.sendJSONToClient(news.client, Message{Type: "admitted", Message: "Welcome, game admin!."})
 		}
-	} else {
-		hub.sendJSONToClient(news.client, Message{Type: "admitted", Message: "Welcome, game admin!."})
+	} else if game.model.Lifecycle == "playing" {
+		if player.model.Class == "player" {
+			hub.sendJSONToClient(player.client, Message{Type: "started", Message: "The game started already!"})
+			if len(player.state.Letters) > 0 {
+				hub.sendJSONToClient(news.client, Message{Type: "gamestart", DrawNumber: game.state.DrawNumber - 1, Letters: player.state.Letters})
+			}
+		}
 	}
 	// TODO: send join notification to clients
 }
