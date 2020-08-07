@@ -101,7 +101,7 @@ class Navigation extends React.Component {
   render() {
     return (
       <header>
-        <bar.TopAppBar fixed short>
+        <bar.TopAppBar fixed short shortCollapsed={ this.props.immersive }>
           <bar.TopAppBarRow>
             <bar.TopAppBarSection>
               <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />

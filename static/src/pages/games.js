@@ -120,6 +120,7 @@ class RushGamePage extends React.Component {
     );
   }
 }
+RushGamePage.immersive = true;
 
 class PreGamePage extends React.Component {
   constructor(props) {

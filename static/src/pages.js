@@ -14,6 +14,12 @@ import { SignupPage } from './pages/signup.js';
 
 class Page extends React.Component {
   render() {
+    return React.createElement(this.getPage(), this.props, this.props.children);
+  }
+  componentDidUpdate() {
+    this.props.setImmersive(this.getPage().immersive);
+  }
+  getPage() {
     var component = ErrorPage;
     switch (this.props.page) {
       case 'home': component = HomePage; break;
@@ -28,7 +34,7 @@ class Page extends React.Component {
       case 'join': component = JoinGamePage; break;
       default: component = ErrorPage;
     }
-    return React.createElement(component, this.props, this.props.children);
+    return component;
   }
 }
 

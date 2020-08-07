@@ -232,3 +232,20 @@ table.word.grid {
 }
 
 /**/
+
+
+/* immersive */
+
+.App.immersive {
+  height: 100vh;
+  width: 100vw;
+  .App-footer, .mdc-top-app-bar--fixed-adjust {
+    display: none;
+  }
+  .game-component > .board {
+    height: calc(0.64 * (100vh - 60px));
+  }
+  .game-component > .bank {
+    height: calc(0.34 * (100vh - 60px));
+  }
+}

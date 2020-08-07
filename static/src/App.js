@@ -33,6 +33,7 @@ class App extends React.Component {
       page: hash !== "" ? hash : 'home',
       user: null,
       game: null,
+      immersive: false,
     };
 
     this.snackbar = createSnackbarQueue();
@@ -113,9 +114,24 @@ class App extends React.Component {
     window.history.pushState(null, '', window.location.pathname + '?' + params.toString());
   }
 
+  setImmersive(immersive) {
+    immersive = !!immersive;
+    if (this.state.immersive !== immersive) {
+      this.setState(state => Object.assign({}, state, { immersive }));
+      if (immersive) {
+        window.scrollBy({
+          top: -window.scrollY,
+          left: 0,
+          behavior: 'smooth',
+        });
+      }
+      document.body.style.overflow = immersive ? "hidden" : "";
+    }
+  }
+
   render() {
     return (
-      <div className="App">
+      <div className={ "App" + (this.state.immersive ? " immersive" : "")}>
         <ThemeProvider
           options={{
             primary: '#1397BD',
@@ -131,8 +147,8 @@ class App extends React.Component {
           }}
         >
 
-        <Navigation user={ this.state.user } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-        <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } />
+        <Navigation user={ this.state.user } immersive={ this.state.immersive } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
+        <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
         <SnackbarQueue messages={ this.snackbar.messages } />
         <Footer page={ this.state.page } />
       </ThemeProvider>
