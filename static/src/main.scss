@@ -141,9 +141,13 @@ table.word.grid {
     flex-direction: row;
     justify-content: space-evenly;
     flex-wrap: wrap;
+    padding: 0px 12px;
     .letter {
       @include tile;
-      margin: 5px;
+      margin: 8px;
+      @media(max-width: 599px) {
+        margin: 10px;
+      }
       display: inline-block;
       vertical-align: bottom;
       border: 1px solid $tileborder;
@@ -247,5 +251,19 @@ table.word.grid {
   }
   .game-component > .bank {
     height: calc(0.34 * (100vh - 60px));
+    .actions {
+      margin-bottom: calc((0.44 * (100vh - 60px)) - 120px);
+    }
+  }
+  @media(max-width: 599px) {
+    .game-component > .board {
+      height: calc(0.54 * (100vh - 60px));
+    }
+    .game-component > .bank {
+      height: calc(0.44 * (100vh - 60px));
+      .actions {
+        margin-bottom: calc((0.44 * (100vh - 60px)) - 120px);
+      }
+    }
   }
 }

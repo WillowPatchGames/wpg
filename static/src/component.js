@@ -686,6 +686,16 @@ class Drag extends React.Component {
     }
   }
 
+  // HACK courtesy of https://stackoverflow.com/a/52085999
+  getFixedOffset() {
+    let fixedElem = document.createElement('div');
+    fixedElem.style.cssText = 'position:fixed; top: 0; left: 0';
+    document.body.appendChild(fixedElem);
+    const rect = fixedElem.getBoundingClientRect();
+    document.body.removeChild(fixedElem);
+    return [rect.left, rect.top]
+  }
+
   getDragData(e, initial) {
     var dragging;
     if (e.touches) {
@@ -725,6 +735,9 @@ class Drag extends React.Component {
         if (FIXED) {
           state.x0 = bb.left;
           state.y0 = bb.top;
+          let [fx, fy] = this.getFixedOffset();
+          state.x0 -= fx;
+          state.y0 -= fy;
         } else {
           state.x0 = this.ref.current.offsetTop;
           state.y0 = this.ref.current.offsetLeft;
@@ -836,7 +849,7 @@ class Drag extends React.Component {
     if (doit && (this.scrolling.left || this.scrolling.top)) {
       if (this.scrolling.timeout) return;
       if (this.scrolling.scrolling) {
-        console.log("DOIT", this.scrolling.left, this.scrolling.top);
+        //console.log("DOIT", this.scrolling.left, this.scrolling.top);
         this.scrolling.parent.scrollBy({
           left: this.scrolling.left,
           top: this.scrolling.top,
@@ -845,7 +858,7 @@ class Drag extends React.Component {
         this.scrolling.timeout = setTimeout(() => {
           this.scrolling.timeout = null;
           if (this.scrolling.scrolling) {
-            console.log("RESCROLL");
+            //console.log("RESCROLL");
             this.scroll(true);
           }
         }, SCROLL_REPEAT);
@@ -853,13 +866,13 @@ class Drag extends React.Component {
         this.scrolling.timeout = setTimeout(() => {
           this.scrolling.scrolling = true;
           this.scrolling.timeout = null;
-          console.log("SCROLL", this.scrolling);
+          //console.log("SCROLL", this.scrolling);
           this.scroll(true);
         }, SCROLL_TIMEOUT);
       }
     } else {
       if (this.scrolling.timeout) {
-        console.log("CLEAR");
+        //console.log("CLEAR");
         clearTimeout(this.scrolling.timeout);
         this.scrolling.timeout = null;
       }
