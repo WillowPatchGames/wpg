@@ -12,11 +12,17 @@ import {
   Grid,
 } from './game.js';
 
+// Library to disable body scrolling
+import { disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock';
+
 // Polyfill for smooth scrolling on iOS
 import { seamless } from 'seamless-scroll-polyfill';
+
 seamless({ duration: 150 });
 
 const e = React.createElement;
+
+var DRAGGABLES = [];
 
 const defaultGrid = new Grid();
 defaultGrid.writeWord("APPLET", 3, 0, false, Letter);
@@ -70,10 +76,18 @@ class Game extends React.Component {
     if (this.state.data.cancel) {
       this.state.data.cancel();
     }
+    if (!this.state.presentation.readOnly) {
+      enableBodyScroll(this.board.current);
+      enableBodyScroll(this.droppoints[["bank",""]]);
+      clearAllBodyScrollLocks();
+    }
   }
 
   componentDidMount() {
     if (!this.state.presentation.readOnly) {
+      let allowTouchMove = (e) => DRAGGABLES.includes(e);
+      disableBodyScroll(this.board.current, {allowTouchMove});
+      disableBodyScroll(this.droppoints[["bank",""]].ref, {allowTouchMove});
       var size = window.getComputedStyle(this.board.current).getPropertyValue("--tile-size");
       this.setState(state => {
         state.presentation.size = size;
@@ -680,7 +694,14 @@ class Drag extends React.Component {
     this.setState(state => fn(Object.assign({}, state)));
   }
 
+  componentDidMount() {
+    DRAGGABLES.push(this.ref.current);
+  }
   componentWillUnmount() {
+    let i = DRAGGABLES.indexOf(this.ref.current);
+    if (i >= 0) {
+      DRAGGABLES.splice(i, 1);
+    }
     for (let l of this.state.listeners) {
       l();
     }
