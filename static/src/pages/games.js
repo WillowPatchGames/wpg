@@ -85,7 +85,7 @@ class RushGamePage extends React.Component {
     super(props);
     this.state = {};
     this.game = loadGame(this.props.game);
-    let user = usr => usr.id === this.props.user.id ? "You" : usr.display;
+    let user = usr => usr ? (usr.id === this.props.user.id ? "You" : usr.display) : "Someone ";
     if (this.game) {
       this.state.data = this.game.data;
       this.unmount = addEv(this.game.ws, "message", processor({
@@ -126,6 +126,7 @@ class PreGamePage extends React.Component {
     super(props);
     this.state = null;
     this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
+    this.game = loadGame(this.props.game);
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
