@@ -20,7 +20,7 @@ defaultGrid.writeWord("TEACHER", 2, 4, true, Letter);
 defaultGrid.writeWord("MAC", 5, 2, false, Letter);
 defaultGrid.padding(5);
 
-var PADDING = [8,14];
+var PADDING = [7,7];
 var SIZE = 35;
 var ALLOW_SCALE = false;
 
@@ -30,6 +30,7 @@ class Game extends React.Component {
     this.state = {
       presentation: {
         selected: null,
+        last_selected: null,
         dropped: null,
         scale: 1,
         scaled: 1,
@@ -38,82 +39,30 @@ class Game extends React.Component {
         readOnly: this.props.readOnly,
         drawing: false,
         discarding: [],
+        padding: PADDING,
       },
       data: props.data,
     };
+    this.state.data.grid.padding(this.state.presentation.padding);
     if (this.state.data.tiles && !this.state.presentation.readOnly) {
       var adder = this.state.data.tiles.onAdd;
       this.state.data.tiles.onAdd = (...tiles) => {
         adder.call(this.state.data.tiles, ...tiles);
-        this.setState(state => this.repad(state));
+        this.setState(this.repad.bind(this));
       };
     }
     this.droppoints = {};
     this.board = React.createRef();
     this.pending = {
+      maintain: null,
       scroll: [0,0],
+      smooth_scroll: [0,0],
     };
-    if (!this.state.presentation.readOnly) {
-      this.kb1 = bodyListener("keydown", (e) => {
-        var handled = [" ", "Spacebar", "Backspace", "Del", "Delete"];
-        if (handled.includes(e.key)) {
-          e.preventDefault();
-        }
-      });
-      this.kb2 = bodyListener("keyup", (e) => {
-        if (this.state.presentation.selected && this.state.presentation.selected[0] === "grid") {
-          for (let i in this.state.data.bank) {
-            if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
-              this.interact(["bank",+i], this.state.presentation.selected);
-              return;
-            }
-          }
-        } else if (!this.state.presentation.selected) {
-          for (let i in this.state.data.bank) {
-            if (String(this.state.data.bank[i]).toUpperCase() === e.key.toUpperCase()) {
-              this.setState(state => {
-                state.presentation.selected = ["bank",+i];
-                return state;
-              });
-              return;
-            }
-          }
-        }
-        switch (e.key) {
-          case "Esc": case "Escape":
-            if (this.state.presentation.selected) {
-              this.setState(state => {
-                return Object.assign({}, state, {
-                  presentation: Object.assign({}, state.presentation, { selected: null}),
-                });
-              });
-            }
-            break;
-          case "Del": case "Delete":
-          case "Backspace":
-            if (this.state.presentation.selected) {
-              this.recall(this.state.presentation.selected);
-            }
-            break;
-          case "Enter":
-            this.draw();
-            e.preventDefault();
-            break;
-          case " ": case "Spacebar":
-            this.check();
-            e.preventDefault();
-            break;
-          default: break;
-        }
-      });
-    } else {
-      this.kb1 = this.kb2 = () => {};
-    }
+    this.unmount = ()=>{};
   }
 
   componentWillUnmount() {
-    this.kb1();
-    this.kb2();
+    if (this.unmount) this.unmount();
     if (this.state.data.cancel) {
       this.state.data.cancel();
     }
@@ -121,24 +70,185 @@ class Game extends React.Component {
 
   componentDidMount() {
     if (!this.state.presentation.readOnly) {
-      this.setState(this.repad);
       var size = window.getComputedStyle(this.board.current).getPropertyValue("--tile-size");
       this.setState(state => {
         state.presentation.size = size;
         return state;
       });
+      if (!this.state.presentation.readOnly) {
+        let release = [];
+        release.push(listenIn("keydown", (e) => {
+          var handled = [" ", "Spacebar", "Backspace", "Del", "Delete"];
+          handled.push(...["Up","Down","Left","Right"].flatMap(a => [a,"Arrow"+a]));
+          if (handled.includes(e.key)) {
+            e.preventDefault();
+          }
+          switch (e.key) {
+            // Arrows to navigate
+            case "Up": case "ArrowUp":
+              if (this.state.presentation.selected || this.state.presentation.last_selected) {
+                let here = this.state.presentation.selected || this.state.presentation.last_selected;
+                if (here[0] === "bank") {
+                  let letters = this.state.data.grid.letterPoses();
+                  let row = Math.max(...letters.map(({pos}) => pos[0]));
+                  if (isFinite(row)) {
+                    // Select a letter in the middle
+                    let rowing = letters.filter(({pos}) => pos[0] === row);
+                    let letter = rowing[Math.floor(rowing.length/2)];
+                    this.select(["grid", ...letter.pos]);
+                  } else {
+                    // Select in center
+                    this.select(["grid", Math.floor(this.state.data.grid.rows/2), Math.floor(this.state.data.grid.cols/2)]);
+                  }
+                } else if (here[0] === "grid") {
+                  if (here[1] > 0) {
+                    this.select([here[0], here[1]-1, here[2]]);
+                  }
+                }
+              }
+              break;
+            case "Down": case "ArrowDown":
+              if (this.state.presentation.selected || this.state.presentation.last_selected) {
+                let here = this.state.presentation.selected || this.state.presentation.last_selected;
+                if (here[0] === "grid") {
+                  if (here[1] < this.state.data.grid.rows - 1) {
+                    this.select([here[0], here[1]+1, here[2]]);
+                  }
+                }
+              }
+              break;
+            case "Left": case "ArrowLeft":
+              if (this.state.presentation.selected || this.state.presentation.last_selected) {
+                let here = this.state.presentation.selected || this.state.presentation.last_selected;
+                if (here[0] === "grid") {
+                  if (here[2] > 0) {
+                    this.select([here[0], here[1], here[2]-1]);
+                  }
+                } else if (here[0] === "bank") {
+                  if (here[1] > 0) {
+                    this.select([here[0], here[1]-1]);
+                  }
+                }
+              }
+              break;
+            case "Right": case "ArrowRight":
+              if (this.state.presentation.selected || this.state.presentation.last_selected) {
+                let here = this.state.presentation.selected || this.state.presentation.last_selected;
+                if (here[0] === "grid") {
+                  if (here[2] < this.state.data.grid.cols - 1) {
+                    this.select([here[0], here[1], here[2]+1]);
+                  }
+                } else if (here[0] === "bank") {
+                  if (here[1] < this.state.data.bank.length - 1) {
+                    this.select([here[0], here[1]+1]);
+                  }
+                }
+              }
+              break;
+            default: break;
+          }
+        }, { passive: false }));
+        release.push(listenIn("keyup", (e) => {
+          let key = e.key.toUpperCase();
+          // Places we can select:
+          // - matching letters in the bank
+          // - matching letters isolated on the grid
+          let places = this.state.data.letterPoses(true).filter(({letter, pos}) => {
+            if (String(letter).toUpperCase() !== key) return false;
+            if (pos[0] === "grid") {
+              if (this.state.data.get([pos[0], pos[1]-1, pos[2]]) || this.state.data.get([pos[0], pos[1], pos[2]-1]) ||
+                  this.state.data.get([pos[0], pos[1]+1, pos[2]]) || this.state.data.get([pos[0], pos[1], pos[2]+1]))
+                return false;
+            }
+            return true;
+          }).map(({pos}) => pos);
+          if (places.length) {
+            let i = places.findIndex(pos => shallowEqual(pos, this.state.presentation.selected))+1;
+            if (i === 0) {
+              if (this.state.presentation.selected && this.state.presentation.selected[0] === "grid") {
+                // Replace the one on the grid
+                return this.interact(places[i], this.state.presentation.selected);
+              } else {
+                // Select the first slot
+                return this.select(places[i]);
+              }
+            } else {
+              // Cycle through the possible selections
+              if (i === places.length) {
+                return this.select(null);
+              } else {
+                return this.select(places[i]);
+              }
+            }
+          }
+          switch (e.key) {
+            // Escape to cancel selection
+            case "Esc": case "Escape":
+              if (this.state.presentation.selected) {
+                this.select(null);
+              }
+              break;
+            // Delete to recall a tile
+            case "Del": case "Delete":
+            case "Backspace":
+              if (this.state.presentation.selected) {
+                this.recall(this.state.presentation.selected);
+              }
+              break;
+            // Enter to draw
+            case "Enter":
+              this.draw();
+              e.preventDefault();
+              break;
+            // Space to check words
+            case " ": case "Spacebar":
+              this.check();
+              e.preventDefault();
+              break;
+            default: break;
+          }
+        }, { passive: false }));
+        release.push(listenIn.call(document.defaultView, "resize", this.recalc.bind(this), { passive: true }));
+        this.unmount = () => {
+          for (let f of release) {
+            f();
+          }
+        };
+      }
     } else if (this.state.data.words) {
       this.check();
     }
   }
   componentDidUpdate() {
+    if (this.pending.maintain) {
+      let bb = this.pending.maintain.element()?.getBoundingClientRect();
+      let parent = this.pending.maintain.parent || this.board.current;
+      let adj = [this.pending.maintain.left - bb.left, this.pending.maintain.top - bb.top];
+      if (adj[0] || adj[1]) {
+        parent.scrollBy({
+          left: adj[0],
+          top: adj[1],
+          behavior: this.pending.maintain.behavior,
+        });
+      }
+      this.pending.maintain = null;
+    }
     if (this.pending.scroll[0]) {
-      this.board.current.scrollTop += SIZE*this.pending.scroll[0];
+      this.board.current.scrollLeft += this.pending.scroll[0];
       this.pending.scroll[0] = 0;
     }
     if (this.pending.scroll[1]) {
-      this.board.current.scrollLeft += SIZE*this.pending.scroll[1];
+      this.board.current.scrollTop += this.pending.scroll[1];
       this.pending.scroll[1] = 0;
+    }
+    if (this.pending.smooth_scroll[0] || this.pending.smooth_scroll[1]) {
+      this.board.current.scrollBy({
+        left: this.pending.smooth_scroll[0] || 0,
+        top: this.pending.smooth_scroll[1] || 0,
+        behavior: "smooth",
+      });
+      this.pending.smooth_scroll[0] = 0;
+      this.pending.smooth_scroll[1] = 0;
     }
   }
 
@@ -152,11 +262,59 @@ class Game extends React.Component {
     };
   }
 
+  recalc() {
+    if (!this.board.current || !this.droppoints[["grid",0,0]]) return;
+    var prev = [...this.state.presentation.padding];
+    var bb = this.board.current.getBoundingClientRect();
+    var bb0 = this.droppoints[["grid",0,0]].ref.getBoundingClientRect();
+    var next = [bb.height/bb0.height, bb.width/bb0.width].map(a => Math.max(Math.ceil((a-1)/2), 7));
+    if (next[0] !== prev[0] || next[1] !== prev[1]) {
+      //console.log(bb, bb0, prev, next);
+      this.setState(state => {
+        state.presentation.padding = next;
+        return this.repad(state);
+      });
+    }
+  }
   repad(state) {
     if (!state) state = this.state;
-    var adj = state.data.grid.padding(PADDING);
-    this.pending.scroll[0] += adj[0];
-    this.pending.scroll[1] += adj[1];
+    let padding = [...this.state.presentation.padding];
+    if (!state.data.grid.letterPoses().length) {
+      padding[0] = padding[0]*2 + 1;
+      padding[1] = padding[1]*2 + 1;
+    }
+    var adj = state.data.grid.padding(padding);
+    if (false) {
+      this.pending.scroll[0] += SIZE*adj[1];
+      this.pending.scroll[1] += SIZE*adj[0];
+    } else {
+      let where =
+        state.data.grid.letterPoses().concat([{pos:[Math.max(0, adj[0]), Math.max(0, adj[1])]}])
+        .map(({pos}) => ["grid", ...pos])
+        .filter(pos => this.droppoints[pos]?.ref && pos[1]-adj[0] < this.state.data.grid.rows && pos[2]-adj[0] < this.state.data.grid.cols)
+        [0];
+      if (where) {
+        let tgt = [where[0], where[1]-adj[0], where[2]-adj[1]];
+        //console.log(where, tgt, this.state.data.grid.rows, this.state.data.grid.cols);
+        let bb = this.droppoints[where].ref.getBoundingClientRect();
+        this.pending.maintain = {
+          element: () => this.droppoints[tgt]?.ref,
+          parent: this.board.current,
+          left: bb.left,
+          top: bb.top,
+        };
+      } else {
+        console.log("Could not find suitable tile");
+      }
+    }
+    if (state.presentation.selected && state.presentation.selected[0] === "grid") {
+      state.presentation.selected[1] += adj[0];
+      state.presentation.selected[2] += adj[1];
+    }
+    if (state.presentation.last_selected && state.presentation.last_selected[0] === "grid") {
+      state.presentation.last_selected[1] += adj[0];
+      state.presentation.last_selected[2] += adj[1];
+    }
     return state;
   }
 
@@ -226,7 +384,7 @@ class Game extends React.Component {
       let there = this.state.presentation.selected;
       if (!there) {
         this.select(here);
-      } else if (shallowEqual(there, here)) {
+      } else if (shallowEqual(there, here) || (shallowEqual(here, ["recall"]) && shallowEqual(there, ["bank",""]))) {
         this.select(null);
       } else if (there.length === 1 && here.length === 1) {
         this.select(here);
@@ -246,9 +404,32 @@ class Game extends React.Component {
     };
   }
   select(here) {
+    let amt = [0,0];
+    if (here && here[0] === "grid") {
+      let bb = this.droppoints[here].ref.getBoundingClientRect();
+      // HACK: adjust for border
+      bb.width += 1;
+      bb.height += 1;
+      let bbp = this.board.current.getBoundingClientRect();
+      if (bbp.left > bb.left && bbp.right > bb.right) {
+        amt[0] -= bbp.left - bb.left;
+      } else if (bbp.right < bb.right && bbp.left < bb.left) {
+        amt[0] += bb.right - bbp.right;
+      }
+      if (bbp.top > bb.top && bbp.bottom > bb.bottom) {
+        amt[1] -= bbp.top - bb.top;
+      } else if (bbp.bottom < bb.bottom && bbp.top < bb.top) {
+        amt[1] += bb.bottom - bbp.bottom;
+      }
+      this.pending.smooth_scroll[0] += amt[0];
+      this.pending.smooth_scroll[1] += amt[1];
+    }
     this.setState(state => {
       state = Object.assign({}, state);
       state.presentation.selected = here;
+      if (here) {
+        state.presentation.last_selected = state.presentation.selected;
+      }
       return state;
     });
   }
@@ -256,11 +437,12 @@ class Game extends React.Component {
   recall(here, dropped) {
     this.interact(here, ["bank",""], dropped);
   }
-  async discard(here) {
+  async discard(here, dropped) {
     if (here && this.state.data.get(here) && !this.state.presentation.discarding.includes(this.state.data.get(here))) {
       var letter = this.state.data.get(here);
       this.setState((state) => {
         state.presentation.selected = null;
+        if (dropped) state.presentation.dropped = here;
         state.presentation.discarding.push(letter);
         return state;
       });
@@ -280,13 +462,16 @@ class Game extends React.Component {
   async draw() {
     if (this.state.presentation.drawing) return;
     var unwords;
+    var noted = false;
     if (!this.state.data.bank.empty() || this.state.data.grid.components().length > 1) {
       console.log("You must connect all of your tiles together before drawing!");
       if (this.props.notify) {
         this.props.notify("You must connect all of your tiles together before drawing!", "error");
       }
-    } else if ((unwords = await this.state.data.check()).length) {
-      if (this.props.notify) {
+      noted = true;
+    }
+    if ((unwords = await this.state.data.check()).length) {
+      if (!noted && this.props.notify) {
         if (unwords.length === 1) {
           this.props.notify('"' + unwords[0] + '"' + " is not a valid word!", "error");
         } else {
@@ -299,7 +484,7 @@ class Game extends React.Component {
         state.presentation.selected = null;
         return state;
       });
-    } else {
+    } else if (!noted) {
       this.setState(state => {
         state.presentation.selected = null;
         state.presentation.drawing = true;
@@ -327,9 +512,9 @@ class Game extends React.Component {
 
   interact(here,there,dropped) {
     if (there[0] === "discard") {
-      return this.discard(here);
+      return this.discard(here, dropped);
     } else if (here[0] === "discard") {
-      return this.discard(there);
+      return this.discard(there, dropped);
     } else if (there[0] === "recall") {
       if (here[0] === "bank") {
         this.select(null);
@@ -433,7 +618,7 @@ class Game extends React.Component {
             e(Button, {
               outlined: true,
               key: "recall",
-              unelevated: shallowEqual(this.state.presentation.selected, ["recall"]),
+              unelevated: shallowEqual(this.state.presentation.selected, ["recall"]) || shallowEqual(this.state.presentation.selected, ["bank",""]),
               ref: this.droppable(["recall"]),
               onClick: this.handler(["recall"]),
             }, "Recall"),
@@ -453,11 +638,12 @@ class Game extends React.Component {
   }
 }
 
-function bodyListener(ty, cb) {
+function listenIn(ty, cb, opts) {
+  var tgt = this || document;
   var listener = (...arg) => cb(...arg);
-  document.addEventListener(ty, listener, { passive: false });
+  tgt.addEventListener(ty, listener, opts);
   return (() => {
-    document.removeEventListener(ty, listener);
+    tgt.removeEventListener(ty, listener, opts);
   });
 };
 
@@ -527,13 +713,13 @@ class Drag extends React.Component {
         state.dy = cy - dragging.y;
         if (dragging.touch !== undefined) {
           state.listeners = this.state.listeners.concat([
-            bodyListener("touchmove", e => this.move(this.getDragData(e))),
-            bodyListener("touchend", e => this.end()),
+            listenIn("touchmove", e => this.move(this.getDragData(e)), { passive: false }),
+            listenIn("touchend", e => this.end(), { passive: false }),
           ]);
         } else {
           state.listeners = this.state.listeners.concat([
-            bodyListener("mousemove", e => this.move(this.getDragData(e))),
-            bodyListener("mouseup", e => this.end()),
+            listenIn("mousemove", e => this.move(this.getDragData(e)), { passive: false }),
+            listenIn("mouseup", e => this.end(), { passive: false }),
           ]);
         }
         this.props.onDrag("start", this.ref);

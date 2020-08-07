@@ -77,7 +77,7 @@ class GameData {
   }
   serialize() {
     var letters = [];
-    this.letterPosse().forEach(({ letter, pos }) => {
+    this.letterPoses().forEach(({ letter, pos }) => {
       letters.push({
         letter: {
           id: letter.id,
@@ -116,7 +116,7 @@ class GameData {
   }
   delete(here) {
     if (here instanceof Letter) {
-      here = this.find(here);
+      here = this.findById(here);
     }
     if (!here || !this.get(here)) {
       return;
@@ -146,6 +146,7 @@ class GameData {
   }
   add(...values) {
     for (let value of values) {
+      if (this.findById(value)) continue;
       this.set(["bank",Bank.blank], value);
     }
     return this;
@@ -160,7 +161,7 @@ class GameData {
   recall(here) {
     return this.swap(here, ["bank",Bank.blank]);
   }
-  find(letter) {
+  findById(letter) {
     var results = [];
     for (let row in this.grid.data) {
       for (let col in this.grid.data[row]) {
@@ -186,11 +187,10 @@ class GameData {
   empty() {
     return this.grid.empty() && this.bank.empty();
   }
-  letterPosse() {
-    return [].concat(
-      this.grid.letterPosse().map(l => (l.pos.unshift("grid"), l)),
-      this.bank.letterPosse().map(l => (l.pos.unshift("bank"), l)),
-    );
+  letterPoses(bankFirst) {
+    var grids = this.grid.letterPoses().map(l => (l.pos.unshift("grid"), l));
+    var banks = this.bank.letterPoses().map(l => (l.pos.unshift("bank"), l));
+    return [].concat(bankFirst ? banks : grids, bankFirst ? grids : banks);
   }
 }
 
@@ -210,7 +210,7 @@ class APITileManager extends TileManager {
     this.draw_number = 1;
   }
   cancel() {
-    this.conn.removeEventListener("message", this.handler);
+    //this.conn.removeEventListener("message", this.handler);
   }
   handler({ data: buf }) {
     var data = JSON.parse(buf);
@@ -462,14 +462,14 @@ class Bank extends Array {
     return this;
   }
   empty() {
-    return !this.letterPosse().length;
+    return !this.letterPoses().length;
   }
-  letterPosse() {
+  letterPoses() {
     var letters = [];
     for (let i in this) {
       var h = this[i];
       if (!h) continue;
-      letters.push({ letter: h, pos: [i] });
+      letters.push({ letter: h, pos: [+i] });
     }
     return letters;
   }
@@ -653,15 +653,15 @@ class Grid {
     return words;
   }
   empty() {
-    return !this.letterPosse().length;
+    return !this.letterPoses().length;
   }
-  letterPosse() {
+  letterPoses() {
     var letters = [];
     for (let row in this.data) {
       for (let col in this.data[row]) {
         var h = this.get(row, col);
         if (!h) continue;
-        letters.push({ letter: h, pos: [row,col] });
+        letters.push({ letter: h, pos: [+row,+col] });
       }
     }
     return letters;
