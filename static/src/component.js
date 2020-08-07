@@ -6,6 +6,7 @@ import './main.scss';
 
 import { Button } from '@rmwc/button';
 import { CircularProgress } from '@rmwc/circular-progress';
+import '@rmwc/circular-progress/styles';
 
 import {
   Letter,
@@ -631,7 +632,7 @@ class Game extends React.Component {
               disabled: !this.state.data.bank.empty() || this.state.data.grid.components().length > 1,
               key: "draw",
               onClick: this.draw.bind(this),
-              icon: this.state.presentation.drawing ? <CircularProgress theme="secondary"/> : null,
+              icon: this.state.presentation.drawing ? <CircularProgress theme="onPrimary"/> : null,
             }, "Draw"),
             e(Button, {
               outlined: true,
