@@ -12,6 +12,10 @@ import {
   Grid,
 } from './game.js';
 
+// Polyfill for smooth scrolling on iOS
+import { seamless } from 'seamless-scroll-polyfill';
+seamless({ duration: 150 });
+
 const e = React.createElement;
 
 const defaultGrid = new Grid();
@@ -649,6 +653,10 @@ function listenIn(ty, cb, opts) {
 
 var FRICTION = 3;
 var FIXED = true;
+var SCROLL_PARENT = true;
+var SCROLL_TIMEOUT = 300;
+var SCROLL_REPEAT = 150;
+var SCROLL_AREA = 2;
 
 class Drag extends React.Component {
   constructor(props) {
@@ -659,6 +667,11 @@ class Drag extends React.Component {
       x0: 0, y0: 0,
       dragging: null,
       listeners: [],
+    };
+    this.scrolling = {
+      scrolling: false,
+      timeout: null,
+      parent: null,
     };
     this.ref = React.createRef();
   }
@@ -696,6 +709,16 @@ class Drag extends React.Component {
   start(dragging) {
     if (!dragging) return;
     if (this.props.onDrag) {
+      if (SCROLL_PARENT) {
+        var parent = this.ref.current.parentElement;
+        while (parent) {
+          if (getComputedStyle(parent).overflow === "auto") {
+            break;
+          }
+          parent = parent.parentElement;
+        }
+        this.scrolling.parent = parent;
+      }
       this.setState(state => {
         state = Object.assign({}, state);
         var bb = this.ref.current.getBoundingClientRect();
@@ -735,15 +758,20 @@ class Drag extends React.Component {
         var x0 = state.x; var y0 = state.y;
         state.x = dragging.x - state.dragging.x;
         state.y = dragging.y - state.dragging.y;
+        var mx = state.x - x0;
+        var my = state.y - y0;
         var clamp = (z,r) => Math.min(r, Math.max(-r, z));
-        var dx = clamp(state.dx, Math.abs(state.x - x0)/FRICTION);
-        var dy = clamp(state.dy, Math.abs(state.y - y0)/FRICTION);
+        var dx = clamp(state.dx, Math.abs(mx)/FRICTION);
+        var dy = clamp(state.dy, Math.abs(my)/FRICTION);
         state.dx -= dx;
         state.x += dx;
         state.dragging.x += dx;
         state.dy -= dy;
         state.y += dy;
         state.dragging.y += dy;
+
+        this.managescroll(mx, my);
+
         return state;
       }, () => {
         this.props.onDrag("move", this.ref);
@@ -752,6 +780,7 @@ class Drag extends React.Component {
   }
   end() {
     if (this.state.dragging && this.props.onDrag) {
+      this.scroll(false);
       this.setState(state => {
         state = Object.assign({}, state);
         state.dragging = null;
@@ -768,6 +797,73 @@ class Drag extends React.Component {
         this.props.onDrag("end", this.ref);
         return state;
       });
+    }
+  }
+  managescroll(left, top) {
+    if (!SCROLL_PARENT || !this.scrolling.parent) return;
+    if (left) {
+      left = this.inscroll("left") || this.inscroll("right");
+    } else {
+      left = this.scrolling.left;
+    }
+    if (top) {
+      top = this.inscroll("top") || this.inscroll("bottom");
+    } else {
+      top = this.scrolling.top;
+    }
+    this.scrolling.left = left || 0;
+    this.scrolling.top = top || 0;
+    if (!left && !top) {
+      this.scroll(false);
+    } else {
+      this.scroll(true);
+    }
+  }
+  inscroll(area) {
+    if (!SCROLL_PARENT || !this.scrolling.parent) return;
+    var s = (area === "right" || area === "bottom") ? -1 : 1;
+    var meas = (area === "top" || area === "bottom") ? "height" : "width";
+    var bbp = this.scrolling.parent.getBoundingClientRect();
+    var bb = this.ref.current.getBoundingClientRect();
+    if (bbp[meas] <= 2*SCROLL_AREA*bb[meas]) return 0;
+    if (s*bbp[area] > s*bb[area] + bb[meas]) return 0;
+    if (s*bbp[area] + SCROLL_AREA*bb[meas] > s*bb[area])
+      return -s*bb[meas];
+    return 0;
+  }
+  scroll(doit) {
+    if (!SCROLL_PARENT || !this.scrolling.parent) return;
+    if (doit && (this.scrolling.left || this.scrolling.top)) {
+      if (this.scrolling.timeout) return;
+      if (this.scrolling.scrolling) {
+        console.log("DOIT", this.scrolling.left, this.scrolling.top);
+        this.scrolling.parent.scrollBy({
+          left: this.scrolling.left,
+          top: this.scrolling.top,
+          behavior: "smooth"
+        });
+        this.scrolling.timeout = setTimeout(() => {
+          this.scrolling.timeout = null;
+          if (this.scrolling.scrolling) {
+            console.log("RESCROLL");
+            this.scroll(true);
+          }
+        }, SCROLL_REPEAT);
+      } else {
+        this.scrolling.timeout = setTimeout(() => {
+          this.scrolling.scrolling = true;
+          this.scrolling.timeout = null;
+          console.log("SCROLL", this.scrolling);
+          this.scroll(true);
+        }, SCROLL_TIMEOUT);
+      }
+    } else {
+      if (this.scrolling.timeout) {
+        console.log("CLEAR");
+        clearTimeout(this.scrolling.timeout);
+        this.scrolling.timeout = null;
+      }
+      this.scrolling.scrolling = false;
     }
   }
 
