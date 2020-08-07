@@ -39,7 +39,7 @@ class Game extends React.Component {
         readOnly: this.props.readOnly,
         drawing: false,
         discarding: [],
-        padding: PADDING,
+        padding: this.state.presentation.readOnly ? [0,0] : PADDING,
       },
       data: props.data,
     };
