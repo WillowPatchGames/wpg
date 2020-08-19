@@ -21,6 +21,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/game"
+	"git.cipherboy.com/WillowPatchGames/api/pkg/room"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/user"
 )
 
@@ -77,8 +78,9 @@ func main() {
 	// Add our main application routers
 	router := mux.NewRouter()
 	auth.BuildRouter(router, debug)
-	user.BuildRouter(router, debug)
 	game.BuildRouter(router, debug)
+	room.BuildRouter(router, debug)
+	user.BuildRouter(router, debug)
 
 	if debug || proxy {
 		// Add static asset handler in debug mode
