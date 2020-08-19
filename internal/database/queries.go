@@ -2,8 +2,10 @@ package database
 
 const t_users = "users"
 const t_auths = "authentication"
+const t_rooms = "rooms"
+// const t_members = "room_memberss"
 const t_games = "games"
-const t_players = "players"
+const t_players = "game_players"
 
 // User Model
 
@@ -35,13 +37,28 @@ const InvalidateToken = "UPDATE " + t_auths + " SET expires=NOW() WHERE key=$1"
 // #nosec G101
 const FromAPIToken = "SELECT user_id FROM authentication WHERE category='api_token' AND key=$1 AND expires > NOW()"
 
+// Room Model
+
+const GetRoomFromID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code FROM " + t_rooms + " WHERE id=$1"
+const GetRoomFromEID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code FROM " + t_rooms + " WHERE eid=$1"
+const GetRoomFromCode = "SELECT id, eid, owner_id, room_id, style, open_room, join_code FROM " + t_rooms + " WHERE join_code=$1"
+
+const InsertRoom = "INSERT INTO " + t_rooms + " (eid, owner_id, room_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+
+const SetRoomConfig = "UPDATE " + t_rooms + " SET config=$1 WHERE id=$2"
+const GetRoomConfig = "SELECT config FROM " + t_rooms + " WHERE id=$1"
+
+const GetRoomCurrentGame = "SELECT id FROM " + t_games + " WHERE room_id=$1 AND (lifecycle='pending' OR lifecycle='playing')"
+
+const SaveRoom = "UPDATE " + t_rooms + " SET style=$1 WHERE id=$2"
+
 // Game Model
 
-const GetGameFromID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
-const GetGameFromEID = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
-const GetGameFromCode = "SELECT id, eid, owner_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE join_code=$1"
+const GetGameFromID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
+const GetGameFromEID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
+const GetGameFromCode = "SELECT id, eid, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE join_code=$1"
 
-const InsertGame = "INSERT INTO " + t_games + " (eid, owner_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5) RETURNING id"
+const InsertGame = "INSERT INTO " + t_games + " (eid, owner_id, room_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
 
 const SetGameConfig = "UPDATE " + t_games + " SET config=$1 WHERE id=$2"
 const GetGameConfig = "SELECT config FROM " + t_games + " WHERE id=$1"

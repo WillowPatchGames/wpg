@@ -12,6 +12,7 @@ type GameModel struct {
 	Id        uint64
 	Eid       uint64
 	OwnerId   uint64
+	RoomId    uint64
 	Style     string
 	Open      bool
 	JoinCode  string
@@ -24,7 +25,7 @@ func (game *GameModel) FromId(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.RoomId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
@@ -43,7 +44,7 @@ func (game *GameModel) FromEid(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.RoomId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func (game *GameModel) FromJoinCode(transaction *sql.Tx, code string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(code).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(code).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.RoomId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
@@ -88,7 +89,7 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 
 	game.Lifecycle = "pending"
 
-	err = stmt.QueryRow(game.Eid, game.OwnerId, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
+	err = stmt.QueryRow(game.Eid, game.OwnerId, game.RoomId, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
 	if err != nil {
 		return err
 	}
@@ -114,6 +115,12 @@ func (game *GameModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
 	err := user.FromId(transaction, game.OwnerId)
 	return user, err
+}
+
+func (game *GameModel) GetRoom(transaction *sql.Tx) (*RoomModel, error) {
+	var room *RoomModel = new (RoomModel)
+	err := room.FromId(transaction, game.RoomId)
+	return room, err
 }
 
 func (game *GameModel) GetConfig(transaction *sql.Tx, object interface{}) error {
