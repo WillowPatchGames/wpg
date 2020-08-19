@@ -34,6 +34,41 @@ CREATE TABLE authentication (
   UNIQUE(user_id, key)
 );
 
+CREATE TYPE room_mode AS ENUM ('single', 'dynamic');
+
+CREATE TABLE rooms (
+  id        BIGSERIAL PRIMARY KEY,
+  eid       BIGINT,
+  owner_id  BIGSERIAL,
+  style     game_mode,
+  open_room BOOLEAN DEFAULT false,
+  join_code VARCHAR(1024),
+  config    TEXT DEFAULT '{}',
+  created   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  closes    TIMESTAMP WITH TIME ZONE,
+
+  FOREIGN KEY (owner_id) REFERENCES users(id),
+  UNIQUE(eid),
+  UNIQUE(join_code)
+);
+
+CREATE TYPE room_member_type AS ENUM ('pending', 'spectator', 'admin', 'player');
+
+CREATE TABLE room_member (
+  id          BIGSERIAL PRIMARY KEY,
+  room_id     BIGSERIAL,
+  user_id     BIGSERIAL,
+  class       room_member_type DEFAULT 'pending',
+  invite_code VARCHAR(1024),
+  config      TEXT DEFAULT '{}',
+  created     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (room_id) REFERENCES games(id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(room_id, user_id),
+  UNIQUE(invite_code)
+);
+
 CREATE TYPE game_mode AS ENUM ('rush');
 CREATE TYPE game_lifecycle AS ENUM ('pending', 'playing', 'finished');
 
@@ -41,6 +76,7 @@ CREATE TABLE games (
   id        BIGSERIAL PRIMARY KEY,
   eid       BIGINT,
   owner_id  BIGSERIAL,
+  room_id   BIGSERIAL,
   style     game_mode,
   open_room BOOLEAN DEFAULT false,
   join_code VARCHAR(1024),
@@ -50,13 +86,14 @@ CREATE TABLE games (
   created   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (owner_id) REFERENCES users(id),
+  FOREIGN KEY (room_id) REFERENCES users(id),
   UNIQUE(eid),
   UNIQUE(join_code)
 );
 
-CREATE TYPE player_type AS ENUM ('pending', 'spectator', 'player');
+CREATE TYPE game_player_type AS ENUM ('pending', 'spectator', 'player');
 
-CREATE TABLE players (
+CREATE TABLE game_players (
   id          BIGSERIAL PRIMARY KEY,
   game_id     BIGSERIAL,
   user_id     BIGSERIAL,
@@ -77,5 +114,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO wpg;
 ALTER TABLE metadata OWNER TO wpg;
 ALTER TABLE users OWNER TO wpg;
 ALTER TABLE authentication OWNER TO wpg;
+ALTER TABLE rooms OWNER TO wpg;
+ALTER TABLE room_member OWNER TO wpg;
 ALTER TABLE games OWNER TO wpg;
-ALTER TABLE players OWNER TO wpg;
+ALTER TABLE game_players OWNER TO wpg;
