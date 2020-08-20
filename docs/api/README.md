@@ -1,4 +1,6 @@
-# WordCorp
+# Willow Patch Games
+
+API Documentation for `wpg`.
 
 ## Authenticated Endpoints
 
