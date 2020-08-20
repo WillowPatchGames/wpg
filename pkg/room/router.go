@@ -3,8 +3,8 @@ package room
 import (
 	"github.com/gorilla/mux"
 
-	"git.cipherboy.com/WillowPatchGames/api/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/api/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
 // BuildRouter registers routes

@@ -21,7 +21,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/game"
-	"git.cipherboy.com/WillowPatchGames/api/pkg/room"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/room"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/user"
 )
 

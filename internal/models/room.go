@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	"git.cipherboy.com/WillowPatchGames/api/internal/database"
-	"git.cipherboy.com/WillowPatchGames/api/internal/utils"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 )
 
 type RoomModel struct {

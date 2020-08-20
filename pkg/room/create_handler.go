@@ -5,13 +5,13 @@ import (
 	"log"
 	"net/http"
 
-	"git.cipherboy.com/WillowPatchGames/api/internal/database"
-	"git.cipherboy.com/WillowPatchGames/api/internal/models"
-	"git.cipherboy.com/WillowPatchGames/api/internal/utils"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
-	api_errors "git.cipherboy.com/WillowPatchGames/api/pkg/errors"
-	"git.cipherboy.com/WillowPatchGames/api/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/api/pkg/middleware/parsel"
+	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
 type createHandlerData struct {
