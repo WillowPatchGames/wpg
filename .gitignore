@@ -176,7 +176,7 @@ dmypy.json
 cython_debug/
 
 # Applications
-/wcapi
+/wpgapi
 
 # Fuzzing data
 pkg/password/password-fuzz.zip

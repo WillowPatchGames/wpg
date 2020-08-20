@@ -52,10 +52,10 @@ uninstall: remove_database
 
 build: cmds
 
-cmds: wcapi
+cmds: wpgapi
 
-wcapi: cmd/wcapi/main.go pkg/*/*.go internal/*/*.go
-	$(GO) build $(NAMESPACE)/cmd/wcapi
+wpgapi: cmd/wpgapi/main.go pkg/*/*.go internal/*/*.go
+	$(GO) build $(NAMESPACE)/cmd/wpgapi
 
 install_database:
 	cd scripts/database && ./setup.sh
@@ -64,7 +64,7 @@ remove_database:
 	cd scripts/database && ./remove.sh || true
 
 clean:
-	rm -f wcapi
+	rm -f wpgapi
 
 submod:
 	git submodule init && git submodule update
@@ -76,4 +76,4 @@ distui:
 	cd assets/static && REACT_EDITOR=none BROWSER=none npm run build
 
 tarball: distui
-	tar -cJf build.tar.xz wcapi assets/wordlist.txt -C assets/static build
+	tar -cJf build.tar.xz wpgapi assets/wordlist.txt -C assets/static build
