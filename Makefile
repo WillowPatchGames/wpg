@@ -10,6 +10,10 @@ dist: distui tarball
 
 check: vet gosec safesql staticcheck crypt utils
 
+deps:
+	go get -u $(NAMESPACE)/...
+	cd assets/static && npm install
+
 fuzz:
 	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
 	cd pkg/password && go-fuzz-build && go-fuzz
@@ -70,12 +74,12 @@ webui: run
 distui: build
 
 tarball: distui
-	tar -cJf build.tar.xz wcapi assets/wordlist.txt -C assets/webui/static build
+	tar -cJf build.tar.xz wcapi assets/wordlist.txt -C assets/static build
 
 run: npm
 
 npm:
-	cd static && REACT_EDITOR=none BROWSER=none npm start
+	cd assets/static && REACT_EDITOR=none BROWSER=none npm start
 
 build:
-	cd static && REACT_EDITOR=none BROWSER=none npm run build
+	cd assets/static && REACT_EDITOR=none BROWSER=none npm run build

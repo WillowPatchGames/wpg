@@ -58,7 +58,7 @@ func main() {
 	flag.StringVar(&db_sslmode, "db_sslmode", "require", "SSL Validation mode (require, verify-full, verify-ca, or disable)")
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
 	flag.BoolVar(&proxy, "proxy", false, "Enable proxy")
-	flag.StringVar(&static_path, "static_path", "assets/webui/static/public", "Path to web UI static assets")
+	flag.StringVar(&static_path, "static_path", "assets/static/public", "Path to web UI static assets")
 	flag.Parse()
 
 	// Open Database connection first
