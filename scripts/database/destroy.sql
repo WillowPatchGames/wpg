@@ -1,6 +1,7 @@
 DROP TABLE players;
 DROP TABLE game_players;
 DROP TABLE games;
+DROP TABLE room_member;
 DROP TABLE room_members;
 DROP TABLE rooms;
 DROP TABLE authentication;

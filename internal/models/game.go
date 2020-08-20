@@ -114,13 +114,19 @@ func (game *GameModel) Save(transaction *sql.Tx) error {
 func (game *GameModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
 	err := user.FromId(transaction, game.OwnerId)
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func (game *GameModel) GetRoom(transaction *sql.Tx) (*RoomModel, error) {
-	var room *RoomModel = new (RoomModel)
+	var room *RoomModel = new(RoomModel)
 	err := room.FromId(transaction, game.RoomId)
-	return room, err
+	if err != nil {
+		return nil, err
+	}
+	return room, nil
 }
 
 func (game *GameModel) GetConfig(transaction *sql.Tx, object interface{}) error {

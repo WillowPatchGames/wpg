@@ -23,11 +23,11 @@ type createHandlerData struct {
 }
 
 type createHandlerResponse struct {
-	RoomID    uint64 `json:"id"`
-	Owner     uint64 `json:"owner"`
-	Style     string `json:"style"`
-	Open      bool   `json:"open"`
-	Code      string `json:"code"`
+	RoomID uint64 `json:"id"`
+	Owner  uint64 `json:"owner"`
+	Style  string `json:"style"`
+	Open   bool   `json:"open"`
+	Code   string `json:"code"`
 }
 
 type CreateHandler struct {
@@ -59,10 +59,16 @@ func (handle *CreateHandler) SetUser(user *models.UserModel) {
 
 func (handle CreateHandler) verifyRequest() error {
 	if handle.req.OwnerID == 0 {
+		handle.req.OwnerID = handle.user.Eid
+	}
+
+	if handle.req.OwnerID == 0 {
+		log.Println("Missing OwnerId")
 		return api_errors.ErrMissingRequest
 	}
 
 	if handle.req.Style == "" {
+		log.Println("Missing style")
 		return api_errors.ErrMissingRequest
 	}
 

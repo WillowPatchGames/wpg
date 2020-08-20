@@ -3,6 +3,7 @@ package database
 const t_users = "users"
 const t_auths = "authentication"
 const t_rooms = "rooms"
+
 // const t_members = "room_memberss"
 const t_games = "games"
 const t_players = "game_players"
@@ -39,11 +40,11 @@ const FromAPIToken = "SELECT user_id FROM authentication WHERE category='api_tok
 
 // Room Model
 
-const GetRoomFromID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code FROM " + t_rooms + " WHERE id=$1"
-const GetRoomFromEID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code FROM " + t_rooms + " WHERE eid=$1"
-const GetRoomFromCode = "SELECT id, eid, owner_id, room_id, style, open_room, join_code FROM " + t_rooms + " WHERE join_code=$1"
+const GetRoomFromID = "SELECT id, eid, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE id=$1"
+const GetRoomFromEID = "SELECT id, eid, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE eid=$1"
+const GetRoomFromCode = "SELECT id, eid, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE join_code=$1"
 
-const InsertRoom = "INSERT INTO " + t_rooms + " (eid, owner_id, room_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+const InsertRoom = "INSERT INTO " + t_rooms + " (eid, owner_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 
 const SetRoomConfig = "UPDATE " + t_rooms + " SET config=$1 WHERE id=$2"
 const GetRoomConfig = "SELECT config FROM " + t_rooms + " WHERE id=$1"

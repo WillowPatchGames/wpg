@@ -1,10 +1,10 @@
-CREATE TABLE metadata IF NOT EXISTS (
+CREATE TABLE IF NOT EXISTS metadata (
   version BIGSERIAL,
   upgraded TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (6);
+INSERT INTO metadata (version) VALUES (7);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
@@ -40,7 +40,7 @@ CREATE TABLE rooms (
   id        BIGSERIAL PRIMARY KEY,
   eid       BIGINT,
   owner_id  BIGSERIAL,
-  style     game_mode,
+  style     room_mode,
   open_room BOOLEAN DEFAULT false,
   join_code VARCHAR(1024),
   config    TEXT DEFAULT '{}',
@@ -54,7 +54,7 @@ CREATE TABLE rooms (
 
 CREATE TYPE room_member_type AS ENUM ('pending', 'spectator', 'admin', 'player');
 
-CREATE TABLE room_member (
+CREATE TABLE room_members (
   id          BIGSERIAL PRIMARY KEY,
   room_id     BIGSERIAL,
   user_id     BIGSERIAL,
@@ -63,7 +63,7 @@ CREATE TABLE room_member (
   config      TEXT DEFAULT '{}',
   created     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (room_id) REFERENCES games(id),
+  FOREIGN KEY (room_id) REFERENCES rooms(id),
   FOREIGN KEY (user_id) REFERENCES users(id),
   UNIQUE(room_id, user_id),
   UNIQUE(invite_code)
@@ -86,7 +86,7 @@ CREATE TABLE games (
   created   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (owner_id) REFERENCES users(id),
-  FOREIGN KEY (room_id) REFERENCES users(id),
+  FOREIGN KEY (room_id) REFERENCES rooms(id),
   UNIQUE(eid),
   UNIQUE(join_code)
 );
@@ -97,7 +97,7 @@ CREATE TABLE game_players (
   id          BIGSERIAL PRIMARY KEY,
   game_id     BIGSERIAL,
   user_id     BIGSERIAL,
-  class       player_type DEFAULT 'pending',
+  class       game_player_type DEFAULT 'pending',
   invite_code VARCHAR(1024),
   state       TEXT DEFAULT '{}',
   created   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

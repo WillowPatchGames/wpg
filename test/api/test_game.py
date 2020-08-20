@@ -4,7 +4,7 @@ from common import *
 
 def test_create_get_game():
     # Sending the first request should be fine
-    user_data, token = auth_user('three')
+    user_data, token = auth_user('four')
 
     headers = {'X-Auth-Token': token}
 

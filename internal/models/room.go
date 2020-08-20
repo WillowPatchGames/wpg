@@ -9,12 +9,12 @@ import (
 )
 
 type RoomModel struct {
-	Id        uint64
-	Eid       uint64
-	OwnerId   uint64
-	Style     string
-	Open      bool
-	JoinCode  string
+	Id       uint64
+	Eid      uint64
+	OwnerId  uint64
+	Style    string
+	Open     bool
+	JoinCode string
 }
 
 func (room *RoomModel) FromId(transaction *sql.Tx, id uint64) error {
@@ -110,11 +110,13 @@ func (room *RoomModel) Save(transaction *sql.Tx) error {
 func (room *RoomModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
 	err := user.FromId(transaction, room.OwnerId)
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
-func (room *RoomModel) GetCurrentGame(transaction *sql.Tx) (*GameModel, error) {
-	var game_id uint64
+func (room *RoomModel) GetCurrentGames(transaction *sql.Tx) ([]*GameModel, error) {
 	var err error
 
 	stmt, err := transaction.Prepare(database.GetRoomCurrentGame)
@@ -122,7 +124,22 @@ func (room *RoomModel) GetCurrentGame(transaction *sql.Tx) (*GameModel, error) {
 		return nil, err
 	}
 
-	err = stmt.QueryRow(room.Id).Scan(&game_id)
+	rows, err := stmt.Query(room.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	var ids []uint64 = make([]uint64, 0)
+	for rows.Next() {
+		var id uint64
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	err = rows.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -132,9 +149,15 @@ func (room *RoomModel) GetCurrentGame(transaction *sql.Tx) (*GameModel, error) {
 		return nil, err
 	}
 
-	var game *GameModel = new(GameModel)
-	err = game.FromId(transaction, game_id)
-	return game, err
+	var games []*GameModel = make([]*GameModel, len(ids))
+	for index, id := range ids {
+		games[index] = new(GameModel)
+		err = games[index].FromId(transaction, id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return games, nil
 }
 
 func (room *RoomModel) GetConfig(transaction *sql.Tx, object interface{}) error {
