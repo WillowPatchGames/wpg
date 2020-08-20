@@ -8,8 +8,23 @@ def test_create_get_game():
 
     headers = {'X-Auth-Token': token}
 
+    room_req = {
+        'owner': user_data['id'],
+        'style': 'single',
+        'open': True
+    }
+
+    room_resp = requests.post(URL + "/rooms", json=room_req, headers=headers)
+
+    print(room_resp, room_resp.json())
+
+    assert room_resp.status_code == 200
+
+    room_data = room_resp.json()
+
     req = {
         'owner': user_data['id'],
+        'room': room_data['id'],
         'style': 'rush',
         'open': True,
         'config': {

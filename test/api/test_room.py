@@ -16,6 +16,8 @@ def test_create_get_room():
 
     resp = requests.post(URL + "/rooms", json=req, headers=headers)
 
+    print(resp, resp.json())
+
     assert resp.status_code == 200
 
     room_data = resp.json()
