@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"git.cipherboy.com/WordCorp/api/internal/database"
-	"git.cipherboy.com/WordCorp/api/internal/utils"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 )
 
 type AuthModel struct {

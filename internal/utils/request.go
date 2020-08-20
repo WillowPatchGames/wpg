@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
+	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 )
 
 type HTTPRequestHandler interface {

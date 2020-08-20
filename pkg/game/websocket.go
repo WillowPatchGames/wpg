@@ -12,8 +12,8 @@ import (
 	"log"
 	"sync"
 
-	"git.cipherboy.com/WordCorp/api/internal/database"
-	"git.cipherboy.com/WordCorp/api/internal/models"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the

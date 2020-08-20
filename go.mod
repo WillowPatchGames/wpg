@@ -1,4 +1,4 @@
-module git.cipherboy.com/WordCorp/api
+module git.cipherboy.com/WillowPatchGames/wpg
 
 go 1.14
 

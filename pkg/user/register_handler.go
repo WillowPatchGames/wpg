@@ -4,12 +4,12 @@ import (
 	"log"
 	"net/http"
 
-	"git.cipherboy.com/WordCorp/api/internal/database"
-	"git.cipherboy.com/WordCorp/api/internal/models"
-	"git.cipherboy.com/WordCorp/api/internal/utils"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
-	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
-	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
+	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
 type registerHandlerData struct {

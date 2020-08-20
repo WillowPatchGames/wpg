@@ -9,8 +9,8 @@ package user
 import (
 	"github.com/gorilla/mux"
 
-	"git.cipherboy.com/WordCorp/api/pkg/middleware/auth"
-	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
 func BuildRouter(router *mux.Router, debug bool) {

@@ -1,4 +1,4 @@
-NAMESPACE?=git.cipherboy.com/WordCorp/api
+NAMESPACE?=git.cipherboy.com/WillowPatchGames/wpg
 GO?=go
 PYTHON?=python3
 
@@ -69,17 +69,11 @@ clean:
 submod:
 	git submodule init && git submodule update
 
-webui: run
+webui:
+	cd assets/static && REACT_EDITOR=none BROWSER=none npm start
 
-distui: build
+distui:
+	cd assets/static && REACT_EDITOR=none BROWSER=none npm run build
 
 tarball: distui
 	tar -cJf build.tar.xz wcapi assets/wordlist.txt -C assets/static build
-
-run: npm
-
-npm:
-	cd assets/static && REACT_EDITOR=none BROWSER=none npm start
-
-build:
-	cd assets/static && REACT_EDITOR=none BROWSER=none npm run build

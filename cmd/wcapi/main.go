@@ -18,10 +18,10 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"git.cipherboy.com/WordCorp/api/internal/database"
-	"git.cipherboy.com/WordCorp/api/pkg/auth"
-	"git.cipherboy.com/WordCorp/api/pkg/game"
-	"git.cipherboy.com/WordCorp/api/pkg/user"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/game"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/user"
 )
 
 const db_fmt string = "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s"

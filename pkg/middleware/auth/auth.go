@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	api_errors "git.cipherboy.com/WordCorp/api/pkg/errors"
-	"git.cipherboy.com/WordCorp/api/pkg/middleware/parsel"
+	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 
-	"git.cipherboy.com/WordCorp/api/internal/database"
-	"git.cipherboy.com/WordCorp/api/internal/models"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 )
 
 type Authed interface {

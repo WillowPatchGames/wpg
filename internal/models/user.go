@@ -3,10 +3,10 @@ package models
 import (
 	"database/sql"
 
-	"git.cipherboy.com/WordCorp/api/internal/database"
-	"git.cipherboy.com/WordCorp/api/internal/utils"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
-	"git.cipherboy.com/WordCorp/api/pkg/password"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/password"
 )
 
 type UserModel struct {

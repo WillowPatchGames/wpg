@@ -3,7 +3,7 @@ package game
 import (
 	"math/rand"
 
-	"git.cipherboy.com/WordCorp/api/internal/utils"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 )
 
 var letterfreq = map[string]float64{
