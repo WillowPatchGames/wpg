@@ -65,11 +65,17 @@ clean:
 submod:
 	git submodule init && git submodule update
 
-webui:
-	cd assets/webui && make run
+webui: run
 
-distui:
-	cd assets/webui && make build
+distui: build
 
 tarball: distui
 	tar -cJf build.tar.xz wcapi assets/wordlist.txt -C assets/webui/static build
+
+run: npm
+
+npm:
+	cd static && REACT_EDITOR=none BROWSER=none npm start
+
+build:
+	cd static && REACT_EDITOR=none BROWSER=none npm run build

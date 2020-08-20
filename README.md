@@ -1,3 +1,3 @@
-# api
+# `wpg`
 
-Backend API for Word Games
+Willow Patch Games's mono-repo.

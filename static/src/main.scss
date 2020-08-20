@@ -1,0 +1,275 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --tile-size: 0.5in;
+}
+
+@mixin hover {
+  @media (hover: hover) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+@mixin noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+}
+
+.word {
+  font-family: "Quicksand", sans-serif;
+  font-weight: 600;
+  font-size: 30px;
+}
+
+@mixin tile-size {
+  font-size: var(--tile-size);
+  width: calc(var(--tile-size) + 2px);
+  height: calc(var(--tile-size) + 2px);
+  /* to force height to be respected */
+  line-height: 100%;
+  text-align: center;
+}
+
+$selected: #95e495;
+$preselected: scale-color($selected, $lightness: +35%);
+$tile: #e0dfef;
+$tiletext: #550080;
+$tileborder: #88a8e2;
+
+@mixin tile {
+  @extend .word;
+  @extend .tile-size;
+  @include noselect;
+  border: 1px solid $tileborder;
+}
+.tile-size {
+  @include tile-size;
+}
+.tile {
+  @extend .tile-size;
+  @include tile;
+}
+
+table.word.grid {
+  border-collapse: collapse;
+  color: $tiletext;
+  margin: auto;
+  td {
+    @include tile;
+    //position: relative;
+    &.unword {
+      color: red;
+    }
+    &.empty {
+      cursor: default;
+      &:not(.read-only) {
+        @include hover {
+          background: $preselected;
+        }
+      }
+      &:not(.read-only):active {
+        @include hover {
+          background: $selected;
+        }
+      }
+      & > div {
+        @extend .tile-size;
+      }
+    }
+    &:not(.read-only):not(.empty) {
+      cursor: pointer;
+    }
+    &:not(.empty) > .tile {
+      display: inline-block;
+      box-sizing: content-box;
+      margin: -1px;
+      border: 1px solid $tile;
+      background: $tile;
+      &:not(.read-only) {
+        :active {
+          border: 1px solid $tileborder;
+          margin: -1px;
+          @include hover {
+            background: $selected;
+          }
+        }
+        @include hover {
+          border: 1px solid $preselected;
+          margin: -1px;
+        }
+      }
+      &:not(.read-only):active {
+        //transform: scale(1.1) translateY(-2px);
+      }
+    }
+    &[data-selected=true] {
+      &.empty {
+        background: $selected;
+        &:not(.read-only) {
+          @include hover {
+            background: $selected;
+            &:active {
+              background: $preselected;
+            }
+          }
+        }
+      }
+      &:not(.empty) > .tile {
+        background: $selected;
+        border-color: $selected;
+        &:not(.read-only):active {
+          @include hover {
+            background: $preselected;
+          }
+        }
+      }
+    }
+  }
+}
+
+.word.bank {
+  padding-top: 10px;
+  .letters {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    padding: 0px 12px;
+    .letter {
+      @include tile;
+      margin: 8px;
+      @media(max-width: 599px) {
+        margin: 10px;
+      }
+      display: inline-block;
+      vertical-align: bottom;
+      border: 1px solid $tileborder;
+      background: $tile;
+      cursor: pointer;
+      &[data-selected=true] {
+        color: #053a05;
+        background: $selected;
+        &:not(.empty) > .tile {
+          background: $selected;
+          &:active:hover {
+            background: $tile;
+          }
+        }
+      }
+      &:not(.empty) > .tile {
+        display: inline-block;
+        box-sizing: content-box;
+        margin: 0;
+        border: none;
+        background: $tile;
+        &:hover, &:active {
+          border: 1px solid $tileborder;
+          margin: -1px;
+        }
+        &:active {
+          //transform: scale(1.1) translateY(-2px);
+          &:hover {
+            background: $selected;
+          }
+        }
+      }
+      &.discarding {
+        color: gray;
+      }
+    }
+  }
+  .actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    flex-wrap: wrap-reverse;
+    padding: 12px;
+    & > * {
+      margin: 6px;
+      --mdc-typography-button-font-size: 1.275rem;
+    }
+  }
+}
+
+/* FULL SCREEN MODE */
+
+//*
+
+#game, .game-component {
+  width: 100%;
+  height: 100%;
+}
+
+.game-component > * {
+  width: 100%;
+  overflow: auto;
+}
+
+.game-component > .board {
+  height: 65vh;
+}
+.game-component > .bank {
+  height: 30vh;
+}
+.game-component > .bank > .bank {
+  height: 100%;
+}
+
+.results .game-component > .board, .results .game-component > .bank {
+  height: initial;
+  overflow-y: hidden;
+}
+
+.results .game-component > .bank, .results .game-component .board {
+  height: initial;
+}
+
+.results table.word.grid {
+    --tile-size: 0.35in;
+}
+
+/**/
+
+
+/* immersive */
+
+.App.immersive {
+  height: 100vh;
+  width: 100vw;
+  .App-footer, .mdc-top-app-bar--fixed-adjust {
+    display: none;
+  }
+  .mdc-drawer--modal {
+    margin-top: 32px;
+  }
+  .mdc-top-app-bar--short-collapsed.mdc-top-app-bar--short-has-action-item {
+    width: 56px;
+  }
+  .game-component > .board {
+    height: calc(0.64 * (100vh - 60px));
+  }
+  .game-component > .bank {
+    height: calc(0.34 * (100vh - 60px));
+    .actions {
+      margin-bottom: calc((0.34 * (100vh - 60px)) - 120px);
+    }
+  }
+  @media(max-width: 599px) {
+    .game-component > .board {
+      height: calc(0.54 * (100vh - 60px));
+    }
+    .game-component > .bank {
+      height: calc(0.44 * (100vh - 60px));
+      .actions {
+        margin-bottom: calc((0.44 * (100vh - 60px)) - 120px);
+      }
+    }
+  }
+}

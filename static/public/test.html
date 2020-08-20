@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test - WordCorp</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="css/main.css" rel="stylesheet"></style>
+  <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+  <script>
+    // All modules are global now, mwahahha
+    window.module = {
+      get exports() {
+        return window;
+      },
+      set exports(exports) {
+        if (typeof exports.default === 'object') {
+          Object.assign(window, exports.default);
+        } else if (typeof exports === 'object') {
+          Object.assign(window, exports);
+        }
+      },
+    };
+  </script>
+  <script src="https://unpkg.com/react-merge-props@0.1.4/index.js" crossorigin></script>
+  <script>
+    var components = {};
+    document.addEventListener("DOMContentLoaded", function() {
+      for (let query in components) {
+        ReactDOM.render(React.createElement(components[query]), document.querySelector(query));
+      }
+    });
+  </script>
+  <script src="../src/game.js"></script>
+  <script src="../src/component.js"></script>
+  <script>
+  wordmanager.fromURL('csw15.txt');
+  var ws = new WebSocket("ws://" + document.location.host + "/game/ws");
+  ws.addEventListener("message", function({ data: buf }) {
+    console.log(buf);
+    var data = JSON.parse(buf);
+    if (!data) console.log("Error: ", buf);
+    if (data.type === "message") {
+      console.log(data.message);
+    } else if (data.error) {
+      console.error(data.error);
+    }
+  });
+  tilemanager = new APITileManager(ws);
+  </script>
+  <script>
+  // Disable zoom (sorry!)
+  //*
+  document.addEventListener('touchmove', function (event) {
+    if (event.scale && event.scale !== 1) { event.preventDefault(); }
+  }, { passive: false });
+  /**/
+  </script>
+</head>
+<body>
+  <div id="game"></div>
+</body>
+</html>
