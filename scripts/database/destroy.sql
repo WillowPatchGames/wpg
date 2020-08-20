@@ -9,5 +9,5 @@ DROP TYPE game_lifecycle;
 DROP TYPE player_type;
 DROP TYPE auth_source;
 
-DROP OWNED BY wordcorp;
-DROP USER wordcorp;
+DROP OWNED BY wpg;
+DROP USER wpg;

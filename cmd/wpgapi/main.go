@@ -54,7 +54,7 @@ func main() {
 	flag.IntVar(&db_port, "db_port", 5432, "Port to contact the database on")
 	flag.StringVar(&db_user, "db_user", "psql", "Username to contact the database with")
 	flag.StringVar(&db_password, "db_password", "password", "Password to authentication against the database with")
-	flag.StringVar(&db_name, "db_name", "wordcorpdb", "Database to connect to with")
+	flag.StringVar(&db_name, "db_name", "wpgdb", "Database to connect to with")
 	flag.StringVar(&db_sslmode, "db_sslmode", "require", "SSL Validation mode (require, verify-full, verify-ca, or disable)")
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
 	flag.BoolVar(&proxy, "proxy", false, "Enable proxy")

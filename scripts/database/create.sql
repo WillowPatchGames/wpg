@@ -71,11 +71,11 @@ CREATE TABLE players (
   UNIQUE(invite_code)
 );
 
-CREATE USER wordcorp WITH PASSWORD 'CHANGEME';
-GRANT ALL PRIVILEGES ON DATABASE wordcorpdb TO wordcorp;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO wordcorp;
-ALTER TABLE metadata OWNER TO wordcorp;
-ALTER TABLE users OWNER TO wordcorp;
-ALTER TABLE authentication OWNER TO wordcorp;
-ALTER TABLE games OWNER TO wordcorp;
-ALTER TABLE players OWNER TO wordcorp;
+CREATE USER wpg WITH PASSWORD 'CHANGEME';
+GRANT ALL PRIVILEGES ON DATABASE wpgdb TO wpg;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO wpg;
+ALTER TABLE metadata OWNER TO wpg;
+ALTER TABLE users OWNER TO wpg;
+ALTER TABLE authentication OWNER TO wpg;
+ALTER TABLE games OWNER TO wpg;
+ALTER TABLE players OWNER TO wpg;
