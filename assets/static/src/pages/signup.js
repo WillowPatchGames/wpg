@@ -59,7 +59,7 @@ class SignupPage extends React.Component {
         <div>
           <Typography use="headline2">Sign up!</Typography>
           <p>
-            We&apos;re happy you&apos;re joining WordCorp!<br /><br />
+            We&apos;re happy you&apos;re joining Willow Patch Games!<br /><br />
             We only need a username or an email (or both, if you&apos;d like account recovery or notifications) and a password.<br /><br />
             If you&apos;re not happy with your display name being your username, feel free to set one.
           </p>

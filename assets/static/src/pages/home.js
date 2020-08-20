@@ -21,7 +21,7 @@ class HomePage extends React.Component {
             <div className="styles.intro">
               <div>
                 <Typography use="headline2">
-                  Welcome to WordCorp!
+                  Welcome to Willow Patch Games!
                 </Typography>
               </div>
               <div>

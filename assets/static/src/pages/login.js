@@ -63,7 +63,7 @@ class LoginPage extends React.Component {
         <div>
           <Typography use="headline2">Login</Typography>
           <p>
-            Enter your username or email and password to log into WordCorp.<br/><br/>
+            Enter your username or email and password to log into Willow Patch Games.<br/><br/>
             <a href="#signup">New user? Sign up instead!</a>
           </p>
         </div>

@@ -8,7 +8,7 @@ class Footer extends React.Component {
       return (
         <div className="App-footer">
           <p style={{ fontSize: '0.85em' }} >
-            Copyright (C) WordCorp<br />
+            Copyright (C) Willow Patch Games<br />
             All Rights Reserved.<br />
           </p>
         </div>

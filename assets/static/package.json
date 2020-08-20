@@ -1,9 +1,9 @@
 {
-  "name": "wordcorp-webui",
+  "name": "wpg-webui",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-or-later",
-  "repository": "https://git.cipherboy.com/WordCorp/webui",
+  "repository": "https://git.cipherboy.com/WillowPatchGames/wpg",
   "dependencies": {
     "@rmwc/button": "^6.1.3",
     "@rmwc/card": "^6.1.3",
