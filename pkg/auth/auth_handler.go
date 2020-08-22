@@ -19,11 +19,10 @@ import (
 )
 
 type authHandlerData struct {
-	InternalID uint64 `json:"id"`
-	UserID     uint64 `json:"eid"`
-	Username   string `json:"username"`
-	Email      string `json:"email"`
-	Password   string `json:"password"`
+	UserID   uint64 `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type authHandlerResponse struct {
@@ -94,7 +93,7 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var user models.UserModel
 	if handle.req.UserID != 0 {
-		err = user.FromEid(tx, handle.req.UserID)
+		err = user.FromId(tx, handle.req.UserID)
 	} else if handle.req.Username != "" {
 		err = user.FromUsername(tx, handle.req.Username)
 	} else if handle.req.Email != "" {
@@ -119,7 +118,7 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.UserID = user.Eid
+	handle.resp.UserID = user.Id
 	handle.resp.Username = user.Username
 	handle.resp.Email = user.Email
 	handle.resp.ApiToken = auth.ApiToken

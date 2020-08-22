@@ -59,7 +59,7 @@ func (handle *CreateHandler) SetUser(user *models.UserModel) {
 
 func (handle CreateHandler) verifyRequest() error {
 	if handle.req.OwnerID == 0 {
-		handle.req.OwnerID = handle.user.Eid
+		handle.req.OwnerID = handle.user.Id
 	}
 
 	if handle.req.OwnerID == 0 {
@@ -93,7 +93,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.UserModel
-	err = user.FromEid(tx, handle.req.OwnerID)
+	err = user.FromId(tx, handle.req.OwnerID)
 	if err != nil {
 		api_errors.WriteError(w, err, true)
 		return
@@ -136,8 +136,8 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.RoomID = room.Eid
-	handle.resp.Owner = user.Eid
+	handle.resp.RoomID = room.Id
+	handle.resp.Owner = user.Id
 	handle.resp.Style = room.Style
 	handle.resp.Open = room.Open
 	handle.resp.Code = room.JoinCode

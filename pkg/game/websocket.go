@@ -395,7 +395,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							if p.user.Id != player.user.Id {
 								req = ""
 							}
-							hub.sendJSONToClient(p.client, Message{Type: "gamestart", DrawNumber: 1, User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
+							hub.sendJSONToClient(p.client, Message{Type: "gamestart", DrawNumber: 1, User: &JSONUser{player.user.Display, player.user.Id}, Letters: drawn, Request: req})
 						}
 					}
 					err = game.model.SetState(tx, &game.state)
@@ -423,7 +423,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 						log.Println(err)
 						// no return
 					}
-					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Eid}})
+					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Id}})
 				}
 			} else {
 				if len(game.state.Letters) >= game.config.DrawSize*len(game.players) {
@@ -455,7 +455,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							if p.user.Id != player.user.Id {
 								req = ""
 							}
-							hub.sendJSONToClient(p.client, Message{Type: "draw", DrawNumber: cmd.DrawNumber, User: &JSONUser{player.user.Display, player.user.Eid}, Letters: drawn, Request: req})
+							hub.sendJSONToClient(p.client, Message{Type: "draw", DrawNumber: cmd.DrawNumber, User: &JSONUser{player.user.Display, player.user.Id}, Letters: drawn, Request: req})
 						}
 					}
 					game.state.DrawNumber++
@@ -485,7 +485,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							// no return
 						}
 					}
-					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Eid}})
+					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Id}})
 				}
 			}
 		} else if cmd.Type == "discard" {
@@ -547,7 +547,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 				game := player.game
 				found := false
 				for _, admitted := range game.players {
-					if admitted.user.Eid == cmd.User.Id {
+					if admitted.user.Id == cmd.User.Id {
 						admitted.model.Class = "player"
 						found = true
 						tx, err := game.txs.GetTx()
@@ -583,7 +583,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 			snapshots := make([]UserSnapshot, len(game.players))
 			for _, player := range game.players {
 				if player.state != nil {
-					snapshots = append(snapshots, UserSnapshot{JSONUser{player.user.Display, player.user.Eid}, player.state.Board})
+					snapshots = append(snapshots, UserSnapshot{JSONUser{player.user.Display, player.user.Id}, player.state.Board})
 				}
 			}
 			hub.sendJSONToClient(client, Message{
@@ -627,7 +627,7 @@ func (hub *Hub) registerClient(news ClientRegister) {
 			hub.sendJSONToClient(news.client, Message{Type: "pending", Message: "You will be admitted to the game shortly."})
 			admin, present := game.players[game.model.OwnerId]
 			if present && player.model.Class == "pending" && admin.client != nil {
-				hub.sendJSONToClient(admin.client, Message{Type: "invite", User: &JSONUser{player.user.Display, player.user.Eid}})
+				hub.sendJSONToClient(admin.client, Message{Type: "invite", User: &JSONUser{player.user.Display, player.user.Id}})
 			}
 		} else {
 			hub.sendJSONToClient(news.client, Message{Type: "admitted", Message: "Welcome, game admin!."})

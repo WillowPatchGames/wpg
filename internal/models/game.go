@@ -10,7 +10,6 @@ import (
 
 type GameModel struct {
 	Id        uint64
-	Eid       uint64
 	OwnerId   uint64
 	roomid    sql.NullInt64
 	RoomId    uint64
@@ -26,30 +25,7 @@ func (game *GameModel) FromId(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
-	if err != nil {
-		return err
-	}
-
-	if game.roomid.Valid {
-		game.RoomId = uint64(game.roomid.Int64)
-	}
-
-	err = stmt.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (game *GameModel) FromEid(transaction *sql.Tx, id uint64) error {
-	stmt, err := transaction.Prepare(database.GetGameFromEID)
-	if err != nil {
-		return err
-	}
-
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(id).Scan(&game.Id, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
@@ -72,7 +48,7 @@ func (game *GameModel) FromJoinCode(transaction *sql.Tx, code string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(code).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(code).Scan(&game.Id, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
@@ -95,7 +71,6 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 		return err
 	}
 
-	game.Eid = utils.RandomId()
 	if game.Open {
 		game.JoinCode = utils.RandomWords()
 	}
@@ -105,7 +80,7 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 	game.roomid.Valid = (game.RoomId != 0)
 	game.roomid.Int64 = int64(game.RoomId)
 
-	err = stmt.QueryRow(game.Eid, game.OwnerId, game.roomid, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
+	err = stmt.QueryRow(game.OwnerId, game.roomid, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
 	if err != nil {
 		return err
 	}

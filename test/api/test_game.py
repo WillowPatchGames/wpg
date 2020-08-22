@@ -48,6 +48,8 @@ def test_create_get_game():
 
     resp = requests.get(URL + "/game/" + str(game_data['id']), headers=headers)
 
+    print(resp, resp.json())
+
     assert resp.status_code == 200
 
     get_data = resp.json()

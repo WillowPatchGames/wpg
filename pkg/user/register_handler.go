@@ -127,7 +127,7 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	handle.resp.UserID = user.Eid
+	handle.resp.UserID = user.Id
 	handle.resp.Username = user.Username
 	handle.resp.Display = user.Display
 	handle.resp.Email = user.Email

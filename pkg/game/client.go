@@ -181,7 +181,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Verify user
 	var userdb models.UserModel
-	err = userdb.FromEid(tx, handle.req.UserID)
+	err = userdb.FromId(tx, handle.req.UserID)
 	if err != nil {
 		log.Println(err)
 		api_errors.WriteError(w, err, true)
@@ -190,7 +190,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Verify game
 	var gamedb models.GameModel
-	err = gamedb.FromEid(tx, handle.req.GameID)
+	err = gamedb.FromId(tx, handle.req.GameID)
 	if err != nil {
 		log.Println(err)
 		api_errors.WriteError(w, err, true)

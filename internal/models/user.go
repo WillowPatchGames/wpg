@@ -4,14 +4,12 @@ import (
 	"database/sql"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/password"
 )
 
 type UserModel struct {
 	Id       uint64
-	Eid      uint64
 	username sql.NullString
 	Username string
 	Display  string
@@ -26,34 +24,7 @@ func (user *UserModel) FromId(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
-	if err != nil {
-		return err
-	}
-
-	if user.username.Valid {
-		user.Username = user.username.String
-	}
-
-	if user.email.Valid {
-		user.Email = user.email.String
-	}
-
-	err = stmt.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (user *UserModel) FromEid(transaction *sql.Tx, id uint64) error {
-	stmt, err := transaction.Prepare(database.GetUserFromEID)
-	if err != nil {
-		return err
-	}
-
-	err = stmt.QueryRow(id).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
+	err = stmt.QueryRow(id).Scan(&user.Id, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
 	}
@@ -80,7 +51,7 @@ func (user *UserModel) FromUsername(transaction *sql.Tx, name string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(name).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
+	err = stmt.QueryRow(name).Scan(&user.Id, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
 	}
@@ -107,7 +78,7 @@ func (user *UserModel) FromEmail(transaction *sql.Tx, mail string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(mail).Scan(&user.Id, &user.Eid, &user.username, &user.Display, &user.email, &user.Guest)
+	err = stmt.QueryRow(mail).Scan(&user.Id, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
 	}
@@ -139,15 +110,13 @@ func (user *UserModel) FromAPIToken(transaction *sql.Tx, token string) error {
 }
 
 func (user *UserModel) Create(transaction *sql.Tx) error {
-	user.Eid = utils.RandomId()
-
 	if !user.Guest {
 		stmt, err := transaction.Prepare(database.InsertUser)
 		if err != nil {
 			return err
 		}
 
-		err = stmt.QueryRow(user.Eid, user.Username, user.Display, user.Email, user.Guest).Scan(&user.Id)
+		err = stmt.QueryRow(user.Username, user.Display, user.Email, user.Guest).Scan(&user.Id)
 		if err != nil {
 			return err
 		}
@@ -160,7 +129,7 @@ func (user *UserModel) Create(transaction *sql.Tx) error {
 		return err
 	}
 
-	err = stmt.QueryRow(user.Eid, user.Display, user.Guest).Scan(&user.Id)
+	err = stmt.QueryRow(user.Display, user.Guest).Scan(&user.Id)
 	if err != nil {
 		return err
 	}

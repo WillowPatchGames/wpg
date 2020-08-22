@@ -87,7 +87,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var room *models.RoomModel
 	if handle.req.RoomID > 0 {
 		room = new(models.RoomModel)
-		err = room.FromEid(tx, handle.req.RoomID)
+		err = room.FromId(tx, handle.req.RoomID)
 		if err != nil {
 			log.Print("Get room?")
 			api_errors.WriteError(w, err, true)
@@ -137,10 +137,10 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.GameID = game.Eid
-	handle.resp.Owner = handle.user.Eid
+	handle.resp.GameID = game.Id
+	handle.resp.Owner = handle.user.Id
 	if room != nil {
-		handle.resp.Room = room.Eid
+		handle.resp.Room = room.Id
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open

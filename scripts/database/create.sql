@@ -4,17 +4,15 @@ CREATE TABLE IF NOT EXISTS metadata (
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (7);
+INSERT INTO metadata (version) VALUES (8);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
-  eid      BIGINT,
   username VARCHAR (512),
   display  VARCHAR (512),
   email    VARCHAR (512),
   guest    BOOLEAN DEFAULT false,
   created  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(eid),
   UNIQUE(username),
   UNIQUE(email)
 );
@@ -38,7 +36,6 @@ CREATE TYPE room_mode AS ENUM ('single', 'dynamic');
 
 CREATE TABLE rooms (
   id        BIGSERIAL PRIMARY KEY,
-  eid       BIGINT,
   owner_id  BIGINT,
   style     room_mode,
   open_room BOOLEAN DEFAULT false,
@@ -48,7 +45,6 @@ CREATE TABLE rooms (
   closes    TIMESTAMP WITH TIME ZONE,
 
   FOREIGN KEY (owner_id) REFERENCES users(id),
-  UNIQUE(eid),
   UNIQUE(join_code)
 );
 
@@ -74,7 +70,6 @@ CREATE TYPE game_lifecycle AS ENUM ('pending', 'playing', 'finished');
 
 CREATE TABLE games (
   id        BIGSERIAL PRIMARY KEY,
-  eid       BIGINT,
   owner_id  BIGINT,
   room_id   BIGINT,
   style     game_mode,
@@ -87,7 +82,6 @@ CREATE TABLE games (
 
   FOREIGN KEY (owner_id) REFERENCES users(id),
   FOREIGN KEY (room_id) REFERENCES rooms(id),
-  UNIQUE(eid),
   UNIQUE(join_code)
 );
 

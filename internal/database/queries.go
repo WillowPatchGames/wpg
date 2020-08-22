@@ -10,19 +10,17 @@ const t_players = "game_players"
 
 // User Model
 
-const GetUserFromID = "SELECT id, eid, username, display, email, guest FROM " +
+const GetUserFromID = "SELECT id, username, display, email, guest FROM " +
 	t_users + " WHERE id=$1"
-const GetUserFromEID = "SELECT id, eid, username, display, email, guest FROM " +
-	t_users + " WHERE eid=$1"
-const GetUserFromUsername = "SELECT id, eid, username, display, email, guest FROM " +
+const GetUserFromUsername = "SELECT id, username, display, email, guest FROM " +
 	t_users + " WHERE username=$1"
-const GetUserFromEmail = "SELECT id, eid, username, display, email, guest FROM " +
+const GetUserFromEmail = "SELECT id, username, display, email, guest FROM " +
 	t_users + " WHERE email=$1"
 
-const InsertUser = "INSERT INTO " + t_users + " (eid, username, display, " +
-	"email, guest) VALUES ($1, $2, $3, $4, $5) RETURNING id"
-const InsertGuest = "INSERT INTO " + t_users + " (eid, display, " +
-	"guest) VALUES ($1, $2, $3) RETURNING id"
+const InsertUser = "INSERT INTO " + t_users + " (username, display, " +
+	"email, guest) VALUES ($1, $2, $3, $4) RETURNING id"
+const InsertGuest = "INSERT INTO " + t_users + " (display, " +
+	"guest) VALUES ($1, $2) RETURNING id"
 
 const UpdateUser = "UPDATE " + t_users + " SET username=$1, email=$2, display=$3, guest=$4 WHERE id=$5"
 
@@ -40,11 +38,10 @@ const FromAPIToken = "SELECT user_id FROM authentication WHERE category='api_tok
 
 // Room Model
 
-const GetRoomFromID = "SELECT id, eid, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE id=$1"
-const GetRoomFromEID = "SELECT id, eid, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE eid=$1"
-const GetRoomFromCode = "SELECT id, eid, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE join_code=$1"
+const GetRoomFromID = "SELECT id, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE id=$1"
+const GetRoomFromCode = "SELECT id, owner_id, style, open_room, join_code FROM " + t_rooms + " WHERE join_code=$1"
 
-const InsertRoom = "INSERT INTO " + t_rooms + " (eid, owner_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5) RETURNING id"
+const InsertRoom = "INSERT INTO " + t_rooms + " (owner_id, style, open_room, join_code) VALUES ($1, $2, $3, $4) RETURNING id"
 
 const SetRoomConfig = "UPDATE " + t_rooms + " SET config=$1 WHERE id=$2"
 const GetRoomConfig = "SELECT config FROM " + t_rooms + " WHERE id=$1"
@@ -55,11 +52,10 @@ const SaveRoom = "UPDATE " + t_rooms + " SET style=$1 WHERE id=$2"
 
 // Game Model
 
-const GetGameFromID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
-const GetGameFromEID = "SELECT id, eid, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE eid=$1"
-const GetGameFromCode = "SELECT id, eid, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE join_code=$1"
+const GetGameFromID = "SELECT id, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE id=$1"
+const GetGameFromCode = "SELECT id, owner_id, room_id, style, open_room, join_code, lifecycle FROM " + t_games + " WHERE join_code=$1"
 
-const InsertGame = "INSERT INTO " + t_games + " (eid, owner_id, room_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+const InsertGame = "INSERT INTO " + t_games + " (owner_id, room_id, style, open_room, join_code) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 
 const SetGameConfig = "UPDATE " + t_games + " SET config=$1 WHERE id=$2"
 const GetGameConfig = "SELECT config FROM " + t_games + " WHERE id=$1"

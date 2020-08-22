@@ -70,7 +70,7 @@ func (handle UpgradeHandler) verifyRequest() error {
 		return api_errors.ErrMissingDisplay
 	}
 
-	if handle.user.Eid != handle.req.UserID {
+	if handle.user.Id != handle.req.UserID {
 		return api_errors.ErrAccessDenied
 	}
 
@@ -153,7 +153,7 @@ func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.UserID = handle.user.Eid
+	handle.resp.UserID = handle.user.Id
 	handle.resp.Username = handle.user.Username
 	handle.resp.Display = handle.user.Display
 	handle.resp.Email = handle.user.Email

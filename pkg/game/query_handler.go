@@ -56,7 +56,7 @@ func (handle *QueryHandler) SetUser(user *models.UserModel) {
 }
 
 func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !utils.IsValidId(handle.req.GameID) && handle.req.JoinCode == "" {
+	if handle.req.GameID == 0 && handle.req.JoinCode == "" {
 		api_errors.WriteError(w, api_errors.ErrMissingRequest, true)
 		return
 	}
@@ -71,7 +71,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var game models.GameModel
 
 	if handle.req.GameID > 0 {
-		err = game.FromEid(tx, handle.req.GameID)
+		err = game.FromId(tx, handle.req.GameID)
 	} else {
 		err = game.FromJoinCode(tx, handle.req.JoinCode)
 	}
@@ -120,10 +120,10 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.GameID = game.Eid
-	handle.resp.Owner = owner.Eid
+	handle.resp.GameID = game.Id
+	handle.resp.Owner = owner.Id
 	if room != nil {
-		handle.resp.Room = room.Eid
+		handle.resp.Room = room.Id
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open

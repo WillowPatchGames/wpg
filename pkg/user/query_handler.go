@@ -96,7 +96,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var user models.UserModel
 	if handle.req.UserID != 0 {
-		err = user.FromEid(tx, handle.req.UserID)
+		err = user.FromId(tx, handle.req.UserID)
 	} else if handle.req.Username != "" {
 		err = user.FromUsername(tx, handle.req.Username)
 	} else if handle.req.Email != "" {
@@ -120,7 +120,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.UserID = user.Eid
+	handle.resp.UserID = user.Id
 	handle.resp.Display = user.Display
 
 	if handle.user != nil && handle.user.Id == user.Id {

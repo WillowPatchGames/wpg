@@ -10,7 +10,6 @@ import (
 
 type RoomModel struct {
 	Id       uint64
-	Eid      uint64
 	OwnerId  uint64
 	Style    string
 	Open     bool
@@ -23,26 +22,7 @@ func (room *RoomModel) FromId(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&room.Id, &room.Eid, &room.OwnerId, &room.Style, &room.Open, &room.JoinCode)
-	if err != nil {
-		return err
-	}
-
-	err = stmt.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (room *RoomModel) FromEid(transaction *sql.Tx, id uint64) error {
-	stmt, err := transaction.Prepare(database.GetRoomFromEID)
-	if err != nil {
-		return err
-	}
-
-	err = stmt.QueryRow(id).Scan(&room.Id, &room.Eid, &room.OwnerId, &room.Style, &room.Open, &room.JoinCode)
+	err = stmt.QueryRow(id).Scan(&room.Id, &room.OwnerId, &room.Style, &room.Open, &room.JoinCode)
 	if err != nil {
 		return err
 	}
@@ -61,7 +41,7 @@ func (room *RoomModel) FromJoinCode(transaction *sql.Tx, code string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(code).Scan(&room.Id, &room.Eid, &room.OwnerId, &room.Style, &room.Open, &room.JoinCode)
+	err = stmt.QueryRow(code).Scan(&room.Id, &room.OwnerId, &room.Style, &room.Open, &room.JoinCode)
 	if err != nil {
 		return err
 	}
@@ -80,12 +60,11 @@ func (room *RoomModel) Create(transaction *sql.Tx) error {
 		return err
 	}
 
-	room.Eid = utils.RandomId()
 	if room.Open {
 		room.JoinCode = utils.RandomWords()
 	}
 
-	err = stmt.QueryRow(room.Eid, room.OwnerId, room.Style, room.Open, room.JoinCode).Scan(&room.Id)
+	err = stmt.QueryRow(room.OwnerId, room.Style, room.Open, room.JoinCode).Scan(&room.Id)
 	if err != nil {
 		return err
 	}
