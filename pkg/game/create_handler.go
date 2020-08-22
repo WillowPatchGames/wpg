@@ -15,7 +15,6 @@ import (
 )
 
 type createHandlerData struct {
-	OwnerID  uint64          `json:"owner"`
 	RoomID   uint64          `json:"room"`
 	Style    string          `json:"style"`
 	Open     bool            `json:"open"`
@@ -26,7 +25,7 @@ type createHandlerData struct {
 type createHandlerResponse struct {
 	GameID    uint64 `json:"id"`
 	Owner     uint64 `json:"owner"`
-	Room      uint64 `json:"room"`
+	Room      uint64 `json:"room,omitempty"`
 	Style     string `json:"style"`
 	Open      bool   `json:"open"`
 	Code      string `json:"code"`
@@ -61,14 +60,6 @@ func (handle *CreateHandler) SetUser(user *models.UserModel) {
 }
 
 func (handle CreateHandler) verifyRequest() error {
-	if handle.req.OwnerID == 0 {
-		return api_errors.ErrMissingRequest
-	}
-
-	if handle.req.RoomID == 0 {
-		return api_errors.ErrMissingRequest
-	}
-
 	if handle.req.Style == "" {
 		return api_errors.ErrMissingRequest
 	}
@@ -93,23 +84,22 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user models.UserModel
-	err = user.FromEid(tx, handle.req.OwnerID)
-	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
-	}
-
-	var room models.RoomModel
-	err = room.FromEid(tx, handle.req.RoomID)
-	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+	var room *models.RoomModel
+	if handle.req.RoomID > 0 {
+		room = new(models.RoomModel)
+		err = room.FromEid(tx, handle.req.RoomID)
+		if err != nil {
+			log.Print("Get room?")
+			api_errors.WriteError(w, err, true)
+			return
+		}
 	}
 
 	var game models.GameModel
-	game.OwnerId = user.Id
-	game.RoomId = room.Id
+	game.OwnerId = handle.user.Id
+	if room != nil {
+		game.RoomId = room.Id
+	}
 	game.Style = handle.req.Style
 	game.Open = handle.req.Open
 
@@ -119,6 +109,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Print("Unable to rollback:", rollbackErr)
 		}
 
+		log.Print("Create?")
 		api_errors.WriteError(w, err, true)
 		return
 	}
@@ -132,6 +123,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				log.Print("Unable to rollback:", rollbackErr)
 			}
 
+			log.Print("Config?")
 			api_errors.WriteError(w, err, true)
 			return
 		}
@@ -146,8 +138,10 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handle.resp.GameID = game.Eid
-	handle.resp.Owner = user.Eid
-	handle.resp.Room = room.Eid
+	handle.resp.Owner = handle.user.Eid
+	if room != nil {
+		handle.resp.Room = room.Eid
+	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open
 	handle.resp.Code = game.JoinCode

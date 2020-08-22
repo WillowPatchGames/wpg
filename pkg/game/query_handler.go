@@ -98,16 +98,19 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var room models.RoomModel
-	err = room.FromId(tx, game.RoomId)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
+	var room *models.RoomModel
+	if game.RoomId > 0 {
+		room = new(models.RoomModel)
+		err = room.FromId(tx, game.RoomId)
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Print("Unable to rollback:", rollbackErr)
+			}
 
-		log.Println("Getting room?", err)
-		api_errors.WriteError(w, err, true)
-		return
+			log.Println("Getting room?", err)
+			api_errors.WriteError(w, err, true)
+			return
+		}
 	}
 
 	err = tx.Commit()
@@ -119,7 +122,9 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	handle.resp.GameID = game.Eid
 	handle.resp.Owner = owner.Eid
-	handle.resp.Room = room.Eid
+	if room != nil {
+		handle.resp.Room = room.Eid
+	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open
 	handle.resp.Lifecycle = game.Lifecycle

@@ -39,7 +39,7 @@ CREATE TYPE room_mode AS ENUM ('single', 'dynamic');
 CREATE TABLE rooms (
   id        BIGSERIAL PRIMARY KEY,
   eid       BIGINT,
-  owner_id  BIGSERIAL,
+  owner_id  BIGINT,
   style     room_mode,
   open_room BOOLEAN DEFAULT false,
   join_code VARCHAR(1024),
@@ -56,8 +56,8 @@ CREATE TYPE room_member_type AS ENUM ('pending', 'spectator', 'admin', 'player')
 
 CREATE TABLE room_members (
   id          BIGSERIAL PRIMARY KEY,
-  room_id     BIGSERIAL,
-  user_id     BIGSERIAL,
+  room_id     BIGINT,
+  user_id     BIGINT,
   class       room_member_type DEFAULT 'pending',
   invite_code VARCHAR(1024),
   config      TEXT DEFAULT '{}',
@@ -75,8 +75,8 @@ CREATE TYPE game_lifecycle AS ENUM ('pending', 'playing', 'finished');
 CREATE TABLE games (
   id        BIGSERIAL PRIMARY KEY,
   eid       BIGINT,
-  owner_id  BIGSERIAL,
-  room_id   BIGSERIAL,
+  owner_id  BIGINT,
+  room_id   BIGINT,
   style     game_mode,
   open_room BOOLEAN DEFAULT false,
   join_code VARCHAR(1024),
@@ -95,8 +95,8 @@ CREATE TYPE game_player_type AS ENUM ('pending', 'spectator', 'player');
 
 CREATE TABLE game_players (
   id          BIGSERIAL PRIMARY KEY,
-  game_id     BIGSERIAL,
-  user_id     BIGSERIAL,
+  game_id     BIGINT,
+  user_id     BIGINT,
   class       game_player_type DEFAULT 'pending',
   invite_code VARCHAR(1024),
   state       TEXT DEFAULT '{}',

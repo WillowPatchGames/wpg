@@ -12,6 +12,7 @@ type GameModel struct {
 	Id        uint64
 	Eid       uint64
 	OwnerId   uint64
+	roomid    sql.NullInt64
 	RoomId    uint64
 	Style     string
 	Open      bool
@@ -25,9 +26,13 @@ func (game *GameModel) FromId(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.RoomId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
+	}
+
+	if game.roomid.Valid {
+		game.RoomId = uint64(game.roomid.Int64)
 	}
 
 	err = stmt.Close()
@@ -44,9 +49,13 @@ func (game *GameModel) FromEid(transaction *sql.Tx, id uint64) error {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.RoomId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(id).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
+	}
+
+	if game.roomid.Valid {
+		game.RoomId = uint64(game.roomid.Int64)
 	}
 
 	err = stmt.Close()
@@ -63,9 +72,13 @@ func (game *GameModel) FromJoinCode(transaction *sql.Tx, code string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(code).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.RoomId, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(code).Scan(&game.Id, &game.Eid, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
+	}
+
+	if game.roomid.Valid {
+		game.RoomId = uint64(game.roomid.Int64)
 	}
 
 	err = stmt.Close()
@@ -89,7 +102,10 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 
 	game.Lifecycle = "pending"
 
-	err = stmt.QueryRow(game.Eid, game.OwnerId, game.RoomId, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
+	game.roomid.Valid = (game.RoomId != 0)
+	game.roomid.Int64 = int64(game.RoomId)
+
+	err = stmt.QueryRow(game.Eid, game.OwnerId, game.roomid, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
 	if err != nil {
 		return err
 	}
@@ -121,6 +137,10 @@ func (game *GameModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 }
 
 func (game *GameModel) GetRoom(transaction *sql.Tx) (*RoomModel, error) {
+	if game.RoomId == 0 {
+		return nil, nil
+	}
+
 	var room *RoomModel = new(RoomModel)
 	err := room.FromId(transaction, game.RoomId)
 	if err != nil {
