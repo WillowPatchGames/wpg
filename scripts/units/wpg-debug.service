@@ -1,0 +1,15 @@
+[Unit]
+Description=WPG Debug Server Daemon
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/run/wpg.pid
+ExecStartPre=/usr/bin/rm -f /run/wpg.pid
+ExecStart=/bin/bash -c "/home/wpg/wpgapi -db_host=/var/run/postgresql -db_sslmode disable -db_user wpg -debug=true -static_path=/home/wpg/build"
+Restart=always
+User=wpg
+Group=wpg
+
+[Install]
+WantedBy=multi-user.target
