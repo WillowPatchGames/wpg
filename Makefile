@@ -1,6 +1,7 @@
 NAMESPACE?=git.cipherboy.com/WillowPatchGames/wpg
 GO?=go
 PYTHON?=python3
+DIST?=build.tar
 
 all: build
 
@@ -12,7 +13,8 @@ check: vet gosec safesql staticcheck crypt utils
 
 deps:
 	go get -u $(NAMESPACE)/...
-	cd assets/static && npm install
+	go mod tidy
+	cd assets/static && npm install && npm audit fix
 
 fuzz:
 	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
@@ -75,5 +77,10 @@ webui:
 distui:
 	cd assets/static && REACT_EDITOR=none BROWSER=none npm run build
 
-tarball: distui
-	tar -cJf build.tar.xz wpgapi assets/wordlist.txt -C assets/static build
+tarball: build
+	rm -f $(DIST) $(DIST).xz
+	tar -cf $(DIST) wpgapi assets/wordlist.txt
+	tar -rf $(DIST) -C assets/static build
+	tar -rf $(DIST) -C scripts database
+	tar -rf $(DIST) -C scripts units
+	xz $(DIST)
