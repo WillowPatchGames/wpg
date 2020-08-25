@@ -26,13 +26,14 @@ class HomePage extends React.Component {
               </div>
               <div>
                 <Typography use="headline3">
-                  Home of wonderful word games
+                  Redefining table-top games updating them for the 21st century.
                 </Typography>
               </div>
               <p>
-                Hi! I&apos;m Alex and he&apos;s Nick and we&apos;ve created a fun website to play games on.
-                <br /><br />
-                At least, we think it is fun.
+                Hey there! We're a small game company kick-started by two brothers
+                one week in August. We like to build games you can play with your
+                friends or family, while catching up and chatting. If this sounds
+                like something cool, we'd love to show you around!
               </p>
             </div>
           </Theme>
