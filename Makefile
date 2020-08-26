@@ -15,6 +15,7 @@ deps:
 	go get -u $(NAMESPACE)/...
 	go mod tidy
 	cd assets/static && npm install && npm audit fix
+	./scripts/words.sh
 
 fuzz:
 	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
@@ -76,6 +77,7 @@ webui:
 
 distui:
 	cd assets/static && REACT_EDITOR=none BROWSER=none npm run build
+	cp assets/static/public/csw15.txt assets/static/build/csw15.txt
 
 tarball: build
 	rm -f $(DIST) $(DIST).xz
