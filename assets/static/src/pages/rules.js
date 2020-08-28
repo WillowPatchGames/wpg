@@ -13,7 +13,7 @@ class RushRulesPage extends React.Component {
         <g.Grid fixedColumnWidth={ true }>
           <g.GridCell align="left" span={3} />
           <g.GridCell align="middle" span={6}>
-            <article>
+            <article className="text">
               <Typography use="headline2">Rules - Rush!</Typography>
               <p>
                 The host creates a room and selects desired customizations.

@@ -130,3 +130,11 @@ a, a:visited {
 .App-game-code {
   width: 90%;
 }
+
+article.text p, article.text ul {
+  text-align: left;
+}
+
+article.text p {
+  text-indent: 20px;
+}

@@ -13,7 +13,7 @@ class DocsPage extends React.Component {
         <g.Grid fixedColumnWidth={ true }>
           <g.GridCell align="left" span={3} />
           <g.GridCell align="middle" span={6}>
-            <article>
+            <article className="text">
               <Typography use="headline2">Documentation</Typography>
               <p>
                 Hope it helps! Let us know if there's anything we can improve!<br /><br />

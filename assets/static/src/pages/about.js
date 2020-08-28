@@ -13,7 +13,7 @@ class AboutPage extends React.Component {
         <g.Grid fixedColumnWidth={ true }>
           <g.GridCell align="left" span={3} />
           <g.GridCell align="middle" span={6}>
-            <article>
+            <article className="text">
               <Typography use="headline2">About Willow Patch Games!</Typography>
               <p>
                 This company was started one fun week in Ann Arbor, Michigan. Two

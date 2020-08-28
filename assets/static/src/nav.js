@@ -130,6 +130,14 @@ class Navigation extends React.Component {
                   <l.ListItemGraphic icon="notes" />
                   <l.ListItemText>About</l.ListItemText>
                 </l.ListItem>
+                <l.ListItem onClick={ () => this.props.setPage('rush-rules') }>
+                  <l.ListItemGraphic icon="notes" />
+                  <l.ListItemText>Rules - Rush!</l.ListItemText>
+                </l.ListItem>
+                <l.ListItem onClick={ () => this.props.setPage('docs') }>
+                  <l.ListItemGraphic icon="notes" />
+                  <l.ListItemText>Documentation</l.ListItemText>
+                </l.ListItem>
               </l.List>
             </d.DrawerContent>
           </d.Drawer>
