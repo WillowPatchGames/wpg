@@ -4,6 +4,7 @@ import './App.css';
 import '@rmwc/icon/styles';
 
 import { AboutPage } from './pages/about.js';
+import { DocsPage } from './pages/docs.js';
 import { ErrorPage } from './pages/common.js';
 import { Footer } from './pages/footer.js';
 import { AfterPartyPage, CreateGamePage, JoinGamePage, PreGamePage, RushGamePage } from './pages/games.js';
@@ -34,6 +35,7 @@ class Page extends React.Component {
       case 'afterparty': component = this.props.game ? AfterPartyPage : JoinGamePage; break;
       case 'join': component = JoinGamePage; break;
       case 'rush-rules': component = RushRulesPage; break;
+      case 'docs': component = DocsPage; break;
       default: component = ErrorPage;
     }
     return component;
