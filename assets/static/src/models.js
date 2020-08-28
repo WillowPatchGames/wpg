@@ -15,7 +15,7 @@ function normalizeCode(str, pretty) {
 }
 
 function ws() {
-  if (window.location.protocol !== 'https:') {
+  if (window.location.protocol === 'https:') {
     return 'wss:';
   }
 
