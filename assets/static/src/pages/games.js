@@ -582,7 +582,8 @@ class JoinGamePage extends React.Component {
               <Typography use="headline2">Join a Game</Typography>
               <p>
                 Good luck, and may the odds be ever in your favor!<br /><br />
-                Need a refresher on <a href="#rush-rules">the rules</a>?
+                Need a refresher on <a href="#rush-rules">the rules</a> or want
+                to check out <a href="#docs">the documentation</a>?
               </p>
             </div>
 
