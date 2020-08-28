@@ -16,7 +16,7 @@ class DocsPage extends React.Component {
             <article>
               <Typography use="headline2">Documentation</Typography>
               <p>
-                Hope it helps! Let us know if there’s anything we can improve!<br /><br />
+                Hope it helps! Let us know if there's anything we can improve!<br /><br />
                 Looking for rules? <a href="rush-rules">Check here instead!</a>
               </p>
               <Typography use="headline3">Game Mechanics</Typography>
@@ -50,13 +50,13 @@ class DocsPage extends React.Component {
               </ul>
               <Typography use="headline4">Moving Tiles</Typography>
               <p>
-                You can move tiles around if you don’t like where you put them
+                You can move tiles around if you don't like where you put them
                 originally. You can also swap the positions of two tiles this way.
               </p>
               <Typography use="headline5">Desktop</Typography>
               <ul>
                 <li>
-                  Click on a letter tile and the place you’d like to put it.
+                  Click on a letter tile and the place you'd like to put it.
                 </li>
                 <li>
                   Alternatively, use your mouse to click and drag the tile
@@ -66,7 +66,7 @@ class DocsPage extends React.Component {
               <Typography use="headline5">Touch Screen (Phone, Tablet, Laptop)</Typography>
               <ul>
                 <li>
-                  Tap a tile and tap the square you’d like to place it.
+                  Tap a tile and tap the square you'd like to place it.
                 </li>
                 <li>
                   Tap an empty square and then tap the tile you wish to place there.
@@ -104,9 +104,9 @@ class DocsPage extends React.Component {
               </ul>
               <Typography use="headline4">Discarding Tiles</Typography>
               <p>
-                If you don’t like a tile, you’re free to discard it and try
+                If you don't like a tile, you're free to discard it and try
                 your luck for some new ones. The mechanics work just like
-                recalling a tile. However, there’s a penalty! You typically
+                recalling a tile. However, there's a penalty! You typically
                 get more tiles back than what you discard.
               </p>
               <Typography use="headline4">Drawing or Going Out</Typography>
