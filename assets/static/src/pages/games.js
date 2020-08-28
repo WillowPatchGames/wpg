@@ -582,7 +582,7 @@ class JoinGamePage extends React.Component {
               <Typography use="headline2">Join a Game</Typography>
               <p>
                 Good luck, and may the odds be ever in your favor!<br /><br />
-                <a href="#create">Looking to make a new game room? Create one here!</a>
+                Need a refresher on <a href="#rush-rules">the rules</a>?
               </p>
             </div>
 

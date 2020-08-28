@@ -10,6 +10,7 @@ import { AfterPartyPage, CreateGamePage, JoinGamePage, PreGamePage, RushGamePage
 import { HomePage } from './pages/home.js';
 import { LoginPage } from './pages/login.js';
 import { ProfilePage } from './pages/profile.js';
+import { RushRulesPage } from './pages/rules.js';
 import { SignupPage } from './pages/signup.js';
 
 class Page extends React.Component {
@@ -32,6 +33,7 @@ class Page extends React.Component {
       case 'play': component = this.props.game ? PreGamePage : JoinGamePage; break;
       case 'afterparty': component = this.props.game ? AfterPartyPage : JoinGamePage; break;
       case 'join': component = JoinGamePage; break;
+      case 'rush-rules': component = RushRulesPage; break;
       default: component = ErrorPage;
     }
     return component;
