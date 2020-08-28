@@ -3,6 +3,10 @@
   --mdc-theme-on-secondary: black;
 }
 
+p {
+  font-size: 1.2em;
+}
+
 .App {
   text-align: center;
 }
@@ -18,9 +22,15 @@
   }
 }
 
+.App-1000px {
+  margin: 0 auto;
+  max-width: 1000px;
+}
+
 .App-hero {
   background-color: var(--mdc-theme-primary);
   padding-top: 50px;
+  padding-bottom: 50px;
 }
 
 .App-page {

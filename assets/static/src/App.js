@@ -11,6 +11,7 @@ import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/theme/styles';
 
+import { RMWCProvider } from '@rmwc/provider';
 import { ThemeProvider } from '@rmwc/theme';
 
 import { SnackbarQueue, createSnackbarQueue } from '@rmwc/snackbar';
@@ -128,27 +129,35 @@ class App extends React.Component {
   render() {
     return (
       <div className={ "App" + (this.state.immersive ? " immersive" : "")}>
-        <ThemeProvider
-          options={{
-            primary: '#1397BD',
-            onPrimary: 'white',
-            primaryBg: '#000',
-            surface: 'white',
-            onSurface: 'black',
-            secondary: '#4CAF50',
-            background: '#18353D',
-            onSecondary: 'white',
-            textPrimaryOnBackground: 'black',
-            textHintOnBackground: 'black'
+        <RMWCProvider
+          typography={{
+            headline1: 'h1',
+            headline2: 'h2',
+            headline3: 'h3',
+            headline4: 'h4',
+            headline5: 'h5',
           }}
         >
-
-        <Navigation user={ this.state.user } immersive={ this.state.immersive } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-        <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
-        <SnackbarQueue messages={ this.snackbar.messages } />
-        <Footer page={ this.state.page } />
-      </ThemeProvider>
-
+          <ThemeProvider
+            options={{
+              primary: '#1397BD',
+              onPrimary: 'white',
+              primaryBg: '#000',
+              surface: 'white',
+              onSurface: 'black',
+              secondary: '#4CAF50',
+              background: '#18353D',
+              onSecondary: 'white',
+              textPrimaryOnBackground: 'black',
+              textHintOnBackground: 'black'
+            }}
+          >
+            <Navigation user={ this.state.user } immersive={ this.state.immersive } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
+            <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
+            <SnackbarQueue messages={ this.snackbar.messages } />
+            <Footer page={ this.state.page } />
+          </ThemeProvider>
+        </RMWCProvider>
       </div>
     );
   }
