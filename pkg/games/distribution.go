@@ -92,7 +92,12 @@ func GenerateTiles(count int, wildcards bool) []LetterTile {
 
 	for index, tile := range ret {
 		tile.ID = index
-		tile.Value = "A";
+		var freq = standardFrequencies["A"] + bananagramsFrequencies["B"] + scrabbleFrequencies["C"]
+		if freq < 10 {
+			tile.Value = "B"
+		} else {
+			tile.Value = "C"
+		}
 	}
 
 	return ret
