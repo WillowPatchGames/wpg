@@ -323,7 +323,7 @@ class GameModel {
 
     Object.assign(ret, result);
     ret.error = null;
-    ret.endpoint = ws() + "://" + document.location.host + "/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+    ret.endpoint = ws() + "//" + document.location.host + "/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
     return ret;
   }
 
@@ -365,7 +365,7 @@ class GameModel {
     this.error = null;
     delete result["config"];
     Object.assign(this, result);
-    this.endpoint = ws() + "://" + document.location.host + "/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
     return this;
   }
 }

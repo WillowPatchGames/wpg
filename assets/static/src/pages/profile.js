@@ -52,7 +52,7 @@ class UserProfilePage extends React.Component {
               <form onSubmit={ this.handleNamesSubmit.bind(this) }>
                 <TextField fullwidth placeholder="email" name="email" inputRef={ this.email } /><br />
                 <TextField fullwidth placeholder="display" name="display" inputRef={ this.display } /><br />
-                <Button label="Change Names" raised />
+                <Button label="Save" raised />
               </form>
               <d.Dialog open={ this.state.nameError !== null } onClosed={() => this.setNameError(null) }>
                 <d.DialogTitle>Error!</d.DialogTitle>
@@ -72,7 +72,7 @@ class UserProfilePage extends React.Component {
                 <TextField fullwidth placeholder="old password" name="old" inputRef={ this.oldPassword } /><br />
                 <TextField fullwidth placeholder="new password" name="new" inputRef={ this.newPassword  } /><br />
                 <TextField fullwidth placeholder="confirm password" name="confirm" inputRef={ this.confirmPassword } /><br />
-                <Button label="Change Names" raised />
+                <Button label="Change Password" raised />
               </form>
               <d.Dialog open={ this.state.passwordError !== null } onClosed={() => this.setPasswordError(null) }>
                 <d.DialogTitle>Error!</d.DialogTitle>
