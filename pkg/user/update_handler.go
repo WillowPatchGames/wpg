@@ -75,8 +75,6 @@ func (handle UpdateHandler) verifyRequest() error {
 }
 
 func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("Update Handler")
-
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Println("Here")
@@ -105,7 +103,6 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var change_password bool = false
 	for _, field := range handle.req.Fields {
-			log.Println("Updating field...")
 		switch field {
 		case "email":
 			log.Println("Update email ->", user.Email)
