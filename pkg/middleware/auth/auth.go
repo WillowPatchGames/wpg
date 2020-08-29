@@ -80,6 +80,7 @@ func (a *authMW) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("Authed: OK as " + user.Display)
 	a.next.SetUser(user)
 
 	a.next.ServeHTTP(w, r)
