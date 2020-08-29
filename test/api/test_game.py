@@ -4,7 +4,7 @@ from common import *
 
 def test_create_get_game():
     # Sending the first request should be fine
-    user_data, token = auth_user('four')
+    user_data, token = auth_user('test_game_test_create_get_game')
 
     headers = {'X-Auth-Token': token}
 
@@ -60,7 +60,7 @@ def test_create_get_game():
 
 def test_create_no_room_game():
     # Sending the first request should be fine
-    user_data, token = auth_user('five')
+    user_data, token = auth_user('test_game_test_create_no_room_game')
 
     headers = {'X-Auth-Token': token}
 

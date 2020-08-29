@@ -4,7 +4,7 @@ from common import *
 
 def test_auth_user():
     # Sending the first request should be fine
-    req = {'username': 'auth', 'email': 'auth@alpha.net', 'password': 'letmein'}
+    req = {'username': 'test_auth_test_auth_user', 'email': 'test_auth_test_auth_user@alpha.net', 'password': 'letmein'}
     resp = requests.post(URL + "/users", json=req)
 
     assert resp.status_code == 200
@@ -16,7 +16,6 @@ def test_auth_user():
     assert 'display' in resp_data
     assert 'email' in resp_data
 
-    # But going again should result in an error
     auth_req = {'username': req['username'], 'password': req['password']}
     resp = requests.post(URL + "/auth", json=auth_req)
 
@@ -25,3 +24,10 @@ def test_auth_user():
     api_token = resp.json()['token']
     assert api_token is not None
     assert len(api_token) > 0
+
+    # Doing it again with a bad password should fail
+    auth_req = {'username': req['username'], 'password': req['password'] + "z"}
+    resp = requests.post(URL + "/auth", json=auth_req)
+
+    assert resp.status_code != 200
+    assert 'token' not in resp.json()

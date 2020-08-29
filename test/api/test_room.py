@@ -4,7 +4,7 @@ from common import *
 
 def test_create_get_room():
     # Sending the first request should be fine
-    user_data, token = auth_user('three')
+    user_data, token = auth_user('test_room_test_create_get_room')
 
     headers = {'X-Auth-Token': token}
 
