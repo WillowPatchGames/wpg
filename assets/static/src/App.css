@@ -3,8 +3,12 @@
   --mdc-theme-on-secondary: black;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  margin: 10px 0px 10px 0px;
+}
+
 p {
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 
 .App {
@@ -34,7 +38,7 @@ p {
 }
 
 .App-page {
-  padding-top: 50px;
+  padding-top: 25px;
 }
 
 .App-footer {

@@ -7,7 +7,7 @@ import { AboutPage } from './pages/about.js';
 import { DocsPage } from './pages/docs.js';
 import { ErrorPage } from './pages/common.js';
 import { Footer } from './pages/footer.js';
-import { AfterPartyPage, CreateGamePage, JoinGamePage, PreGamePage, RushGamePage } from './pages/games.js';
+import { AfterPartyPage, CreateGamePage, CreateRoomPage, JoinGamePage, PreGamePage, RushGamePage } from './pages/games.js';
 import { HomePage } from './pages/home.js';
 import { LoginPage } from './pages/login.js';
 import { ProfilePage } from './pages/profile.js';
@@ -29,7 +29,8 @@ class Page extends React.Component {
       case 'login': component = LoginPage; break;
       case 'profile': component = ProfilePage; break;
       case 'signup': component = SignupPage; break;
-      case 'create': component = this.props.user ? CreateGamePage : LoginPage; break;
+      case 'create-game': component = this.props.user ? CreateGamePage : LoginPage; break;
+      case 'create-room': component = this.props.user ? CreateRoomPage : LoginPage; break;
       case 'playing': component = this.props.game ? RushGamePage : JoinGamePage; break;
       case 'play': component = this.props.game ? PreGamePage : JoinGamePage; break;
       case 'afterparty': component = this.props.game ? AfterPartyPage : JoinGamePage; break;

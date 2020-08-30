@@ -501,6 +501,21 @@ class CreateGamePage extends React.Component {
   }
 }
 
+class CreateRoomPage extends React.Component {
+  render() {
+    return (
+      <div className="App-page">
+        <Typography use="headline2">Create a Game Room</Typography>
+        <p>
+          Invite your friends to play online with you!
+          This way, you'll be able to play multiple games without having to
+          re-share a link.
+        </p>
+      </div>
+    );
+  }
+}
+
 class JoinGamePage extends React.Component {
   constructor(props) {
     super(props);
@@ -608,16 +623,31 @@ class JoinGamePage extends React.Component {
         </c.Card>
       </g.GridCell>
       <g.GridCell align="right" span={6}>
-        <c.Card>
-          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-            <div>
-              <Typography use="headline2">Create a Game</Typography>
-              <p>
-                <a href="#create">Looking to make a new game room? Create one here!</a>
-              </p>
+        <div style={{ padding: '1rem 0px 1rem 0px' }}>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <div>
+                <Typography use="headline2">Make a Room</Typography>
+                <p>
+                  <a href="#create-room">Looking to make a new room? Create one here!</a>.<br />
+                  A room lets you play multiple games without having to share a new link every time!
+                </p>
+              </div>
             </div>
-          </div>
-        </c.Card>
+          </c.Card>
+        </div>
+        <div style={{ padding: '1rem 0px 1rem 0px' }}>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <div>
+                <Typography use="headline2">Play a Single Game</Typography>
+                <p>
+                  <a href="#create-game">Looking to play a single game? Make one here!</a>
+                </p>
+              </div>
+            </div>
+          </c.Card>
+        </div>
       </g.GridCell>
     </g.GridRow>;
 
@@ -659,6 +689,7 @@ class JoinGamePage extends React.Component {
 export {
   AfterPartyPage,
   CreateGamePage,
+  CreateRoomPage,
   JoinGamePage,
   PreGamePage,
   RushGamePage
