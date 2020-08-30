@@ -22,35 +22,57 @@ class UserProfilePage extends React.Component {
   constructor(props) {
     super(props);
 
-    this.email = React.createRef();
-    this.display = React.createRef();
+    this.oldPassword = React.createRef();
+    this.newPassword = React.createRef();
+    this.confirmPassword = React.createRef();
 
     this.state = {
-      email: this.props.user.email,
-      display: this.props.user.display,
+      email: this.props.user.email === null ? "" : this.props.user.email,
+      display: this.props.user.display === null ? "" : this.props.user.display,
       nameError: null,
       passwordError: null,
     };
+  }
+
+  inputHandler(name) {
+    if (name === "email") {
+      return (e) => {
+        var value = e.target.value;
+        this.setState(state => Object.assign({}, state, { email: value }));
+      }
+    } else if (name === "display") {
+      return (e) => {
+        var value = e.target.value;
+        this.setState(state => Object.assign({}, state, { display: value }));
+      }
+    } else {
+      console.log("Unknown name: " + name);
+    }
   }
 
   async handleNamesSubmit(event) {
     event.preventDefault();
 
     var data = {};
-    if (this.email.current.value !== "") {
-      data['email'] = this.email.current.value;
+    if (this.state.email !== this.props.user.email) {
+      data['email'] = this.state.email;
     }
-    if (this.display.current.value !== "") {
-      data['display'] = this.display.current.value;
+    if (this.state.display !== this.props.user.display) {
+      data['display'] = this.state.display;
     }
 
     await this.props.user.save(data);
 
-    if (!this.props.user.error) {
-      this.props.setPage('profile');
-    } else {
-      this.setError(this.props.user.error.message);
+    if (this.props.user.error) {
+      this.setNameError(this.props.user.error.message);
+      return;
     }
+
+    let user = this.props.user;
+    this.props.setUser(user);
+
+    this.setState(state => Object.assign({}, state, { email: this.props.user.email === null ? "" : this.props.user.email }));
+    this.setState(state => Object.assign({}, state, { display: this.props.user.display === null ? "" : this.props.user.display }));
   }
 
   async handlePasswordSubmit(event) {
@@ -58,9 +80,14 @@ class UserProfilePage extends React.Component {
 
     var old_password = this.oldPassword.current.value;
     var new_password = this.newPassword.current.value;
+    var confirm_password = this.confirmPassword.current.value;
+
+    if (new_password != confirm_password) {
+      this.setPasswordError("New and old passwords don't match!");
+      return;
+    }
 
     var data = {
-      'password': true,
       'old_password': old_password,
       'new_password': new_password
     };
@@ -70,9 +97,18 @@ class UserProfilePage extends React.Component {
     if (!this.props.user.error) {
       this.oldPassword.current.value = "";
       this.newPassword.current.value = "";
+      this.confirmPassword.current.value = "";
     } else {
-      this.setError(this.props.user.error.message);
+      this.setPasswordError(this.props.user.error.message);
     }
+  }
+
+  setNameError(message) {
+    this.setState(state => Object.assign({}, state, { nameError: message }));
+  }
+
+  setPasswordError(message) {
+    this.setState(state => Object.assign({}, state, { passwordError: message }));
   }
 
   render() {
@@ -82,8 +118,8 @@ class UserProfilePage extends React.Component {
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <form onSubmit={ this.handleNamesSubmit.bind(this) }>
-                <TextField fullwidth placeholder="email" name="email" inputRef={ this.email } /><br />
-                <TextField fullwidth placeholder="display" name="display" inputRef={ this.display } /><br />
+                <TextField fullwidth placeholder="email" name="email" value={ this.state.email } onChange={ this.inputHandler("email") } /><br />
+                <TextField fullwidth placeholder="display" name="display" value={ this.state.display } onChange={ this.inputHandler("display") } /><br />
                 <Button label="Save" raised />
               </form>
               <d.Dialog open={ this.state.nameError !== null } onClosed={() => this.setNameError(null) }>

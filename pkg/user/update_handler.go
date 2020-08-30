@@ -110,10 +110,11 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case "display":
 			log.Println("Update dispaly ->", user.Display)
 			user.Display = handle.req.Display
-		case "password":
+		case "password", "old_password", "new_password":
 			log.Println("Update password...")
 			change_password = true
 		default:
+			log.Println("Field:", field)
 			err = api_errors.ErrMissingRequest
 		}
 	}

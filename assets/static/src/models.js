@@ -209,7 +209,12 @@ class UserModel {
     var request = {'fields': []};
 
     for (let key in fields) {
-      request['fields'].push('key');
+     if (key === "old_password" && key === "new_password") {
+        request['fields'].push('password');
+      } else {
+        request['fields'].push(key);
+      }
+
       request[key] = fields[key];
     }
 
