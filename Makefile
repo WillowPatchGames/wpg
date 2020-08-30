@@ -86,3 +86,8 @@ tarball: build
 	tar -rf $(DIST) -C scripts database
 	tar -rf $(DIST) -C scripts units
 	xz $(DIST)
+
+beta-deploy: all dist
+	mv $(DIST).xz ../ansible/files/$(DIST).xz
+	cd ../nginx-configs && tar -cJf ../ansible/files/nginx.tar.xz *
+	cd ../ansible && ansible-playbook -i hosts beta.yml
