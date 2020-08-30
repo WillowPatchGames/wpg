@@ -114,7 +114,7 @@ class UserModel {
       body: JSON.stringify(request)
     });
 
-    const result = await response.json()
+    const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
 
@@ -141,7 +141,7 @@ class UserModel {
       body: JSON.stringify(request)
     });
 
-    const result = await response.json()
+    const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
 
@@ -191,7 +191,7 @@ class UserModel {
       body: JSON.stringify(request)
     });
 
-    const result = await response.json()
+    const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
 
@@ -203,6 +203,42 @@ class UserModel {
 
     Object.assign(this, result);
     return this.login(password);
+  }
+
+  async save(fields) {
+    var request = {'fields': []};
+
+    for (let key in fields) {
+      request['fields'].push('key');
+      request[key] = fields[key];
+    }
+
+    var save_uri = this.api + '/user/' + this.id;
+    const response = await fetch(save_uri, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    const result = await response.json();
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+
+    const other = await UserModel.FromId(this.id, this.token);
+    Object.assign(this, other);
+
+    return this;
   }
 
   async login(password) {
@@ -223,7 +259,7 @@ class UserModel {
       body: JSON.stringify(request)
     });
 
-    const result = await response.json()
+    const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
 
@@ -354,7 +390,7 @@ class GameModel {
       body: JSON.stringify(request)
     });
 
-    const result = await response.json()
+    const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
 

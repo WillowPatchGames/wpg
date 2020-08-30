@@ -33,14 +33,46 @@ class UserProfilePage extends React.Component {
     };
   }
 
-  handleNamesSubmit(event) {
+  async handleNamesSubmit(event) {
     event.preventDefault();
-    return null;
+
+    var data = {};
+    if (this.email.current.value !== "") {
+      data['email'] = this.email.current.value;
+    }
+    if (this.display.current.value !== "") {
+      data['display'] = this.display.current.value;
+    }
+
+    await this.props.user.save(data);
+
+    if (!this.props.user.error) {
+      this.props.setPage('profile');
+    } else {
+      this.setError(this.props.user.error.message);
+    }
   }
 
-  handlePasswordSubmit(event) {
+  async handlePasswordSubmit(event) {
     event.preventDefault();
-    return null;
+
+    var old_password = this.oldPassword.current.value;
+    var new_password = this.newPassword.current.value;
+
+    var data = {
+      'password': true,
+      'old_password': old_password,
+      'new_password': new_password
+    };
+
+    await this.props.user.save(data);
+
+    if (!this.props.user.error) {
+      this.oldPassword.current.value = "";
+      this.newPassword.current.value = "";
+    } else {
+      this.setError(this.props.user.error.message);
+    }
   }
 
   render() {
