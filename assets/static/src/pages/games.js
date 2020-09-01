@@ -800,6 +800,7 @@ class JoinGamePage extends React.Component {
 export {
   AfterPartyPage,
   CreateGamePage,
+  CreateGameForm,
   CreateRoomPage,
   JoinGamePage,
   PreGamePage,

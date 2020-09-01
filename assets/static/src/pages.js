@@ -38,7 +38,7 @@ class Page extends React.Component {
       case 'join': component = JoinGamePage; break;
       case 'rush-rules': component = RushRulesPage; break;
       case 'docs': component = DocsPage; break;
-      case 'room': component = RoomPage; break;
+      case 'room': component = this.props.room ? RoomPage : JoinGamePage ; break;
       default: component = ErrorPage;
     }
     return component;

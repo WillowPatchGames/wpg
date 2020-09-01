@@ -12,6 +12,9 @@ import * as l from '@rmwc/list';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
+import { CreateGameForm } from './games.js';
+
+
 function loadRoom(room) {
   if (!room || !room.endpoint) return null;
   return room;
@@ -25,16 +28,19 @@ class RoomPage extends React.Component {
 
     this.state = {};
     this.room = loadRoom(this.props.room);
+
+    this.code_ref = React.createRef();
+    this.link_ref = React.createRef();
   }
 
   render() {
     return (
       <div className="App-page">
+        <Typography use="headline2">Room</Typography>
         <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={3} />
-          <g.GridCell align="middle" span={6}>
+          <g.GridCell align="left" span={6}>
             <article className="text">
-              <Typography use="headline2">Room</Typography>
+              <Typography use="headline3">Joining</Typography>
               <c.Card>
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
                   <l.List twoLine>
@@ -52,13 +58,17 @@ class RoomPage extends React.Component {
                         <p>Or have them visit this link:</p>
                       </l.ListItem>
                       <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-                        <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.room.code + "#room" }>{ window.location.origin + "/?code=" + this.room.code + "#play" }</a></p>
+                        <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.room.code + "#room" }>{ window.location.origin + "/?code=" + this.room.code + "#room" }</a></p>
                       </l.ListItem>
                     </l.ListGroup>
                   </l.List>
                 </div>
               </c.Card>
             </article>
+          </g.GridCell>
+          <g.GridCell align="right" span={6}>
+            <Typography use="headline3">Playing</Typography>
+            <CreateGameForm {...this.props} />
           </g.GridCell>
         </g.Grid>
       </div>
