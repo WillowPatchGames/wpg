@@ -22,5 +22,5 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return new(AuthHandler)
 	}
 
-	router.Handle("/auth", parsel.Wrap(authFactory, config)).Methods("POST")
+	router.Handle("/api/v1/auth", parsel.Wrap(authFactory, config)).Methods("POST")
 }

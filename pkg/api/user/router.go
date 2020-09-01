@@ -38,12 +38,12 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return new(RegisterHandler)
 	}
 
-	router.Handle("/user/{UserID:[0-9]+}/upgrade", parsel.Wrap(upgradeFactory, config)).Methods("PUT")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/upgrade", parsel.Wrap(upgradeFactory, config)).Methods("PUT")
 
-	router.Handle("/user/{UserID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
-	router.Handle("/user/{UserID:[0-9]+}", parsel.Wrap(updateFactory, config)).Methods("PATCH")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}", parsel.Wrap(updateFactory, config)).Methods("PATCH")
 
-	router.Handle("/user", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/user", parsel.Wrap(queryFactory, config)).Methods("GET")
 
-	router.Handle("/users", parsel.Wrap(registerFactory, config)).Methods("POST")
+	router.Handle("/api/v1/users", parsel.Wrap(registerFactory, config)).Methods("POST")
 }

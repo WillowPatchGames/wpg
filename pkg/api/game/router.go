@@ -24,10 +24,10 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(inner)
 	}
 
-	router.Handle("/game/find", parsel.Wrap(queryFactory, config)).Methods("GET")
-	router.Handle("/game/{GameID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
-	router.Handle("/game", parsel.Wrap(queryFactory, config)).Methods("GET")
-	router.Handle("/games", parsel.Wrap(createFactory, config)).Methods("POST")
+	router.Handle("/api/v1/game/find", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/game/{GameID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/game", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/games", parsel.Wrap(createFactory, config)).Methods("POST")
 
 	gamehub := NewHub()
 	go gamehub.Run()
@@ -38,5 +38,5 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(ret)
 	}
 
-	router.Handle("/game/{GameID:[0-9]+}/ws", parsel.Wrap(socketFactory, config)).Methods("GET")
+	router.Handle("/api/v1/game/{GameID:[0-9]+}/ws", parsel.Wrap(socketFactory, config)).Methods("GET")
 }
