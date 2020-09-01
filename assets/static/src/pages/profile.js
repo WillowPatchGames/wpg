@@ -82,7 +82,7 @@ class UserProfilePage extends React.Component {
     var new_password = this.newPassword.current.value;
     var confirm_password = this.confirmPassword.current.value;
 
-    if (new_password != confirm_password) {
+    if (new_password !== confirm_password) {
       this.setPasswordError("New and old passwords don't match!");
       return;
     }

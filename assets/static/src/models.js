@@ -289,6 +289,112 @@ class UserModel {
   }
 }
 
+class RoomModel {
+  constructor(user) {
+    this.id = null;
+    this.user = user;
+    this.api = window.location.protocol + '//' + window.location.host;
+    this.create_uri = this.api + '/rooms';
+
+    this.mode = null;
+    this.open = null;
+    this.code = null;
+  }
+
+  static async FromId(id) {
+    var ret = new RoomModel();
+
+    var uri = ret.api + '/room/' + id;
+
+    const response = await fetch(uri, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Auth-Token': ret.user.token,
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      ret.error = result;
+      return ret;
+    }
+
+    Object.assign(ret, result);
+    ret.error = null;
+    ret.endpoint = ws() + "//" + document.location.host + "/room/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+    return ret;
+  }
+
+  static async FromCode(user, code) {
+    code = normalizeCode(code);
+    var ret = new RoomModel(user);
+    ret.code = code;
+
+    var uri = ret.api + '/room/find?join=' + code;
+
+    const response = await fetch(uri, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Auth-Token': ret.user.token,
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      ret.error = result;
+      return ret;
+    }
+
+    Object.assign(ret, result);
+    ret.error = null;
+    ret.endpoint = ws() + "//" + document.location.host + "/room/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+    return ret;
+  }
+
+  async create() {
+    var request = {
+      'owner': this.user.id,
+      'style': this.mode,
+      'open': this.open,
+    };
+
+    const response = await fetch(this.create_uri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    const result = await response.json();
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    this.error = null;
+    delete result["config"];
+    Object.assign(this, result);
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    return this;
+  }
+}
+
 class GameModel {
   constructor(user) {
     this.id = null;
@@ -413,6 +519,7 @@ class GameModel {
 
 export {
   UserModel,
+  RoomModel,
   GameModel,
   normalizeCode,
 };

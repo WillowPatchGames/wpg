@@ -25,7 +25,7 @@ import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
 // Application imports
-import { UserModel, GameModel, normalizeCode } from '../models.js';
+import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { GameData, GameInterface, APITileManager, JSWordManager } from '../game.js';
 import { Game } from '../component.js';
 
@@ -501,6 +501,113 @@ class CreateGamePage extends React.Component {
   }
 }
 
+
+class CreateRoomForm extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      error: null,
+      mode: 'single',
+      open: true,
+    }
+  }
+
+  async handleSubmit(event) {
+    event.preventDefault();
+
+    if (this.props.user === null || !this.props.user.authed) {
+      this.setError("Need to have a user account before doing this action!");
+      return;
+    }
+
+    var room = new RoomModel(this.props.user);
+    room.mode = this.state.mode;
+    room.open = this.state.open;
+
+    await room.create();
+
+    if (room.error !== null) {
+      this.setError(room.error.message);
+    } else {
+      this.props.setCode(room.code);
+      this.props.setRoom(room);
+      this.props.setPage('room');
+    }
+  }
+
+  newState(fn, cb) {
+    return this.setState(state => Object.assign({}, state, fn(state)));
+  }
+
+  inputHandler(name, checky) {
+    return (e) => {
+      var v = checky ? e.target.checked : e.target.value;
+      return this.newState(() => ({ [name]: v }));
+    };
+  }
+
+  toggle(name) {
+    this.newState(state => ({ [name]: !state[name] }));
+  }
+
+  setError(message) {
+    this.setState(state => Object.assign({}, state, { error: message }));
+  }
+
+  render() {
+    var pl = (num, name) => (""+num+" "+name+(+num === 1 ? "" : "s"));
+
+    return (
+      <c.Card>
+        <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+
+          <form onSubmit={ this.handleSubmit.bind(this) }>
+            <l.List twoLine>
+              <l.ListGroup>
+                <l.ListGroupSubheader>Joining Options</l.ListGroupSubheader>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label={ this.state.open ? "Open for anyone to join if they have the room code" : "Generate unique invite codes for everyone" } checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
+              </l.ListGroup>
+              <br />
+              <br />
+              <l.ListGroup>
+                <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+                <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") } options={
+                  [
+                    {
+                      label: 'Single (Only one game)',
+                      value: 'single',
+                    },
+                    {
+                      label: 'Dynamic (Play multiple types of games)',
+                      value: 'dynamic',
+                    }
+                  ]
+                } />
+                <br/>
+                {
+                  this.state.mode === 'rush' ?
+                  <p>In rush mode, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!</p>
+                  : <></>
+                }
+              </l.ListGroup>
+            </l.List>
+
+            <Button label="Create" raised />
+          </form>
+          <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+            <d.DialogTitle>Error!</d.DialogTitle>
+            <d.DialogContent>{ this.state.error }</d.DialogContent>
+            <d.DialogActions>
+              <d.DialogButton action="close">OK</d.DialogButton>
+            </d.DialogActions>
+          </d.Dialog>
+        </div>
+      </c.Card>
+    );
+  }
+}
+
 class CreateRoomPage extends React.Component {
   render() {
     return (
@@ -511,6 +618,12 @@ class CreateRoomPage extends React.Component {
           This way, you'll be able to play multiple games without having to
           re-share a link.
         </p>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} />
+          <g.GridCell align="middle" span={6}>
+            <CreateRoomForm {...this.props} />
+          </g.GridCell>
+        </g.Grid>
       </div>
     );
   }

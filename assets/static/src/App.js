@@ -34,6 +34,7 @@ class App extends React.Component {
       page: hash !== "" ? hash : 'home',
       user: null,
       game: null,
+      room: null,
       immersive: false,
     };
 
@@ -101,6 +102,10 @@ class App extends React.Component {
     window.location.hash = '#' + page;
   }
 
+  setRoom(room) {
+    this.setState(state => Object.assign({}, state, { room }));
+  }
+
   setGame(game) {
     this.setState(state => Object.assign({}, state, { game }));
   }
@@ -153,7 +158,7 @@ class App extends React.Component {
             }}
           >
             <Navigation user={ this.state.user } immersive={ this.state.immersive } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-            <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
+            <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } room={ this.state.room } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setRoom={ this.setRoom.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
             <SnackbarQueue messages={ this.snackbar.messages } />
             <Footer page={ this.state.page } />
           </ThemeProvider>

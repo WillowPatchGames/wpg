@@ -11,6 +11,7 @@ import { AfterPartyPage, CreateGamePage, CreateRoomPage, JoinGamePage, PreGamePa
 import { HomePage } from './pages/home.js';
 import { LoginPage } from './pages/login.js';
 import { ProfilePage } from './pages/profile.js';
+import { RoomPage } from './pages/room.js';
 import { RushRulesPage } from './pages/rules.js';
 import { SignupPage } from './pages/signup.js';
 
@@ -37,6 +38,7 @@ class Page extends React.Component {
       case 'join': component = JoinGamePage; break;
       case 'rush-rules': component = RushRulesPage; break;
       case 'docs': component = DocsPage; break;
+      case 'room': component = RoomPage; break;
       default: component = ErrorPage;
     }
     return component;
