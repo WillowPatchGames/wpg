@@ -28,7 +28,7 @@ class UserModel {
     this.username = null;
     this.email = null;
     this.display = null;
-    this.api = window.location.protocol + '//' + window.location.host;
+    this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
 
     this.authed = false;
     this.token = null;
@@ -293,7 +293,7 @@ class RoomModel {
   constructor(user) {
     this.id = null;
     this.user = user;
-    this.api = window.location.protocol + '//' + window.location.host;
+    this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
     this.create_uri = this.api + '/rooms';
 
     this.mode = null;
@@ -399,7 +399,7 @@ class GameModel {
   constructor(user) {
     this.id = null;
     this.user = user;
-    this.api = window.location.protocol + '//' + window.location.host;
+    this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
     this.create_uri = this.api + '/games';
 
     this.mode = null;

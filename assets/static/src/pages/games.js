@@ -556,8 +556,6 @@ class CreateRoomForm extends React.Component {
   }
 
   render() {
-    var pl = (num, name) => (""+num+" "+name+(+num === 1 ? "" : "s"));
-
     return (
       <c.Card>
         <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
