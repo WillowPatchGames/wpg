@@ -285,7 +285,7 @@ class UserModel {
   async logout() {
     this.token = null;
     this.authed = false;
-    localStorage.removeItem('user');
+    localStorage.clear();
   }
 }
 
