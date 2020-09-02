@@ -111,7 +111,7 @@ func (rs *RushState) Init(cfg RushConfig) error {
 	}
 
 	// Then generate tiles and have players draw their initial tiles.
-	rs.Tiles = GenerateTiles(total_tiles, false, BananagramsFreq)
+	rs.Tiles = GenerateTiles(total_tiles, false, rs.Config.Frequency)
 	for player_index := range rs.Players {
 		rs.Players[player_index].Init()
 
@@ -198,6 +198,12 @@ func (rs *RushState) PlayTile(player int, tile_id int, x int, y int) error {
 	tile_index, ok = rs.Players[player].FindTile(tile_id)
 	if !ok {
 		return errors.New("tile is not in hand")
+	}
+
+	// Check if destination is occupied; if so, issue a SwapTile request rather
+	// than a PlayTile request.
+	if board_tile_id, ok := rs.Players[player].Board.AtPosition[LetterPos{x, y}]; ok {
+		return rs.SwapTile(player, tile_id, board_tile_id)
 	}
 
 	// Remote tile from hand
