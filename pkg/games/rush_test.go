@@ -67,7 +67,7 @@ func validateTileIDs(t *testing.T, game *RushState) {
 func TestRushGame(t *testing.T) {
 	var config RushConfig
 	config.NumPlayers = 4
-	config.NumTiles = 75
+	config.NumTiles = 76
 	config.TilesPerPlayer = true
 	config.StartSize = 13
 	config.DrawSize = 1

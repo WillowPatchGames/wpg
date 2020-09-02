@@ -8,8 +8,13 @@ func TestWordlist(t *testing.T) {
 	if !IsWord("alphabet") {
 		t.Fatal("alphabet isn't a word but should be")
 	}
+
 	if !IsWord("cat") {
 		t.Fatal("cat isn't a word but should be")
+	}
+
+	if !IsWord("ew") {
+		t.Fatal("ew isn't a word but should be")
 	}
 
 	if IsWord("superlongthingthatshouldntbeaword") {
