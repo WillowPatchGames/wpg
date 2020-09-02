@@ -119,7 +119,6 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			log.Print("Unable to rollback:", rollbackErr)

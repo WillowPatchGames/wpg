@@ -9,7 +9,7 @@ test: check
 
 dist: distui tarball
 
-check: vet gosec safesql staticcheck crypt utils
+check: vet gosec safesql staticcheck crypt utils games
 
 deps:
 	go get -u $(NAMESPACE)/...
@@ -44,6 +44,9 @@ crypt: pkg/password/*.go
 
 utils: internal/utils/*.go
 	go test $(NAMESPACE)/internal/utils
+
+games: pkg/games/*.go
+	go test $(NAMESPACE)/pkg/games
 
 api:
 	$(PYTHON) -c 'import pytest' || $(PYTHON) -m pip install pytest

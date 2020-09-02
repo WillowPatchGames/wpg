@@ -1,5 +1,9 @@
 package games
 
+import (
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
+)
+
 var standardFrequencies = map[string]float64{
 	"A": 8.04,
 	"B": 1.48,
@@ -87,18 +91,48 @@ var scrabbleFrequencies = map[string]float64{
 	"Z": 1.00,
 }
 
-func GenerateTiles(count int, wildcards bool) []LetterTile {
+var frequencyMap []map[string]float64 = []map[string]float64{
+	standardFrequencies,
+	bananagramsFrequencies,
+	scrabbleFrequencies,
+}
+
+type Frequency int
+
+const (
+	StandardFreq    Frequency = iota
+	BananagramsFreq Frequency = iota
+	ScrabbleFreq    Frequency = iota
+)
+
+func randomTile(freq Frequency) string {
+	var sum float64 = 0.01
+	for letter := range frequencyMap[freq] {
+		sum += frequencyMap[freq][letter]
+	}
+
+	var choice float64 = utils.RandomFloat64() * sum
+	for letter := range frequencyMap[freq] {
+		choice -= frequencyMap[freq][letter]
+		if choice <= 0.0 {
+			return letter
+		}
+	}
+
+	return "E"
+}
+
+func GenerateTiles(count int, wildcards bool, freq Frequency) []LetterTile {
 	var ret []LetterTile = make([]LetterTile, count)
 
 	for index, tile := range ret {
 		tile.ID = index
-		var freq = standardFrequencies["A"] + bananagramsFrequencies["B"] + scrabbleFrequencies["C"]
-		if freq < 10 {
-			tile.Value = "B"
-		} else {
-			tile.Value = "C"
-		}
+		tile.Value = randomTile(freq)
 	}
+
+	utils.SecureRand.Shuffle(len(ret), func(i, j int) {
+		ret[i], ret[j] = ret[j], ret[i]
+	})
 
 	return ret
 }

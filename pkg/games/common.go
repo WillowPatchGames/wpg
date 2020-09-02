@@ -1,8 +1,8 @@
 package games
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 )
 
 type GameConfigError struct {
@@ -31,7 +31,7 @@ type LetterPos struct {
 }
 
 type LetterGrid struct {
-	Tiles       []LetterTile      `json:"tiles"`
+	Tiles       []LetterTile `json:"tiles"`
 	ToTile      map[int]LetterTile
 	PositionsOf map[int]LetterPos `json:"positions"`
 	AtPosition  map[LetterPos]int

@@ -1,6 +1,7 @@
 package games
 
 import (
+	"errors"
 	"log"
 	"strconv"
 )
@@ -17,6 +18,7 @@ type RushConfig struct {
 	StartSize      int  `json:"start_size"`      // 5 <= n <= 25
 	DrawSize       int  `json:"draw_size"`       // 1 <= n <= 10
 	DiscardPenalty int  `json:"discard_penalty"` // 1 <= n <= 10
+	Frequency      Frequency `json:"frequency"`
 }
 
 type RushState struct {
@@ -87,7 +89,7 @@ func (rs *RushState) Init(cfg RushConfig) error {
 	}
 
 	// Then generate tiles and have players draw their initial tiles.
-	rs.Tiles = GenerateTiles(total_tiles, false)
+	rs.Tiles = GenerateTiles(total_tiles, false, BananagramsFreq)
 	for player_index := range rs.Players {
 		err = rs.DrawTiles(player_index, rs.Config.StartSize)
 		if err != nil {
@@ -100,5 +102,49 @@ func (rs *RushState) Init(cfg RushConfig) error {
 }
 
 func (rs *RushState) DrawTiles(player int, count int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	if count >= len(rs.Tiles) {
+		return errors.New("too few tiles remaining to draw requested number")
+	}
+
+	var drawn = rs.Tiles[:count]
+	rs.Tiles = rs.Tiles[count:]
+
+	rs.Players[player].Hand = append(rs.Players[player].Hand, drawn...)
+
+	return nil
+}
+
+func (rs *RushState) PlayTile(player int, tile_id int, x int, y int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	var tile_index int = -1
+
+	for index, tile := range rs.Players[player].Hand {
+		if tile.ID == tile_id {
+			tile_index = index
+			break
+		}
+	}
+
+	if tile_index == -1 {
+		return errors.New("not a valid tile to play")
+	}
+
+	// Remote tile from hand
+	var tile = rs.Players[player].Hand[tile_index]
+	rs.Players[player].Hand = append(rs.Players[player].Hand[:tile_index], rs.Players[player].Hand[tile_index+1:]...)
+
+	// Add to board
+	rs.Players[player].Board.Tiles = append(rs.Players[player].Board.Tiles, tile)
+	rs.Players[player].Board.ToTile[tile.ID] = tile
+	rs.Players[player].Board.PositionsOf[tile.ID] = LetterPos{x, y}
+	rs.Players[player].Board.AtPosition[LetterPos{x, y}] = tile.ID
+
 	return nil
 }

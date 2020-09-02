@@ -51,7 +51,7 @@ func (cr *cryptoReader) Uint64() uint64 {
 var cr math_rand.Source64 = &cryptoReader{}
 
 // #nosec G404
-var c *math_rand.Rand = math_rand.New(cr)
+var SecureRand *math_rand.Rand = math_rand.New(cr)
 
 // ===== Random Utils ===== //
 
@@ -71,7 +71,7 @@ func IsValidId(id uint64) bool {
 }
 
 func RandomFloat64() float64 {
-	return c.Float64()
+	return SecureRand.Float64()
 }
 
 func RandomToken() string {
