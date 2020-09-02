@@ -11,6 +11,11 @@ type RushPlayer struct {
 	Hand  []LetterTile `json:"hand"`
 }
 
+func (rp *RushPlayer) Init() {
+	rp.Board.Init()
+	rp.Hand = make([]LetterTile, 0)
+}
+
 func (rp *RushPlayer) FindTile(tile_id int) (int, bool) {
 	var tile_index int = -1
 
@@ -32,13 +37,6 @@ type RushConfig struct {
 	DrawSize       int       `json:"draw_size"`       // 1 <= n <= 10
 	DiscardPenalty int       `json:"discard_penalty"` // 1 <= n <= 10
 	Frequency      Frequency `json:"frequency"`
-}
-
-type RushState struct {
-	Tiles   []LetterTile `json:"tiles"`
-	DrawID  int          `json:"draw"`
-	Players []RushPlayer `json:"players"`
-	Config  RushConfig   `json:"config"`
 }
 
 func (cfg RushConfig) Validate() error {
@@ -85,6 +83,13 @@ func (cfg RushConfig) Validate() error {
 	return nil
 }
 
+type RushState struct {
+	Tiles   []LetterTile `json:"tiles"`
+	DrawID  int          `json:"draw"`
+	Players []RushPlayer `json:"players"`
+	Config  RushConfig   `json:"config"`
+}
+
 func (rs *RushState) Init(cfg RushConfig) error {
 	var err error
 
@@ -108,11 +113,59 @@ func (rs *RushState) Init(cfg RushConfig) error {
 	// Then generate tiles and have players draw their initial tiles.
 	rs.Tiles = GenerateTiles(total_tiles, false, BananagramsFreq)
 	for player_index := range rs.Players {
+		rs.Players[player_index].Init()
+
 		err = rs.DrawTiles(player_index, rs.Config.StartSize)
 		if err != nil {
 			log.Println("Unexpected error from DrawTiles; shouldn't error during RushState.Init()", err)
 			return err
 		}
+	}
+
+	// Increment to the initial draw identifier value of 1 to show players they
+	// need to draw. (Initial DrawID on the client side is 0; this forces them
+	// to load their hands).
+	rs.DrawID = 1
+
+	return nil
+}
+
+func (rs *RushState) HasValidWords(player int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	return rs.Players[player].Board.VisitAllWordsOnBoard(func(lg *LetterGrid, start LetterPos, end LetterPos, word string) error {
+		log.Println("Visiting word:", word, "rooted at:", start, "IsWord:", IsWord(word))
+
+		if !IsWord(word) {
+			return errors.New("not a valid word: " + word)
+		}
+
+		return nil
+	})
+}
+
+func (rs *RushState) IsValidBoard(player int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	// To be a valid board we need:
+	// - to have at least two tiles on the board, and
+	// - to have a single connected component over all letters, and
+	// - for all top->down and left->right segments to be valid words.
+
+	if len(rs.Players[player].Board.Tiles) <= 1 {
+		return errors.New("expected more than one tile on the board")
+	}
+
+	if !rs.Players[player].Board.IsAllConnected() {
+		return errors.New("expected board to be a single connected component")
+	}
+
+	if err := rs.HasValidWords(player); err != nil {
+		return err
 	}
 
 	return nil
@@ -230,4 +283,91 @@ func (rs *RushState) SwapTile(player int, first int, second int) error {
 	}
 
 	return rs.swapTilesOnBoard(player, first, second)
+}
+
+func (rs *RushState) RecallTile(player int, tile_id int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	var tile LetterTile
+	var ok bool
+	if tile, ok = rs.Players[player].Board.ToTile[tile_id]; !ok {
+		return errors.New("not a valid tile identifier on the board")
+	}
+
+	rs.Players[player].Board.RemoveTile(tile.ID)
+	rs.Players[player].Hand = append(rs.Players[player].Hand, tile)
+
+	return nil
+}
+
+func (rs *RushState) Discard(player int, tile_id int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	if rs.Config.DiscardPenalty > len(rs.Tiles) {
+		return errors.New("unable to draw; not enough tiles remaining")
+	}
+
+	// It is safe to ignore this error: we first recall the tile from the board
+	// if it was there. Then we can discard it out of the hand and re-add it.
+	_ = rs.RecallTile(player, tile_id)
+
+	var tile_index int
+	var found bool
+	if tile_index, found = rs.Players[player].FindTile(tile_id); !found {
+		return errors.New("unable to find tile in hand")
+	}
+
+	// Save existing tile and remove from hand
+	var tile LetterTile = rs.Players[player].Hand[tile_index]
+	rs.Players[player].Hand = append(rs.Players[player].Hand[:tile_index], rs.Players[player].Hand[tile_index+1:]...)
+
+	// Draw new tiles before re-adding tile from hand.
+	err := rs.DrawTiles(player, rs.Config.DiscardPenalty)
+	if err != nil {
+		// Re-add tile to hand before existing since an error occurred and we
+		// couldn't actually discard it.
+		rs.Players[player].Hand = append(rs.Players[player].Hand, tile)
+		return err
+	}
+
+	rs.Tiles = append(rs.Tiles, tile)
+
+	return nil
+}
+
+func (rs *RushState) Draw(player int, last_id int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	if len(rs.Players[player].Hand) > 0 {
+		return errors.New("unable to draw while tiles remaining in hand")
+	}
+
+	if rs.DrawID > last_id {
+		return errors.New("unable to draw with old draw id")
+	}
+
+	if err := rs.IsValidBoard(player); err != nil {
+		return errors.New("unable to draw because of invalid board: " + err.Error())
+	}
+
+	var tiles_needed = rs.Config.DrawSize * rs.Config.NumPlayers
+	if tiles_needed >= len(rs.Tiles) {
+		return errors.New("game is over; unable to satisfy draw requirements")
+	}
+
+	// Draw for all players
+	rs.DrawID += 1
+	for player_index := range rs.Players {
+		if err := rs.DrawTiles(player_index, rs.Config.DrawSize); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -6,10 +6,17 @@ import (
 
 func TestWordlist(t *testing.T) {
 	if !IsWord("alphabet") {
-		t.Error("alphabet isn't a word but should be")
+		t.Fatal("alphabet isn't a word but should be")
+	}
+	if !IsWord("cat") {
+		t.Fatal("cat isn't a word but should be")
 	}
 
 	if IsWord("superlongthingthatshouldntbeaword") {
-		t.Error("superlongthingthatshouldntbeaword is a word but shouldn't be")
+		t.Fatal("superlongthingthatshouldntbeaword is a word but shouldn't be")
+	}
+
+	if IsWord("catz") {
+		t.Fatal("catz is a word but shouldn't be")
 	}
 }

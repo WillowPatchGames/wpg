@@ -127,9 +127,9 @@ func randomTile(freq Frequency) string {
 func GenerateTiles(count int, wildcards bool, freq Frequency) []LetterTile {
 	var ret []LetterTile = make([]LetterTile, count)
 
-	for index, tile := range ret {
-		tile.ID = index
-		tile.Value = randomTile(freq)
+	for index := range ret {
+		ret[index].ID = index + 1
+		ret[index].Value = randomTile(freq)
 	}
 
 	utils.SecureRand.Shuffle(len(ret), func(i, j int) {
