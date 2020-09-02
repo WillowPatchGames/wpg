@@ -100,9 +100,11 @@ var frequencyMap []map[string]float64 = []map[string]float64{
 type Frequency int
 
 const (
+	StartFreqRange  Frequency = iota
 	StandardFreq    Frequency = iota
 	BananagramsFreq Frequency = iota
 	ScrabbleFreq    Frequency = iota
+	EndFreqRange    Frequency = iota
 )
 
 func randomTile(freq Frequency) string {

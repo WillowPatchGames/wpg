@@ -11,13 +11,26 @@ type RushPlayer struct {
 	Hand  []LetterTile `json:"hand"`
 }
 
+func (rp *RushPlayer) FindTile(tile_id int) (int, bool) {
+	var tile_index int = -1
+
+	for index, tile := range rp.Hand {
+		if tile.ID == tile_id {
+			tile_index = index
+			break
+		}
+	}
+
+	return tile_index, tile_index != -1
+}
+
 type RushConfig struct {
-	NumPlayers     int  `json:"num_players"` // 2 <= n <= 25
-	NumTiles       int  `json:"num_tiles"`   // Between 1 and 100 rounds worth
-	TilesPerPlayer bool `json:"tiles_per_player"`
-	StartSize      int  `json:"start_size"`      // 5 <= n <= 25
-	DrawSize       int  `json:"draw_size"`       // 1 <= n <= 10
-	DiscardPenalty int  `json:"discard_penalty"` // 1 <= n <= 10
+	NumPlayers     int       `json:"num_players"` // 2 <= n <= 25
+	NumTiles       int       `json:"num_tiles"`   // Between 1 and 100 rounds worth
+	TilesPerPlayer bool      `json:"tiles_per_player"`
+	StartSize      int       `json:"start_size"`      // 5 <= n <= 25
+	DrawSize       int       `json:"draw_size"`       // 1 <= n <= 10
+	DiscardPenalty int       `json:"discard_penalty"` // 1 <= n <= 10
 	Frequency      Frequency `json:"frequency"`
 }
 
@@ -43,6 +56,10 @@ func (cfg RushConfig) Validate() error {
 
 	if cfg.DiscardPenalty == 0 || cfg.DiscardPenalty > 10 {
 		return GameConfigError{"discard penalty", strconv.Itoa(cfg.DiscardPenalty), "between 1 and 10"}
+	}
+
+	if cfg.Frequency <= StartFreqRange || cfg.Frequency >= EndFreqRange {
+		return GameConfigError{"frequency range", strconv.Itoa(int(cfg.Frequency)), "between " + strconv.Itoa(int(StartFreqRange)) + " and " + strconv.Itoa(int(EndFreqRange))}
 	}
 
 	var total_tiles int = cfg.NumTiles
@@ -123,17 +140,11 @@ func (rs *RushState) PlayTile(player int, tile_id int, x int, y int) error {
 		return errors.New("not a valid player identifier")
 	}
 
-	var tile_index int = -1
-
-	for index, tile := range rs.Players[player].Hand {
-		if tile.ID == tile_id {
-			tile_index = index
-			break
-		}
-	}
-
-	if tile_index == -1 {
-		return errors.New("not a valid tile to play")
+	var tile_index int
+	var ok bool
+	tile_index, ok = rs.Players[player].FindTile(tile_id)
+	if !ok {
+		return errors.New("tile is not in hand")
 	}
 
 	// Remote tile from hand
@@ -141,10 +152,82 @@ func (rs *RushState) PlayTile(player int, tile_id int, x int, y int) error {
 	rs.Players[player].Hand = append(rs.Players[player].Hand[:tile_index], rs.Players[player].Hand[tile_index+1:]...)
 
 	// Add to board
-	rs.Players[player].Board.Tiles = append(rs.Players[player].Board.Tiles, tile)
-	rs.Players[player].Board.ToTile[tile.ID] = tile
-	rs.Players[player].Board.PositionsOf[tile.ID] = LetterPos{x, y}
-	rs.Players[player].Board.AtPosition[LetterPos{x, y}] = tile.ID
+	rs.Players[player].Board.AddTile(tile, x, y)
 
 	return nil
+}
+
+func (rs *RushState) MoveTile(player int, tile_id int, x int, y int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	if _, ok := rs.Players[player].Board.ToTile[tile_id]; !ok {
+		return errors.New("not a valid tile identifier")
+	}
+
+	// Move the tile on the board
+	rs.Players[player].Board.MoveTile(tile_id, x, y)
+
+	return nil
+}
+
+func (rs *RushState) swapTilesOnBoard(player int, first int, second int) error {
+	if _, ok := rs.Players[player].Board.ToTile[first]; !ok {
+		return errors.New("first is not a valid tile identifier")
+	}
+
+	if _, ok := rs.Players[player].Board.ToTile[second]; !ok {
+		return errors.New("second is not a valid tile identifier")
+	}
+
+	// Swap the tiles on the board
+	rs.Players[player].Board.SwapTile(first, second)
+
+	return nil
+}
+
+func (rs *RushState) swapTileHandToBoard(player int, hand_tile int, board_tile int) error {
+	// board_tile is a Tile ID
+	// hand_tile is an index in Hand
+
+	// Grab the tile from the board and place it in the hand
+	var tile = rs.Players[player].Board.ToTile[board_tile]
+	var pos = rs.Players[player].Board.PositionsOf[board_tile]
+	rs.Players[player].Board.RemoveTile(board_tile)
+
+	rs.Players[player].Hand = append(rs.Players[player].Hand, tile)
+
+	// Grab the tile from the hand and place it on the board
+	tile = rs.Players[player].Hand[hand_tile]
+	rs.Players[player].Hand = append(rs.Players[player].Hand[:hand_tile], rs.Players[player].Hand[hand_tile+1:]...)
+	rs.Players[player].Board.AddTile(tile, pos.X, pos.Y)
+
+	return nil
+}
+
+func (rs *RushState) SwapTile(player int, first int, second int) error {
+	if player >= len(rs.Players) {
+		return errors.New("not a valid player identifier")
+	}
+
+	var first_index int
+	var first_ok bool
+	first_index, first_ok = rs.Players[player].FindTile(first)
+
+	var second_index int
+	var second_ok bool
+	second_index, second_ok = rs.Players[player].FindTile(second)
+
+	if first_ok && second_ok {
+		// Since the order of the hand is an implementation detail, we can safely
+		// make this a no-op.
+		return nil
+	} else if first_ok {
+		return rs.swapTileHandToBoard(player, first_index, second)
+	} else if second_ok {
+		return rs.swapTileHandToBoard(player, second_index, first)
+	}
+
+	return rs.swapTilesOnBoard(player, first, second)
 }

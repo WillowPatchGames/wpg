@@ -12,6 +12,7 @@ func TestRushGame(t *testing.T) {
 	config.StartSize = 13
 	config.DrawSize = 1
 	config.DiscardPenalty = 3
+	config.Frequency = BananagramsFreq
 
 	if err := config.Validate(); err != nil {
 		t.Error("Unable to validate good configuration", err)
