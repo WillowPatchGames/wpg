@@ -34,9 +34,9 @@ class RoomPage extends React.Component {
   }
 
   async checkForGames() {
-    this.props.room.update();
-    if (this.props.room.games && this.props.room.games.length == 1) {
-      var game = await GameModel.FromId(this.props.user, this.props.room.games[0]);
+    await this.props.room.update();
+    if (this.props.room.games) {
+      var game = await GameModel.FromId(this.props.user, this.props.room.games[this.props.room.games.length - 1]);
 
       if (game.error === null) {
         this.props.setGame(game);

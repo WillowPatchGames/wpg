@@ -179,6 +179,7 @@ class AfterPartyPage extends React.Component {
     this.game.ws.send(JSON.stringify({"type": "peek"}));
   }
   componentWillUnmount() {
+    this.props.setGame(null);
     if (this.unmount) this.unmount();
   }
   render() {
@@ -682,6 +683,12 @@ class JoinGamePage extends React.Component {
         console.error(game.error);
         this.setError(game.error.message);
       } else {
+        if (room.games) {
+          game = await GameModel.FromId(this.props.user, room.games[room.games.length - 1]);
+          if (game.error !== null) {
+            this.props.setGame(game);
+          }
+        }
         this.props.setRoom(room);
         this.props.setPage('room');
       }
