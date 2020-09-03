@@ -48,19 +48,19 @@ func validateTileIDs(t *testing.T, game *RushState) {
 	}
 
 	if !have_c {
-		t.Fatal("Expecting c in tile pile")
+		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "C", 0})
 	}
 
 	if !have_a {
-		t.Fatal("Expecting a in tile pile")
+		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "A", 0})
 	}
 
 	if !have_t {
-		t.Fatal("Expecting t in tile pile")
+		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "T", 0})
 	}
 
 	if !have_z {
-		t.Fatal("Expecting z in tile pile")
+		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "Z", 0})
 	}
 }
 
@@ -81,6 +81,9 @@ func TestRushGame(t *testing.T) {
 	var game RushState
 	if err := game.Init(config); err != nil {
 		t.Fatal("Unable to initialize game with good configration", err)
+	}
+	if err := game.Start(config.NumPlayers); err != nil {
+		t.Fatal("Unable to start game with good configration", err)
 	}
 	validateTileIDs(t, &game)
 

@@ -91,9 +91,7 @@ type RushState struct {
 }
 
 func (rs *RushState) Init(cfg RushConfig) error {
-	var err error
-
-	err = cfg.Validate()
+	var err error = cfg.Validate()
 	if err != nil {
 		log.Println("Error with RushConfig", err)
 		return err
@@ -101,7 +99,20 @@ func (rs *RushState) Init(cfg RushConfig) error {
 
 	rs.Config = cfg
 
-	// Create initial player objects
+	return nil
+}
+
+func (rs *RushState) Start(players int) error {
+	var err error
+
+	rs.Config.NumPlayers = players
+
+	err = rs.Config.Validate()
+	if err != nil {
+		log.Println("Error with RushConfig after starting", err)
+	}
+
+	// Create the player objects
 	rs.Players = make([]RushPlayer, rs.Config.NumPlayers)
 
 	// First calculate the number of tiles we need in this game.

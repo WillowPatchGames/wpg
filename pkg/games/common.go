@@ -2,7 +2,31 @@ package games
 
 import (
 	"fmt"
+	"strings"
 )
+
+type GameMode int
+
+const (
+	RushGame GameMode = iota
+)
+
+func (gm GameMode) String() string {
+	return []string{"rush"}[gm]
+}
+
+func GameModeFromString(repr string) GameMode {
+	switch strings.ToLower(repr) {
+	case "rush":
+		return RushGame
+	default:
+		return -1
+	}
+}
+
+func (gm GameMode) IsValid() bool {
+	return gm == RushGame
+}
 
 type GameConfigError struct {
 	Parameter     string
