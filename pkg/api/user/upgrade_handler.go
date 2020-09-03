@@ -19,7 +19,7 @@ type upgradeHandlerData struct {
 	Email    string `json:"email,omitempty"`
 	Display  string `json:"display,omitempty"`
 	Password string `json:"password,omitempty"`
-	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type upgradeHandlerResponse struct {
@@ -50,7 +50,7 @@ func (handle *UpgradeHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *UpgradeHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *UpgradeHandler) SetUser(user *models.UserModel) {
@@ -70,7 +70,7 @@ func (handle UpgradeHandler) verifyRequest() error {
 		return api_errors.ErrMissingDisplay
 	}
 
-	if handle.user.Id != handle.req.UserID {
+	if handle.user.ID != handle.req.UserID {
 		return api_errors.ErrAccessDenied
 	}
 
@@ -133,7 +133,7 @@ func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Invalid
 	var auth models.AuthModel
-	auth.ApiToken = handle.req.ApiToken
+	auth.APIToken = handle.req.APIToken
 
 	err = auth.Invalidate(tx)
 	if err != nil {
@@ -153,7 +153,7 @@ func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.UserID = handle.user.Id
+	handle.resp.UserID = handle.user.ID
 	handle.resp.Username = handle.user.Username
 	handle.resp.Display = handle.user.Display
 	handle.resp.Email = handle.user.Email

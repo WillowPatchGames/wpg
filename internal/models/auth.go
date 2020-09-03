@@ -10,8 +10,8 @@ import (
 )
 
 type AuthModel struct {
-	UserId   uint64
-	ApiToken string
+	UserID   uint64
+	APIToken string
 }
 
 func (token *AuthModel) FromPassword(transaction *sql.Tx, user UserModel, password string) error {
@@ -20,8 +20,8 @@ func (token *AuthModel) FromPassword(transaction *sql.Tx, user UserModel, passwo
 		return err
 	}
 
-	token.ApiToken = utils.RandomToken()
-	if token.ApiToken == "" {
+	token.APIToken = utils.RandomToken()
+	if token.APIToken == "" {
 		return errors.New("unable to generate token")
 	}
 
@@ -31,13 +31,13 @@ func (token *AuthModel) FromPassword(transaction *sql.Tx, user UserModel, passwo
 		return err
 	}
 
-	_, err = stmt.Exec(user.Id, token.ApiToken)
+	_, err = stmt.Exec(user.ID, token.APIToken)
 	if err != nil {
 		log.Println("AuthModel.FromPassword(): Creating token? ", err)
 		return err
 	}
 
-	token.UserId = user.Id
+	token.UserID = user.ID
 
 	return stmt.Close()
 }
@@ -47,8 +47,8 @@ func (token *AuthModel) GuestToken(transaction *sql.Tx, user UserModel) error {
 		return nil
 	}
 
-	token.ApiToken = utils.RandomToken()
-	if token.ApiToken == "" {
+	token.APIToken = utils.RandomToken()
+	if token.APIToken == "" {
 		return errors.New("unable to generate token")
 	}
 
@@ -58,13 +58,13 @@ func (token *AuthModel) GuestToken(transaction *sql.Tx, user UserModel) error {
 		return err
 	}
 
-	_, err = stmt.Exec(user.Id, token.ApiToken)
+	_, err = stmt.Exec(user.ID, token.APIToken)
 	if err != nil {
 		log.Println("AuthModel.FromPassword(): Creating token? ", err)
 		return err
 	}
 
-	token.UserId = user.Id
+	token.UserID = user.ID
 
 	return stmt.Close()
 }
@@ -76,7 +76,7 @@ func (token *AuthModel) Invalidate(transaction *sql.Tx) error {
 		return err
 	}
 
-	_, err = stmt.Exec(token.ApiToken)
+	_, err = stmt.Exec(token.APIToken)
 	if err != nil {
 		log.Println("AuthModel.FromPassword(): Creating token? ", err)
 		return err
@@ -91,7 +91,7 @@ func (token *AuthModel) FromAPIToken(transaction *sql.Tx, value string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(value).Scan(&token.UserId)
+	err = stmt.QueryRow(value).Scan(&token.UserID)
 	if err != nil {
 		return err
 	}

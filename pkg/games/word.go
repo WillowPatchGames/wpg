@@ -66,62 +66,62 @@ func (lg *LetterGrid) AddTile(tile LetterTile, x int, y int) {
 	lg.AtPosition[pos] = tile.ID
 }
 
-func (lg *LetterGrid) MoveTile(tile_id int, x int, y int) {
-	var old_pos LetterPos = lg.PositionsOf[tile_id]
-	var new_pos LetterPos = LetterPos{x, y}
+func (lg *LetterGrid) MoveTile(tileID int, x int, y int) {
+	var oldPos LetterPos = lg.PositionsOf[tileID]
+	var newPos LetterPos = LetterPos{x, y}
 
 	// Remove the old position key
-	delete(lg.AtPosition, old_pos)
+	delete(lg.AtPosition, oldPos)
 
 	// Add the new position information
-	lg.PositionsOf[tile_id] = new_pos
-	lg.AtPosition[new_pos] = tile_id
+	lg.PositionsOf[tileID] = newPos
+	lg.AtPosition[newPos] = tileID
 }
 
 func (lg *LetterGrid) SwapTile(first int, second int) {
-	var first_pos LetterPos = lg.PositionsOf[first]
-	var second_pos LetterPos = lg.PositionsOf[second]
+	var firstPos LetterPos = lg.PositionsOf[first]
+	var secondPos LetterPos = lg.PositionsOf[second]
 
-	lg.AtPosition[second_pos] = first
-	lg.AtPosition[first_pos] = second
+	lg.AtPosition[secondPos] = first
+	lg.AtPosition[firstPos] = second
 
-	lg.PositionsOf[first] = second_pos
-	lg.PositionsOf[second] = first_pos
+	lg.PositionsOf[first] = secondPos
+	lg.PositionsOf[second] = firstPos
 }
 
-func (lg *LetterGrid) RemoveTile(tile_id int) {
-	var tile_index = -1
+func (lg *LetterGrid) RemoveTile(tileID int) {
+	var tileIndex = -1
 	for index, tile := range lg.Tiles {
-		if tile.ID == tile_id {
-			tile_index = index
+		if tile.ID == tileID {
+			tileIndex = index
 			break
 		}
 	}
 
-	if tile_index == -1 {
+	if tileIndex == -1 {
 		return
 	}
 
-	lg.Tiles = append(lg.Tiles[:tile_index], lg.Tiles[tile_index+1:]...)
-	delete(lg.AtPosition, lg.PositionsOf[tile_id])
-	delete(lg.PositionsOf, tile_id)
-	delete(lg.ToTile, tile_id)
+	lg.Tiles = append(lg.Tiles[:tileIndex], lg.Tiles[tileIndex+1:]...)
+	delete(lg.AtPosition, lg.PositionsOf[tileID])
+	delete(lg.PositionsOf, tileID)
+	delete(lg.ToTile, tileID)
 }
 
 func (lg *LetterGrid) visitLeftToRight(start LetterPos, visitor func(lg *LetterGrid, start LetterPos, end LetterPos, word string) error) error {
 	var word string
 	var end LetterPos = LetterPos{start.X, start.Y}
 
-	tile_id, ok := lg.AtPosition[end]
+	tileID, ok := lg.AtPosition[end]
 
 	for ok {
-		tile := lg.ToTile[tile_id]
+		tile := lg.ToTile[tileID]
 		word += tile.Value
-		end.X += 1
-		tile_id, ok = lg.AtPosition[end]
+		end.X++
+		tileID, ok = lg.AtPosition[end]
 	}
 
-	end.X -= 1
+	end.X--
 
 	return visitor(lg, start, end, word)
 }
@@ -130,15 +130,15 @@ func (lg *LetterGrid) visitTopToBottom(start LetterPos, visitor func(lg *LetterG
 	var word string
 	var end LetterPos = LetterPos{start.X, start.Y}
 
-	tile_id, ok := lg.AtPosition[end]
+	tileID, ok := lg.AtPosition[end]
 	for ok {
-		tile := lg.ToTile[tile_id]
+		tile := lg.ToTile[tileID]
 		word += tile.Value
-		end.Y += 1
-		tile_id, ok = lg.AtPosition[end]
+		end.Y++
+		tileID, ok = lg.AtPosition[end]
 	}
 
-	end.Y -= 1
+	end.Y--
 
 	return visitor(lg, start, end, word)
 }
@@ -152,10 +152,10 @@ func (lg *LetterGrid) VisitAllWordsOnBoard(visitor func(lg *LetterGrid, start Le
 		// Check if there's a tile to the left; if not, this is the start of a
 		// word. Also check if there's a tile to the right; otherwise, this ends
 		// up being a one-letter word, which we don't validate.
-		var left_pos LetterPos = LetterPos{position.X - 1, position.Y}
-		var right_pos LetterPos = LetterPos{position.X + 1, position.Y}
-		if _, ok := lg.AtPosition[left_pos]; !ok {
-			if _, ok := lg.AtPosition[right_pos]; ok {
+		var leftPos LetterPos = LetterPos{position.X - 1, position.Y}
+		var rightPos LetterPos = LetterPos{position.X + 1, position.Y}
+		if _, ok := lg.AtPosition[leftPos]; !ok {
+			if _, ok := lg.AtPosition[rightPos]; ok {
 				// This is the start of a word. Visit left->right from this position.
 				err := lg.visitLeftToRight(position, visitor)
 				if err != nil {
@@ -167,10 +167,10 @@ func (lg *LetterGrid) VisitAllWordsOnBoard(visitor func(lg *LetterGrid, start Le
 		// Check if there's a tile to the top; if not, this is the start of a
 		// word. Also check if there's a tile to the bottom; otherwise, this ends
 		// up being a one-letter word, which we don't validate.
-		var top_pos LetterPos = LetterPos{position.X, position.Y - 1}
-		var down_pos LetterPos = LetterPos{position.X, position.Y + 1}
-		if _, ok := lg.AtPosition[top_pos]; !ok {
-			if _, ok := lg.AtPosition[down_pos]; ok {
+		var topPos LetterPos = LetterPos{position.X, position.Y - 1}
+		var downPos LetterPos = LetterPos{position.X, position.Y + 1}
+		if _, ok := lg.AtPosition[topPos]; !ok {
+			if _, ok := lg.AtPosition[downPos]; ok {
 				// This is the start of a word. Visit left->right from this position.
 				err := lg.visitTopToBottom(position, visitor)
 				if err != nil {

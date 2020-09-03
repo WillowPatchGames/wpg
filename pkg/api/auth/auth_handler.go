@@ -29,7 +29,7 @@ type authHandlerResponse struct {
 	UserID   uint64 `json:"id,omitempty"`
 	Username string `json:"username,omitempty"`
 	Email    string `json:"email,omitempty"`
-	ApiToken string `json:"token,omitempty"`
+	APIToken string `json:"token,omitempty"`
 }
 
 type AuthHandler struct {
@@ -49,16 +49,16 @@ func (handle *AuthHandler) GetObjectPointer() interface{} {
 	return &handle.req
 }
 
-func (handler AuthHandler) verifyRequest() error {
+func (handle AuthHandler) verifyRequest() error {
 	var present int = 0
-	if handler.req.UserID != 0 {
-		present += 1
+	if handle.req.UserID != 0 {
+		present++
 	}
-	if handler.req.Username != "" {
-		present += 1
+	if handle.req.Username != "" {
+		present++
 	}
-	if handler.req.Email != "" {
-		present += 1
+	if handle.req.Email != "" {
+		present++
 	}
 
 	if present == 0 {
@@ -69,7 +69,7 @@ func (handler AuthHandler) verifyRequest() error {
 		return api_errors.ErrTooManySpecifiers
 	}
 
-	if handler.req.Password == "" {
+	if handle.req.Password == "" {
 		return api_errors.ErrMissingPassword
 	}
 
@@ -93,7 +93,7 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var user models.UserModel
 	if handle.req.UserID != 0 {
-		err = user.FromId(tx, handle.req.UserID)
+		err = user.FromID(tx, handle.req.UserID)
 	} else if handle.req.Username != "" {
 		err = user.FromUsername(tx, handle.req.Username)
 	} else if handle.req.Email != "" {
@@ -118,10 +118,10 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.UserID = user.Id
+	handle.resp.UserID = user.ID
 	handle.resp.Username = user.Username
 	handle.resp.Email = user.Email
-	handle.resp.ApiToken = auth.ApiToken
+	handle.resp.APIToken = auth.APIToken
 
 	utils.SendResponse(w, r, handle)
 }

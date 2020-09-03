@@ -20,7 +20,7 @@ type updateHandlerData struct {
 	Old      string   `json:"old_password,omitempty"`
 	Password string   `json:"new_password,omitempty"`
 	Fields   []string `json:"fields"`
-	ApiToken string   `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string   `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type updateHandlerResponse struct {
@@ -51,7 +51,7 @@ func (handle *UpdateHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *UpdateHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *UpdateHandler) SetUser(user *models.UserModel) {
@@ -63,7 +63,7 @@ func (handle UpdateHandler) verifyRequest() error {
 		return api_errors.ErrMissingRequest
 	}
 
-	if handle.req.UserID != handle.user.Id {
+	if handle.req.UserID != handle.user.ID {
 		return api_errors.ErrAccessDenied
 	}
 
@@ -90,7 +90,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.UserModel
-	err = user.FromId(tx, handle.req.UserID)
+	err = user.FromID(tx, handle.req.UserID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			log.Print("Unable to rollback:", rollbackErr)
@@ -101,7 +101,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var change_password bool = false
+	var changePassword bool = false
 	for _, field := range handle.req.Fields {
 		switch field {
 		case "email":
@@ -112,7 +112,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			user.Display = handle.req.Display
 		case "password", "old_password", "new_password":
 			log.Println("Update password...")
-			change_password = true
+			changePassword = true
 		default:
 			log.Println("Field:", field)
 			err = api_errors.ErrMissingRequest
@@ -129,7 +129,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if change_password {
+	if changePassword {
 		err = user.ComparePassword(tx, handle.req.Old)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
@@ -171,10 +171,10 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.UserID = user.Id
+	handle.resp.UserID = user.ID
 	handle.resp.Display = user.Display
 
-	if handle.user != nil && handle.user.Id == user.Id {
+	if handle.user != nil && handle.user.ID == user.ID {
 		handle.resp.Username = user.Username
 		handle.resp.Email = user.Email
 		handle.resp.Guest = user.Guest

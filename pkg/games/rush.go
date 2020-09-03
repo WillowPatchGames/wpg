@@ -16,17 +16,17 @@ func (rp *RushPlayer) Init() {
 	rp.Hand = make([]LetterTile, 0)
 }
 
-func (rp *RushPlayer) FindTile(tile_id int) (int, bool) {
-	var tile_index int = -1
+func (rp *RushPlayer) FindTile(tileID int) (int, bool) {
+	var tileIndex int = -1
 
 	for index, tile := range rp.Hand {
-		if tile.ID == tile_id {
-			tile_index = index
+		if tile.ID == tileID {
+			tileIndex = index
 			break
 		}
 	}
 
-	return tile_index, tile_index != -1
+	return tileIndex, tileIndex != -1
 }
 
 type RushConfig struct {
@@ -60,24 +60,24 @@ func (cfg RushConfig) Validate() error {
 		return GameConfigError{"frequency range", strconv.Itoa(int(cfg.Frequency)), "between " + strconv.Itoa(int(StartFreqRange)) + " and " + strconv.Itoa(int(EndFreqRange))}
 	}
 
-	var total_tiles int = cfg.NumTiles
+	var totalTiles int = cfg.NumTiles
 	if cfg.TilesPerPlayer {
-		total_tiles *= cfg.NumPlayers
+		totalTiles *= cfg.NumPlayers
 	}
 
-	var initial_tiles int = cfg.StartSize * cfg.NumPlayers
-	var one_draw int = cfg.DrawSize * cfg.NumPlayers
-	var num_rounds = (total_tiles - initial_tiles) / one_draw
+	var initialTiles int = cfg.StartSize * cfg.NumPlayers
+	var oneDraw int = cfg.DrawSize * cfg.NumPlayers
+	var numRounds = (totalTiles - initialTiles) / oneDraw
 
-	if total_tiles <= (initial_tiles+one_draw) || num_rounds > 75 {
-		var tiles_repr string = strconv.Itoa(cfg.NumTiles)
+	if totalTiles <= (initialTiles+oneDraw) || numRounds > 75 {
+		var tilesRepr string = strconv.Itoa(cfg.NumTiles)
 		if cfg.TilesPerPlayer {
-			tiles_repr += " per player"
+			tilesRepr += " per player"
 		} else {
-			tiles_repr += " total"
+			tilesRepr += " total"
 		}
 
-		return GameConfigError{"number of tiles", tiles_repr, "enough for 1 to 75 rounds"}
+		return GameConfigError{"number of tiles", tilesRepr, "enough for 1 to 75 rounds"}
 	}
 
 	return nil
@@ -116,17 +116,17 @@ func (rs *RushState) Start(players int) error {
 	rs.Players = make([]RushPlayer, rs.Config.NumPlayers)
 
 	// First calculate the number of tiles we need in this game.
-	var total_tiles int = rs.Config.NumTiles
+	var totalTiles int = rs.Config.NumTiles
 	if rs.Config.TilesPerPlayer {
-		total_tiles *= rs.Config.NumPlayers
+		totalTiles *= rs.Config.NumPlayers
 	}
 
 	// Then generate tiles and have players draw their initial tiles.
-	rs.Tiles = GenerateTiles(total_tiles, false, rs.Config.Frequency)
-	for player_index := range rs.Players {
-		rs.Players[player_index].Init()
+	rs.Tiles = GenerateTiles(totalTiles, false, rs.Config.Frequency)
+	for playerIndex := range rs.Players {
+		rs.Players[playerIndex].Init()
 
-		err = rs.DrawTiles(player_index, rs.Config.StartSize)
+		err = rs.DrawTiles(playerIndex, rs.Config.StartSize)
 		if err != nil {
 			log.Println("Unexpected error from DrawTiles; shouldn't error during RushState.Init()", err)
 			return err
@@ -199,27 +199,27 @@ func (rs *RushState) DrawTiles(player int, count int) error {
 	return nil
 }
 
-func (rs *RushState) PlayTile(player int, tile_id int, x int, y int) error {
+func (rs *RushState) PlayTile(player int, tileID int, x int, y int) error {
 	if player >= len(rs.Players) {
 		return errors.New("not a valid player identifier")
 	}
 
-	var tile_index int
+	var tileIndex int
 	var ok bool
-	tile_index, ok = rs.Players[player].FindTile(tile_id)
+	tileIndex, ok = rs.Players[player].FindTile(tileID)
 	if !ok {
 		return errors.New("tile is not in hand")
 	}
 
 	// Check if destination is occupied; if so, issue a SwapTile request rather
 	// than a PlayTile request.
-	if board_tile_id, ok := rs.Players[player].Board.AtPosition[LetterPos{x, y}]; ok {
-		return rs.SwapTile(player, tile_id, board_tile_id)
+	if boardTileID, ok := rs.Players[player].Board.AtPosition[LetterPos{x, y}]; ok {
+		return rs.SwapTile(player, tileID, boardTileID)
 	}
 
 	// Remote tile from hand
-	var tile = rs.Players[player].Hand[tile_index]
-	rs.Players[player].Hand = append(rs.Players[player].Hand[:tile_index], rs.Players[player].Hand[tile_index+1:]...)
+	var tile = rs.Players[player].Hand[tileIndex]
+	rs.Players[player].Hand = append(rs.Players[player].Hand[:tileIndex], rs.Players[player].Hand[tileIndex+1:]...)
 
 	// Add to board
 	rs.Players[player].Board.AddTile(tile, x, y)
@@ -227,17 +227,17 @@ func (rs *RushState) PlayTile(player int, tile_id int, x int, y int) error {
 	return nil
 }
 
-func (rs *RushState) MoveTile(player int, tile_id int, x int, y int) error {
+func (rs *RushState) MoveTile(player int, tileID int, x int, y int) error {
 	if player >= len(rs.Players) {
 		return errors.New("not a valid player identifier")
 	}
 
-	if _, ok := rs.Players[player].Board.ToTile[tile_id]; !ok {
+	if _, ok := rs.Players[player].Board.ToTile[tileID]; !ok {
 		return errors.New("not a valid tile identifier")
 	}
 
 	// Move the tile on the board
-	rs.Players[player].Board.MoveTile(tile_id, x, y)
+	rs.Players[player].Board.MoveTile(tileID, x, y)
 
 	return nil
 }
@@ -257,20 +257,20 @@ func (rs *RushState) swapTilesOnBoard(player int, first int, second int) error {
 	return nil
 }
 
-func (rs *RushState) swapTileHandToBoard(player int, hand_tile int, board_tile int) error {
-	// board_tile is a Tile ID
-	// hand_tile is an index in Hand
+func (rs *RushState) swapTileHandToBoard(player int, handTile int, boardTile int) error {
+	// boardTile is a Tile ID
+	// handTile is an index in Hand
 
 	// Grab the tile from the board and place it in the hand
-	var tile = rs.Players[player].Board.ToTile[board_tile]
-	var pos = rs.Players[player].Board.PositionsOf[board_tile]
-	rs.Players[player].Board.RemoveTile(board_tile)
+	var tile = rs.Players[player].Board.ToTile[boardTile]
+	var pos = rs.Players[player].Board.PositionsOf[boardTile]
+	rs.Players[player].Board.RemoveTile(boardTile)
 
 	rs.Players[player].Hand = append(rs.Players[player].Hand, tile)
 
 	// Grab the tile from the hand and place it on the board
-	tile = rs.Players[player].Hand[hand_tile]
-	rs.Players[player].Hand = append(rs.Players[player].Hand[:hand_tile], rs.Players[player].Hand[hand_tile+1:]...)
+	tile = rs.Players[player].Hand[handTile]
+	rs.Players[player].Hand = append(rs.Players[player].Hand[:handTile], rs.Players[player].Hand[handTile+1:]...)
 	rs.Players[player].Board.AddTile(tile, pos.X, pos.Y)
 
 	return nil
@@ -281,35 +281,35 @@ func (rs *RushState) SwapTile(player int, first int, second int) error {
 		return errors.New("not a valid player identifier")
 	}
 
-	var first_index int
-	var first_ok bool
-	first_index, first_ok = rs.Players[player].FindTile(first)
+	var firstIndex int
+	var firstOk bool
+	firstIndex, firstOk = rs.Players[player].FindTile(first)
 
-	var second_index int
-	var second_ok bool
-	second_index, second_ok = rs.Players[player].FindTile(second)
+	var secondIndex int
+	var secondOk bool
+	secondIndex, secondOk = rs.Players[player].FindTile(second)
 
-	if first_ok && second_ok {
+	if firstOk && secondOk {
 		// Since the order of the hand is an implementation detail, we can safely
 		// make this a no-op.
 		return nil
-	} else if first_ok {
-		return rs.swapTileHandToBoard(player, first_index, second)
-	} else if second_ok {
-		return rs.swapTileHandToBoard(player, second_index, first)
+	} else if firstOk {
+		return rs.swapTileHandToBoard(player, firstIndex, second)
+	} else if secondOk {
+		return rs.swapTileHandToBoard(player, secondIndex, first)
 	}
 
 	return rs.swapTilesOnBoard(player, first, second)
 }
 
-func (rs *RushState) RecallTile(player int, tile_id int) error {
+func (rs *RushState) RecallTile(player int, tileID int) error {
 	if player >= len(rs.Players) {
 		return errors.New("not a valid player identifier")
 	}
 
 	var tile LetterTile
 	var ok bool
-	if tile, ok = rs.Players[player].Board.ToTile[tile_id]; !ok {
+	if tile, ok = rs.Players[player].Board.ToTile[tileID]; !ok {
 		return errors.New("not a valid tile identifier on the board")
 	}
 
@@ -319,7 +319,7 @@ func (rs *RushState) RecallTile(player int, tile_id int) error {
 	return nil
 }
 
-func (rs *RushState) Discard(player int, tile_id int) error {
+func (rs *RushState) Discard(player int, tileID int) error {
 	if player >= len(rs.Players) {
 		return errors.New("not a valid player identifier")
 	}
@@ -330,17 +330,17 @@ func (rs *RushState) Discard(player int, tile_id int) error {
 
 	// It is safe to ignore this error: we first recall the tile from the board
 	// if it was there. Then we can discard it out of the hand and re-add it.
-	_ = rs.RecallTile(player, tile_id)
+	_ = rs.RecallTile(player, tileID)
 
-	var tile_index int
+	var tileIndex int
 	var found bool
-	if tile_index, found = rs.Players[player].FindTile(tile_id); !found {
+	if tileIndex, found = rs.Players[player].FindTile(tileID); !found {
 		return errors.New("unable to find tile in hand")
 	}
 
 	// Save existing tile and remove from hand
-	var tile LetterTile = rs.Players[player].Hand[tile_index]
-	rs.Players[player].Hand = append(rs.Players[player].Hand[:tile_index], rs.Players[player].Hand[tile_index+1:]...)
+	var tile LetterTile = rs.Players[player].Hand[tileIndex]
+	rs.Players[player].Hand = append(rs.Players[player].Hand[:tileIndex], rs.Players[player].Hand[tileIndex+1:]...)
 
 	// Draw new tiles before re-adding tile from hand.
 	err := rs.DrawTiles(player, rs.Config.DiscardPenalty)
@@ -356,7 +356,7 @@ func (rs *RushState) Discard(player int, tile_id int) error {
 	return nil
 }
 
-func (rs *RushState) Draw(player int, last_id int) error {
+func (rs *RushState) Draw(player int, lastID int) error {
 	if player >= len(rs.Players) {
 		return errors.New("not a valid player identifier")
 	}
@@ -365,7 +365,7 @@ func (rs *RushState) Draw(player int, last_id int) error {
 		return errors.New("unable to draw while tiles remaining in hand")
 	}
 
-	if rs.DrawID > last_id {
+	if rs.DrawID > lastID {
 		return errors.New("unable to draw with old draw id")
 	}
 
@@ -373,15 +373,15 @@ func (rs *RushState) Draw(player int, last_id int) error {
 		return errors.New("unable to draw because of invalid board: " + err.Error())
 	}
 
-	var tiles_needed = rs.Config.DrawSize * rs.Config.NumPlayers
-	if tiles_needed >= len(rs.Tiles) {
+	var tilesNeeded = rs.Config.DrawSize * rs.Config.NumPlayers
+	if tilesNeeded >= len(rs.Tiles) {
 		return errors.New("game is over; unable to satisfy draw requirements")
 	}
 
 	// Draw for all players
-	rs.DrawID += 1
-	for player_index := range rs.Players {
-		if err := rs.DrawTiles(player_index, rs.Config.DrawSize); err != nil {
+	rs.DrawID++
+	for playerIndex := range rs.Players {
+		if err := rs.DrawTiles(playerIndex, rs.Config.DrawSize); err != nil {
 			return err
 		}
 	}

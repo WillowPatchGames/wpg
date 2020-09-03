@@ -12,7 +12,7 @@ type HTTPRequestHandler interface {
 }
 
 func SendResponse(w http.ResponseWriter, r *http.Request, obj HTTPRequestHandler) {
-	resp_data, err := json.Marshal(obj.GetResponse())
+	respData, err := json.Marshal(obj.GetResponse())
 	if err != nil {
 		api_errors.WriteError(w, err, true)
 		return
@@ -20,7 +20,7 @@ func SendResponse(w http.ResponseWriter, r *http.Request, obj HTTPRequestHandler
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if _, err = w.Write(resp_data); err != nil {
+	if _, err = w.Write(respData); err != nil {
 		return
 	}
 

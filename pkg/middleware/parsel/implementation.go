@@ -31,7 +31,7 @@ type parselmouth struct {
 }
 
 type visitor interface {
-	Visit(field reflect.Value, tag_data string, debug bool) error
+	Visit(field reflect.Value, tagData string, debug bool) error
 }
 
 func isContentType(header string, value string) bool {

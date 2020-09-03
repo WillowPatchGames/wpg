@@ -8,7 +8,7 @@ import (
 
 type PlayerData struct {
 	// Identifier of the user in the internal database.
-	Uid uint64 `json:"user_id"`
+	UID uint64 `json:"user_id"`
 
 	// Index of this player in the internal game state, because they use an
 	// array of players instead of using the uid.
@@ -69,9 +69,9 @@ type MessageHeader struct {
 	ReplyTo     int    `json:"reply_to,omitempty"`
 }
 
-// Contollers wrap game data and handle the parsing of messages from the
+// Controller wraps game data and handles the parsing of messages from the
 // websocket or other connection. dispatch.go handles the actual dispatch
-// into game specific commands.
+// into game specific commands understood by a game implementation.
 type Controller struct {
 	lock   sync.Mutex
 	ToGame map[uint64]GameData `json:"games"`
@@ -81,18 +81,18 @@ func (c *Controller) Init() {
 	c.ToGame = make(map[uint64]GameData)
 }
 
-func (c *Controller) AddGame(mode_repr string, gid uint64, config interface{}) error {
+func (c *Controller) AddGame(modeRepr string, gid uint64, config interface{}) error {
 	if _, ok := c.ToGame[gid]; ok {
 		return errors.New("game with specified id already exists in controller")
 	}
 
-	var mode GameMode = GameModeFromString(mode_repr)
+	var mode GameMode = GameModeFromString(modeRepr)
 	if !mode.IsValid() {
-		return errors.New("unknown game mode: " + mode_repr)
+		return errors.New("unknown game mode: " + modeRepr)
 	}
 
 	if mode != RushGame {
-		panic("Valid but unsupported game mode: " + mode_repr)
+		panic("Valid but unsupported game mode: " + modeRepr)
 	}
 
 	var rushConfig *RushConfig = config.(*RushConfig)
@@ -123,10 +123,10 @@ func (c *Controller) Dispatch(message []byte) error {
 	var mode string
 	var gid uint64
 	var uid uint64
-	var msg_type string
+	var msgType string
 	var err error
 
-	mode, gid, uid, msg_type, err = getMessageModeAndID(message)
+	mode, gid, uid, msgType, err = getMessageModeAndID(message)
 	if err != nil {
 		return err
 	}
@@ -135,19 +135,19 @@ func (c *Controller) Dispatch(message []byte) error {
 		return errors.New("unknown type of message")
 	}
 
-	game_data, ok := c.ToGame[gid]
-	if !ok || game_data.State == nil {
+	gameData, ok := c.ToGame[gid]
+	if !ok || gameData.State == nil {
 		return errors.New("unable to find game by id")
 	}
 
-	if game_data.Mode.String() != mode {
+	if gameData.Mode.String() != mode {
 		return errors.New("game modes don't match internal expectations")
 	}
 
-	player_data, ok := game_data.ToPlayer[uid]
+	playerData, ok := gameData.ToPlayer[uid]
 	if !ok {
 		return errors.New("user isn't playing this game")
 	}
 
-	return c.dispatch(message, game_data, msg_type, player_data)
+	return c.dispatch(message, gameData, msgType, playerData)
 }

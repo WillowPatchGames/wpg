@@ -16,7 +16,7 @@ import (
 type queryHandlerData struct {
 	GameID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"GameID,omitempty"`
 	JoinCode string `json:"join,omitempty" query:"join,omitempty" route:"JoinCode,omitempty"`
-	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type queryHandlerResponse struct {
@@ -48,7 +48,7 @@ func (handle *QueryHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *QueryHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *QueryHandler) SetUser(user *models.UserModel) {
@@ -71,7 +71,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var game models.GameModel
 
 	if handle.req.GameID > 0 {
-		err = game.FromId(tx, handle.req.GameID)
+		err = game.FromID(tx, handle.req.GameID)
 	} else {
 		err = game.FromJoinCode(tx, handle.req.JoinCode)
 	}
@@ -87,7 +87,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var owner models.UserModel
-	err = owner.FromId(tx, game.OwnerId)
+	err = owner.FromID(tx, game.OwnerID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			log.Print("Unable to rollback:", rollbackErr)
@@ -99,9 +99,9 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var room *models.RoomModel
-	if game.RoomId > 0 {
+	if game.RoomID > 0 {
 		room = new(models.RoomModel)
-		err = room.FromId(tx, game.RoomId)
+		err = room.FromID(tx, game.RoomID)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				log.Print("Unable to rollback:", rollbackErr)
@@ -120,10 +120,10 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.GameID = game.Id
-	handle.resp.Owner = owner.Id
+	handle.resp.GameID = game.ID
+	handle.resp.Owner = owner.ID
 	if room != nil {
-		handle.resp.Room = room.Id
+		handle.resp.Room = room.ID
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open

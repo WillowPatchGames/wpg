@@ -9,7 +9,7 @@ import (
 )
 
 type UserModel struct {
-	Id       uint64
+	ID       uint64
 	username sql.NullString
 	Username string
 	Display  string
@@ -18,13 +18,13 @@ type UserModel struct {
 	Guest    bool
 }
 
-func (user *UserModel) FromId(transaction *sql.Tx, id uint64) error {
+func (user *UserModel) FromID(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetUserFromID)
 	if err != nil {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&user.Id, &user.username, &user.Display, &user.email, &user.Guest)
+	err = stmt.QueryRow(id).Scan(&user.ID, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (user *UserModel) FromUsername(transaction *sql.Tx, name string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(name).Scan(&user.Id, &user.username, &user.Display, &user.email, &user.Guest)
+	err = stmt.QueryRow(name).Scan(&user.ID, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (user *UserModel) FromEmail(transaction *sql.Tx, mail string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(mail).Scan(&user.Id, &user.username, &user.Display, &user.email, &user.Guest)
+	err = stmt.QueryRow(mail).Scan(&user.ID, &user.username, &user.Display, &user.email, &user.Guest)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (user *UserModel) FromAPIToken(transaction *sql.Tx, token string) error {
 		return err
 	}
 
-	return user.FromId(transaction, auth.UserId)
+	return user.FromID(transaction, auth.UserID)
 }
 
 func (user *UserModel) Create(transaction *sql.Tx) error {
@@ -116,7 +116,7 @@ func (user *UserModel) Create(transaction *sql.Tx) error {
 			return err
 		}
 
-		err = stmt.QueryRow(user.Username, user.Display, user.Email, user.Guest).Scan(&user.Id)
+		err = stmt.QueryRow(user.Username, user.Display, user.Email, user.Guest).Scan(&user.ID)
 		if err != nil {
 			return err
 		}
@@ -129,7 +129,7 @@ func (user *UserModel) Create(transaction *sql.Tx) error {
 		return err
 	}
 
-	err = stmt.QueryRow(user.Display, user.Guest).Scan(&user.Id)
+	err = stmt.QueryRow(user.Display, user.Guest).Scan(&user.ID)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (user *UserModel) Create(transaction *sql.Tx) error {
 }
 
 func (user *UserModel) Save(transaction *sql.Tx) error {
-	if user.Id == 0 {
+	if user.ID == 0 {
 		panic("Unitialized user object passed to Save")
 	}
 
@@ -161,7 +161,7 @@ func (user *UserModel) Save(transaction *sql.Tx) error {
 		user.email.Valid = true
 	}
 
-	_, err = stmt.Exec(user.username, user.email, user.Display, user.Guest, user.Id)
+	_, err = stmt.Exec(user.username, user.email, user.Display, user.Guest, user.ID)
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (user *UserModel) Save(transaction *sql.Tx) error {
 }
 
 func (user *UserModel) SetPassword(transaction *sql.Tx, pass string) error {
-	if user.Id == 0 {
+	if user.ID == 0 {
 		panic("Unitialized user object passed to SetPassword")
 	}
 
@@ -191,7 +191,7 @@ func (user *UserModel) SetPassword(transaction *sql.Tx, pass string) error {
 		return err
 	}
 
-	_, err = stmt.Exec(user.Id, serialized)
+	_, err = stmt.Exec(user.ID, serialized)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (user *UserModel) getPassword(transaction *sql.Tx) (string, error) {
 		return "", err
 	}
 
-	err = stmt.QueryRow(user.Id).Scan(&result)
+	err = stmt.QueryRow(user.ID).Scan(&result)
 	if err != nil {
 		return "", err
 	}
@@ -222,7 +222,7 @@ func (user *UserModel) getPassword(transaction *sql.Tx) (string, error) {
 }
 
 func (user *UserModel) ComparePassword(transaction *sql.Tx, given string) error {
-	if user.Id == 0 {
+	if user.ID == 0 {
 		panic("Uninitialized user object passed to ComparePassword")
 	}
 

@@ -22,39 +22,39 @@ type RouteVisitor struct {
 	vars map[string]string
 }
 
-func (r RouteVisitor) parseFieldTag(tag_data string) (string, bool, bool) {
-	if tag_data == "-" || tag_data == "" {
+func (r RouteVisitor) parseFieldTag(tagData string) (string, bool, bool) {
+	if tagData == "-" || tagData == "" {
 		return "", false, false
 	}
 
-	var tag_parts []string = strings.Split(tag_data, ",")
-	if len(tag_parts) == 0 {
+	var tagParts []string = strings.Split(tagData, ",")
+	if len(tagParts) == 0 {
 		return "", false, false
 	}
 
-	var field_name string = tag_parts[0]
+	var fieldName string = tagParts[0]
 	var omitempty bool = false
 	var present bool = false
 
-	_, present = r.vars[field_name]
+	_, present = r.vars[fieldName]
 
-	if len(tag_parts) == 1 {
-		return field_name, omitempty, present
+	if len(tagParts) == 1 {
+		return fieldName, omitempty, present
 	}
 
-	for index, part := range tag_parts[1:] {
+	for index, part := range tagParts[1:] {
 		if part == "omitempty" {
 			omitempty = true
 		} else {
-			panic("unkown tag part at index " + strconv.Itoa(index+1) + ": `" + tag_data + "`: " + part)
+			panic("unkown tag part at index " + strconv.Itoa(index+1) + ": `" + tagData + "`: " + part)
 		}
 	}
 
-	return field_name, omitempty, present
+	return fieldName, omitempty, present
 }
 
-func (r RouteVisitor) Visit(field reflect.Value, tag_data string, debug bool) error {
-	key, omitempty, present := r.parseFieldTag(tag_data)
+func (r RouteVisitor) Visit(field reflect.Value, tagData string, debug bool) error {
+	key, omitempty, present := r.parseFieldTag(tagData)
 	if !present {
 		if debug {
 			log.Println("tag not present in query string")
@@ -71,48 +71,48 @@ func (r RouteVisitor) Visit(field reflect.Value, tag_data string, debug bool) er
 	}
 
 	if field.Kind() == reflect.Bool {
-		b_value, err := strconv.ParseBool(value)
+		bValue, err := strconv.ParseBool(value)
 		if err != nil {
 			return err
 		}
 
 		if debug {
-			log.Println("Set boolean value:", b_value)
+			log.Println("Set boolean value:", bValue)
 		}
 
-		field.SetBool(b_value)
+		field.SetBool(bValue)
 	} else if field.Kind() == reflect.Int || field.Kind() == reflect.Int8 || field.Kind() == reflect.Int16 || field.Kind() == reflect.Int32 || field.Kind() == reflect.Int64 {
-		i_value, err := strconv.ParseInt(value, 10, 64)
+		iValue, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return err
 		}
 
 		if debug {
-			log.Println("Set int value:", i_value)
+			log.Println("Set int value:", iValue)
 		}
-		field.SetInt(i_value)
+		field.SetInt(iValue)
 	} else if field.Kind() == reflect.Uint || field.Kind() == reflect.Uint8 || field.Kind() == reflect.Uint16 || field.Kind() == reflect.Uint32 || field.Kind() == reflect.Uint64 {
-		u_value, err := strconv.ParseUint(value, 10, 64)
+		uValue, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
 			return err
 		}
 
 		if debug {
-			log.Println("Set uint value:", u_value)
+			log.Println("Set uint value:", uValue)
 		}
 
-		field.SetUint(u_value)
+		field.SetUint(uValue)
 	} else if field.Kind() == reflect.Float32 || field.Kind() == reflect.Float64 {
-		f_value, err := strconv.ParseFloat(value, 64)
+		fValue, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return err
 		}
 
 		if debug {
-			log.Println("Set float value:", f_value)
+			log.Println("Set float value:", fValue)
 		}
 
-		field.SetFloat(f_value)
+		field.SetFloat(fValue)
 	} else if field.Kind() == reflect.String {
 		field.SetString(value)
 	} else {

@@ -16,10 +16,10 @@ func hasLetterInHand(game *RushState, player int, letter string) int {
 }
 
 func validateTileIDs(t *testing.T, game *RushState) {
-	var have_c = false
-	var have_a = false
-	var have_t = false
-	var have_z = false
+	var haveC = false
+	var haveA = false
+	var haveT = false
+	var haveZ = false
 
 	for _, tile := range game.Tiles {
 		if tile.ID <= 0 {
@@ -31,35 +31,35 @@ func validateTileIDs(t *testing.T, game *RushState) {
 		}
 
 		if tile.Value == "C" {
-			have_c = true
+			haveC = true
 		}
 
 		if tile.Value == "A" {
-			have_a = true
+			haveA = true
 		}
 
 		if tile.Value == "T" {
-			have_t = true
+			haveT = true
 		}
 
 		if tile.Value == "Z" {
-			have_z = true
+			haveZ = true
 		}
 	}
 
-	if !have_c {
+	if !haveC {
 		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "C", 0})
 	}
 
-	if !have_a {
+	if !haveA {
 		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "A", 0})
 	}
 
-	if !have_t {
+	if !haveT {
 		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "T", 0})
 	}
 
-	if !have_z {
+	if !haveZ {
 		game.Tiles = append(game.Tiles, LetterTile{len(game.Tiles) + 1, "", "Z", 0})
 	}
 }
@@ -92,28 +92,28 @@ func TestRushGame(t *testing.T) {
 	// Try and spell "cat" with player one; dump random tiles until we find
 	// enough letters.
 	for hasLetterInHand(&game, player, "C") == -1 || hasLetterInHand(&game, player, "A") == -1 || hasLetterInHand(&game, player, "T") == -1 || hasLetterInHand(&game, player, "Z") == -1 {
-		var tile_to_discard = -1
+		var tileToDiscard = -1
 		for _, tile := range game.Players[player].Hand {
 			if tile.Value != "C" && tile.Value != "A" && tile.Value != "T" && tile.Value != "Z" {
-				tile_to_discard = tile.ID
+				tileToDiscard = tile.ID
 				break
 			}
 		}
 
-		if tile_to_discard == -1 {
+		if tileToDiscard == -1 {
 			t.Error("Unable to find suitable tile to discard")
 		}
 
-		if err := game.Discard(player, tile_to_discard); err != nil {
+		if err := game.Discard(player, tileToDiscard); err != nil {
 			t.Error("Unable to discard tile", err)
 		}
 	}
 
 	// We should now have all tiles in our hand. Play them on the board.
 	{
-		tile_id := hasLetterInHand(&game, player, "C")
-		if err := game.PlayTile(player, tile_id, 0, 0); err != nil {
-			t.Fatal("Unable to play C tile on board", err, tile_id)
+		tileID := hasLetterInHand(&game, player, "C")
+		if err := game.PlayTile(player, tileID, 0, 0); err != nil {
+			t.Fatal("Unable to play C tile on board", err, tileID)
 		}
 
 		// Validate that "c" on the board is invalid due to size constraints.
@@ -121,9 +121,9 @@ func TestRushGame(t *testing.T) {
 			t.Fatal("Expected `c` board to be invalid but was valid", err)
 		}
 
-		tile_id = hasLetterInHand(&game, player, "T")
-		if err := game.PlayTile(player, tile_id, 0, 2); err != nil {
-			t.Fatal("Unable to play T tile on board", err, tile_id)
+		tileID = hasLetterInHand(&game, player, "T")
+		if err := game.PlayTile(player, tileID, 0, 2); err != nil {
+			t.Fatal("Unable to play T tile on board", err, tileID)
 		}
 
 		// Validate that "c t" on the board is invalid due to connectivity
@@ -132,9 +132,9 @@ func TestRushGame(t *testing.T) {
 			t.Fatal("Expected `c t` board to be invalid but was valid:", err)
 		}
 
-		tile_id = hasLetterInHand(&game, player, "A")
-		if err := game.PlayTile(player, tile_id, 0, 1); err != nil {
-			t.Fatal("Unable to play A tile on board:", err, tile_id)
+		tileID = hasLetterInHand(&game, player, "A")
+		if err := game.PlayTile(player, tileID, 0, 1); err != nil {
+			t.Fatal("Unable to play A tile on board:", err, tileID)
 		}
 
 		// Validate that "cat" on the board is valid.
@@ -145,9 +145,9 @@ func TestRushGame(t *testing.T) {
 
 	// Now play the Z and make sure the board isn't valid still.
 	{
-		tile_id := hasLetterInHand(&game, player, "Z")
-		if err := game.PlayTile(player, tile_id, 0, 3); err != nil {
-			t.Fatal("Unable to play Z tile on board:", err, tile_id)
+		tileID := hasLetterInHand(&game, player, "Z")
+		if err := game.PlayTile(player, tileID, 0, 3); err != nil {
+			t.Fatal("Unable to play Z tile on board:", err, tileID)
 		}
 
 		// Validate that "catz" on the board is invalid.
@@ -156,7 +156,7 @@ func TestRushGame(t *testing.T) {
 		}
 
 		// Recall the Z
-		if err := game.RecallTile(player, tile_id); err != nil {
+		if err := game.RecallTile(player, tileID); err != nil {
 			t.Fatal("Unable to recall Z from board:", err)
 		}
 	}

@@ -16,7 +16,7 @@ import (
 type queryHandlerData struct {
 	RoomID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"RoomID,omitempty"`
 	JoinCode string `json:"join,omitempty" query:"join,omitempty" route:"JoinCode,omitempty"`
-	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type queryHandlerResponse struct {
@@ -47,7 +47,7 @@ func (handle *QueryHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *QueryHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *QueryHandler) SetUser(user *models.UserModel) {
@@ -70,7 +70,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var room models.RoomModel
 
 	if handle.req.RoomID > 0 {
-		err = room.FromId(tx, handle.req.RoomID)
+		err = room.FromID(tx, handle.req.RoomID)
 	} else {
 		err = room.FromJoinCode(tx, handle.req.JoinCode)
 	}
@@ -86,7 +86,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var owner models.UserModel
-	err = owner.FromId(tx, room.OwnerId)
+	err = owner.FromID(tx, room.OwnerID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			log.Print("Unable to rollback:", rollbackErr)
@@ -116,15 +116,15 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.RoomID = room.Id
-	handle.resp.Owner = owner.Id
+	handle.resp.RoomID = room.ID
+	handle.resp.Owner = owner.ID
 	handle.resp.Style = room.Style
 	handle.resp.Open = room.Open
 
 	if len(games) > 0 {
 		handle.resp.CurrentGames = make([]uint64, len(games))
 		for index, game := range games {
-			handle.resp.CurrentGames[index] = game.Id
+			handle.resp.CurrentGames[index] = game.ID
 		}
 	}
 

@@ -44,14 +44,14 @@ type RushPlay struct {
 	Y      int `json:"y"`
 }
 
-func (c *Controller) dispatchRush(message []byte, data GameData, message_type string, player PlayerData) error {
+func (c *Controller) dispatchRush(message []byte, data GameData, messageType string, player PlayerData) error {
 	var err error
 	var state *RushState = data.State.(*RushState)
 	if state == nil {
 		panic("internal state is nil; this shouldn't happen when the game is started")
 	}
 
-	switch message_type {
+	switch messageType {
 	case "play":
 		var data RushPlay
 		if err := json.Unmarshal(message, &data); err != nil {
@@ -123,10 +123,10 @@ func (c *Controller) dispatchRush(message []byte, data GameData, message_type st
 	return err
 }
 
-func (c *Controller) dispatch(message []byte, data GameData, message_type string, player PlayerData) error {
+func (c *Controller) dispatch(message []byte, data GameData, messageType string, player PlayerData) error {
 	if data.Mode != RushGame {
 		panic("Valid but unsupported game mode: " + data.Mode.String())
 	}
 
-	return c.dispatchRush(message, data, message_type, player)
+	return c.dispatchRush(message, data, messageType, player)
 }

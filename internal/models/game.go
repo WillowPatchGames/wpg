@@ -9,29 +9,29 @@ import (
 )
 
 type GameModel struct {
-	Id        uint64
-	OwnerId   uint64
+	ID        uint64
+	OwnerID   uint64
 	roomid    sql.NullInt64
-	RoomId    uint64
+	RoomID    uint64
 	Style     string
 	Open      bool
 	JoinCode  string
 	Lifecycle string
 }
 
-func (game *GameModel) FromId(transaction *sql.Tx, id uint64) error {
+func (game *GameModel) FromID(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetGameFromID)
 	if err != nil {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&game.Id, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(id).Scan(&game.ID, &game.OwnerID, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
 
 	if game.roomid.Valid {
-		game.RoomId = uint64(game.roomid.Int64)
+		game.RoomID = uint64(game.roomid.Int64)
 	}
 
 	err = stmt.Close()
@@ -48,13 +48,13 @@ func (game *GameModel) FromJoinCode(transaction *sql.Tx, code string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(code).Scan(&game.Id, &game.OwnerId, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
+	err = stmt.QueryRow(code).Scan(&game.ID, &game.OwnerID, &game.roomid, &game.Style, &game.Open, &game.JoinCode, &game.Lifecycle)
 	if err != nil {
 		return err
 	}
 
 	if game.roomid.Valid {
-		game.RoomId = uint64(game.roomid.Int64)
+		game.RoomID = uint64(game.roomid.Int64)
 	}
 
 	err = stmt.Close()
@@ -77,10 +77,10 @@ func (game *GameModel) Create(transaction *sql.Tx) error {
 
 	game.Lifecycle = "pending"
 
-	game.roomid.Valid = (game.RoomId != 0)
-	game.roomid.Int64 = int64(game.RoomId)
+	game.roomid.Valid = (game.RoomID != 0)
+	game.roomid.Int64 = int64(game.RoomID)
 
-	err = stmt.QueryRow(game.OwnerId, game.roomid, game.Style, game.Open, game.JoinCode).Scan(&game.Id)
+	err = stmt.QueryRow(game.OwnerID, game.roomid, game.Style, game.Open, game.JoinCode).Scan(&game.ID)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (game *GameModel) Save(transaction *sql.Tx) error {
 		return err
 	}
 
-	_, err = stmt.Exec(game.Style, game.Lifecycle, game.Id)
+	_, err = stmt.Exec(game.Style, game.Lifecycle, game.ID)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (game *GameModel) Save(transaction *sql.Tx) error {
 
 func (game *GameModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
-	err := user.FromId(transaction, game.OwnerId)
+	err := user.FromID(transaction, game.OwnerID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +112,12 @@ func (game *GameModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 }
 
 func (game *GameModel) GetRoom(transaction *sql.Tx) (*RoomModel, error) {
-	if game.RoomId == 0 {
+	if game.RoomID == 0 {
 		return nil, nil
 	}
 
 	var room *RoomModel = new(RoomModel)
-	err := room.FromId(transaction, game.RoomId)
+	err := room.FromID(transaction, game.RoomID)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (game *GameModel) GetConfig(transaction *sql.Tx, object interface{}) error 
 		return err
 	}
 
-	err = stmt.QueryRow(game.Id).Scan(&serialized)
+	err = stmt.QueryRow(game.ID).Scan(&serialized)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (game *GameModel) SetConfig(transaction *sql.Tx, object interface{}) error 
 		return err
 	}
 
-	_, err = stmt.Exec(string(serialized), game.Id)
+	_, err = stmt.Exec(string(serialized), game.ID)
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func (game *GameModel) GetState(transaction *sql.Tx, object interface{}) error {
 		return err
 	}
 
-	err = stmt.QueryRow(game.Id).Scan(&serialized)
+	err = stmt.QueryRow(game.ID).Scan(&serialized)
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func (game *GameModel) SetState(transaction *sql.Tx, object interface{}) error {
 		return err
 	}
 
-	_, err = stmt.Exec(string(serialized), game.Id)
+	_, err = stmt.Exec(string(serialized), game.ID)
 	if err != nil {
 		return err
 	}

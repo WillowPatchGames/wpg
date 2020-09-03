@@ -8,7 +8,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-var DefaultId string = "scrypt"
+var DefaultID string = "scrypt"
 var DefaultN int = 1 << 15
 var DefaultR int = 8
 var DefaultP int = 1
@@ -26,7 +26,7 @@ type Scrypt struct {
 func NewScrypt() *Scrypt {
 	var ret *Scrypt = new(Scrypt)
 
-	ret.Id = DefaultId
+	ret.ID = DefaultID
 	ret.N = DefaultN
 	ret.R = DefaultR
 	ret.P = DefaultP
@@ -68,11 +68,11 @@ func (s *Scrypt) Compare(password []byte) error {
 }
 
 func (s *Scrypt) Marshal() ([]byte, error) {
-	if s.Id == "" || s.Salt == nil || s.Value == nil {
+	if s.ID == "" || s.Salt == nil || s.Value == nil {
 		return nil, ErrInvalidObject
 	}
 
-	var ret string = "$" + s.Id
+	var ret string = "$" + s.ID
 	ret += ",N=" + strconv.Itoa(s.N)
 	ret += ",r=" + strconv.Itoa(s.R)
 	ret += ",p=" + strconv.Itoa(s.P)
@@ -83,7 +83,7 @@ func (s *Scrypt) Marshal() ([]byte, error) {
 	return []byte(ret), nil
 }
 
-func (s *Scrypt) unmarshalCheckId(src []byte, index int) (int, error) {
+func (s *Scrypt) unmarshalCheckID(src []byte, index int) (int, error) {
 	if len(src) <= index {
 		return index, ErrInvalidSerialization
 	}
@@ -96,14 +96,14 @@ func (s *Scrypt) unmarshalCheckId(src []byte, index int) (int, error) {
 			break
 		}
 
-		endIndex += 1
+		endIndex++
 	}
 
 	if startIndex == endIndex {
 		return index, ErrInvalidSerialization
 	}
 
-	s.Id = string(src[startIndex:endIndex])
+	s.ID = string(src[startIndex:endIndex])
 
 	return endIndex, nil
 }
@@ -121,7 +121,7 @@ func (s *Scrypt) unmarshalParseParameters(src []byte, index int) (int, error) {
 		if src[index] != ',' {
 			return index, ErrInvalidSerialization
 		}
-		index += 1
+		index++
 
 		if len(src) <= index {
 			return index, ErrInvalidSerialization
@@ -198,7 +198,7 @@ func (s *Scrypt) unmarshalParseBase64(src []byte, index int) ([]byte, int, error
 			break
 		}
 
-		endIndex += 1
+		endIndex++
 	}
 
 	if startIndex == endIndex {
@@ -227,9 +227,9 @@ func (s *Scrypt) Unmarshal(src []byte) error {
 	if src[index] != '$' {
 		return ErrInvalidSerialization
 	}
-	index += 1
+	index++
 
-	index, err = s.unmarshalCheckId(src, index)
+	index, err = s.unmarshalCheckID(src, index)
 	if err != nil {
 		return err
 	}
@@ -246,7 +246,7 @@ func (s *Scrypt) Unmarshal(src []byte) error {
 	if src[index] != '$' {
 		return ErrInvalidSerialization
 	}
-	index += 1
+	index++
 
 	s.Salt, index, err = s.unmarshalParseBase64(src, index)
 	if err != nil {
@@ -266,7 +266,7 @@ func (s *Scrypt) Unmarshal(src []byte) error {
 	if src[index] != '$' {
 		return ErrInvalidSerialization
 	}
-	index += 1
+	index++
 
 	s.Value, _, err = s.unmarshalParseBase64(src, index)
 	if err != nil {

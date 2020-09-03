@@ -19,7 +19,7 @@ type createHandlerData struct {
 	Style    string          `json:"style"`
 	Open     bool            `json:"open"`
 	Config   *RushGameConfig `json:"config"`
-	ApiToken string          `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string          `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type createHandlerResponse struct {
@@ -52,7 +52,7 @@ func (handle *CreateHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *CreateHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *CreateHandler) SetUser(user *models.UserModel) {
@@ -87,7 +87,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var room *models.RoomModel
 	if handle.req.RoomID > 0 {
 		room = new(models.RoomModel)
-		err = room.FromId(tx, handle.req.RoomID)
+		err = room.FromID(tx, handle.req.RoomID)
 		if err != nil {
 			log.Print("Get room?")
 			api_errors.WriteError(w, err, true)
@@ -96,9 +96,9 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var game models.GameModel
-	game.OwnerId = handle.user.Id
+	game.OwnerID = handle.user.ID
 	if room != nil {
-		game.RoomId = room.Id
+		game.RoomID = room.ID
 	}
 	game.Style = handle.req.Style
 	game.Open = handle.req.Open
@@ -137,10 +137,10 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.GameID = game.Id
-	handle.resp.Owner = handle.user.Id
+	handle.resp.GameID = game.ID
+	handle.resp.Owner = handle.user.ID
 	if room != nil {
-		handle.resp.Room = room.Id
+		handle.resp.Room = room.ID
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open

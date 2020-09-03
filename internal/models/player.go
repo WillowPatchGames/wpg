@@ -9,20 +9,20 @@ import (
 )
 
 type PlayerModel struct {
-	Id         uint64
-	GameId     uint64
-	UserId     uint64
+	ID         uint64
+	GameID     uint64
+	UserID     uint64
 	Class      string
 	InviteCode string
 }
 
-func (player *PlayerModel) FromId(transaction *sql.Tx, id uint64) error {
+func (player *PlayerModel) FromID(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetPlayerFromID)
 	if err != nil {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&player.Id, &player.GameId, &player.UserId, &player.Class, &player.InviteCode)
+	err = stmt.QueryRow(id).Scan(&player.ID, &player.GameID, &player.UserID, &player.Class, &player.InviteCode)
 	if err != nil {
 		return err
 	}
@@ -35,13 +35,13 @@ func (player *PlayerModel) FromId(transaction *sql.Tx, id uint64) error {
 	return nil
 }
 
-func (player *PlayerModel) FromIds(transaction *sql.Tx, game_id uint64, user_id uint64) error {
+func (player *PlayerModel) FromIDs(transaction *sql.Tx, gameID uint64, userID uint64) error {
 	stmt, err := transaction.Prepare(database.GetPlayerFromIDs)
 	if err != nil {
 		return err
 	}
 
-	err = stmt.QueryRow(game_id, user_id).Scan(&player.Id, &player.GameId, &player.UserId, &player.Class, &player.InviteCode)
+	err = stmt.QueryRow(gameID, userID).Scan(&player.ID, &player.GameID, &player.UserID, &player.Class, &player.InviteCode)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (player *PlayerModel) Create(transaction *sql.Tx) error {
 	}
 	player.InviteCode = utils.RandomWords()
 
-	err = stmt.QueryRow(player.GameId, player.UserId, player.Class, player.InviteCode).Scan(&player.Id)
+	err = stmt.QueryRow(player.GameID, player.UserID, player.Class, player.InviteCode).Scan(&player.ID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (player *PlayerModel) Save(transaction *sql.Tx) error {
 		return err
 	}
 
-	_, err = stmt.Exec(player.Class, player.Id)
+	_, err = stmt.Exec(player.Class, player.ID)
 	if err != nil {
 		return err
 	}
@@ -89,13 +89,13 @@ func (player *PlayerModel) Save(transaction *sql.Tx) error {
 
 func (player *PlayerModel) GetGame(transaction *sql.Tx) (*GameModel, error) {
 	var game *GameModel = new(GameModel)
-	err := game.FromId(transaction, player.GameId)
+	err := game.FromID(transaction, player.GameID)
 	return game, err
 }
 
 func (player *PlayerModel) GetUser(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
-	err := user.FromId(transaction, player.UserId)
+	err := user.FromID(transaction, player.UserID)
 	return user, err
 }
 
@@ -107,7 +107,7 @@ func (player *PlayerModel) GetState(transaction *sql.Tx, object interface{}) err
 		return err
 	}
 
-	err = stmt.QueryRow(player.Id).Scan(&serialized)
+	err = stmt.QueryRow(player.ID).Scan(&serialized)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (player *PlayerModel) SetState(transaction *sql.Tx, object interface{}) err
 		return err
 	}
 
-	_, err = stmt.Exec(string(serialized), player.Id)
+	_, err = stmt.Exec(string(serialized), player.ID)
 	if err != nil {
 		return err
 	}

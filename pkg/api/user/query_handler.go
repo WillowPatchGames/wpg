@@ -17,7 +17,7 @@ type queryHandlerData struct {
 	UserID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
 	Username string `json:"username,omitempty" query:"username,omitempty" route:"Username,omitempty"`
 	Email    string `json:"email,omitempty" query:"email,omitempty" route:"Email,omitempty"`
-	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type queryHandlerResponse struct {
@@ -48,7 +48,7 @@ func (handle *QueryHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *QueryHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *QueryHandler) SetUser(user *models.UserModel) {
@@ -59,13 +59,13 @@ func (handle QueryHandler) verifyRequest() error {
 	var present int = 0
 
 	if handle.req.UserID != 0 {
-		present += 1
+		present++
 	}
 	if handle.req.Username != "" {
-		present += 1
+		present++
 	}
 	if handle.req.Email != "" {
-		present += 1
+		present++
 	}
 
 	if present == 0 {
@@ -96,7 +96,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var user models.UserModel
 	if handle.req.UserID != 0 {
-		err = user.FromId(tx, handle.req.UserID)
+		err = user.FromID(tx, handle.req.UserID)
 	} else if handle.req.Username != "" {
 		err = user.FromUsername(tx, handle.req.Username)
 	} else if handle.req.Email != "" {
@@ -120,10 +120,10 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.UserID = user.Id
+	handle.resp.UserID = user.ID
 	handle.resp.Display = user.Display
 
-	if handle.user != nil && handle.user.Id == user.Id {
+	if handle.user != nil && handle.user.ID == user.ID {
 		handle.resp.Username = user.Username
 		handle.resp.Email = user.Email
 		handle.resp.Guest = user.Guest

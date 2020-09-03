@@ -8,12 +8,11 @@ import (
 var ErrPasswordMismatch = errors.New("provided password doesn't match hash")
 var ErrInvalidObject = errors.New("invalid or uninitialized object provided")
 var ErrInvalidSerialization = errors.New("invalid data provided to Unmarshal")
-var ErrUnknownId = errors.New("unknown identifier or invalid id provided")
 
 type Crypt struct {
 	Crypter
 
-	Id    string
+	ID    string
 	Salt  []byte
 	Value []byte
 }
@@ -60,7 +59,7 @@ func parseInt(src []byte, index int) (int, int, error) {
 
 	if src[index] == '-' {
 		negative = true
-		index += 1
+		index++
 
 		if len(src) <= index {
 			return ret, index, ErrInvalidObject
@@ -73,7 +72,7 @@ func parseInt(src []byte, index int) (int, int, error) {
 
 	for isDigit(src, index) {
 		ret = (ret * 10) + int(src[index]-'0')
-		index += 1
+		index++
 		if len(src) <= index {
 			break
 		}

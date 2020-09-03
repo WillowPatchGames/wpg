@@ -7,7 +7,7 @@ import (
 func TestMarshal(t *testing.T) {
 	var obj *Scrypt = NewScrypt()
 
-	obj.Id = "scrypt"
+	obj.ID = "scrypt"
 	obj.N = 1
 	obj.R = 2
 	obj.P = 3
@@ -37,7 +37,7 @@ func TestUnmarshal(t *testing.T) {
 		t.Error(err)
 	}
 
-	if obj.Id != "scrypt" {
+	if obj.ID != "scrypt" {
 		t.Error(err)
 	}
 

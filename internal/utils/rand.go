@@ -50,23 +50,22 @@ func (cr *cryptoReader) Uint64() uint64 {
 
 var cr math_rand.Source64 = &cryptoReader{}
 
-// #nosec G404
-var SecureRand *math_rand.Rand = math_rand.New(cr)
+var SecureRand *math_rand.Rand = math_rand.New(cr) // #nosec G404
 
 // ===== Random Utils ===== //
 
-func RandomId() uint64 {
+func RandomID() uint64 {
 	var id uint64 = cr.Uint64()
 	id = (id % (idMax - idMin)) + idMin
 
-	if !IsValidId(id) {
-		panic("RandomId() generated an invalid identifier: " + fmt.Sprintf("%d", id))
+	if !IsValidID(id) {
+		panic("RandomID() generated an invalid identifier: " + fmt.Sprintf("%d", id))
 	}
 
 	return id
 }
 
-func IsValidId(id uint64) bool {
+func IsValidID(id uint64) bool {
 	return id >= idMin && id <= idMax
 }
 
@@ -136,7 +135,7 @@ func RandomWords() string {
 	var bits uint64 = 1
 	for mask < uint64(len(words)) {
 		mask = mask << 1
-		bits += 1
+		bits++
 	}
 	mask = mask - 1
 	for i := 0; i < numWords; i++ {
@@ -144,8 +143,8 @@ func RandomWords() string {
 			index = cr.Uint64()
 		}
 
-		var word_index = (index & mask) % uint64(len(words))
-		result = append(result, words[word_index])
+		var wordIndex = (index & mask) % uint64(len(words))
+		result = append(result, words[wordIndex])
 		index = index >> bits
 	}
 

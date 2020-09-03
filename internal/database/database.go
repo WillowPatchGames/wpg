@@ -2,28 +2,35 @@ package database
 
 import (
 	"database/sql"
+	// Required for postgres database connection, the only type we currently
+	// support. Ensures postgres dependency gets tracked in go.mod.
 	_ "github.com/lib/pq"
 )
 
-var DB *sql.DB
+// Database connection. Most
+var db *sql.DB
 
 func OpenDatabase(format string, conn string) error {
 	var err error
 
-	DB, err = sql.Open(format, conn)
+	db, err = sql.Open(format, conn)
 	if err != nil {
 		return err
 	}
 
-	err = DB.Ping()
+	err = db.Ping()
 	if err != nil {
-		_ = DB.Close()
+		_ = db.Close()
 		return err
 	}
 
 	return nil
 }
 
+func Close() error {
+	return db.Close()
+}
+
 func GetTransaction() (*sql.Tx, error) {
-	return DB.Begin()
+	return db.Begin()
 }

@@ -20,49 +20,49 @@ import (
 	"strconv"
 )
 
-func (p parselmouth) nestedReflect(obj interface{}, tag_key string, v visitor) error {
-	var v_obj reflect.Value = reflect.ValueOf(obj)
+func (p parselmouth) nestedReflect(obj interface{}, tagKey string, v visitor) error {
+	var vObj reflect.Value = reflect.ValueOf(obj)
 
-	for v_obj.Kind() == reflect.Ptr && !v_obj.IsNil() {
+	for vObj.Kind() == reflect.Ptr && !vObj.IsNil() {
 		if p.config.DebugLogging {
-			log.Println("parselmouth.nestedReflect(): Resolving object:", v_obj.String())
+			log.Println("parselmouth.nestedReflect(): Resolving object:", vObj.String())
 		}
 
-		v_obj = v_obj.Elem()
+		vObj = vObj.Elem()
 	}
 
-	if v_obj.Kind() == reflect.Ptr && v_obj.IsNil() {
+	if vObj.Kind() == reflect.Ptr && vObj.IsNil() {
 		return errors.New("parsel: invalid return from Parseltongue.GetObjectPointer: " + reflect.TypeOf(obj).String() + " -- eventual a nil pointer")
 	}
 
-	if v_obj.Kind() != reflect.Struct {
+	if vObj.Kind() != reflect.Struct {
 		return errors.New("parsel: invalid return from Parseltongue.GetObjectPointer: " + reflect.TypeOf(obj).String() + " -- not eventually a struct")
 	}
 
-	var t_obj reflect.Type = v_obj.Type()
+	var tObj reflect.Type = vObj.Type()
 
-	if v_obj.NumField() != t_obj.NumField() {
+	if vObj.NumField() != tObj.NumField() {
 		panic("parsel: unable to parse object with different number of fields in reflect.Value than reflect.Type(reflect.Value): " + reflect.TypeOf(obj).String())
 	}
 
-	for field_i := 0; field_i < t_obj.NumField(); field_i++ {
-		var sf_field reflect.StructField = t_obj.Field(field_i)
-		var v_field = v_obj.Field(field_i)
+	for fieldI := 0; fieldI < tObj.NumField(); fieldI++ {
+		var sfField reflect.StructField = tObj.Field(fieldI)
+		var vField = vObj.Field(fieldI)
 
 		if p.config.DebugLogging {
-			log.Println("parselmouth.nestedReflect(): Parsing field[" + strconv.Itoa(field_i) + "]: " + sf_field.Name + " == " + v_field.String())
+			log.Println("parselmouth.nestedReflect(): Parsing field[" + strconv.Itoa(fieldI) + "]: " + sfField.Name + " == " + vField.String())
 		}
 
-		for v_field.Kind() == reflect.Ptr && !v_field.IsNil() {
+		for vField.Kind() == reflect.Ptr && !vField.IsNil() {
 			if p.config.DebugLogging {
-				log.Println("parselmouth.nestedReflect(): Resolving field object:", v_field.String())
+				log.Println("parselmouth.nestedReflect(): Resolving field object:", vField.String())
 			}
 
-			v_field = v_field.Elem()
+			vField = vField.Elem()
 		}
 
-		if v_field.Kind() == reflect.Struct && v_field.CanInterface() {
-			err := p.nestedReflect(v_field.Interface(), tag_key, v)
+		if vField.Kind() == reflect.Struct && vField.CanInterface() {
+			err := p.nestedReflect(vField.Interface(), tagKey, v)
 			if err != nil {
 				return err
 			}
@@ -70,21 +70,21 @@ func (p parselmouth) nestedReflect(obj interface{}, tag_key string, v visitor) e
 			continue
 		}
 
-		if !v_field.CanSet() {
+		if !vField.CanSet() {
 			if p.config.DebugLogging {
-				log.Println("parselmouth.nestedReflect(): Skipping field[" + strconv.Itoa(field_i) + "]: " + sf_field.Name + " == " + v_field.String())
+				log.Println("parselmouth.nestedReflect(): Skipping field[" + strconv.Itoa(fieldI) + "]: " + sfField.Name + " == " + vField.String())
 			}
 
 			continue
 		}
 
-		tag_value, present := sf_field.Tag.Lookup(tag_key)
+		tagValue, present := sfField.Tag.Lookup(tagKey)
 		if present {
 			if p.config.DebugLogging {
-				log.Println("parselmouth.nestedReflect(): Visiting field with tag_key `" + tag_key + "` present on field: " + strconv.Itoa(field_i))
+				log.Println("parselmouth.nestedReflect(): Visiting field with tagKey `" + tagKey + "` present on field: " + strconv.Itoa(fieldI))
 			}
 
-			err := v.Visit(v_field, tag_value, p.config.DebugLogging)
+			err := v.Visit(vField, tagValue, p.config.DebugLogging)
 			if err != nil {
 				return err
 			}

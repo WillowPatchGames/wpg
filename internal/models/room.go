@@ -9,20 +9,20 @@ import (
 )
 
 type RoomModel struct {
-	Id       uint64
-	OwnerId  uint64
+	ID       uint64
+	OwnerID  uint64
 	Style    string
 	Open     bool
 	JoinCode string
 }
 
-func (room *RoomModel) FromId(transaction *sql.Tx, id uint64) error {
+func (room *RoomModel) FromID(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetRoomFromID)
 	if err != nil {
 		return err
 	}
 
-	err = stmt.QueryRow(id).Scan(&room.Id, &room.OwnerId, &room.Style, &room.Open, &room.JoinCode)
+	err = stmt.QueryRow(id).Scan(&room.ID, &room.OwnerID, &room.Style, &room.Open, &room.JoinCode)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (room *RoomModel) FromJoinCode(transaction *sql.Tx, code string) error {
 		return err
 	}
 
-	err = stmt.QueryRow(code).Scan(&room.Id, &room.OwnerId, &room.Style, &room.Open, &room.JoinCode)
+	err = stmt.QueryRow(code).Scan(&room.ID, &room.OwnerID, &room.Style, &room.Open, &room.JoinCode)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (room *RoomModel) Create(transaction *sql.Tx) error {
 		room.JoinCode = utils.RandomWords()
 	}
 
-	err = stmt.QueryRow(room.OwnerId, room.Style, room.Open, room.JoinCode).Scan(&room.Id)
+	err = stmt.QueryRow(room.OwnerID, room.Style, room.Open, room.JoinCode).Scan(&room.ID)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (room *RoomModel) Save(transaction *sql.Tx) error {
 		return err
 	}
 
-	_, err = stmt.Exec(room.Style, room.Id)
+	_, err = stmt.Exec(room.Style, room.ID)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (room *RoomModel) Save(transaction *sql.Tx) error {
 
 func (room *RoomModel) GetOwner(transaction *sql.Tx) (*UserModel, error) {
 	var user *UserModel = new(UserModel)
-	err := user.FromId(transaction, room.OwnerId)
+	err := user.FromID(transaction, room.OwnerID)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (room *RoomModel) GetCurrentGames(transaction *sql.Tx) ([]*GameModel, error
 		return nil, err
 	}
 
-	rows, err := stmt.Query(room.Id)
+	rows, err := stmt.Query(room.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (room *RoomModel) GetCurrentGames(transaction *sql.Tx) ([]*GameModel, error
 	var games []*GameModel = make([]*GameModel, len(ids))
 	for index, id := range ids {
 		games[index] = new(GameModel)
-		err = games[index].FromId(transaction, id)
+		err = games[index].FromID(transaction, id)
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +147,7 @@ func (room *RoomModel) GetConfig(transaction *sql.Tx, object interface{}) error 
 		return err
 	}
 
-	err = stmt.QueryRow(room.Id).Scan(&serialized)
+	err = stmt.QueryRow(room.ID).Scan(&serialized)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (room *RoomModel) SetConfig(transaction *sql.Tx, object interface{}) error 
 		return err
 	}
 
-	_, err = stmt.Exec(string(serialized), room.Id)
+	_, err = stmt.Exec(string(serialized), room.ID)
 	if err != nil {
 		return err
 	}

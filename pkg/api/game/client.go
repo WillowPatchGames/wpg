@@ -144,7 +144,7 @@ func (c *Client) writePump() {
 type socketHandlerRequest struct {
 	GameID   uint64 `query:"id,omitempty" route:"GameID,omitempty"`
 	UserID   uint64 `query:"user_id,omitempty" route:"UserID,omitempty"`
-	ApiToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 // SocketHandler is a handler for game connections
@@ -164,7 +164,7 @@ func (handle *SocketHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *SocketHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *SocketHandler) SetUser(user *models.UserModel) {
@@ -181,7 +181,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Verify user
 	var userdb models.UserModel
-	err = userdb.FromId(tx, handle.req.UserID)
+	err = userdb.FromID(tx, handle.req.UserID)
 	if err != nil {
 		log.Println(err)
 		api_errors.WriteError(w, err, true)
@@ -190,7 +190,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Verify game
 	var gamedb models.GameModel
-	err = gamedb.FromId(tx, handle.req.GameID)
+	err = gamedb.FromID(tx, handle.req.GameID)
 	if err != nil {
 		log.Println(err)
 		api_errors.WriteError(w, err, true)
@@ -218,7 +218,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	client := &Client{hub: handle.Hub, conn: conn, send: make(chan []byte, 256)}
 
 	// Connect Player to ActiveGame, Client to Hub
-	client.hub.register <- ClientRegister{client, gamedb.Id, userdb.Id}
+	client.hub.register <- ClientRegister{client, gamedb.ID, userdb.ID}
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.

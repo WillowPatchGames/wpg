@@ -110,7 +110,7 @@ func (hub *Hub) connectGame(gameid uint64) (*ActiveGame, error) {
 	defer game.txs.ReleaseTx(tx)
 
 	var gamedb models.GameModel
-	err = gamedb.FromId(tx, gameid)
+	err = gamedb.FromID(tx, gameid)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -163,7 +163,7 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 
 	// Make sure the player doesn't already have another client connection
 	for c := range hub.clients {
-		if hub.clients[c].model.GameId == gameid && hub.clients[c].model.UserId == userid {
+		if hub.clients[c].model.GameID == gameid && hub.clients[c].model.UserID == userid {
 			return nil, errors.New("player was already connected with different connection")
 		}
 	}
@@ -196,23 +196,23 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 	defer game.txs.ReleaseTx(tx)
 
 	var userdb models.UserModel
-	err = userdb.FromId(tx, userid)
+	err = userdb.FromID(tx, userid)
 	if err != nil {
 		return nil, err
 	}
 
 	class := "pending"
-	if userid == game.model.OwnerId {
+	if userid == game.model.OwnerID {
 		class = "player"
 	}
 	playerdb := models.PlayerModel{
-		GameId: gameid,
-		UserId: userid,
+		GameID: gameid,
+		UserID: userid,
 		Class:  class,
 	}
 	var state *PlayerState
 	// Maybe the player exists in the database already
-	err = playerdb.FromIds(tx, gameid, userid)
+	err = playerdb.FromIDs(tx, gameid, userid)
 	if err != nil {
 		// Nope, let's create it
 		err = playerdb.Create(tx)
@@ -247,7 +247,7 @@ func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*Ac
 		client: client,
 	}
 
-	game.players[userdb.Id] = player
+	game.players[userdb.ID] = player
 	hub.clients[client] = player
 
 	return player, nil
@@ -338,7 +338,7 @@ type Message struct {
 // JSONUser is a JSON user entry
 type JSONUser struct {
 	Display string `json:"display"`
-	Id      uint64 `json:"id"`
+	ID      uint64 `json:"id"`
 }
 
 // UserSnapshot is a snapshot paired with its user
@@ -392,10 +392,10 @@ func (hub *Hub) actOn(client *Client, buf string) {
 						}
 						if p.client != nil {
 							req := cmd.Request
-							if p.user.Id != player.user.Id {
+							if p.user.ID != player.user.ID {
 								req = ""
 							}
-							hub.sendJSONToClient(p.client, Message{Type: "gamestart", DrawNumber: 1, User: &JSONUser{player.user.Display, player.user.Id}, Letters: drawn, Request: req})
+							hub.sendJSONToClient(p.client, Message{Type: "gamestart", DrawNumber: 1, User: &JSONUser{player.user.Display, player.user.ID}, Letters: drawn, Request: req})
 						}
 					}
 					err = game.model.SetState(tx, &game.state)
@@ -423,7 +423,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 						log.Println(err)
 						// no return
 					}
-					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Id}})
+					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.ID}})
 				}
 			} else {
 				if len(game.state.Letters) >= game.config.DrawSize*len(game.players) {
@@ -452,10 +452,10 @@ func (hub *Hub) actOn(client *Client, buf string) {
 
 						if p.client != nil {
 							req := cmd.Request
-							if p.user.Id != player.user.Id {
+							if p.user.ID != player.user.ID {
 								req = ""
 							}
-							hub.sendJSONToClient(p.client, Message{Type: "draw", DrawNumber: cmd.DrawNumber, User: &JSONUser{player.user.Display, player.user.Id}, Letters: drawn, Request: req})
+							hub.sendJSONToClient(p.client, Message{Type: "draw", DrawNumber: cmd.DrawNumber, User: &JSONUser{player.user.Display, player.user.ID}, Letters: drawn, Request: req})
 						}
 					}
 					game.state.DrawNumber++
@@ -485,7 +485,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 							// no return
 						}
 					}
-					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.Id}})
+					hub.sendJSONToGame(game, Message{Type: "gameover", User: &JSONUser{player.user.Display, player.user.ID}})
 				}
 			}
 		} else if cmd.Type == "discard" {
@@ -547,7 +547,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 				game := player.game
 				found := false
 				for _, admitted := range game.players {
-					if admitted.user.Id == cmd.User.Id {
+					if admitted.user.ID == cmd.User.ID {
 						admitted.model.Class = "player"
 						found = true
 						tx, err := game.txs.GetTx()
@@ -583,7 +583,7 @@ func (hub *Hub) actOn(client *Client, buf string) {
 			snapshots := make([]UserSnapshot, len(game.players))
 			for _, player := range game.players {
 				if player.state != nil {
-					snapshots = append(snapshots, UserSnapshot{JSONUser{player.user.Display, player.user.Id}, player.state.Board})
+					snapshots = append(snapshots, UserSnapshot{JSONUser{player.user.Display, player.user.ID}, player.state.Board})
 				}
 			}
 			hub.sendJSONToClient(client, Message{
@@ -623,11 +623,11 @@ func (hub *Hub) registerClient(news ClientRegister) {
 	hub.sendJSONToClient(news.client, Message{Type: "message", Message: "HI"})
 	game := player.game
 	if game.model.Lifecycle == "pending" {
-		if player.user.Id != game.model.OwnerId {
+		if player.user.ID != game.model.OwnerID {
 			hub.sendJSONToClient(news.client, Message{Type: "pending", Message: "You will be admitted to the game shortly."})
-			admin, present := game.players[game.model.OwnerId]
+			admin, present := game.players[game.model.OwnerID]
 			if present && player.model.Class == "pending" && admin.client != nil {
-				hub.sendJSONToClient(admin.client, Message{Type: "invite", User: &JSONUser{player.user.Display, player.user.Id}})
+				hub.sendJSONToClient(admin.client, Message{Type: "invite", User: &JSONUser{player.user.Display, player.user.ID}})
 			}
 		} else {
 			hub.sendJSONToClient(news.client, Message{Type: "admitted", Message: "Welcome, game admin!."})

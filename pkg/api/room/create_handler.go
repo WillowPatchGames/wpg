@@ -19,7 +19,7 @@ type createHandlerData struct {
 	Style    string          `json:"style"`
 	Open     bool            `json:"open"`
 	Config   *RushRoomConfig `json:"config"`
-	ApiToken string          `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	APIToken string          `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type createHandlerResponse struct {
@@ -50,7 +50,7 @@ func (handle *CreateHandler) GetObjectPointer() interface{} {
 }
 
 func (handle *CreateHandler) GetToken() string {
-	return handle.req.ApiToken
+	return handle.req.APIToken
 }
 
 func (handle *CreateHandler) SetUser(user *models.UserModel) {
@@ -59,11 +59,11 @@ func (handle *CreateHandler) SetUser(user *models.UserModel) {
 
 func (handle CreateHandler) verifyRequest() error {
 	if handle.req.OwnerID == 0 {
-		handle.req.OwnerID = handle.user.Id
+		handle.req.OwnerID = handle.user.ID
 	}
 
 	if handle.req.OwnerID == 0 {
-		log.Println("Missing OwnerId")
+		log.Println("Missing OwnerID")
 		return api_errors.ErrMissingRequest
 	}
 
@@ -93,14 +93,14 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.UserModel
-	err = user.FromId(tx, handle.req.OwnerID)
+	err = user.FromID(tx, handle.req.OwnerID)
 	if err != nil {
 		api_errors.WriteError(w, err, true)
 		return
 	}
 
 	var room models.RoomModel
-	room.OwnerId = user.Id
+	room.OwnerID = user.ID
 	room.Style = handle.req.Style
 	room.Open = handle.req.Open
 
@@ -136,8 +136,8 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handle.resp.RoomID = room.Id
-	handle.resp.Owner = user.Id
+	handle.resp.RoomID = room.ID
+	handle.resp.Owner = user.ID
 	handle.resp.Style = room.Style
 	handle.resp.Open = room.Open
 	handle.resp.Code = room.JoinCode
