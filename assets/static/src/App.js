@@ -94,10 +94,14 @@ class App extends React.Component {
       this.setPage('home');
     }
 
-    this.setState(state => Object.assign({}, state, { user}));
+    this.setState(state => Object.assign({}, state, { user }));
   }
 
   setPage(page) {
+    if (this.state.page === page) {
+      return;
+    }
+
     this.setState(state => Object.assign({}, state, { page }));
     window.location.hash = '#' + page;
   }

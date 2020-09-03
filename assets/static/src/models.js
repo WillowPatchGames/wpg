@@ -301,35 +301,6 @@ class RoomModel {
     this.code = null;
   }
 
-  static async FromId(id) {
-    var ret = new RoomModel();
-
-    var uri = ret.api + '/room/' + id;
-
-    const response = await fetch(uri, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-Auth-Token': ret.user.token,
-      },
-      redirect: 'follow'
-    });
-
-    const result = await response.json();
-
-    if ('type' in result && result['type'] === 'error') {
-      console.log(result);
-
-      ret.error = result;
-      return ret;
-    }
-
-    Object.assign(ret, result);
-    ret.error = null;
-    ret.endpoint = ws() + "//" + document.location.host + "/room/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
-    return ret;
-  }
-
   static async FromCode(user, code) {
     code = normalizeCode(code);
     var ret = new RoomModel(user);
@@ -393,6 +364,33 @@ class RoomModel {
     this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
     return this;
   }
+
+  async update() {
+    var uri = this.api + '/room/' + this.id;
+
+    const response = await fetch(uri, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+    this.error = null;
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    return this;
+  }
 }
 
 class GameModel {
@@ -415,32 +413,10 @@ class GameModel {
     this.discard_penalty = null;
   }
 
-  static async FromId(id) {
-    var ret = new GameModel();
-
-    var uri = ret.api + '/game/' + id;
-
-    const response = await fetch(uri, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-Auth-Token': ret.user.token,
-      },
-      redirect: 'follow'
-    });
-
-    const result = await response.json();
-
-    if ('type' in result && result['type'] === 'error') {
-      console.log(result);
-
-      ret.error = result;
-      return ret;
-    }
-
-    Object.assign(ret, result);
-    ret.error = null;
-    ret.endpoint = ws() + "//" + document.location.host + "/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+  static async FromId(user, id) {
+    var ret = new GameModel(user);
+    ret.id = id;
+    await ret.update();
     return ret;
   }
 
@@ -471,7 +447,7 @@ class GameModel {
 
     Object.assign(ret, result);
     ret.error = null;
-    ret.endpoint = ws() + "//" + document.location.host + "/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+    ret.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
     return ret;
   }
 
@@ -517,7 +493,34 @@ class GameModel {
     this.error = null;
     delete result["config"];
     Object.assign(this, result);
-    this.endpoint = ws() + "//" + document.location.host + "/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    return this;
+  }
+
+  async update() {
+    var uri = this.api + '/game/' + this.id;
+
+    const response = await fetch(uri, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+    this.error = null;
+    this.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
     return this;
   }
 }

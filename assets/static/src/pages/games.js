@@ -408,11 +408,11 @@ class CreateGameForm extends React.Component {
     if (game.error !== null) {
       this.setError(game.error.message);
     } else {
-      this.props.setCode(game.code);
       this.props.setGame(game);
 
-      if (this.props.page !== 'room') {
+      if (this.props.room === null) {
         this.props.setPage('play');
+        this.props.setCode(game.code);
       }
     }
   }
@@ -555,6 +555,7 @@ class CreateRoomForm extends React.Component {
       this.setError(room.error.message);
     } else {
       this.props.setRoom(room);
+      this.props.setGame(null);
       this.props.setPage('room');
     }
   }
@@ -673,8 +674,17 @@ class JoinGamePage extends React.Component {
     var game = await GameModel.FromCode(this.props.user, this.state.code);
 
     if (game.error !== null) {
-      console.error(game.error);
-      this.setError(game.error.message);
+      // Try loading it as a room instead, before displaying the game error page.
+      var room = await RoomModel.FromCode(this.props.user, this.state.code);
+
+      if (room.error !== null) {
+        console.error(room.error);
+        console.error(game.error);
+        this.setError(game.error.message);
+      } else {
+        this.props.setRoom(room);
+        this.props.setPage('room');
+      }
     } else {
       this.props.setCode(game.code);
       this.props.setGame(game);
@@ -827,5 +837,6 @@ export {
   CreateRoomPage,
   JoinGamePage,
   PreGamePage,
-  RushGamePage
+  RushGamePage,
+  loadGame
 };
