@@ -12,7 +12,7 @@ import * as l from '@rmwc/list';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
-import { CreateGameForm } from './games.js';
+import { CreateGameForm, PreGamePage } from './games.js';
 
 
 function loadRoom(room) {
@@ -48,7 +48,7 @@ class RoomPage extends React.Component {
                       <l.ListItem disabled>
                         <p>Share this code to let users join:</p>
                       </l.ListItem>
-                      <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+                      <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
                         <l.ListItemText className="App-game-code">
                           <TextField fullwidth readOnly value={ this.room.code } inputRef={ this.code_ref } />
                         </l.ListItemText>
@@ -57,7 +57,7 @@ class RoomPage extends React.Component {
                       <l.ListItem disabled>
                         <p>Or have them visit this link:</p>
                       </l.ListItem>
-                      <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
+                      <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
                         <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.room.code + "#room" }>{ window.location.origin + "/?code=" + this.room.code + "#room" }</a></p>
                       </l.ListItem>
                     </l.ListGroup>
@@ -68,7 +68,7 @@ class RoomPage extends React.Component {
           </g.GridCell>
           <g.GridCell align="right" span={6}>
             <Typography use="headline3">Playing</Typography>
-            <CreateGameForm {...this.props} />
+            { this.props.game === null ? <CreateGameForm {...this.props} /> : <PreGamePage {...this.props} /> }
           </g.GridCell>
         </g.Grid>
       </div>

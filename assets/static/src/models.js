@@ -401,6 +401,7 @@ class GameModel {
     this.user = user;
     this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
     this.create_uri = this.api + '/games';
+    this.room = null;
 
     this.mode = null;
     this.open = null;
@@ -489,6 +490,10 @@ class GameModel {
         'tiles_per_player': this.tiles_per_player
       }
     };
+
+    if (this.room !== null) {
+      request['room'] = this.room.id;
+    }
 
     const response = await fetch(this.create_uri, {
       method: 'POST',

@@ -295,53 +295,70 @@ class PreGameAdminPage extends React.Component {
     this.props.setPage('playing');
   }
   render() {
+    let invite = null;
+    if (this.props.room === null) {
+      invite =
+      <l.ListGroup>
+        <l.ListItem disabled>
+          <p>Share this code to let users join:</p>
+        </l.ListItem>
+        <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+          <l.ListItemText className="App-game-code">
+            <TextField fullwidth readOnly value={ this.game.code } inputRef={ this.code_ref } />
+          </l.ListItemText>
+          <l.ListItemMeta icon="content_copy" />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <p>Or have them visit this link:</p>
+        </l.ListItem>
+        <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
+          <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
+        </l.ListItem>
+      </l.ListGroup>;
+    }
+
+    let content = <c.Card>
+      <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+        <l.List twoLine>
+          { invite }
+          <l.ListGroup>
+            <l.ListItem disabled>
+              <p>Users in this game:</p>
+            </l.ListItem>
+            { this.state.waitlist.map((user, i) =>
+                <l.ListItem key={user.display} >
+                {user.display}
+                <l.ListItemMeta>
+                  <Checkbox checked={user.admitted} label="Admitted" onChange={ user.admitted ? () => this.setState(state => state) : () => this.toggleAdmitted(user) } />
+                </l.ListItemMeta>
+                </l.ListItem>
+            )}
+          </l.ListGroup>
+        </l.List>
+        <Button onClick={ () => this.start() } label="Start" raised />
+      </div>
+    </c.Card>;
+
+    if (this.props.room === null) {
+      return (
+        <div>
+          <h1>Users to be admitted</h1>
+          <g.Grid fixedColumnWidth={ true }>
+            <g.GridCell align="left" span={3} />
+            <g.GridCell align="right" span={6}>
+              { content }
+            </g.GridCell>
+          </g.Grid>
+        </div>
+      );
+    } else {
     return (
       <div>
         <h1>Users to be admitted</h1>
-        <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={3} />
-          <g.GridCell align="right" span={6}>
-            <c.Card>
-              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                <l.List twoLine>
-                  <l.ListGroup>
-                    <l.ListItem disabled>
-                      <p>Share this code to let users join:</p>
-                    </l.ListItem>
-                    <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
-                      <l.ListItemText className="App-game-code">
-                        <TextField fullwidth readOnly value={ this.game.code } inputRef={ this.code_ref } />
-                      </l.ListItemText>
-                      <l.ListItemMeta icon="content_copy" />
-                    </l.ListItem>
-                    <l.ListItem disabled>
-                      <p>Or have them visit this link:</p>
-                    </l.ListItem>
-                    <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-                      <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
-                    </l.ListItem>
-                  </l.ListGroup>
-                  <l.ListGroup>
-                    <l.ListItem disabled>
-                      <p>Users in this game:</p>
-                    </l.ListItem>
-                    { this.state.waitlist.map((user, i) =>
-                        <l.ListItem key={user.display} >
-                        {user.display}
-                        <l.ListItemMeta>
-                          <Checkbox checked={user.admitted} label="Admitted" onChange={ user.admitted ? () => this.setState(state => state) : () => this.toggleAdmitted(user) } />
-                        </l.ListItemMeta>
-                        </l.ListItem>
-                    )}
-                  </l.ListGroup>
-                </l.List>
-                <Button onClick={ () => this.start() } label="Start" raised />
-              </div>
-            </c.Card>
-          </g.GridCell>
-        </g.Grid>
+        { content }
       </div>
-    )
+    );
+    }
   }
 }
 
@@ -382,6 +399,10 @@ class CreateGameForm extends React.Component {
     game.draw_size = +this.state.draw_size;
     game.discard_penalty = +this.state.discard_penalty;
 
+    if (this.props.room !== null) {
+      game.room = this.props.room;
+    }
+
     await game.create();
 
     if (game.error !== null) {
@@ -389,7 +410,10 @@ class CreateGameForm extends React.Component {
     } else {
       this.props.setCode(game.code);
       this.props.setGame(game);
-      this.props.setPage('play');
+
+      if (this.props.page !== 'room') {
+        this.props.setPage('play');
+      }
     }
   }
 
@@ -530,7 +554,6 @@ class CreateRoomForm extends React.Component {
     if (room.error !== null) {
       this.setError(room.error.message);
     } else {
-      this.props.setCode(room.code);
       this.props.setRoom(room);
       this.props.setPage('room');
     }
