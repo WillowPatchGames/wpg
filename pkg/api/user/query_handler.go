@@ -8,6 +8,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
@@ -74,6 +75,16 @@ func (handle QueryHandler) verifyRequest() error {
 
 	if present > 1 {
 		return api_errors.ErrTooManySpecifiers
+	}
+
+	err := api.ValidateUsername(handle.req.Username)
+	if err != nil {
+		return err
+	}
+
+	err = api.ValidateEmail(handle.req.Email)
+	if err != nil {
+		return err
 	}
 
 	return nil

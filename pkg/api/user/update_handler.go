@@ -8,6 +8,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
@@ -69,6 +70,16 @@ func (handle UpdateHandler) verifyRequest() error {
 
 	if (handle.req.Old != "" || handle.req.Password != "") && (handle.req.Old == "" || handle.req.Password == "") {
 		return api_errors.ErrMissingPassword
+	}
+
+	err := api.ValidateEmail(handle.req.Email)
+	if err != nil {
+		return err
+	}
+
+	err = api.ValidateDisplayName(handle.req.Display)
+	if err != nil {
+		return err
 	}
 
 	return nil
