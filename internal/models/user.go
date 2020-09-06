@@ -110,13 +110,27 @@ func (user *UserModel) FromAPIToken(transaction *sql.Tx, token string) error {
 }
 
 func (user *UserModel) Create(transaction *sql.Tx) error {
+	if user.Username == "" {
+		user.username.Valid = false
+	} else {
+		user.username.String = user.Username
+		user.username.Valid = true
+	}
+
+	if user.Email == "" {
+		user.email.Valid = false
+	} else {
+		user.email.String = user.Email
+		user.email.Valid = true
+	}
+
 	if !user.Guest {
 		stmt, err := transaction.Prepare(database.InsertUser)
 		if err != nil {
 			return err
 		}
 
-		err = stmt.QueryRow(user.Username, user.Display, user.Email, user.Guest).Scan(&user.ID)
+		err = stmt.QueryRow(user.username, user.Display, user.email, user.Guest).Scan(&user.ID)
 		if err != nil {
 			return err
 		}
