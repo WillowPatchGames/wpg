@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strconv"
 	"unicode"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 )
 
 func ValidateUsername(username string) error {
@@ -16,8 +18,8 @@ func ValidateUsername(username string) error {
 	for index, char := range rUsername {
 		if unicode.IsSpace(char) {
 			return errors.New("character at index " + strconv.Itoa(index) + " is a space: " + string(char))
-		} else if unicode.IsGraphic(char) {
-			return errors.New("character at index " + strconv.Itoa(index) + " is graphic: " + string(char))
+		} else if !unicode.IsPrint(char) {
+			return errors.New("character at index " + strconv.Itoa(index) + " is not printable: " + string(char))
 		} else if unicode.IsControl(char) {
 			return errors.New("character at index " + strconv.Itoa(index) + " is a control character: " + string(char))
 		}
@@ -61,6 +63,8 @@ func ValidateDisplayName(displayName string) error {
 	for index, char := range rDisplayName {
 		if unicode.IsControl(char) {
 			return errors.New("character at index " + strconv.Itoa(index) + " is a control character: " + string(char))
+		} else if !unicode.IsPrint(char) {
+			return errors.New("character at index " + strconv.Itoa(index) + " is not printable: " + string(char))
 		}
 	}
 
@@ -69,4 +73,22 @@ func ValidateDisplayName(displayName string) error {
 	}
 
 	return nil
+}
+
+func UserCanModifyUser(actor models.UserModel, target models.UserModel) error {
+	// Currently we only allow first-party actions.
+	if actor.ID == target.ID {
+		return nil
+	}
+
+	return errors.New("user unauthorized to perform specified action")
+}
+
+func UserCanCreateGame(actor models.UserModel, room models.RoomModel) error {
+	// Currently we only allow first-party actions.
+	if actor.ID == room.OwnerID {
+		return nil
+	}
+
+	return errors.New("user unauthorized to perform specified action")
 }

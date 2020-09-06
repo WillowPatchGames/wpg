@@ -9,6 +9,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
@@ -89,7 +90,23 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		room = new(models.RoomModel)
 		err = room.FromID(tx, handle.req.RoomID)
 		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Print("Unable to rollback:", rollbackErr)
+			}
+
 			log.Print("Get room?")
+			api_errors.WriteError(w, err, true)
+			return
+		}
+
+
+		err = api.UserCanCreateGame(*handle.user, *room)
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Print("Unable to rollback:", rollbackErr)
+			}
+
+			log.Print("Not authorized?")
 			api_errors.WriteError(w, err, true)
 			return
 		}

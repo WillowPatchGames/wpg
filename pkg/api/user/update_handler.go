@@ -77,10 +77,10 @@ func (handle UpdateHandler) verifyRequest() error {
 		return err
 	}
 
-	err = api.ValidateDisplayName(handle.req.Display)
-	if err != nil {
-		return err
-	}
+	// api.ValidateDisplayName() can't be called here because we haven't
+	// parsed which fields to expect. If "display" is expected, it'll be
+	// non-empty, but otherwise handle.req.Display will be empty. The latter
+	// throws a validation error.
 
 	return nil
 }
@@ -112,6 +112,17 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = api.UserCanModifyUser(*handle.user, user)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
+		log.Println("Not authorized?", err)
+		api_errors.WriteError(w, err, true)
+		return
+	}
+
 	var changePassword bool = false
 	for _, field := range handle.req.Fields {
 		switch field {
@@ -120,7 +131,10 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			user.Email = handle.req.Email
 		case "display":
 			log.Println("Update dispaly ->", user.Display)
-			user.Display = handle.req.Display
+			err = api.ValidateDisplayName(handle.req.Display)
+			if err != nil {
+				user.Display = handle.req.Display
+			}
 		case "password", "old_password", "new_password":
 			log.Println("Update password...")
 			changePassword = true
