@@ -12,7 +12,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type createHandlerData struct {
@@ -34,10 +34,9 @@ type createHandlerResponse struct {
 }
 
 type CreateHandler struct {
-	http.Handler
-	utils.HTTPRequestHandler
-	parsel.Parseltongue
 	auth.Authed
+	hwaterr.ErrableHandler
+	utils.HTTPRequestHandler
 
 	req  createHandlerData
 	resp createHandlerResponse
@@ -68,11 +67,10 @@ func (handle CreateHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var data []byte
@@ -81,8 +79,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	tx, err := database.GetTransaction()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var room *models.RoomModel
@@ -94,11 +91,9 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				log.Print("Unable to rollback:", rollbackErr)
 			}
 
-			log.Print("Get room?")
-			api_errors.WriteError(w, err, true)
-			return
+			log.Print("Get room?", err)
+			return err
 		}
-
 
 		err = api.UserCanCreateGame(*handle.user, *room)
 		if err != nil {
@@ -106,9 +101,8 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				log.Print("Unable to rollback:", rollbackErr)
 			}
 
-			log.Print("Not authorized?")
-			api_errors.WriteError(w, err, true)
-			return
+			log.Print("Not authorized?", err)
+			return err
 		}
 	}
 
@@ -126,9 +120,8 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Print("Unable to rollback:", rollbackErr)
 		}
 
-		log.Print("Create?")
-		api_errors.WriteError(w, err, true)
-		return
+		log.Print("Create?", err)
+		return err
 	}
 
 	log.Println("Created game")
@@ -140,9 +133,8 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				log.Print("Unable to rollback:", rollbackErr)
 			}
 
-			log.Print("Config?")
-			api_errors.WriteError(w, err, true)
-			return
+			log.Print("Config?", err)
+			return err
 		}
 	}
 
@@ -150,8 +142,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = tx.Commit()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	handle.resp.GameID = game.ID
@@ -164,8 +155,6 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handle.resp.Code = game.JoinCode
 	handle.resp.Lifecycle = game.Lifecycle
 
-	data, _ = json.Marshal(handle.resp)
-	log.Println("Response:", string(data))
-
 	utils.SendResponse(w, r, &handle)
+	return nil
 }

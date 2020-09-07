@@ -9,6 +9,7 @@ package auth
 import (
 	"github.com/gorilla/mux"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
@@ -19,7 +20,7 @@ func BuildRouter(router *mux.Router, debug bool) {
 	config.SchemaTag = "json"
 
 	var authFactory = func() parsel.Parseltongue {
-		return new(AuthHandler)
+		return hwaterr.Wrap(new(AuthHandler))
 	}
 
 	router.Handle("/api/v1/auth", parsel.Wrap(authFactory, config)).Methods("POST")

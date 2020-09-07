@@ -16,7 +16,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type authHandlerData struct {
@@ -34,9 +34,8 @@ type authHandlerResponse struct {
 }
 
 type AuthHandler struct {
-	http.Handler
+	hwaterr.ErrableHandler
 	utils.HTTPRequestHandler
-	parsel.Parseltongue
 
 	req  authHandlerData
 	resp authHandlerResponse
@@ -87,19 +86,17 @@ func (handle AuthHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		log.Println("Here")
-		api_errors.WriteError(w, err, true)
-		return
+		log.Println("Here", err)
+		return err
 	}
 
 	tx, err := database.GetTransaction()
 	if err != nil {
 		log.Println("Transaction?")
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var user models.UserModel
@@ -112,21 +109,18 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var auth models.AuthModel
 	err = auth.FromPassword(tx, user, handle.req.Password)
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	handle.resp.UserID = user.ID
@@ -135,4 +129,5 @@ func (handle AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handle.resp.APIToken = auth.APIToken
 
 	utils.SendResponse(w, r, handle)
+	return nil
 }

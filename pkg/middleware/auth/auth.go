@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
@@ -12,29 +12,29 @@ import (
 )
 
 type Authed interface {
-	http.Handler
-	parsel.Parseltongue
+	hwaterr.ErrableHandler
 
 	GetToken() string
 	SetUser(user *models.UserModel)
+	GetObjectPointer() interface{}
 }
 
 func Require(handler Authed) parsel.Parseltongue {
 	var ret = new(authMW)
 	ret.next = handler
 	ret.requireAuth = true
-	return ret
+	return hwaterr.Wrap(ret)
 }
 
 func Allow(handler Authed) parsel.Parseltongue {
 	var ret = new(authMW)
 	ret.next = handler
 	ret.requireAuth = false
-	return ret
+	return hwaterr.Wrap(ret)
 }
 
 type authMW struct {
-	http.Handler
+	hwaterr.ErrableHandler
 	parsel.Parseltongue
 
 	next        Authed
@@ -45,12 +45,11 @@ func (a *authMW) GetObjectPointer() interface{} {
 	return a.next.GetObjectPointer()
 }
 
-func (a *authMW) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	tx, err := database.GetTransaction()
 	if err != nil {
 		log.Println("Authed: Begin transaction?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var token string = a.next.GetToken()
@@ -66,22 +65,19 @@ func (a *authMW) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		log.Println("Authed: Getting user?", err)
 
-		if !a.requireAuth {
+		if a.requireAuth {
 			log.Println("Authed: Required auth, so returning error")
-			api_errors.WriteError(w, err, true)
-			return
+			return err
 		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Println("Authed: Commit transaction?", err)
-		api_errors.WriteError(w, err, true)
-		return
+	} else {
+		err = tx.Commit()
+		if err != nil {
+			log.Println("Authed: Commit transaction?", err)
+			return err
+		}
 	}
 
 	log.Println("Authed: OK as " + user.Display)
 	a.next.SetUser(user)
-
-	a.next.ServeHTTP(w, r)
+	return a.next.ServeErrableHTTP(w, r)
 }

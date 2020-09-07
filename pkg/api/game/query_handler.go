@@ -10,7 +10,7 @@ import (
 
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type queryHandlerData struct {
@@ -29,10 +29,9 @@ type queryHandlerResponse struct {
 }
 
 type QueryHandler struct {
-	http.Handler
-	utils.HTTPRequestHandler
-	parsel.Parseltongue
 	auth.Authed
+	hwaterr.ErrableHandler
+	utils.HTTPRequestHandler
 
 	req  queryHandlerData
 	resp queryHandlerResponse
@@ -55,17 +54,15 @@ func (handle *QueryHandler) SetUser(user *models.UserModel) {
 	handle.user = user
 }
 
-func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	if handle.req.GameID == 0 && handle.req.JoinCode == "" {
-		api_errors.WriteError(w, api_errors.ErrMissingRequest, true)
-		return
+		return api_errors.ErrMissingRequest
 	}
 
 	tx, err := database.GetTransaction()
 	if err != nil {
-		log.Println("Transaction?")
-		api_errors.WriteError(w, err, true)
-		return
+		log.Println("Transaction?", err)
+		return err
 	}
 
 	var game models.GameModel
@@ -82,8 +79,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Getting game?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var owner models.UserModel
@@ -94,8 +90,7 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Getting user?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var room *models.RoomModel
@@ -108,16 +103,14 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			log.Println("Getting room?", err)
-			api_errors.WriteError(w, err, true)
-			return
+			return err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Println("Commiting?")
-		api_errors.WriteError(w, err, true)
-		return
+		log.Println("Commiting?", err)
+		return err
 	}
 
 	handle.resp.GameID = game.ID
@@ -130,4 +123,5 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handle.resp.Lifecycle = game.Lifecycle
 
 	utils.SendResponse(w, r, handle)
+	return nil
 }
