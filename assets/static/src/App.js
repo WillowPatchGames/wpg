@@ -99,11 +99,21 @@ class App extends React.Component {
 
   setPage(page) {
     if (this.state.page === page) {
+      console.log("Early return from setPage: already there");
       return;
     }
 
+    if (page === "" || page === null) {
+      console.trace("Refusing to set empty page.");
+      return;
+    }
+
+    console.trace("New page: " + page);
+
     this.setState(state => Object.assign({}, state, { page }));
     window.location.hash = '#' + page;
+
+    console.trace("Setting hash: " + window.location.hash);
   }
 
   setRoom(room) {

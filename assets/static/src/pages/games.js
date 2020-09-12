@@ -353,12 +353,12 @@ class PreGameAdminPage extends React.Component {
         </div>
       );
     } else {
-    return (
-      <div>
-        <h1>Users to be admitted</h1>
-        { content }
-      </div>
-    );
+      return (
+        <div>
+          <h1>Users to be admitted</h1>
+          { content }
+        </div>
+      );
     }
   }
 }
