@@ -90,7 +90,7 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Println("Here", err)
-		return err
+		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
 	tx, err := database.GetTransaction()

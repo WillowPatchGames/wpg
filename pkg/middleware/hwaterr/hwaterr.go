@@ -13,9 +13,13 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
-type HttpError interface {
+type HTTPError interface {
 	error
 	StatusCode() int
+}
+
+func WrapError(msg error, status int) HTTPError {
+	return httpError{msg.Error(), status}
 }
 
 type ErrableHandler interface {
@@ -23,9 +27,9 @@ type ErrableHandler interface {
 	ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error
 }
 
-func WrapError(ret error) (int, []byte) {
-	var code int = http.StatusBadRequest
-	casted, ok := ret.(HttpError)
+func EncodeError(ret error) (int, []byte) {
+	var code int = http.StatusInternalServerError
+	casted, ok := ret.(HTTPError)
 	if ok {
 		code = casted.StatusCode()
 	}
@@ -48,7 +52,7 @@ func WrapError(ret error) (int, []byte) {
 }
 
 func WriteError(w http.ResponseWriter, r *http.Request, ret error) {
-	code, data := WrapError(ret)
+	code, data := EncodeError(ret)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)

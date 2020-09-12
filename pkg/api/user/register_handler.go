@@ -84,7 +84,8 @@ func (handle RegisterHandler) verifyRequest() error {
 func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		return err
+		log.Println("Got an error message: " + err.Error())
+		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
 	tx, err := database.GetTransaction()

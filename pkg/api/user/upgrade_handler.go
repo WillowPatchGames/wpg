@@ -101,7 +101,7 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Print("Error during verifyRequest:", err)
-		return err
+		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
 	tx, err := database.GetTransaction()

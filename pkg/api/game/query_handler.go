@@ -56,7 +56,7 @@ func (handle *QueryHandler) SetUser(user *models.UserModel) {
 
 func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	if handle.req.GameID == 0 && handle.req.JoinCode == "" {
-		return api_errors.ErrMissingRequest
+		return hwaterr.WrapError(api_errors.ErrMissingRequest, http.StatusBadRequest)
 	}
 
 	tx, err := database.GetTransaction()

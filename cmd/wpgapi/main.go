@@ -36,7 +36,8 @@ var dbSslmode string
 
 func gorillaWalkFn(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 	path, _ := route.GetPathTemplate()
-	log.Println("Routing path:", path)
+	methods, _ := route.GetMethods()
+	log.Println("Routing path:", path, methods)
 	return nil
 }
 
@@ -100,6 +101,10 @@ func main() {
 
 	// Add logging middleware
 	handler = handlers.CombinedLoggingHandler(os.Stderr, handler)
+
+	if !debug {
+		handler = handlers.RecoveryHandler()(handler)
+	}
 
 	// Build our server and start it
 	srv := &http.Server{

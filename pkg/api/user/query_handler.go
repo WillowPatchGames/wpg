@@ -93,7 +93,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Println("Here")
-		return err
+		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
 	tx, err := database.GetTransaction()

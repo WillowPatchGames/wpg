@@ -29,3 +29,16 @@ func (eh errableHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (eh *errableHandler) GetObjectPointer() interface{} {
 	return eh.next.GetObjectPointer()
 }
+
+type httpError struct {
+	message string
+	code    int
+}
+
+func (hE httpError) Error() string {
+	return hE.message
+}
+
+func (hE httpError) StatusCode() int {
+	return hE.code
+}

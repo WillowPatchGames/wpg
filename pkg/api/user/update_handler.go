@@ -88,7 +88,7 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Println("Here")
-		return err
+		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
 	tx, err := database.GetTransaction()
@@ -119,16 +119,20 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	var changePassword bool = false
+Fields:
 	for _, field := range handle.req.Fields {
 		switch field {
 		case "email":
-			log.Println("Update email ->", user.Email)
+			log.Println("Update email", user.Email, "->", handle.req.Email)
 			user.Email = handle.req.Email
 		case "display":
-			log.Println("Update dispaly ->", user.Display)
+			log.Println("Update display", user.Display, "->", handle.req.Display)
 			err = api.ValidateDisplayName(handle.req.Display)
-			if err != nil {
+			if err == nil {
 				user.Display = handle.req.Display
+			} else {
+				log.Println("Invalid display name:", err)
+				break Fields
 			}
 		case "password", "old_password", "new_password":
 			log.Println("Update password...")
@@ -196,5 +200,5 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	utils.SendResponse(w, r, handle)
-	return err
+	return nil
 }

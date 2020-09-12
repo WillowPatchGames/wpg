@@ -77,7 +77,7 @@ func (handle CreateHandler) verifyRequest() error {
 func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		return err
+		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
 	var data []byte

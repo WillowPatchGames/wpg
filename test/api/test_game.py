@@ -60,7 +60,7 @@ def test_create_get_game():
 
 def test_create_no_room_game():
     # Sending the first request should be fine
-    user_data, token = auth_user('test_game_test_create_no_room_game')
+    user_data, token = auth_user('test_game_test_create_no_room')
 
     headers = {'X-Auth-Token': token}
 
