@@ -11,7 +11,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type updateHandlerData struct {
@@ -33,10 +33,9 @@ type updateHandlerResponse struct {
 }
 
 type UpdateHandler struct {
-	http.Handler
-	utils.HTTPRequestHandler
-	parsel.Parseltongue
 	auth.Authed
+	hwaterr.ErrableHandler
+	utils.HTTPRequestHandler
 
 	req  updateHandlerData
 	resp updateHandlerResponse
@@ -85,19 +84,17 @@ func (handle UpdateHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Println("Here")
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	tx, err := database.GetTransaction()
 	if err != nil {
 		log.Println("Transaction?")
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var user models.UserModel
@@ -108,8 +105,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Getting?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	err = api.UserCanModifyUser(*handle.user, user)
@@ -119,8 +115,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Not authorized?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var changePassword bool = false
@@ -150,8 +145,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Updating?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	if changePassword {
@@ -162,8 +156,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			log.Println("Checking password?", err)
-			api_errors.WriteError(w, err, true)
-			return
+			return err
 		}
 
 		err = user.SetPassword(tx, handle.req.Password)
@@ -173,8 +166,7 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			log.Println("Updating password", err)
-			api_errors.WriteError(w, err, true)
-			return
+			return err
 		}
 	}
 
@@ -185,15 +177,13 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Saving User?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Println("Commiting?")
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	handle.resp.UserID = user.ID
@@ -206,4 +196,5 @@ func (handle *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SendResponse(w, r, handle)
+	return err
 }

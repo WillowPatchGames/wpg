@@ -11,7 +11,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type upgradeHandlerData struct {
@@ -32,10 +32,9 @@ type upgradeHandlerResponse struct {
 }
 
 type UpgradeHandler struct {
-	http.Handler
-	utils.HTTPRequestHandler
-	parsel.Parseltongue
 	auth.Authed
+	hwaterr.ErrableHandler
+	utils.HTTPRequestHandler
 
 	req  upgradeHandlerData
 	resp upgradeHandlerResponse
@@ -97,20 +96,18 @@ func (handle UpgradeHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	log.Print("Start UpgradeHandler.ServeHTTP()")
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Print("Error during verifyRequest:", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	tx, err := database.GetTransaction()
 	if err != nil {
 		log.Print("Error during database.GetTransaction", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	if handle.req.Username != "" {
@@ -136,8 +133,7 @@ func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Print("Unable to set password:", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	err = handle.user.Save(tx)
@@ -147,8 +143,7 @@ func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Print("Unable to save user:", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	// Invalid
@@ -162,15 +157,13 @@ func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Print("Unable to save user:", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Print("Error during tx.Commit()", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	handle.resp.UserID = handle.user.ID
@@ -182,4 +175,5 @@ func (handle UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handle", handle.resp)
 
 	utils.SendResponse(w, r, &handle)
+	return nil
 }

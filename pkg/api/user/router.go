@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
@@ -35,7 +36,7 @@ func BuildRouter(router *mux.Router, debug bool) {
 	}
 
 	var registerFactory = func() parsel.Parseltongue {
-		return new(RegisterHandler)
+		return hwaterr.Wrap(new(RegisterHandler))
 	}
 
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/upgrade", parsel.Wrap(upgradeFactory, config)).Methods("PUT")

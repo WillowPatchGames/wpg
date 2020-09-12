@@ -11,7 +11,7 @@ import (
 
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type createHandlerData struct {
@@ -31,10 +31,9 @@ type createHandlerResponse struct {
 }
 
 type CreateHandler struct {
-	http.Handler
-	utils.HTTPRequestHandler
-	parsel.Parseltongue
 	auth.Authed
+	hwaterr.ErrableHandler
+	utils.HTTPRequestHandler
 
 	req  createHandlerData
 	resp createHandlerResponse
@@ -75,11 +74,10 @@ func (handle CreateHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var data []byte
@@ -88,15 +86,13 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	tx, err := database.GetTransaction()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var user models.UserModel
 	err = user.FromID(tx, handle.req.OwnerID)
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var room models.RoomModel
@@ -110,8 +106,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Print("Unable to rollback:", rollbackErr)
 		}
 
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	log.Println("Created room")
@@ -123,8 +118,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				log.Print("Unable to rollback:", rollbackErr)
 			}
 
-			api_errors.WriteError(w, err, true)
-			return
+			return err
 		}
 	}
 
@@ -132,8 +126,7 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = tx.Commit()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	handle.resp.RoomID = room.ID
@@ -146,4 +139,5 @@ func (handle CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println("Response:", string(data))
 
 	utils.SendResponse(w, r, &handle)
+	return nil
 }

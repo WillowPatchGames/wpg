@@ -10,7 +10,7 @@ import (
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type registerHandlerData struct {
@@ -31,9 +31,8 @@ type registerHandlerResponse struct {
 }
 
 type RegisterHandler struct {
-	http.Handler
+	hwaterr.ErrableHandler
 	utils.HTTPRequestHandler
-	parsel.Parseltongue
 
 	req  registerHandlerData
 	resp registerHandlerResponse
@@ -82,17 +81,15 @@ func (handle RegisterHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	tx, err := database.GetTransaction()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var user models.UserModel
@@ -110,8 +107,7 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			log.Print("Unable to rollback:", rollbackErr)
 		}
 
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	if user.Guest {
@@ -124,8 +120,7 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 
 			log.Println("")
-			api_errors.WriteError(w, err, true)
-			return
+			return err
 		}
 
 		handle.resp.Token = auth.APIToken
@@ -136,15 +131,13 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 				log.Print("Unable to rollback:", rollbackErr)
 			}
 
-			api_errors.WriteError(w, err, true)
-			return
+			return err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	handle.resp.UserID = user.ID
@@ -155,4 +148,5 @@ func (handle RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	// handle.resp.Token set above if the user is a guest user.
 
 	utils.SendResponse(w, r, &handle)
+	return nil
 }

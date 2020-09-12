@@ -11,7 +11,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type queryHandlerData struct {
@@ -30,10 +30,9 @@ type queryHandlerResponse struct {
 }
 
 type QueryHandler struct {
-	http.Handler
-	utils.HTTPRequestHandler
-	parsel.Parseltongue
 	auth.Authed
+	hwaterr.ErrableHandler
+	utils.HTTPRequestHandler
 
 	req  queryHandlerData
 	resp queryHandlerResponse
@@ -90,19 +89,17 @@ func (handle QueryHandler) verifyRequest() error {
 	return nil
 }
 
-func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
 		log.Println("Here")
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	tx, err := database.GetTransaction()
 	if err != nil {
 		log.Println("Transaction?")
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	var user models.UserModel
@@ -120,15 +117,13 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Getting?", err)
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Println("Commiting?")
-		api_errors.WriteError(w, err, true)
-		return
+		return err
 	}
 
 	handle.resp.UserID = user.ID
@@ -141,4 +136,5 @@ func (handle *QueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SendResponse(w, r, handle)
+	return nil
 }

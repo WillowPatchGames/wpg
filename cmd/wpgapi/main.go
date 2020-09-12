@@ -101,9 +101,6 @@ func main() {
 	// Add logging middleware
 	handler = handlers.CombinedLoggingHandler(os.Stderr, handler)
 
-	// Add recovery middleware
-	handler = handlers.RecoveryHandler()(handler)
-
 	// Build our server and start it
 	srv := &http.Server{
 		Handler: handler,

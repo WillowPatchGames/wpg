@@ -11,7 +11,6 @@ import (
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
 type queryHandlerData struct {
@@ -31,7 +30,6 @@ type queryHandlerResponse struct {
 type QueryHandler struct {
 	auth.Authed
 	hwaterr.ErrableHandler
-	parsel.Parseltongue
 	utils.HTTPRequestHandler
 
 	req  queryHandlerData
