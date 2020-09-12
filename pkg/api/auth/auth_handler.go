@@ -109,7 +109,7 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err != nil {
-		return err
+		return hwaterr.WrapError(err, http.StatusNotFound)
 	}
 
 	var auth models.AuthModel

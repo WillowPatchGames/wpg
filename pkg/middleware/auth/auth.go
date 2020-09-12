@@ -12,8 +12,6 @@ import (
 )
 
 type Authed interface {
-	hwaterr.ErrableHandler
-
 	GetToken() string
 	SetUser(user *models.UserModel)
 	GetObjectPointer() interface{}
@@ -23,17 +21,28 @@ func Require(handler Authed) parsel.Parseltongue {
 	var ret = new(authMW)
 	ret.next = handler
 	ret.requireAuth = true
-	return hwaterr.Wrap(ret)
+
+	if _, ok := handler.(hwaterr.ErrableHandler); ok {
+		return hwaterr.Wrap(ret)
+	} else {
+		return ret
+	}
 }
 
 func Allow(handler Authed) parsel.Parseltongue {
 	var ret = new(authMW)
 	ret.next = handler
 	ret.requireAuth = false
-	return hwaterr.Wrap(ret)
+
+	if _, ok := handler.(hwaterr.ErrableHandler); ok {
+		return hwaterr.Wrap(ret)
+	} else {
+		return ret
+	}
 }
 
 type authMW struct {
+	http.Handler
 	hwaterr.ErrableHandler
 	parsel.Parseltongue
 
@@ -83,5 +92,19 @@ func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error 
 	}
 
 	a.next.SetUser(user)
-	return a.next.ServeErrableHTTP(w, r)
+
+	if next, ok := a.next.(http.Handler); ok && next != nil {
+		next.ServeHTTP(w, r)
+		return nil
+	}
+
+	if next, ok := a.next.(hwaterr.ErrableHandler); ok && next != nil {
+		return next.ServeErrableHTTP(w, r)
+	}
+
+	panic("No next handler to call into; perhaps a type mismatch?")
+}
+
+func (a *authMW) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_ = a.ServeErrableHTTP(w, r)
 }

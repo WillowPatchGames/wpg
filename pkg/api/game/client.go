@@ -12,9 +12,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
@@ -149,9 +148,8 @@ type socketHandlerRequest struct {
 
 // SocketHandler is a handler for game connections
 type SocketHandler struct {
-	http.Handler
-	parsel.Parseltongue
 	auth.Authed
+	http.Handler
 
 	Hub *Hub
 
@@ -175,7 +173,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tx, err := database.GetTransaction()
 	if err != nil {
 		log.Println(err)
-		api_errors.WriteError(w, err, true)
+		hwaterr.WriteError(w, r, err)
 		return
 	}
 
@@ -184,7 +182,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = userdb.FromID(tx, handle.req.UserID)
 	if err != nil {
 		log.Println(err)
-		api_errors.WriteError(w, err, true)
+		hwaterr.WriteError(w, r, err)
 		return
 	}
 
@@ -193,7 +191,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = gamedb.FromID(tx, handle.req.GameID)
 	if err != nil {
 		log.Println(err)
-		api_errors.WriteError(w, err, true)
+		hwaterr.WriteError(w, r, err)
 		return
 	}
 
@@ -201,14 +199,14 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
-		api_errors.WriteError(w, err, true)
+		hwaterr.WriteError(w, r, err)
 		return
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Println(err)
-		api_errors.WriteError(w, err, true)
+		hwaterr.WriteError(w, r, err)
 		return
 	}
 
