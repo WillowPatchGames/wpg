@@ -54,6 +54,10 @@ class AboutPage extends React.Component {
                   hearing these stories and hope our social games inspire you to tell
                   your own stories.
                 </p>
+                <p>
+                  The artwork above was created by our talented designer, Liz Mayo,
+                  and was inspired by the actual lake.
+                </p>
               </article>
             </c.Card>
           </g.GridCell>
