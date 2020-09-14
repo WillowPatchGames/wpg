@@ -23,7 +23,7 @@ class AboutPage extends React.Component {
           <g.GridCell align="left" span={6}>
             <Typography use="headline2">About Willow Patch Games!</Typography>
             <c.Card>
-              <article class="text" style={{ padding: '1rem 1rem 1rem 1rem' }}>
+              <article className="text" style={{ padding: '1rem 1rem 1rem 1rem' }}>
                 <p>
                   This company was started one fun week in Ann Arbor, Michigan. Two
                   brothers, Nick and Alex, got together and put together the core of
@@ -45,7 +45,7 @@ class AboutPage extends React.Component {
           <g.GridCell align="right" span={6}>
             <c.Card>
               <c.CardMedia sixteenByNine style={{ backgroundImage: 'url(' + willows + ')' }} />
-              <article class="text" style={{ padding: '0 1rem 1rem 1rem' }}>
+              <article className="text" style={{ padding: '0 1rem 1rem 1rem' }}>
                 <Typography use="headline3">About the Name</Typography>
                 <p>
                   On a lake somewhere in Idaho, there's a patch of willows growing by
@@ -58,37 +58,55 @@ class AboutPage extends React.Component {
             </c.Card>
           </g.GridCell>
         </g.Grid>
-        <Typography use="headline2">Our Team!</Typography>
+        <Typography use="headline2">Meet Our Team!</Typography>
         <div className="flexbox App-1000px">
           <div className="flexible">
-            <c.Card>
+            <c.Card style={{ width: '300px' }}>
               <c.CardMedia square style={{ backgroundImage: 'url(' + alex_scheel + ')' }} />
-              <article class="text" style={{ padding: '0 1rem 1rem 1rem' }}>
-                <Typography use="headline3">Alex Scheel</Typography>
+              <Typography use="headline3">Alex&nbsp;Scheel</Typography>
+              <article className="text-left" style={{ padding: '0 1rem 1rem 1rem' }}>
                 <p>
-                  Alex is one of the two cofounders.
+                  Alex is one of the two cofounders of <i>Willow Patch Games</i> with
+                  his brother Nick. He is an engineer at Red Hat working on the Red Hat
+                  Certificate System product. When not working, often you'll find him
+                  playing violin or taking photos.
                 </p>
               </article>
+              <c.CardActions>
+                <c.CardActionIcons>
+                  <a href="https://cipherboy.com" target="_blank"><c.CardActionIcon icon="home" /></a>
+                  <a href="https://g.cipherboy.com" target="_blank"><c.CardActionIcon icon="person" /></a>
+                </c.CardActionIcons>
+              </c.CardActions>
             </c.Card>
           </div>
           <div className="flexible">
-            <c.Card>
+            <c.Card style={{ width: '300px' }}>
               <c.CardMedia square style={{ backgroundImage: 'url(' + nick_scheel + ')' }} />
-              <article class="text" style={{ padding: '0 1rem 1rem 1rem' }}>
-                <Typography use="headline3">Nick Scheel</Typography>
+              <Typography use="headline3">Nick&nbsp;Scheel</Typography>
+              <article className="text-left" style={{ padding: '0 1rem 1rem 1rem' }}>
                 <p>
-                  Nick is one of the two cofounders.
+                  Nick is one of the two cofounders of <i>Willow Patch Games</i> with
+                  his brother Alex. Nick is pursuing dual degrees in Cello Performance
+                  and Mathematics at <a href="https://www.bard.edu/" target="_blank">Bard</a> in
+                  New York.
                 </p>
               </article>
+              <c.CardActions>
+                <c.CardActionIcons>
+                  <a href="https://github.com/MonoidMusician" target="_blank"><c.CardActionIcon icon="person" /></a>
+                </c.CardActionIcons>
+              </c.CardActions>
             </c.Card>
           </div>
           <div className="flexible">
-            <c.Card>
+            <c.Card style={{ width: '300px' }}>
               <c.CardMedia square style={{ backgroundImage: 'url(' + liz_mayo + ')' }} />
-              <article class="text" style={{ padding: '0 1rem 1rem 1rem' }}>
-                <Typography use="headline3">Liz Mayo</Typography>
+              <Typography use="headline3">Liz&nbsp;Mayo</Typography>
+              <article className="text-left" style={{ padding: '0 1rem 1rem 1rem' }}>
                 <p>
-                  Liz is our graphic design intern.
+                  Liz is our marketing and graphic design intern. She is currently pursuing
+                  a marketing degree at <a href="https://wmich.edu/" target="_blank">WMU</a>.
                 </p>
               </article>
             </c.Card>
