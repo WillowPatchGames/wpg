@@ -1,7 +1,3 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package game
 
 import (
@@ -11,37 +7,96 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/games"
 )
 
-// Hub maintains the set of active clients and broadcasts messages to the
-// clients.
-type Hub struct {
-	// Registered clients.
-	clients map[*Client]*ActivePlayer
+type GameID uint64
+type UserID uint64
 
-	// A map of active games by id
-	games map[uint64]*ActiveGame
+const (
+	// Time allowed to connect to the peer.
+	connectWait = 16 * time.Second
 
-	// Register requests from the clients.
-	register chan ClientRegister
+	// Time allowed to write a message to the peer.
+	writeWait = 8 * time.Second
 
-	// Unregister requests from clients.
-	unregister chan *Client
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
 
-	process chan ClientMessage
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 1) / 4
+
+	// ReadBufferSize must be limited in order to prevent the client from
+	// starving resources from other players.
+	readBufferSize = 256 * 1024 // 256KB
+
+	// SendBufferSize must be limited because players could send messages which
+	// result in large response messages, starving resources from other players.
+	sendBufferSize = 256 * 1024 // 256KB
+)
+
+// Client holds the underlying websocket connection and the
+type Client struct {
+	// Pointer to our central Hub struct this client is registerred with.
+	hub *Hub
+
+	// Underlying client connection.
+	conn *websocket.Conn
+
+	// Buffered channel of outbound messages.
+	send chan []byte
+
+	// GameID this client is playing.
+	gameID GameID
+
+	// UserID this client is authicated as.
+	userID UserID
 }
 
-// NewHub news hubs
+// ClientMessage holds messages from clients
+type ClientMessage struct {
+	client *Client
+
+	message []byte
+}
+
+// Hub maintains the mapping between WebSocket channels and the backend game
+// controller. Note that a hub has a single games.Controller instance that
+// tracks the data for all
+type Hub struct {
+	// Controller handles dispatching game-specific messages and keeping track of
+	// game state.
+	controller games.Controller
+
+	// Connections maps (gid, uid) tuples to an active Client connection. In the
+	// future, this could be multiple connections to let the same player play on
+	// different devices if they wish.
+	connections map[GameID]map[UserID]Client
+
+	// Register handles join requests from the clients.
+	register chan *Client
+
+	// Unregister handles drop requests from the clients.
+	unregister chan *Client
+
+	// Process a message from the client.
+	process map[GameID]chan ClientMessage
+}
+
+// NewHub creates a new hub.
 func NewHub() *Hub {
+	// Note that inner maps and channels must be created per-game.
 	return &Hub{
-		clients:    make(map[*Client]*ActivePlayer),
-		games:      make(map[uint64]*ActiveGame),
-		register:   make(chan ClientRegister),
-		unregister: make(chan *Client),
-		process:    make(chan ClientMessage),
+		connections: make(map[GameID]map[UserID]Client),
+		register:    make(chan *Client),
+		unregister:  make(chan *Client),
+		process:     make(map[GameID]chan ClientMessage),
 	}
 }
 
@@ -613,7 +668,7 @@ func (hub *Hub) Run() {
 	}
 }
 
-func (hub *Hub) registerClient(news ClientRegister) {
+func (hub *Hub) registerClient(news *Client) {
 	player, err := hub.connectPlayer(news.client, news.gameid, news.userid)
 	if err != nil {
 		log.Println(err)

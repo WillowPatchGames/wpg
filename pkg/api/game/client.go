@@ -1,17 +1,14 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package game
 
 import (
-	"bytes"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
 
+	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 
@@ -19,67 +16,35 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 )
 
-const (
-	// Time allowed to write a message to the peer.
-	writeWait = 10 * time.Second
-
-	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
-
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
-)
-
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
-
+// upgrader takes a regular net/http connection and upgrades it into a
+// WebSocket connection.
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  65536,
-	WriteBufferSize: 65536,
+	HandshakeTimeout: connectWait,
+	ReadBufferSize:   readBufferSize,
+	WriteBufferSize:  sendBufferSize,
 }
 
-// Client is a middleman between the websocket connection and the hub.
-type Client struct {
-	hub *Hub
-
-	// The websocket connection.
-	conn *websocket.Conn
-
-	// Buffered channel of outbound messages.
-	send chan []byte
-}
-
-// ClientRegister registers a client with the hub on a game
-type ClientRegister struct {
-	client *Client
-
-	gameid uint64
-	userid uint64
-}
-
-// ClientMessage holds messages from clients
-type ClientMessage struct {
-	client *Client
-
-	message string
-}
-
-// readPump pumps messages from the websocket connection to the hub.
+// readPump() pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
 func (c *Client) readPump() {
+	// When the client connection is closed or an error occurred, unregister this
+	// client.
 	defer func() {
 		c.hub.unregister <- c
 		_ = c.conn.Close()
 	}()
-	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
+
+	// Set a handler to react to pong messages.
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	for {
-		_, message, err := c.conn.ReadMessage()
+		// Set the deadline on the next read command.
+		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
+
+		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
 			log.Printf("Socket close: %v", err)
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -87,8 +52,11 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.process <- ClientMessage{c, string(message)}
+
+		if messageType != websocket.TextMessage {
+			log.Println("Unexpected message type: " + strconv.Itoa(messageType) + " -- proceeding anyways")
+		}
+		c.hub.process <- ClientMessage{c, message}
 	}
 }
 
@@ -153,7 +121,10 @@ type SocketHandler struct {
 
 	Hub *Hub
 
-	req  socketHandlerRequest
+	req socketHandlerRequest
+	// No response object because this should be upgraded into a WebSocket
+	// connection and shouldn't return a result itself.
+
 	user *models.UserModel
 }
 
@@ -178,9 +149,8 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify user
-	var userdb models.UserModel
-	err = userdb.FromID(tx, handle.req.UserID)
-	if err != nil {
+	if handle.req.UserID != handle.user.ID {
+		err = hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusForbidden)
 		log.Println(err)
 		hwaterr.WriteError(w, r, err)
 		return
@@ -216,7 +186,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	client := &Client{hub: handle.Hub, conn: conn, send: make(chan []byte, 256)}
 
 	// Connect Player to ActiveGame, Client to Hub
-	client.hub.register <- ClientRegister{client, gamedb.ID, userdb.ID}
+	handle.Hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.

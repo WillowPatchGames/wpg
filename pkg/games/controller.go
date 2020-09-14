@@ -14,6 +14,11 @@ type PlayerData struct {
 	// array of players instead of using the uid.
 	Index int `json:"index"`
 
+	// Whether or not this player has been admitted to this game. By default,
+	// they start with admitted = false, requring an admin to admit them, unless
+	// they join with an individual invite link.
+	Admitted bool `json:"admitted"`
+
 	// Whether or not the player is ready for the game to begin.
 	Ready bool `json:"ready"`
 
@@ -59,6 +64,7 @@ type GameData struct {
 	ToPlayer map[uint64]PlayerData `json:"players"`
 }
 
+// Common header for all inbound and outbound messages.
 type MessageHeader struct {
 	Mode        string `json:"game_mode"`
 	ID          uint64 `json:"game_id"`
