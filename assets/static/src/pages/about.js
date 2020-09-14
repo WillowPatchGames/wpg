@@ -9,6 +9,9 @@ import * as g from '@rmwc/grid';
 import { Typography } from '@rmwc/typography';
 
 import willows from '../images/WillowPatch.jpg';
+import alex_scheel from '../images/alex-scheel.jpg';
+import nick_scheel from '../images/nick-scheel.png';
+import liz_mayo from '../images/liz-mayo.jpg';
 
 class AboutPage extends React.Component {
   render() {
@@ -55,6 +58,42 @@ class AboutPage extends React.Component {
             </c.Card>
           </g.GridCell>
         </g.Grid>
+        <Typography use="headline2">Our Team!</Typography>
+        <div className="flexbox App-1000px">
+          <div className="flexible">
+            <c.Card>
+              <c.CardMedia square style={{ backgroundImage: 'url(' + alex_scheel + ')' }} />
+              <article class="text" style={{ padding: '0 1rem 1rem 1rem' }}>
+                <Typography use="headline3">Alex Scheel</Typography>
+                <p>
+                  Alex is one of the two cofounders.
+                </p>
+              </article>
+            </c.Card>
+          </div>
+          <div className="flexible">
+            <c.Card>
+              <c.CardMedia square style={{ backgroundImage: 'url(' + nick_scheel + ')' }} />
+              <article class="text" style={{ padding: '0 1rem 1rem 1rem' }}>
+                <Typography use="headline3">Nick Scheel</Typography>
+                <p>
+                  Nick is one of the two cofounders.
+                </p>
+              </article>
+            </c.Card>
+          </div>
+          <div className="flexible">
+            <c.Card>
+              <c.CardMedia square style={{ backgroundImage: 'url(' + liz_mayo + ')' }} />
+              <article class="text" style={{ padding: '0 1rem 1rem 1rem' }}>
+                <Typography use="headline3">Liz Mayo</Typography>
+                <p>
+                  Liz is our graphic design intern.
+                </p>
+              </article>
+            </c.Card>
+          </div>
+        </div>
       </div>
     );
   }

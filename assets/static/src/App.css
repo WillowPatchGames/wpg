@@ -142,3 +142,11 @@ article.text p, article.text ul {
 article.text p {
   text-indent: 20px;
 }
+
+.flexbox {
+  display: flex;
+}
+
+.flexible {
+  margin: 1rem;
+}
