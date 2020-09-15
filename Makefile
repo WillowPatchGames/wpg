@@ -13,9 +13,12 @@ check: vet gosec safesql staticcheck crypt utils games
 
 deps:
 	go get -u $(NAMESPACE)/...
-	go mod tidy
-	cd assets/static && npm install && npm audit fix
+	cd assets/static && npm install
 	./scripts/words.sh
+
+deps-update: deps
+	go mod tidy
+	cd assets/static && npm audit fix
 
 fuzz:
 	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build

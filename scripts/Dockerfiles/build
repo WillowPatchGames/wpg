@@ -1,0 +1,22 @@
+#This is my comment -- we are going to build wpg
+
+FROM registry.fedoraproject.org/fedora:latest
+
+RUN true \
+  && bash -c 'echo keepcache=True >> /etc/dnf/dnf.conf' \
+  && dnf install -y npm golang make wget tar xz \
+                    /usr/share/dict/words \
+  && go get github.com/securego/gosec/cmd/gosec \
+  && go get github.com/stripe/safesql \
+  && go get honnef.co/go/tools/cmd/staticcheck \
+  && rm -rf /usr/share/doc /usr/share/doc-base \
+            /usr/share/man /usr/share/locale /usr/share/zoneinfo \
+  && true
+
+COPY . /home/wpg
+
+WORKDIR /home/wpg
+
+CMD true \
+  && make deps clean all check dist \
+  && true
