@@ -37,25 +37,32 @@ func (c *Client) readPump() {
 		_ = c.conn.Close()
 	}()
 
-	// Set a handler to react to pong messages.
-	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	// Set a handler to react to pong messages from the client. We don't need to
+	// reply (it is an _inbound_ pong). However, we can use it to update our
+	// read deadlines to tell the library that the peer is still alive.
+	c.conn.SetPongHandler(func(string) error {
+		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
+
+		return nil
+	})
 
 	for {
-		// Set the deadline on the next read command.
+		// Set the deadline on the read command below.
 		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Printf("Socket close: %v", err)
+			log.Println("Got an error during reading?", err)
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				log.Println("Got unepected close error:", err)
 			}
-			break
+			return
 		}
 
 		if messageType != websocket.TextMessage {
 			log.Println("Unexpected message type: " + strconv.Itoa(messageType) + " -- proceeding anyways")
 		}
+
 		c.hub.process[c.gameID] <- ClientMessage{c, message}
 	}
 }
@@ -66,39 +73,43 @@ func (c *Client) readPump() {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *Client) writePump() {
+	// In order to keep this WebSocket connection open, we have to send ping
+	// messages from the server to the client every so often. This period is
+	// determined by the pingPeriod constant. Create a ticker so we can be
+	// notified when we need to send a new ping message.
 	ticker := time.NewTicker(pingPeriod)
+
 	defer func() {
+		// If we can no longer write to the client, we should consider the client
+		// closed and unregister it from the hub. In the worst case, a new
+		// connection will appear with the specified messages.
+		c.hub.unregister <- c
+
 		ticker.Stop()
 		_ = c.conn.Close()
 	}()
+
 	for {
+		// See above; select from either of our two channels to read from.
 		select {
 		case message, ok := <-c.send:
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel.
+				// The hub closed the channel; notify the client and exit this
+				// goroutine.
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			w, err := c.conn.NextWriter(websocket.TextMessage)
+			err := c.conn.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
+				log.Println("Got error trying to write message to peer:", err)
 				return
 			}
-			_, _ = w.Write(message)
 
-			// Add queued chat messages to the current websocket message.
-			/*
-				n := len(c.send)
-				for i := 0; i < n; i++ {
-					w.Write(newline)
-					w.Write(<-c.send)
-				}
-			*/
-
-			if err := w.Close(); err != nil {
-				return
-			}
+			// Since we just wrote to this WebSocket, we don't need to ping the peer
+			// again. Reset the ticker so we don't prematurely trigger.
+			ticker.Reset(pingPeriod)
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
