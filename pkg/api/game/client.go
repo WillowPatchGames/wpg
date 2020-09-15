@@ -56,7 +56,7 @@ func (c *Client) readPump() {
 		if messageType != websocket.TextMessage {
 			log.Println("Unexpected message type: " + strconv.Itoa(messageType) + " -- proceeding anyways")
 		}
-		c.hub.process <- ClientMessage{c, message}
+		c.hub.process[c.gameID] <- ClientMessage{c, message}
 	}
 }
 

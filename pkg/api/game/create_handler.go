@@ -11,16 +11,17 @@ import (
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/games"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
 type createHandlerData struct {
-	RoomID   uint64          `json:"room"`
-	Style    string          `json:"style"`
-	Open     bool            `json:"open"`
-	Config   *RushGameConfig `json:"config"`
-	APIToken string          `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	RoomID   uint64            `json:"room"`
+	Style    string            `json:"style"`
+	Open     bool              `json:"open"`
+	Config   *games.RushConfig `json:"config"`
+	APIToken string            `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type createHandlerResponse struct {

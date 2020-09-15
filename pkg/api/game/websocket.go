@@ -1,12 +1,10 @@
 package game
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -77,7 +75,7 @@ type Hub struct {
 	// Connections maps (gid, uid) tuples to an active Client connection. In the
 	// future, this could be multiple connections to let the same player play on
 	// different devices if they wish.
-	connections map[GameID]map[UserID]Client
+	connections map[GameID]map[UserID]*Client
 
 	// Register handles join requests from the clients.
 	register chan *Client
@@ -93,155 +91,82 @@ type Hub struct {
 func NewHub() *Hub {
 	// Note that inner maps and channels must be created per-game.
 	return &Hub{
-		connections: make(map[GameID]map[UserID]Client),
+		connections: make(map[GameID]map[UserID]*Client),
 		register:    make(chan *Client),
 		unregister:  make(chan *Client),
 		process:     make(map[GameID]chan ClientMessage),
 	}
 }
 
-// ActiveGame information
-type ActiveGame struct {
-	model   models.GameModel
-	config  RushGameConfig
-	state   *GameState
-	players map[uint64]*ActivePlayer
-	txs     GameTxs
-}
-
-// ActivePlayer state
-type ActivePlayer struct {
-	model  models.PlayerModel
-	user   models.UserModel
-	state  *PlayerState
-	game   *ActiveGame
-	client *Client
-}
-
-// A Letter with a uuid
-type Letter struct {
-	ID    int32  `json:"id"`
-	Value string `json:"value"`
-}
-
-type GameTxs struct {
-	lock sync.Mutex
-}
-
-func (g *GameTxs) GetTx() (*sql.Tx, error) {
-	g.lock.Lock()
+func (hub *Hub) ensureGameExists(gameid uint64) error {
+	// If the game already exists, there's nothing we need to do. It is already
+	// registerred in the controller and we can continue to adding a player.
+	if hub.controller.GameExists(gameid) {
+		return nil
+	}
 
 	tx, err := database.GetTransaction()
-	if err != nil {
-		g.lock.Unlock()
-	}
-
-	return tx, err
-}
-
-func (g *GameTxs) ReleaseTx(tx *sql.Tx) {
-	if tx != nil {
-		err := tx.Commit()
-		if err != nil && err != sql.ErrTxDone {
-			log.Println(err)
-		}
-	}
-
-	g.lock.Unlock()
-}
-
-func (hub *Hub) connectGame(gameid uint64) (*ActiveGame, error) {
-	game, present := hub.games[gameid]
-	if present {
-		return game, nil
-	}
-
-	game = new(ActiveGame)
-
-	tx, err := game.txs.GetTx()
-	if err != nil {
-		return nil, err
-	}
-	defer game.txs.ReleaseTx(tx)
-
-	var gamedb models.GameModel
-	err = gamedb.FromID(tx, gameid)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	err = gamedb.GetConfig(tx, &game.config)
-	if err != nil {
-		return nil, err
-	}
-
-	err = game.loadOrStart(tx, gamedb)
-	if err != nil {
-		return nil, err
-	}
-
-	game.model = gamedb
-	game.players = make(map[uint64]*ActivePlayer)
-	hub.games[gameid] = game
-	return game, nil
-}
-
-// TODO: actually have a start event!
-func (game *ActiveGame) loadOrStart(tx *sql.Tx, gamedb models.GameModel) error {
-	// state TEXT DEFAULT '{}'
-	err := gamedb.GetState(tx, &game.state)
 	if err != nil {
 		return err
 	}
 
-	if game.state.Initialized {
+	defer tx.Commit()
+
+	var gamedb models.GameModel
+	err = gamedb.FromID(tx, gameid)
+	if err != nil {
+		log.Println("Unable to load game:", err)
+		return err
+	}
+
+	var config games.RushConfig
+	err = gamedb.GetConfig(tx, &config)
+	if err != nil {
+		log.Println("Unable to load game config", err)
+		return err
+	}
+
+	err = hub.controller.AddGame("rush", gameid, config)
+	if err != nil {
+		log.Println("Unable to add game to controller:", err)
+		return err
+	}
+
+	return nil
+}
+
+func (hub *Hub) connectPlayer(client *Client) error {
+	// Maybe the player exists in the client pool already. If so, all we need to
+	// do is update the connection; everything else has already been done.
+	// Otherwise, we've got to potentially create the game and add the player.
+
+	user_client_map, present := hub.connections[client.gameID]
+	if !present {
+		// When
+		hub.connections[client.gameID] = make(map[UserID]*Client)
+		user_client_map = hub.connections[client.gameID]
+	}
+
+	player, present := user_client_map[client.userID]
+	if present {
+		if player != client {
+			// If the player is already connected, assume this connection should take
+			// precedence and update accordingly.
+			hub.connections[client.gameID][client.userID] = client
+		}
+
 		return nil
 	}
 
-	tilepile := game.config.NumTiles
-	if game.config.TilesPerPlayer {
-		tilepile *= game.config.NumPlayers
-	}
-
-	game.state = newGameState(tilepile)
-	err = gamedb.SetState(tx, &game.state)
-	return err
-}
-
-func (hub *Hub) connectPlayer(client *Client, gameid uint64, userid uint64) (*ActivePlayer, error) {
-	// Maybe the player exists in the client pool already
-	player, present := hub.clients[client]
-	if present {
-		return player, nil
-	}
-
-	// Make sure the player doesn't already have another client connection
-	for c := range hub.clients {
-		if hub.clients[c].model.GameID == gameid && hub.clients[c].model.UserID == userid {
-			return nil, errors.New("player was already connected with different connection")
-		}
-	}
-
-	game, err := hub.connectGame(gameid)
+	// Create a new game if doesn't exist
+	err := hub.ensureGameExists(client.gameID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// Maybe the player exists in the game already
-	player, present = game.players[userid]
-	if present {
-		if player.client == nil {
-			player.client = client
-			hub.clients[client] = player
-			return player, nil
-		}
-		return nil, errors.New("player was already connected with different connection")
-	}
-
-	// If not, and the game is finished, we don't want to add more players
-	if game.model.Lifecycle == "finished" {
-		return nil, errors.New("cannot add player to finished game")
+	exists, err = hub.controller.AddPlayer(client.gameID, client.userID)
+	if err != nil || exists {
+		return err
 	}
 
 	tx, err := game.txs.GetTx()

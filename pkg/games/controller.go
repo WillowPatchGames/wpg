@@ -87,8 +87,13 @@ func (c *Controller) Init() {
 	c.ToGame = make(map[uint64]GameData)
 }
 
+func (c *Controller) GameExists(gid uint64) bool {
+	_, ok := c.ToGame[gid]
+	return ok
+}
+
 func (c *Controller) AddGame(modeRepr string, gid uint64, config interface{}) error {
-	if _, ok := c.ToGame[gid]; ok {
+	if c.GameExists(gid) {
 		return errors.New("game with specified id already exists in controller")
 	}
 
@@ -113,6 +118,52 @@ func (c *Controller) AddGame(modeRepr string, gid uint64, config interface{}) er
 
 	c.ToGame[gid] = GameData{mode, state, make(map[uint64]PlayerData)}
 	return nil
+}
+
+func (c *Controller) PlayerExists(gid uint64, uid uint64) bool {
+	game, ok := c.ToGame[gid]
+	if !ok {
+		return ok
+	}
+
+	_, ok = game.ToPlayer[uid]
+	return ok
+}
+
+func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
+	if !c.GameExists(gid) {
+		return false, errors.New("game with specified id does not exists in controller")
+	}
+
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	game := c.ToGame[gid]
+
+	player, present := game.ToPlayer[uid]
+	if present {
+		return present, nil
+	}
+
+	game.ToPlayer[uid] = PlayerData{
+		UID: uid,
+		InboundMsgs: make(map[int]interface{}),
+		OutboundMsgs: make(map[int]interface{}),
+		InboundReplies: make(map[int]int),
+		OutboundReplies: make(map[int]int),
+	}
+
+	return false, nil
+}
+
+func (c *Controller) MakeReady(gid uint64, uid uint64, ready bool) error {
+	if !c.GameExists(gid) {
+		return false, errors.New("game with specified id does not exists in controller")
+	}
+
+	if !c.PlayerExists(gid, uid) {
+		return false, errors.New("game with specified id does not exists in controller")
+	}
 }
 
 func getMessageModeAndID(message []byte) (string, uint64, uint64, string, error) {
