@@ -109,7 +109,12 @@ func (c *Client) writePump() {
 
 			// Since we just wrote to this WebSocket, we don't need to ping the peer
 			// again. Reset the ticker so we don't prematurely trigger.
-			ticker.Reset(pingPeriod)
+			//
+			// XXX: This call was added in Go v1.15; Fedora 32 currently ships v1.14,
+			// so we need to wait until Fedora 33 is stable and deployed on our servers
+			// to use this command.
+			//
+			// ticker.Reset(pingPeriod)
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
