@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// GameMode describes which mode (type? style?) a given game is. This is a
+// proxy for using string identifiers and strongly typed instead.
 type GameMode int
 
 const (
@@ -15,6 +17,7 @@ func (gm GameMode) String() string {
 	return []string{"rush"}[gm]
 }
 
+// Convert the representation of a GameMode to a string.
 func GameModeFromString(repr string) GameMode {
 	switch strings.ToLower(repr) {
 	case "rush":
@@ -28,6 +31,9 @@ func (gm GameMode) IsValid() bool {
 	return gm == RushGame
 }
 
+// GameConfigError is a type of error specific for errors in the
+// configuration; it documents which parameter was bad, what its
+// bad value was, and what an allowed range of values were.
 type GameConfigError struct {
 	Parameter     string
 	Value         string

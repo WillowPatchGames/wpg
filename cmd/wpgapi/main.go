@@ -34,6 +34,8 @@ var dbPassword string
 var dbName string
 var dbSslmode string
 
+// In debug mode, we use this function to walk the set of routes we've added,
+// showing them in the logs.
 func gorillaWalkFn(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 	path, _ := route.GetPathTemplate()
 	methods, _ := route.GetMethods()
@@ -63,7 +65,8 @@ func main() {
 	flag.StringVar(&staticPath, "static_path", "assets/static/public", "Path to web UI static assets")
 	flag.Parse()
 
-	// Open Database connection first
+	// Open Database connection first. Currently we only support postgres
+	// databases but we could change that in the future.
 	dbconn = fmt.Sprintf(dbFmt, dbHost, dbPort, dbUser, dbPassword, dbName, dbSslmode)
 
 	if debug {
@@ -76,7 +79,8 @@ func main() {
 	}
 	defer database.Close()
 
-	// Add our main application routers
+	// Add our main API handlers. This extends the main router with relevant
+	// routes.
 	router := mux.NewRouter()
 	auth.BuildRouter(router, debug)
 	game.BuildRouter(router, debug)
@@ -84,7 +88,10 @@ func main() {
 	user.BuildRouter(router, debug)
 
 	if debug || proxy {
-		// Add static asset handler in debug mode
+		// Add static asset handler in debug mode or when we've been asked to proxy
+		// stuff. Static asset handler is either a path on disk (when using a
+		// production build) or a URL/proxy-pass type deal when using a debug node
+		// auto-reloading server.
 		if _, err := os.Stat(staticPath); err == nil {
 			log.Println("Adding static asset routing: " + staticPath)
 			fileHandler := http.FileServer(http.Dir(staticPath))
@@ -103,6 +110,9 @@ func main() {
 	handler = handlers.CombinedLoggingHandler(os.Stderr, handler)
 
 	if !debug {
+		// This handler prevents logging stacktraces during debug mode. We should
+		// leave it enabled for production to avoid crashing the handler in most
+		// instances.
 		handler = handlers.RecoveryHandler()(handler)
 	}
 
@@ -112,6 +122,7 @@ func main() {
 		Addr:    addr,
 	}
 
+	// In debug mode, show our added routes.
 	if debug {
 		err = router.Walk(gorillaWalkFn)
 		if err != nil {

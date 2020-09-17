@@ -15,7 +15,7 @@ type PlayerData struct {
 	Index int `json:"index"`
 
 	// Whether or not this player has been admitted to this game. By default,
-	// they start with admitted = false, requring an admin to admit them, unless
+	// they start with admitted = false, requiring an admin to admit them, unless
 	// they join with an individual invite link.
 	Admitted bool `json:"admitted"`
 
@@ -41,7 +41,7 @@ type PlayerData struct {
 	// to be repeated.
 	OutboundMsgs map[int]interface{} `json:"outbound"`
 
-	// InboundReplies maps indentifiers in InboundMsgs to identifiers in
+	// InboundReplies maps identifiers in InboundMsgs to identifiers in
 	// OutboundMsgs to keep track of replies to individual messages. This is
 	// only for messages on the client which need to be confirmed by the
 	// server.
@@ -80,35 +80,52 @@ type MessageHeader struct {
 
 // Controller wraps game data and handles the parsing of messages from the
 // websocket or other connection. dispatch.go handles the actual dispatch
-// into game specific commands understood by a game implementation.
+// into game specific commands understood by a game implementation. We lock
+// around ToGame to prevent concurrent access and modification to games. This
+// lets us lock within Controller (and calls to Controller methods) without
+// having our callers lock. Because access to the entire controller is locked,
+// we need not lock access to the PlayerData inside. Additionally, we assume
+// games have internal locks of their own, preventing concurrent modification
+// from corrupting the state.
 type Controller struct {
 	lock   sync.Mutex
 	ToGame map[uint64]GameData `json:"games"`
 }
 
+// Initialize a Controller object.
 func (c *Controller) Init() {
+	// Locks don't need to be initialized.
 	c.ToGame = make(map[uint64]GameData)
 }
 
+// Whether or not a given game exists and is tracked by this controller
+// instance.
 func (c *Controller) GameExists(gid uint64) bool {
 	_, ok := c.ToGame[gid]
 	return ok
 }
 
+// Add a new game to a controller. Note that, while configuration information
+// is populated, the game isn't yet started.
 func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config interface{}) error {
+	// If the game exists, throw an error.
 	if c.GameExists(gid) {
 		return errors.New("game with specified id already exists in controller")
 	}
 
+	// If game is of an invalid mode, exit. Currently we only support a single
+	// type of game, Rush!.
 	var mode GameMode = GameModeFromString(modeRepr)
 	if !mode.IsValid() {
 		return errors.New("unknown game mode: " + modeRepr)
 	}
 
 	if mode != RushGame {
+		// XXX: Remove me once more game modes are supported.
 		panic("Valid but unsupported game mode: " + modeRepr)
 	}
 
+	// Type assert to grab the configuration.
 	var rushConfig *RushConfig = config.(*RushConfig)
 	var state *RushState = new(RushState)
 
@@ -129,6 +146,7 @@ func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config i
 	return nil
 }
 
+// Remove a given game once it is no longer needed.
 func (c *Controller) RemoveGame(gid uint64) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -141,6 +159,7 @@ func (c *Controller) RemoveGame(gid uint64) error {
 	return nil
 }
 
+// Check if a given player exists (by UserID) in the given game.
 func (c *Controller) PlayerExists(gid uint64, uid uint64) bool {
 	game, ok := c.ToGame[gid]
 	if !ok {
@@ -151,6 +170,8 @@ func (c *Controller) PlayerExists(gid uint64, uid uint64) bool {
 	return ok
 }
 
+// Add a player to this game. Returns true iff the player was already
+// present.
 func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -166,8 +187,8 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 		return present, nil
 	}
 
+	// By default, the owner of the game is already admitted into the game.
 	var owner bool = uid == game.Owner
-
 	game.ToPlayer[uid] = PlayerData{
 		UID:             uid,
 		Admitted:        owner,
@@ -180,6 +201,8 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 	return false, nil
 }
 
+// Mark a player as being ready to play. This can and should be controlled
+// by the player and not by a game admin.
 func (c *Controller) MarkReady(gid uint64, uid uint64, ready bool) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -198,6 +221,10 @@ func (c *Controller) MarkReady(gid uint64, uid uint64, ready bool) error {
 	return nil
 }
 
+// Mark a player as being admitted to the game. This should be controlled by
+// the game admin and not the players themselves. The exception to this is
+// that users joining by individual invite tokens should be auto-admitted as
+// they were previously invited individually.
 func (c *Controller) MarkAdmitted(gid uint64, uid uint64, admitted bool) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -216,24 +243,21 @@ func (c *Controller) MarkAdmitted(gid uint64, uid uint64, admitted bool) error {
 	return nil
 }
 
-func getMessageModeAndID(message []byte) (string, uint64, uint64, string, error) {
+func getMessageModeAndID(message []byte) (MessageHeader, error) {
 	var obj MessageHeader
 
 	if err := json.Unmarshal(message, &obj); err != nil {
-		return "", 0, 0, "", err
+		return obj, err
 	}
 
-	return obj.Mode, obj.ID, obj.Player, obj.MessageType, nil
+	return obj, nil
 }
 
 func (c *Controller) Dispatch(message []byte) error {
-	var mode string
-	var gid uint64
-	var uid uint64
-	var msgType string
+	var obj MessageHeader
 	var err error
 
-	mode, gid, uid, msgType, err = getMessageModeAndID(message)
+	obj, err = getMessageModeAndID(message)
 	if err != nil {
 		return err
 	}
