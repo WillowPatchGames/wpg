@@ -3,6 +3,7 @@ import React from 'react';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/grid/styles';
+import '@rmwc/icon/styles';
 import '@rmwc/list/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
@@ -10,6 +11,7 @@ import '@rmwc/textfield/styles';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as g from '@rmwc/grid';
+import { Icon } from '@rmwc/icon';
 import * as l from '@rmwc/list';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
@@ -27,32 +29,98 @@ class RoomPage extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = {};
+    this.state = {
+      game_choices: null
+    };
 
     this.code_ref = React.createRef();
     this.link_ref = React.createRef();
   }
 
+  componentDidMount() {
+    this.checkForGames();
+  }
+
   async checkForGames() {
     await this.props.room.update();
-    if (this.props.room.games) {
-      var game = await GameModel.FromId(this.props.user, this.props.room.games[this.props.room.games.length - 1]);
 
-      if (game.error === null) {
-        this.props.setGame(game);
+    if (this.props.room.games) {
+      var games = [];
+      for (var game_index in this.props.room.games) {
+        var game_id = this.props.room.games[game_index];
+        var game = await GameModel.FromId(this.props.user, game_id);
+
+        if (game.error === null) {
+          games.push(game);
+        } else {
+          console.log(game);
+        }
       }
+
+      this.setState(state => Object.assign({}, state, { game_choices: games }));
+    } else {
+      this.setState(state => Object.assign({}, state, { game_choices: null }));
+    }
+  }
+
+  async joinGame(game) {
+    await game.update();
+    if (game.error !== null) {
+      console.log(game);
+    } else {
+      this.props.setGame(game);
+    }
+  }
+
+  async deleteGame(game) {
+    await game.delete();
+    if (game.error !== null) {
+      console.log(game);
+    } else {
+      this.checkForGames();
     }
   }
 
   render() {
     let right_panel = null;
     if (this.props.game === null) {
-      if (this.props.user.id === this.props.room.owner) {
-        console.log("We're the owner");
+      if (this.props.user.id === this.props.room.owner && this.state.game_choices === null) {
         right_panel = <CreateGameForm {...this.props} />;
       } else {
-        console.log("We're a spectator");
-        right_panel = <Button label="Look for a game" raised onClick={() => this.checkForGames() } />
+        var games = [];
+
+        if (this.state.game_choices !== null) {
+          for (var index in this.state.game_choices) {
+            var game = this.state.game_choices[index];
+            games.push(
+              <c.Card>
+                <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
+                  Game #{ game.id }
+                </div>
+                <c.CardActions>
+                  <c.CardActionButton onClick={ () => this.joinGame(game) }>
+                    Play
+                  </c.CardActionButton>
+                  {
+                    this.props.user.id === this.props.room.owner ?
+                    <c.CardActionButton onClick={ () => this.deleteGame(game) }>
+                      Delete
+                    </c.CardActionButton>
+                    : <></>
+                  }
+                </c.CardActions>
+              </c.Card>
+            );
+          }
+        }
+
+        right_panel = <>
+          <Button label="Refresh Games" raised onClick={() => this.checkForGames() } />
+          <br /><br />
+          {
+            games ? <div>{ games }</div> : <></>
+          }
+        </>
       }
     } else {
       console.log("There's already a game!");
