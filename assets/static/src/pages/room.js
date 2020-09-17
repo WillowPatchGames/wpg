@@ -3,7 +3,6 @@ import React from 'react';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/grid/styles';
-import '@rmwc/icon/styles';
 import '@rmwc/list/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
@@ -11,19 +10,12 @@ import '@rmwc/textfield/styles';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as g from '@rmwc/grid';
-import { Icon } from '@rmwc/icon';
 import * as l from '@rmwc/list';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
-import { CreateGameForm, PreGamePage, loadGame } from './games.js';
+import { CreateGameForm, PreGamePage } from './games.js';
 import { GameModel } from '../models.js';
-
-
-function loadRoom(room) {
-  if (!room || !room.endpoint) return null;
-  return room;
-}
 
 class RoomPage extends React.Component {
   constructor(props) {
@@ -90,8 +82,8 @@ class RoomPage extends React.Component {
         var games = [];
 
         if (this.state.game_choices !== null) {
-          for (var index in this.state.game_choices) {
-            var game = this.state.game_choices[index];
+          for (let index in this.state.game_choices) {
+            let game = this.state.game_choices[index];
             games.push(
               <c.Card>
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
