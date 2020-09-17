@@ -384,7 +384,8 @@ class CreateGameForm extends React.Component {
       tiles_per_player: false,
       start_size: 12,
       draw_size: 1,
-      discard_penalty: 3
+      discard_penalty: 3,
+      frequency: 1,
     }
   }
 
@@ -406,6 +407,7 @@ class CreateGameForm extends React.Component {
     game.start_size = +this.state.start_size;
     game.draw_size = +this.state.draw_size;
     game.discard_penalty = +this.state.discard_penalty;
+    game.frequency = +this.state.frequency;
 
     if (this.props.room !== null) {
       game.room = this.props.room;
@@ -484,6 +486,34 @@ class CreateGameForm extends React.Component {
                 { this.state.tiles_per_player
                   ? <p>There will be { this.state.num_tiles } tiles per player</p>
                   : <p>There will be { this.state.num_tiles } tiles overall</p>
+                }
+                <br />
+                <Select label="Tile Frequency" enhanced value={ "" + this.state.frequency } onChange={ this.inputHandler("frequency") } options={
+                  [
+                    {
+                      label: 'Standard US English Letter Frequencies',
+                      value: '1',
+                    },
+                    {
+                      label: 'Bananagrams Tile Frequency',
+                      value: '2',
+                    },
+                    {
+                      label: 'Scrabble Tile Frequency',
+                      value: '3',
+                    }
+                  ]
+                } />
+                <br/>
+                {
+                  +this.state.frequency === 1 ?
+                  <p>This uses the standard frequency breakdown of US English text to create a pool of tiles. Letters such as q and z are really infrequent while vowels are more common.</p>
+                  : (
+                    +this.state.frequency === 2 ?
+                    <p>This uses the frequency breakdown of Bananagrams, scaled to the size of the pool.</p>
+                    :
+                    <p>This uses the frequency breakdown of Scrabble, scaled to the size of the pool.</p>
+                  )
                 }
                 <br />
                 <l.ListItem>

@@ -411,6 +411,7 @@ class GameModel {
     this.tiles_per_player = null;
     this.start_size = null;
     this.discard_penalty = null;
+    this.frequency = null;
   }
 
   static async FromId(user, id) {
@@ -463,7 +464,8 @@ class GameModel {
         'draw_size': this.draw_size,
         'discard_penalty': this.discard_penalty,
         'num_players': this.num_players,
-        'tiles_per_player': this.tiles_per_player
+        'tiles_per_player': this.tiles_per_player,
+        'frequency': this.frequency,
       }
     };
 
