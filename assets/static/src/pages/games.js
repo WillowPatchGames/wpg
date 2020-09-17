@@ -726,6 +726,7 @@ class JoinGamePage extends React.Component {
             this.props.setGame(game);
           }
         }
+        this.props.setCode(room.code);
         this.props.setRoom(room);
         this.props.setPage('room');
       }

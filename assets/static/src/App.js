@@ -19,7 +19,7 @@ import { SnackbarQueue, createSnackbarQueue } from '@rmwc/snackbar';
 // Application imports
 import { Navigation } from './nav.js';
 import { Page, Footer } from './pages.js';
-import { normalizeCode, UserModel } from './models.js';
+import { normalizeCode, UserModel, RoomModel, GameModel } from './models.js';
 
 // CSS overrides last
 import './App.css';
@@ -45,8 +45,11 @@ class App extends React.Component {
     window.onhashchange = () => this.setPage(window.location.hash.substring(1));
   }
 
-  componentDidMount() {
-    this.loadUser();
+  async componentWillMount() {
+    let user = await this.loadUser();
+    if (user !== null) {
+      this.loadGame();
+    }
   }
 
   async loadUser() {
@@ -77,10 +80,36 @@ class App extends React.Component {
       localStorage.removeItem('user');
       localStorage.removeItem('guest');
       this.setUser(null);
+      return null;
     }
 
     if (verified_user.display !== user.display || verified_user.username !== user.username || verified_user.email !== user.email) {
       this.setUser(verified_user);
+    }
+
+    return verified_user;
+  }
+
+  async loadGame() {
+    var params = new URLSearchParams(window.location.search);
+    let code = params.get("code");
+    if (code === null) {
+      return;
+    }
+
+    code = normalizeCode(code);
+
+    var game = await GameModel.FromCode(this.state.user, code);
+    if (game.error !== null) {
+      // Try loading it as a room instead.
+      var room = await RoomModel.FromCode(this.state.user, code);
+      if (room.error === null || room.error === undefined) {
+        this.setCode(code);
+        this.setRoom(room);
+      }
+    } else {
+      this.setCode(code);
+      this.setGame(game);
     }
   }
 
