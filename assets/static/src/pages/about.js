@@ -78,8 +78,14 @@ class AboutPage extends React.Component {
               </article>
               <c.CardActions>
                 <c.CardActionIcons>
-                  <a href="https://cipherboy.com" target="_blank"><c.CardActionIcon icon="home" /></a>
-                  <a href="https://g.cipherboy.com" target="_blank"><c.CardActionIcon icon="person" /></a>
+                  {
+                    // eslint-disable-next-line
+                    <a href="https://cipherboy.com" target="_blank" rel="noopener"><c.CardActionIcon icon="home" /></a>
+                  }
+                  {
+                    // eslint-disable-next-line
+                    <a href="https://g.cipherboy.com" target="_blank" rel="noopener"><c.CardActionIcon icon="person" /></a>
+                  }
                 </c.CardActionIcons>
               </c.CardActions>
             </c.Card>
@@ -92,13 +98,13 @@ class AboutPage extends React.Component {
                 <p>
                   Nick is one of the two cofounders of <i>Willow Patch Games</i> with
                   his brother Alex. Nick is pursuing dual degrees in Cello Performance
-                  and Mathematics at <a href="https://www.bard.edu/" target="_blank">Bard</a> in
+                  and Mathematics at <a href="https://www.bard.edu/" target="_blank" rel="noopener noreferrer">Bard</a> in
                   New York.
                 </p>
               </article>
               <c.CardActions>
                 <c.CardActionIcons>
-                  <a href="https://github.com/MonoidMusician" target="_blank"><c.CardActionIcon icon="person" /></a>
+                  <a href="https://github.com/MonoidMusician" target="_blank" rel="noopener noreferrer"><c.CardActionIcon icon="person" /></a>
                 </c.CardActionIcons>
               </c.CardActions>
             </c.Card>
@@ -110,7 +116,7 @@ class AboutPage extends React.Component {
               <article className="text-left" style={{ padding: '0 1rem 1rem 1rem' }}>
                 <p>
                   Liz is our marketing and graphic design intern. She is currently pursuing
-                  a marketing degree at <a href="https://wmich.edu/" target="_blank">WMU</a>.
+                  a marketing degree at <a href="https://wmich.edu/" target="_blank" rel="noopener noreferrer">WMU</a>.
                 </p>
               </article>
             </c.Card>
