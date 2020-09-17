@@ -65,6 +65,13 @@ func (handle CreateHandler) verifyRequest() error {
 		return api_errors.ErrMissingRequest
 	}
 
+	if handle.req.Config != nil {
+		err := handle.req.Config.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
