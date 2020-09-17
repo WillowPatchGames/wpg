@@ -182,6 +182,10 @@ class AfterPartyPage extends React.Component {
     this.props.setGame(null);
     if (this.unmount) this.unmount();
   }
+  returnToRoom() {
+    this.props.setGame(null);
+    this.props.setPage("room");
+  }
   render() {
     return (
       <div>
@@ -190,6 +194,9 @@ class AfterPartyPage extends React.Component {
         : <></>
         }
         <h2>That was fun, wasn't it?</h2>
+        {
+          this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+        }
         <ol className="results">
           { this.state.snapshots
           ? this.state.snapshots.map(snapshot =>
