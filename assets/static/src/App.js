@@ -45,9 +45,9 @@ class App extends React.Component {
     window.onhashchange = () => this.setPage(window.location.hash.substring(1));
   }
 
-  async componentWillMount() {
+  async componentDidMount() {
     let user = await this.loadUser();
-    if (user !== null) {
+    if (user !== null && this.state.user !== null) {
       this.loadGame();
     }
   }
@@ -106,10 +106,14 @@ class App extends React.Component {
       if (room.error === null || room.error === undefined) {
         this.setCode(code);
         this.setRoom(room);
+        this.setPage('room');
       }
     } else {
       this.setCode(code);
       this.setGame(game);
+      if (this.state.page === '') {
+        this.setPage('play');
+      }
     }
   }
 
@@ -127,6 +131,8 @@ class App extends React.Component {
   }
 
   setPage(page) {
+    window.location.hash = '#' + page;
+
     if (this.state.page === page) {
       console.log("Early return from setPage: already there");
       return;
@@ -140,7 +146,6 @@ class App extends React.Component {
     console.trace("New page: " + page);
 
     this.setState(state => Object.assign({}, state, { page }));
-    window.location.hash = '#' + page;
 
     console.trace("Setting hash: " + window.location.hash);
   }
