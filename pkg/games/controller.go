@@ -262,23 +262,23 @@ func (c *Controller) Dispatch(message []byte) error {
 		return err
 	}
 
-	if mode != "rush" {
+	if obj.Mode != "rush" {
 		return errors.New("unknown type of message")
 	}
 
-	gameData, ok := c.ToGame[gid]
+	gameData, ok := c.ToGame[obj.ID]
 	if !ok || gameData.State == nil {
 		return errors.New("unable to find game by id")
 	}
 
-	if gameData.Mode.String() != mode {
+	if gameData.Mode.String() != obj.Mode {
 		return errors.New("game modes don't match internal expectations")
 	}
 
-	playerData, ok := gameData.ToPlayer[uid]
+	playerData, ok := gameData.ToPlayer[obj.Player]
 	if !ok {
 		return errors.New("user isn't playing this game")
 	}
 
-	return c.dispatch(message, gameData, msgType, playerData)
+	return c.dispatch(message, gameData, obj.MessageType, playerData)
 }

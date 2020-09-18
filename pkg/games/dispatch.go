@@ -52,6 +52,15 @@ func (c *Controller) dispatchRush(message []byte, data GameData, messageType str
 	}
 
 	switch messageType {
+	case "start":
+		var players int = 0
+		for _, player := range data.ToPlayer {
+			if player.Admitted {
+				players += 1
+			}
+		}
+
+		err = state.Start(players)
 	case "play":
 		var data RushPlay
 		if err := json.Unmarshal(message, &data); err != nil {
@@ -118,6 +127,8 @@ func (c *Controller) dispatchRush(message []byte, data GameData, messageType str
 		}
 
 		err = state.Draw(player.Index, data.DrawID)
+	default:
+		err = errors.New("unknown message_type issued to rush game: " + messageType)
 	}
 
 	return err

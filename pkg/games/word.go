@@ -21,6 +21,7 @@ type LetterGrid struct {
 	ToTile      map[int]LetterTile
 	PositionsOf map[int]LetterPos `json:"positions"`
 	AtPosition  map[LetterPos]int
+	Drift       []int `json:"drift"`
 }
 
 func (lg *LetterGrid) Init() {

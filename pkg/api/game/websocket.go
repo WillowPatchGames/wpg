@@ -367,7 +367,12 @@ func (hub *Hub) processMessage(client *Client, message []byte) error {
 		return errors.New("unable to process message from non-existent client")
 	}
 
-	return hub.controller.Dispatch(message)
+	err := hub.controller.Dispatch(message)
+	if err != nil {
+		log.Println(err, string(message))
+	}
+
+	return err
 }
 
 func (hub *Hub) ProcessPlayerMessages(gid GameID) {
@@ -388,7 +393,8 @@ func (hub *Hub) ProcessPlayerMessages(gid GameID) {
 				log.Println("Got error processing message:", err)
 			}
 		case <-ticker.C:
-			log.Println("Haven't gotten any new messages in", pongWait)
+			// Don't do anything; this ensures we check hub.process above in case
+			// the socket was closed under us.
 		}
 	}
 }
