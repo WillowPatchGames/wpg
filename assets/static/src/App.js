@@ -139,15 +139,10 @@ class App extends React.Component {
     }
 
     if (page === "" || page === null) {
-      console.trace("Refusing to set empty page.");
       return;
     }
 
-    console.trace("New page: " + page);
-
     this.setState(state => Object.assign({}, state, { page }));
-
-    console.trace("Setting hash: " + window.location.hash);
   }
 
   setRoom(room) {
