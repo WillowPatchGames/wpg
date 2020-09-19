@@ -159,6 +159,10 @@ func (c *Controller) dispatch(message []byte, game GameData, messageType string,
 			return err
 		}
 
+		if player.UID != game.Owner {
+			return errors.New("player not authorized to admit other players")
+		}
+
 		return c.MarkAdmitted(game.GID, data.Target, data.Admit)
 	case "ready":
 		var data GameReady
