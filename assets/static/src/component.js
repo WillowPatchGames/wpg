@@ -8,11 +8,6 @@ import { Button } from '@rmwc/button';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
 
-import {
-  Letter,
-  Grid,
-} from './game.js';
-
 // Library to disable body scrolling
 import { disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock';
 
@@ -24,12 +19,6 @@ seamless({ duration: 150 });
 const e = React.createElement;
 
 var DRAGGABLES = [];
-
-const defaultGrid = new Grid();
-defaultGrid.writeWord("APPLET", 3, 0, false, Letter);
-defaultGrid.writeWord("TEACHER", 2, 4, true, Letter);
-defaultGrid.writeWord("MAC", 5, 2, false, Letter);
-defaultGrid.padding(5);
 
 var PADDING = [7,7];
 var SIZE = 35;

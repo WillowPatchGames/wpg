@@ -1,11 +1,17 @@
+import {
+  LetterTile,
+  LetterBank,
+  LetterGrid,
+} from './games/word.js';
+
 function def(v) {
   return v !== undefined && v !== null;
 }
 
 class GameData {
   constructor(old) {
-    this.grid = old?.grid ? new Grid(old.grid) : new Grid();
-    this.bank = old?.bank ? new Bank(old.bank) : new Bank();
+    this.grid = old?.grid ? new LetterGrid(old.grid) : new LetterGrid();
+    this.bank = old?.bank ? new LetterBank(old.bank) : new LetterBank();
   }
   serialize() {
     var letters = [];
@@ -33,8 +39,8 @@ class GameData {
       }
     }
     return new GameData({
-      grid: Grid.deserialize(grids),
-      bank: Bank.deserialize(banks),
+      grid: LetterGrid.deserialize(grids),
+      bank: LetterBank.deserialize(banks),
     });
   }
   get(here) {
@@ -47,7 +53,7 @@ class GameData {
     }
   }
   delete(here) {
-    if (here instanceof Letter) {
+    if (here instanceof LetterTile) {
       here = this.findById(here);
     }
     if (!here || !this.get(here)) {
@@ -79,7 +85,7 @@ class GameData {
   add(...values) {
     for (let value of values) {
       if (this.findById(value)) continue;
-      this.set(["bank",Bank.blank], value);
+      this.set(["bank", LetterBank.blank], value);
     }
     return this;
   }
@@ -91,7 +97,7 @@ class GameData {
     return this;
   }
   recall(here) {
-    return this.swap(here, ["bank",Bank.blank]);
+    return this.swap(here, ["bank", LetterBank.blank]);
   }
   findById(letter) {
     var results = [];
@@ -134,9 +140,10 @@ class TileManager {
 }
 
 class APITileManager extends TileManager {
-  constructor(conn) {
+  constructor(controller) {
     super();
-    this.conn = conn;
+
+    this.controller = controller;
     this.handler = this.handler.bind(this);
     this.conn.addEventListener("message", this.handler);
     this.draw_number = 1;
@@ -148,62 +155,27 @@ class APITileManager extends TileManager {
     var data = JSON.parse(buf);
     if (!data) return;
     if ((data.type === "draw" || data.type === "gamestart") && !data.request && this.onAdd) {
-      let letters = data.letters.map(Letter.deserialize);
+      let letters = data.letters.map(LetterTile.deserialize);
       if (data.draw_number) {
         this.draw_number = +data.draw_number + 1;
       }
       this.onAdd(...letters);
     }
   }
+
   async draw(data) {
-    await waitOpen(this.conn);
-    var request = String(uid());
-    this.conn.send(JSON.stringify({
-      type: "draw",
-      draw_number: this.draw_number,
-      snapshot: data ? data.serialize() : undefined,
-      request,
-    }));
-    var dat = await wsPromise(this.conn, (resolve, reject) => ({ data: buf }) => {
-      var data = JSON.parse(buf);
-      if (data.type === "error" && data.request === request) {
-        reject(data);
-      } else if ((data.type === "gamestart" || data.type === "draw" || data.type === "gameover") && data.request === request) {
-        resolve(data);
-        if (data.draw_number) {
-          this.draw_number = +data.draw_number + 1;
-        }
-      }
-    });
-    return dat.letters?.map(Letter.deserialize);
+    // XXX: Make this work.
+    var dat = await this.controller.draw();
   }
-  async discard(letter, data) {
-    var request = String(uid());
-    this.conn.send(JSON.stringify({
-      type: "discard",
-      letter: {
-        id: letter.id,
-        value: String(letter),
-      },
-      snapshot: data ? data.serialize() : undefined,
-      request,
-    }));
-    var dat = await wsPromise(this.conn, (resolve, reject) => ({ data: buf }) => {
-      var data = JSON.parse(buf);
-      if ((data.type === "error" && data.request === request) || data.type === "gameover") {
-        reject(data);
-      } else if (data.type === "discard" && data.request === request) {
-        resolve(data);
-      }
-    });
-    return dat.letters?.map(Letter.deserialize);
+
+  async discard(letter) {
+    // XXX: Make this work.
+    var dat = await this.controller.discard(letter);
   }
-  swap(here, there, data) {
-    this.conn.send(JSON.stringify({
-      type: "swap",
-      here, there,
-      snapshot: data ? data.serialize() : undefined,
-    }));
+
+  async swap(here, there) {
+    // XXX: Make this work.
+    await this.controller.swap(here, there);
   }
 }
 
@@ -274,7 +246,7 @@ class JSTileManager extends TileManager {
         return el > choice ? ((chosenIndex = i), true) : false;
     });
     var chosenElement = letters[chosenIndex];
-    return new Letter(chosenElement);
+    return new LetterTile(chosenElement);
   }
 }
 
@@ -329,16 +301,18 @@ class GameInterface extends GameData {
       this.history.push({
         type: "init",
         snapshot: {
-          grid: new Grid(this.grid),
-          bank: new Bank(this.bank),
+          grid: new LetterGrid(this.grid),
+          bank: new LetterBank(this.bank),
         },
       });
     }
   }
+
   cancel() {
     if (this.tiles) this.tiles.cancel();
     if (this.words) this.words.cancel();
   }
+
   swap(here, there) {
     super.swap(here, there);
     this.tiles.swap(here, there, this);
@@ -365,53 +339,7 @@ class GameInterface extends GameData {
   }
 }
 
-class Gridded extends String {
-  constructor(old) {
-    super(old?.letters?.join(""));
-    if (def(old?.letters)) this.letters = old.letters;
-    if (def(old?.row)) this.row = +old.row;
-    if (def(old?.col)) this.col = +old.col;
-    if (def(old?.vertical)) this.vertical = old.vertical;
-    if (def(old?.grid)) {
-      this.grid = old.grid;
-    }
-    if (def(this.grid?.drift)) {
-      this.drift = [this.grid.drift[0], this.grid.drift[1]];
-    } else {
-      this.drift = [0,0];
-    }
-  }
-
-  includes(row, col, grid) {
-    if (!grid) grid = this.grid;
-    if (def(grid?.drift)) {
-      row += this.drift[0] - grid.drift[0];
-      col += this.drift[1] - grid.drift[1];
-    }
-    return (this.row <= row && row <= this.row + (this.vertical ? this.length : 0) &&
-      this.col <= col && col <= this.col + (this.vertical ? 0 : this.length));
-  }
-
-  present(grid) {
-    if (!grid) grid = this.grid;
-    var row = this.row - this.drift[0] + grid.drift[0];
-    var col = this.col - this.drift[1] + grid.drift[1];
-    if (grid.get(row - (this.vertical ? 1 : 0), col - (this.vertical ? 0 : 1))) return false;
-    for (let t of this.letters) {
-      if (String(grid.get(row, col)) !== String(t)) return false;
-      if (this.vertical) {
-        row += 1;
-      } else {
-        col += 1;
-      }
-    }
-    if (grid.get(row, col)) return false;
-    return true;
-  }
-}
-
 export {
-  Letter,
   GameData,
   TileManager,
   APITileManager,
@@ -419,7 +347,4 @@ export {
   WordManager,
   JSWordManager,
   GameInterface,
-  Bank,
-  Grid,
-  Gridded,
 };

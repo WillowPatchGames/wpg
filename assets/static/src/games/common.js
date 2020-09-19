@@ -23,6 +23,55 @@ class WebSocketController {
   constructor(game) {
     this.game = game;
     this.msg_ctrl = new MessageController(game);
+    this.cache = [];
+
+    this.wsConnect();
+  }
+
+  wsConnect() {
+    // In the event that our websocket points to the wrong endpoint, that
+    // we don't have a websocket, or that we have a closed websocket, open a
+    // new one.
+    if (!this.game.ws || this.game.ws.url !== this.game.endpoint || this.game.ws.readyState != WebSocket.OPEN) {
+      this.game.ws = new WebSocket(this.game.endpoint);
+
+      // After the WebSocket was opened, attempt to flush the cache of
+      // messages waiting to be sent.
+      this.flushCache();
+    }
+  }
+
+  // flushCache assumes an open WebSocket.
+  async flushCache() {
+    if (this.cache.length === 0) {
+      return;
+    }
+
+    // Number of messages successfully sent.
+    var sent = 0;
+    for (let message of cache) {
+      // Check if the websocket is open. If it is, we've successfully sent it.
+      var open = true;
+      await this.waitOpen().catch(() => open = false);
+      if (!open) {
+        break;
+      }
+
+      // Send this message.
+      this.game.ws.send(JSON.stringify(message));
+
+      // Verify the socket is still open. If it isn't, we probably failed to
+      // send the message.
+      await this.waitOpen().catch(() => open = false);
+      if (!open) {
+        break;
+      }
+
+      sent += 1;
+    }
+
+    // Remove all messages we've successfully sent.
+    this.cache = this.cache.slice(sent);
   }
 
   // Add event listeners (evs: dict mapping event to function) to the websocket.
@@ -108,10 +157,17 @@ class WebSocketController {
   // Returns a promise which will wait for the websocket to open. Resolves
   // immediately when the websocket is already open.
   waitOpen() {
-    if (!ws.readyState) {
+    // A websocket can either be opening, open, or closing/closed. In the
+    // former case, we need to register an even listener and wait for the
+    // open result. In the case when we're already open, we should resolve.
+    // However, in the case when the socket is actually closed, we should
+    // reject instead of resolving.
+    if (!this.game.ws.readyState) {
       return this.wsPromise(resolve => ({ open: resolve }));
-    } else {
+    } else if (this.game.ws.readyState == WebSocket.OPEN) {
       return Promise.resolve();
+    } else {
+      return Promise.reject();
     }
   }
 
@@ -123,20 +179,42 @@ class WebSocketController {
         resolve(data);
       }
     });
+  }
 
-    // Send an object to our peer. Wait for the peer to reply with a specific
-    // message destined for us.
-    sendAndWait(data) {
-      var wire_data = this.msg_ctrl.template(data);
-      var message_id = wire_data.message_id;
-      this.game.ws.send(JSON.stringify(wire_data))
-      return this.waitResponse(message_id);
-    }
+  // Wait for a response to a particular type of message.
+  waitType(message_type) {
+    return this.wsPromise(resolve => ({ data: buf }) => {
+      var data = JSON.parse(buf);
+      if (data.message_type === message_type) {
+        resolve(data);
+      }
+    });
+  }
 
-    // Send an object to our peer but don't wait for a reply.
-    send(data) {
-      var wire_data = this.msg_ctl.template(data);
-      return this.game.ws.send(JSON.stringify(wire_data));
-    }
+  // Send an object to our peer. Wait for the peer to reply with a specific
+  // message destined for us.
+  sendAndWait(data) {
+    var wire_data = this.msg_ctrl.template(data);
+    var message_id = wire_data.message_id;
+    this.game.ws.send(JSON.stringify(wire_data));
+    return this.waitResponse(message_id);
+  }
+
+  // Send an object to our peer but don't wait for a reply.
+  send(data) {
+    var wire_data = this.msg_ctl.template(data);
+    return this.game.ws.send(JSON.stringify(wire_data));
+  }
+
+  // Notify on an incoming message of a particular type.
+  notify(message_type, handler) {
+    var event_handler = (message_event) => {
+      var data = JSON.parse(message_event.data);
+      if (data.message_type === message_type) {
+        handler(data);
+      }
+    };
+
+    this.game.ws.addEventListener("message", event_handler);
   }
 }

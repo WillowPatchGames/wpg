@@ -1,3 +1,7 @@
+function def(v) {
+  return v !== undefined && v !== null;
+}
+
 // See also: LetterTile in pkg/games/word.go
 class LetterTile extends String {
   constructor(obj) {
@@ -87,6 +91,9 @@ class LetterBank extends Array {
     return ret;
   }
 }
+
+// A static, empty LetterBank
+LetterBank.blank = "";
 
 // LetterGrid combines a bank of tiles with a set of 2D positions, forming a
 //
@@ -299,7 +306,7 @@ class LetterGrid {
     if (!isFinite(jda[0])) jda[0] = 0;
     if (!isFinite(jda[1])) jda[1] = 0;
     //console.log(adj, jda, letters);
-    var ret = new Grid();
+    var ret = new LetterGrid();
     if (!letters.length) return ret;
     ret.rows = jda[0] + adj[0];
     ret.cols = jda[1] + adj[1];
@@ -310,5 +317,50 @@ class LetterGrid {
       ret.set(...pos, new LetterTile(letter.letter));
     }
     return ret;
+  }
+}
+
+class Gridded extends String {
+  constructor(old) {
+    super(old?.letters?.join(""));
+    if (def(old?.letters)) this.letters = old.letters;
+    if (def(old?.row)) this.row = +old.row;
+    if (def(old?.col)) this.col = +old.col;
+    if (def(old?.vertical)) this.vertical = old.vertical;
+    if (def(old?.grid)) {
+      this.grid = old.grid;
+    }
+    if (def(this.grid?.drift)) {
+      this.drift = [this.grid.drift[0], this.grid.drift[1]];
+    } else {
+      this.drift = [0,0];
+    }
+  }
+
+  includes(row, col, grid) {
+    if (!grid) grid = this.grid;
+    if (def(grid?.drift)) {
+      row += this.drift[0] - grid.drift[0];
+      col += this.drift[1] - grid.drift[1];
+    }
+    return (this.row <= row && row <= this.row + (this.vertical ? this.length : 0) &&
+      this.col <= col && col <= this.col + (this.vertical ? 0 : this.length));
+  }
+
+  present(grid) {
+    if (!grid) grid = this.grid;
+    var row = this.row - this.drift[0] + grid.drift[0];
+    var col = this.col - this.drift[1] + grid.drift[1];
+    if (grid.get(row - (this.vertical ? 1 : 0), col - (this.vertical ? 0 : 1))) return false;
+    for (let t of this.letters) {
+      if (String(grid.get(row, col)) !== String(t)) return false;
+      if (this.vertical) {
+        row += 1;
+      } else {
+        col += 1;
+      }
+    }
+    if (grid.get(row, col)) return false;
+    return true;
   }
 }
