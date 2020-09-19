@@ -54,6 +54,9 @@ type PlayerData struct {
 }
 
 type GameData struct {
+	// Identifier of the game in the internal database.
+	GID uint64 `json:"game_id"`
+
 	// What type of game this is.
 	Mode GameMode `json:"mode"`
 
@@ -137,6 +140,7 @@ func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config i
 	defer c.lock.Unlock()
 
 	c.ToGame[gid] = GameData{
+		gid,
 		mode,
 		owner,
 		state,

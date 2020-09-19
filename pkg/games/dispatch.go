@@ -134,10 +134,44 @@ func (c *Controller) dispatchRush(message []byte, data GameData, messageType str
 	return err
 }
 
-func (c *Controller) dispatch(message []byte, data GameData, messageType string, player PlayerData) error {
-	if data.Mode != RushGame {
-		panic("Valid but unsupported game mode: " + data.Mode.String())
+type GameAdmit struct {
+	MessageHeader
+	Target uint64 `json:"target_id"`
+	Admit  bool   `json:"admit"`
+}
+
+type GameReady struct {
+	MessageHeader
+	Ready bool `json:"ready"`
+}
+
+func (c *Controller) dispatch(message []byte, game GameData, messageType string, player PlayerData) error {
+	// First try and handle some common message types. Note that since c.Dispatch
+	// doesn't hold a lock, we can safely call back into c.MarkAdmitted(...) and
+	// c.MarkReady(...).
+	//
+	// Note that start messages can't be handled here; they are specific to the
+	// individual game type.
+	switch messageType {
+	case "admit":
+		var data GameAdmit
+		if err := json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		return c.MarkAdmitted(game.GID, data.Target, data.Admit)
+	case "ready":
+		var data GameReady
+		if err := json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		return c.MarkReady(game.GID, player.UID, data.Ready)
 	}
 
-	return c.dispatchRush(message, data, messageType, player)
+	if game.Mode != RushGame {
+		panic("Valid but unsupported game mode: " + game.Mode.String())
+	}
+
+	return c.dispatchRush(message, game, messageType, player)
 }
