@@ -9,7 +9,7 @@ import {
 } from './common.js';
 
 class RushInterface {
-  drawTile = () => {};
+  draw = () => {};
   discard = (tile) => {};
   recall = (tile) => {};
   swap = (first, second) => {};
@@ -48,7 +48,7 @@ class RushController extends RushInterface {
     });
   }
 
-  async drawTile() {
+  async draw() {
     return this.game.wsController.sendAndWait({
       'message_type': 'draw',
       'draw_id': this.draw_id++,
@@ -118,6 +118,44 @@ class RushData extends RushInterface {
     }
   }
 
+  // Set a tile at a given position.
+  set(here, value) {
+    if (this.get(here) === value) {
+      return;
+    }
+
+    if (!value) {
+      return this.delete(here);
+    }
+
+    if (here[0] === "grid") {
+      return this.grid.set(...here.slice(1), value);
+    } else if (here[0] === "bank") {
+      return this.bank.set(...here.slice(1), value);
+    } else {
+      throw new Error("Unrecognized GameData location: " + here[0]);
+    }
+  }
+
+  // Arbitrary data deleter for bank and grid using types.
+  delete(here) {
+    if (here instanceof LetterTile) {
+      here = this.findById(here);
+    }
+
+    if (here === null || !this.get(here)) {
+      return;
+    }
+
+    if (here[0] === "grid") {
+      this.grid.delete(...here.shift());
+    } else if (here[0] === "bank") {
+      this.grid.delete(...here.shift());
+    } else {
+      throw new Error("Unknown type for RushData locations: " + here[0]);
+    }
+  }
+
   // Find a letter by identifier.
   findById(obj) {
     var result = this.grid.findLetter(obj);
@@ -133,11 +171,39 @@ class RushData extends RushInterface {
     return null;
   }
 
-  // Arbitrary data deleter for bank and grid using types.
-  delete(here) {
-    if (here instanceof LetterTile) {
-      here = this.findById(here);
-    }
+  draw(...tile) {
+    this.bank.push(...tile);
+  }
+
+  discard(tile) {
+    this.delete(tile);
+  }
+
+  recall(tile) {
+    this.grid.delete(tile);
+    this.draw(tile);
+  }
+
+  swap(first, second) {
+    var here = this.findById(first);
+    var there = this.findById(second);
+    this.set(here, second);
+    this.set(there, first);
+  }
+
+  move(tile, pos) {
+    var old = this.findLetter(tile);
+    this.set(pos, tile);
+    this.delete(old);
+  }
+
+  play(tile, pos) {
+    this.bank.delete(tile);
+    this.set(pos, tile);
+  }
+
+  empty() {
+    return this.grid.empty() && this.bank.empty();
   }
 
   // Serialize RushData for sending back over the WebSocket to the server.
@@ -167,6 +233,36 @@ class RushGame extends RushInterface {
   }
 
 
+  async draw() {
+    var ret = await this.controller.draw();
+    this.data.draw(ret);
+  }
+
+  async discard(tile) {
+    this.data.discard(tile);
+    var ret = await this.controller.discard(tile);
+    this.data.draw(ret);
+  }
+
+  async recall(tile) {
+    this.controller.recall(tile);
+    this.data.recall(tile);
+  }
+
+  async swap(first, second) {
+    this.controller.swap(first, second);
+    this.data.recall(first, second);
+  }
+
+  async move(tile, pos) {
+    this.controller.move(tile, pos);
+    this.data.move(tile, pos);
+  }
+
+  async play(tile, pos) {
+    this.controller.move(tile, pos);
+    this.data.move(tile, pos);
+  }
 }
 
 export {

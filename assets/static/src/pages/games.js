@@ -26,7 +26,7 @@ import { TextField } from '@rmwc/textfield';
 
 // Application imports
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
-import { GameData, GameInterface, APITileManager, JSWordManager } from '../game.js';
+import { GameData, GameInterface, JSWordManager } from '../game.js';
 import { Game } from '../component.js';
 import { RushGame } from '../games/rush.js';
 
@@ -34,8 +34,6 @@ function loadGame(game) {
   if (!game || !game.endpoint) return null;
   if (!game.ws || game.ws.url !== game.endpoint)
     game.ws = new WebSocket(game.endpoint);
-  if (!game.tilemanager)
-    game.tilemanager = new APITileManager(game.ws);
   if (!game.wordmanager) {
     game.wordmanager = new JSWordManager();
     game.wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
