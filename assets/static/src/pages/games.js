@@ -28,6 +28,7 @@ import { TextField } from '@rmwc/textfield';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { GameData, GameInterface, APITileManager, JSWordManager } from '../game.js';
 import { Game } from '../component.js';
+import { RushGame } from '../games/rush.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;

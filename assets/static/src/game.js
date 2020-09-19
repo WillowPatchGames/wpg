@@ -9,49 +9,6 @@ function def(v) {
 }
 
 class GameData {
-  constructor(old) {
-    this.grid = old?.grid ? new LetterGrid(old.grid) : new LetterGrid();
-    this.bank = old?.bank ? new LetterBank(old.bank) : new LetterBank();
-  }
-  serialize() {
-    var letters = [];
-    this.letterPoses().forEach(({ letter, pos }) => {
-      letters.push({
-        letter: {
-          id: letter.id,
-          value: String(letter),
-        },
-        pos: {
-          area: pos[0],
-          idx: pos.slice(1).map(Number),
-        }
-      });
-    });
-    return letters;
-  }
-  static deserialize(letters) {
-    var grids = [], banks = [];
-    for (let letter of letters) {
-      if (letter.pos.area === "grid") {
-        grids.push({ letter: letter.letter, pos: letter.pos.idx });
-      } else if (letter.pos.area === "bank") {
-        banks.push({ letter: letter.letter, pos: letter.pos.idx });
-      }
-    }
-    return new GameData({
-      grid: LetterGrid.deserialize(grids),
-      bank: LetterBank.deserialize(banks),
-    });
-  }
-  get(here) {
-    if (here[0] === "grid") {
-      return this.grid.get(...here.slice(1));
-    } else if (here[0] === "bank") {
-      return this.bank.get(...here.slice(1));
-    } else {
-      throw new Error("Unrecognized GameData location: " + here[0]);
-    }
-  }
   delete(here) {
     if (here instanceof LetterTile) {
       here = this.findById(here);
@@ -145,8 +102,6 @@ class APITileManager extends TileManager {
 
     this.controller = controller;
     this.handler = this.handler.bind(this);
-    this.conn.addEventListener("message", this.handler);
-    this.draw_number = 1;
   }
   cancel() {
     //this.conn.removeEventListener("message", this.handler);
@@ -176,77 +131,6 @@ class APITileManager extends TileManager {
   async swap(here, there) {
     // XXX: Make this work.
     await this.controller.swap(here, there);
-  }
-}
-
-class JSTileManager extends TileManager {
-  constructor(length) {
-    super();
-    if (!def(length)) length = 50;
-    // https://norvig.com/mayzner.html
-    this.letterfreq = {
-      "A": 8.04,
-      "B": 1.48,
-      "C": 3.34,
-      "D": 3.82,
-      "E": 12.49,
-      "F": 2.40,
-      "G": 1.87,
-      "H": 5.05,
-      "I": 7.57,
-      "J": 0.16,
-      "K": 0.54,
-      "L": 4.07,
-      "M": 2.51,
-      "N": 7.23,
-      "O": 7.64,
-      "P": 2.14,
-      "Q": 0.12,
-      "R": 6.28,
-      "S": 6.51,
-      "T": 9.28,
-      "U": 2.73,
-      "V": 1.05,
-      "W": 1.68,
-      "X": 0.23,
-      "Y": 1.66,
-      "Z": 0.09,
-    };
-    this.drawpile = [];
-    this.draw_size = 1;
-    this.discard_penalty = 3;
-    for (var i=0; i<length; i++) {
-      this.drawpile.push(this.randomLetter());
-    }
-  }
-  async draw() {
-    if (this.drawpile.length < this.draw_size) return;
-    var drawn = this.drawpile.splice(0, this.draw_size);
-    return drawn;
-  }
-  async discard(letter) {
-    if (this.drawpile.length < this.discard_penalty) return;
-    var drawn = this.drawpile.splice(0, this.discard_penalty);
-    this.drawpile.push(letter);
-    // shuffle
-    for (let i = this.drawpile.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [this.drawpile[i], this.drawpile[j]] = [this.drawpile[j], this.drawpile[i]];
-    }
-    return drawn;
-  }
-  randomLetter() {
-    var sum = 0;
-    var letters = Object.keys(this.letterfreq);
-    var bias = Object.values(this.letterfreq);
-    var cumulativeBias = bias.map(function(x) { sum += x; return sum; });
-    var choice = Math.random() * sum;
-    var chosenIndex = null;
-    cumulativeBias.some(function(el, i) {
-        return el > choice ? ((chosenIndex = i), true) : false;
-    });
-    var chosenElement = letters[chosenIndex];
-    return new LetterTile(chosenElement);
   }
 }
 
@@ -343,7 +227,6 @@ export {
   GameData,
   TileManager,
   APITileManager,
-  JSTileManager,
   WordManager,
   JSWordManager,
   GameInterface,

@@ -60,6 +60,24 @@ class LetterBank extends Array {
     return this;
   }
 
+  // Find a letter (either by identifier or by LetterTile instance) in this
+  // bank.
+  findLetter(letter) {
+    if (letter instanceof LetterTile) {
+      letter = letter.id;
+    }
+
+    letter = +letter;
+
+    for (let index in this) {
+      if (+this[index].id === letter) {
+        return [index];
+      }
+    }
+
+    return null;
+  }
+
   empty() {
     return !this.letterPositions().length;
   }
@@ -81,11 +99,30 @@ class LetterBank extends Array {
     return letters;
   }
 
+  // Returns a set of letters, relative to their positions in the bank. Unlike
+  // letterPositions(...), position isn't explicitly encoded.
+  serialize() {
+    var result = [];
+
+    for (let index in this) {
+      var value = this[index];
+      if (!value) {
+        continue;
+      }
+
+      result.push(value);
+    }
+
+    return result;
+  }
+
+  // Couples with serialize(); creates a bank of tiles. Note that position is
+  // implicitly encoded in the method instead of explicitly.
   static deserialize(letters) {
     var ret = new LetterBank();
 
     for (let letter of letters) {
-      ret.set(...letter.pos, new LetterTile(letter.letter));
+      ret.set(new LetterTile(letter));
     }
 
     return ret;
@@ -93,14 +130,15 @@ class LetterBank extends Array {
 }
 
 // A static, empty LetterBank
-LetterBank.blank = "";
+LetterBank.blank = new LetterBank();
 
 // LetterGrid combines a bank of tiles with a set of 2D positions, forming a
 //
 // See also LetterGrid in pkg/games/word.go.
 class LetterGrid {
   constructor(old) {
-    // When there's an existing set of letters, copy them.
+    // When there's an existing set of letters, copy them. Data is looked up
+    // via (row == x) and then by (col == y) ==> data[row][col].
     if (old?.data) {
       this.data = old.data;
     } else {
@@ -123,13 +161,16 @@ class LetterGrid {
   // Setter on the size rows;
   set rowCount(len) {
     this.data.length = len;
+
     for (let i = 0; i < len; i++) {
       if (!this.data[i]) {
-        this.data[i] = [];
+        this.data[i] = new LetterBank();
       }
     }
+
     this.cols = (null, this.cols);
   }
+
   get columnCount() {
     var res = 0;
     for (let row in this.data) {
@@ -139,24 +180,31 @@ class LetterGrid {
     }
     return res;
   }
+
   set columnCount(len) {
     for (let row in this.data) {
       this.data[row].length = len;
     }
   }
+
+  // Returns a tile at a certain position.
   get(row, col) {
     return this.data[row] && this.data[row][col];
   }
+
+  // Sets the tile at a certain position.
   set(row, col, value) {
     if (!value) this.delete(row, col);
     if (!this.data[row]) this.data[row] = [];
     this.data[row][col] = value;
     return this;
   }
+
   delete(row, col) {
     delete this.data[row][col];
     return this;
   }
+
   writeWord(word, row, col, vert, cons) {
     for (let letter of word) {
       if (!this.data[row]) this.data[row] = [];
@@ -169,6 +217,7 @@ class LetterGrid {
     }
     this.rows = (null, this.rows);
   }
+
   padding(amt) {
     if (!amt) amt = 0;
     if (typeof amt === "number") {
@@ -211,6 +260,7 @@ class LetterGrid {
     this.drift[1] += amt[1] - j;
     return [amt[0] - i, amt[1] - j];
   }
+
   components() {
     var components = [];
     for (let row in this.data) {
@@ -244,8 +294,10 @@ class LetterGrid {
         }
       }
     }
+
     return components;
   }
+
   words() {
     var words = [];
     for (let row in this.data) {
@@ -274,6 +326,21 @@ class LetterGrid {
     }
     return words;
   }
+
+  // Find a letter (either by identifier or by LetterTile instance) in this
+  // grid.
+  findLetter(letter) {
+    for (let row in this.data) {
+      var result = this.data[row].findLetter(letter);
+      if (result !== null) {
+        return result.unpush(row);
+      }
+    }
+
+    return null;
+  }
+
+  // Whether or not this letter grid is empty.
   empty() {
     return !this.letterPositions().length;
   }
@@ -290,6 +357,29 @@ class LetterGrid {
     }
 
     return letters;
+  }
+
+  serialize() {
+    var tiles = [];
+    var positions = {};
+
+    for (let row in this.data) {
+      for (let col in this.data[row]) {
+        var tile = this.get(row, col);
+        if (!tile) {
+          continue;
+        }
+
+        tiles.push(tile);
+        positions[tile.id] = new LetterPos(row, col);
+      }
+    }
+
+    return {
+      'tiles': tiles,
+      'positions': positions,
+      'drift': this.drift
+    }
   }
 
   static deserialize(letters) {
@@ -363,4 +453,11 @@ class Gridded extends String {
     if (grid.get(row, col)) return false;
     return true;
   }
+}
+
+export {
+  LetterTile,
+  LetterBank,
+  LetterGrid,
+  Gridded
 }

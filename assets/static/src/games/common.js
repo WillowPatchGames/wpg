@@ -4,6 +4,10 @@ class MessageController {
     this.game = game;
   }
 
+  setId(value) {
+    this.message_id = value;
+  }
+
   template(data) {
     let ret = {
       "game_mode": this.game.mode,
@@ -32,7 +36,8 @@ class WebSocketController {
     // In the event that our websocket points to the wrong endpoint, that
     // we don't have a websocket, or that we have a closed websocket, open a
     // new one.
-    if (!this.game.ws || this.game.ws.url !== this.game.endpoint || this.game.ws.readyState != WebSocket.OPEN) {
+    if (!this.game.ws || this.game.ws.url !== this.game.endpoint ||
+          this.game.ws.readyState !== WebSocket.OPEN) {
       this.game.ws = new WebSocket(this.game.endpoint);
 
       // After the WebSocket was opened, attempt to flush the cache of
@@ -49,9 +54,9 @@ class WebSocketController {
 
     // Number of messages successfully sent.
     var sent = 0;
-    for (let message of cache) {
+    for (let message of this.cache) {
       // Check if the websocket is open. If it is, we've successfully sent it.
-      var open = true;
+      let open = true;
       await this.waitOpen().catch(() => open = false);
       if (!open) {
         break;
@@ -164,7 +169,7 @@ class WebSocketController {
     // reject instead of resolving.
     if (!this.game.ws.readyState) {
       return this.wsPromise(resolve => ({ open: resolve }));
-    } else if (this.game.ws.readyState == WebSocket.OPEN) {
+    } else if (this.game.ws.readyState === WebSocket.OPEN) {
       return Promise.resolve();
     } else {
       return Promise.reject();
@@ -218,3 +223,7 @@ class WebSocketController {
     this.game.ws.addEventListener("message", event_handler);
   }
 }
+
+export {
+  WebSocketController
+};
