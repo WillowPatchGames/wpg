@@ -300,6 +300,7 @@ func (hub *Hub) connectPlayer(client *Client) error {
 		return err
 	}
 
+	hub.connections[client.gameID][client.userID] = client
 	return nil
 }
 
@@ -325,22 +326,41 @@ func (hub *Hub) deleteGame(gameID GameID) {
 func (hub *Hub) deleteClient(client *Client) {
 	if !hub.controller.GameExists(uint64(client.gameID)) {
 		// Client can't possibly exist any more because the game is no longer
-		// present. Remove the client without throwing an error and additionally
-		// remove all other connections using the same gameID.
-		hub.deleteGame(client.gameID)
+		// present. This means the game is already deleted and the player's
+		// connection is closed. Don't do anything else. See notes below on
+		// why this is possible.
 		return
 	}
 
+	var deleteGame bool = false
+
 	delete(hub.connections[client.gameID], client.userID)
 	if len(hub.connections[client.gameID]) == 0 {
-		hub.deleteGame(client.gameID)
+		// Hold off on doing the delete; see notes below.
+		deleteGame = true
 	}
 
+	// Check if player exists on controller before deleting game; otherwise,
+	// we won't close the underlying Channel.
 	if !hub.controller.PlayerExists(uint64(client.gameID), uint64(client.userID)) {
+		// We get here because, while the below code removes references to the
+		// client in the Hub, there's no way to remove existing Goroutines with
+		// a copy of the Client. In particular, routines like
+		// ProcessPlayerMessages(...) can frequently be stuck holding a
+		// client connection while it is being removed elsewhere.
 		return
 	}
 
 	close(client.send)
+
+	err := hub.controller.RemovePlayer(uint64(client.gameID), uint64(client.userID))
+	if err != nil {
+		log.Println("Got unexpected error while removing player:", err)
+	}
+
+	if deleteGame {
+		hub.deleteGame(client.gameID)
+	}
 }
 
 // Run only processes register/unregister messages. A separate goroutine
