@@ -207,7 +207,7 @@ class WebSocketController {
 
   // Send an object to our peer but don't wait for a reply.
   send(data) {
-    var wire_data = this.msg_ctl.template(data);
+    var wire_data = this.msg_ctrl.template(data);
     return this.game.ws.send(JSON.stringify(wire_data));
   }
 

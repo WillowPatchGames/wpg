@@ -32,7 +32,9 @@ import { RushGame } from '../games/rush.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
-  game.interface = new RushGame(game);
+  if (!game.interface) {
+    game.interface = new RushGame(game);
+  }
   return game;
 }
 
