@@ -143,7 +143,7 @@ func (rs *RushState) Start(players int) error {
 
 func (rs *RushState) HasValidWords(player int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	return rs.Players[player].Board.VisitAllWordsOnBoard(func(lg *LetterGrid, start LetterPos, end LetterPos, word string) error {
@@ -159,7 +159,7 @@ func (rs *RushState) HasValidWords(player int) error {
 
 func (rs *RushState) IsValidBoard(player int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	// To be a valid board we need:
@@ -184,7 +184,7 @@ func (rs *RushState) IsValidBoard(player int) error {
 
 func (rs *RushState) DrawTiles(player int, count int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	if count >= len(rs.Tiles) {
@@ -201,7 +201,7 @@ func (rs *RushState) DrawTiles(player int, count int) error {
 
 func (rs *RushState) PlayTile(player int, tileID int, x int, y int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	var tileIndex int
@@ -229,11 +229,11 @@ func (rs *RushState) PlayTile(player int, tileID int, x int, y int) error {
 
 func (rs *RushState) MoveTile(player int, tileID int, x int, y int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	if _, ok := rs.Players[player].Board.ToTile[tileID]; !ok {
-		return errors.New("not a valid tile identifier")
+		return errors.New("not a valid tile identifier: " + strconv.Itoa(tileID))
 	}
 
 	// Move the tile on the board
@@ -278,7 +278,7 @@ func (rs *RushState) swapTileHandToBoard(player int, handTile int, boardTile int
 
 func (rs *RushState) SwapTile(player int, first int, second int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	var firstIndex int
@@ -304,7 +304,7 @@ func (rs *RushState) SwapTile(player int, first int, second int) error {
 
 func (rs *RushState) RecallTile(player int, tileID int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	var tile LetterTile
@@ -321,7 +321,7 @@ func (rs *RushState) RecallTile(player int, tileID int) error {
 
 func (rs *RushState) Discard(player int, tileID int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	if rs.Config.DiscardPenalty > len(rs.Tiles) {
@@ -358,7 +358,7 @@ func (rs *RushState) Discard(player int, tileID int) error {
 
 func (rs *RushState) Draw(player int, lastID int) error {
 	if player >= len(rs.Players) {
-		return errors.New("not a valid player identifier")
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	if len(rs.Players[player].Hand) > 0 {

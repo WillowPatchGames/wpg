@@ -5,10 +5,6 @@ import (
 	"errors"
 )
 
-type RushCheckBoard struct {
-	MessageHeader
-}
-
 type RushDraw struct {
 	MessageHeader
 	DrawID int `json:"draw_id"`
@@ -127,6 +123,8 @@ func (c *Controller) dispatchRush(message []byte, data GameData, messageType str
 		}
 
 		err = state.Draw(player.Index, data.DrawID)
+	case "check":
+		err = state.IsValidBoard(player.Index)
 	default:
 		err = errors.New("unknown message_type issued to rush game: " + messageType)
 	}
@@ -143,6 +141,11 @@ type GameAdmit struct {
 type GameReady struct {
 	MessageHeader
 	Ready bool `json:"ready"`
+}
+
+type GameIsWord struct {
+	MessageHeader
+	Word string `json:"word"`
 }
 
 func (c *Controller) dispatch(message []byte, game GameData, messageType string, player PlayerData) error {
@@ -171,6 +174,14 @@ func (c *Controller) dispatch(message []byte, game GameData, messageType string,
 		}
 
 		return c.MarkReady(game.GID, player.UID, data.Ready)
+	case "word":
+		var data GameIsWord
+		if err := json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		// XXX: Handle word check requests.
+		return nil
 	}
 
 	if game.Mode != RushGame {
