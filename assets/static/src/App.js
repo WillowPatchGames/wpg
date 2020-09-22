@@ -125,6 +125,7 @@ class App extends React.Component {
     if (user === null && this.state.user !== null) {
       this.state.user.logout();
       this.setPage('home');
+      window.location = '/';
     }
 
     this.setState(state => Object.assign({}, state, { user }));
