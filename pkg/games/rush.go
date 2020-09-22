@@ -362,7 +362,7 @@ func (rs *RushState) Draw(player int, lastID int) error {
 	}
 
 	if len(rs.Players[player].Hand) > 0 {
-		return errors.New("unable to draw while tiles remaining in hand")
+		return errors.New("unable to draw while tiles remain in the hand")
 	}
 
 	if rs.DrawID > lastID {

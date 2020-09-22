@@ -3,6 +3,7 @@ package games
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 	"sync"
 )
 
@@ -113,7 +114,7 @@ func (c *Controller) GameExists(gid uint64) bool {
 func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config interface{}) error {
 	// If the game exists, throw an error.
 	if c.GameExists(gid) {
-		return errors.New("game with specified id already exists in controller")
+		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") already exists in controller")
 	}
 
 	// If game is of an invalid mode, exit. Currently we only support a single
@@ -156,7 +157,7 @@ func (c *Controller) RemoveGame(gid uint64) error {
 	defer c.lock.Unlock()
 
 	if !c.GameExists(gid) {
-		return errors.New("game with specified id doesn't exist in controller; possible double delete")
+		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") doesn't exist in controller; possible double delete")
 	}
 
 	delete(c.ToGame, gid)
@@ -181,7 +182,7 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 	defer c.lock.Unlock()
 
 	if !c.GameExists(gid) {
-		return false, errors.New("game with specified id does not exists in controller")
+		return false, errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") does not exists in controller")
 	}
 
 	game := c.ToGame[gid]
@@ -212,11 +213,11 @@ func (c *Controller) MarkReady(gid uint64, uid uint64, ready bool) error {
 	defer c.lock.Unlock()
 
 	if !c.GameExists(gid) {
-		return errors.New("game with specified id does not exists in controller")
+		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") does not exists in controller")
 	}
 
 	if !c.PlayerExists(gid, uid) {
-		return errors.New("game with specified id does not exists in controller")
+		return errors.New("player with specified id (" + strconv.FormatUint(uid, 10) + ") does not exists in controller for game (" + strconv.FormatUint(gid, 10) + ")")
 	}
 
 	game := c.ToGame[gid]
@@ -234,16 +235,34 @@ func (c *Controller) MarkAdmitted(gid uint64, uid uint64, admitted bool) error {
 	defer c.lock.Unlock()
 
 	if !c.GameExists(gid) {
-		return errors.New("game with specified id does not exists in controller")
+		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") does not exists in controller")
 	}
 
 	if !c.PlayerExists(gid, uid) {
-		return errors.New("game with specified id does not exists in controller")
+		return errors.New("player with specified id (" + strconv.FormatUint(uid, 10) + ") does not exists in controller (" + strconv.FormatUint(gid, 10) + ")")
 	}
 
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
 	player.Admitted = admitted
+	return nil
+}
+
+// Remove a given game once it is no longer needed.
+func (c *Controller) RemovePlayer(gid uint64, uid uint64) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if !c.GameExists(gid) {
+		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") doesn't exist in controller; possible double delete")
+	}
+
+	if !c.PlayerExists(gid, uid) {
+		return errors.New("player with specified id (" + strconv.FormatUint(uid, 10) + ") does not exists in controller (" + strconv.FormatUint(gid, 10) + ")")
+	}
+
+	game := c.ToGame[gid]
+	delete(game.ToPlayer, uid)
 	return nil
 }
 
@@ -272,7 +291,7 @@ func (c *Controller) Dispatch(message []byte) error {
 
 	gameData, ok := c.ToGame[obj.ID]
 	if !ok || gameData.State == nil {
-		return errors.New("unable to find game by id")
+		return errors.New("unable to find game by id (" + strconv.FormatUint(obj.ID, 10) + ")")
 	}
 
 	if gameData.Mode.String() != obj.Mode {
@@ -281,7 +300,7 @@ func (c *Controller) Dispatch(message []byte) error {
 
 	playerData, ok := gameData.ToPlayer[obj.Player]
 	if !ok {
-		return errors.New("user isn't playing this game")
+		return errors.New("user (" + strconv.FormatUint(obj.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(obj.ID, 10) + ")")
 	}
 
 	return c.dispatch(message, gameData, obj.MessageType, playerData)
