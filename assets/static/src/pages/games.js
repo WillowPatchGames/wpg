@@ -26,24 +26,13 @@ import { TextField } from '@rmwc/textfield';
 
 // Application imports
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
-import { GameData, GameInterface, JSWordManager } from '../game.js';
+import { JSWordManager } from '../game.js';
 import { Game } from '../component.js';
 import { RushGame } from '../games/rush.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
-  if (!game.ws || game.ws.url !== game.endpoint)
-    game.ws = new WebSocket(game.endpoint);
-  if (!game.wordmanager) {
-    game.wordmanager = new JSWordManager();
-    game.wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
-  }
-  if (!game.data) {
-    game.data = new GameInterface({
-      tiles: game.tilemanager,
-      words: game.wordmanager,
-    });
-  }
+  game.interface = new RushGame(game);
   return game;
 }
 
@@ -86,7 +75,7 @@ class RushGamePage extends React.Component {
     this.game = loadGame(this.props.game);
     let user = usr => usr ? (usr.id === this.props.user.id ? "You" : usr.display) : "Someone ";
     if (this.game) {
-      this.state.data = this.game.data;
+      this.state.interface = this.game.interface;
       this.unmount = addEv(this.game.ws, "message", processor({
         "gamestart": data => {
           data.message = user(data.user) + " drew first!";
@@ -114,7 +103,7 @@ class RushGamePage extends React.Component {
     return (
       <div>
         <h1>Rush! game</h1>
-        <Game data={ this.state.data } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
+        <Game interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
     );
   }
@@ -143,6 +132,9 @@ class AfterPartyPage extends React.Component {
     };
     var wordmanager = new JSWordManager();
     wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
+    /*
+    XXX: Upgrade AfterPartyPage to work again... :-)
+
     this.unmount = addEv(this.game.ws, "message", processor({
       "snapshots": async (data) => {
         if (data.snapshots) {
@@ -172,7 +164,7 @@ class AfterPartyPage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
         }
       },
-    }));
+    }));*/
   }
   componentDidMount() {
     this.game.ws.send(JSON.stringify({"type": "peek"}));
@@ -287,18 +279,13 @@ class PreGameAdminPage extends React.Component {
         if (user.admitted === false) {
           user.admitted = true;
           this.setState(state => state);
-          this.game.ws.send(JSON.stringify({
-            "type": "admit",
-            "user": user,
-          }));
+          this.game.interface.controller.admitPlayer(user);
         }
       }
     }
   }
   start() {
-    this.game.ws.send(JSON.stringify({
-      "type": "start",
-    }));
+    this.game.interface.controller.startGame();
     this.props.setPage('playing');
   }
   render() {

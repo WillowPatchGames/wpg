@@ -9,12 +9,15 @@ import {
 } from './common.js';
 
 class RushInterface {
-  draw = () => {};
-  discard = (tile) => {};
-  recall = (tile) => {};
-  swap = (first, second) => {};
-  move = (tile, pos) => {};
-  play = (tile, pos) => {};
+  /*
+    check = () => {};
+    draw = () => {};
+    discard = (tile) => {};
+    recall = (tile) => {};
+    swap = (first, second) => {};
+    move = (tile, pos) => {};
+    play = (tile, pos) => {};
+  */
 }
 
 class RushController extends RushInterface {
@@ -28,7 +31,7 @@ class RushController extends RushInterface {
   }
 
   async admitPlayer(player, admit) {
-    return this.game.wsController.send({
+    return await this.wsController.send({
       'message_type': 'admit',
       'target_id': +player,
       'admit': admit,
@@ -36,41 +39,47 @@ class RushController extends RushInterface {
   }
 
   async markReady(ready) {
-    return this.game.wsController.send({
+    return await this.wsController.send({
       'message_type': 'ready',
       'ready': ready,
     });
   }
 
   async startGame() {
-    return this.game.wsController.send({
+    return await this.wsController.send({
       'message_type': 'start',
     });
   }
 
   async draw() {
-    return this.game.wsController.sendAndWait({
+    return await this.wsController.sendAndWait({
+      'message_type': 'check',
+    });
+  }
+
+  async draw() {
+    return await this.wsController.sendAndWait({
       'message_type': 'draw',
       'draw_id': this.draw_id++,
     });
   }
 
   async discard(tile) {
-    return this.game.wsController.sendAndWait({
+    return await this.wsController.sendAndWait({
       'message_type': 'discard',
       'tile_id': tile.id,
     });
   }
 
   async recall(tile) {
-    return this.game.wsController.send({
+    return await this.wsController.send({
       'message_type': 'recall',
       'tile_id': tile.id,
     });
   }
 
   async swap(first, second) {
-    return this.game.wsController.send({
+    return await this.wsController.send({
       'message_type': 'swap',
       'first_id': first.id,
       'second_id': second.id,
@@ -78,7 +87,7 @@ class RushController extends RushInterface {
   }
 
   async move(tile, pos) {
-    return this.game.wsController.send({
+    return await this.wsController.send({
       'message_type': 'move',
       'tile_id': tile.id,
       'x': pos.x,
@@ -87,11 +96,17 @@ class RushController extends RushInterface {
   }
 
   async play(tile, pos) {
-    return this.game.wsController.send({
+    return await this.wsController.send({
       'message_type': 'play',
       'tile_id': tile.id,
       'x': pos.x,
       'y': pos.y,
+    });
+  }
+
+  async peek() {
+    return await this.wsController.send({
+      'message_type': 'peek',
     });
   }
 }
@@ -171,6 +186,12 @@ class RushData extends RushInterface {
     return null;
   }
 
+  check(result) {
+    // XXX: Determine what to do at the controller layer w.r.t. invalid words.
+    console.log("Here?");
+    return {};
+  }
+
   draw(...tile) {
     this.bank.push(...tile);
   }
@@ -206,6 +227,12 @@ class RushData extends RushInterface {
     return this.grid.empty() && this.bank.empty();
   }
 
+  letterPositions(bankFirst) {
+    var grids = this.grid.letterPositions().map(l => (l.pos.unshift("grid"), l));
+    var banks = this.bank.letterPositions().map(l => (l.pos.unshift("bank"), l));
+    return [].concat(bankFirst ? banks : grids, bankFirst ? grids : banks);
+  }
+
   // Serialize RushData for sending back over the WebSocket to the server.
   serialize() {
     return {
@@ -232,36 +259,40 @@ class RushGame extends RushInterface {
     this.controller = new RushController(game);
   }
 
+  async check() {
+    var ret = await this.controller.draw();
+    return this.data.check(ret);
+  }
 
   async draw() {
     var ret = await this.controller.draw();
-    this.data.draw(ret);
+    return this.data.draw(ret);
   }
 
   async discard(tile) {
     this.data.discard(tile);
     var ret = await this.controller.discard(tile);
-    this.data.draw(ret);
+    return this.data.draw(ret);
   }
 
   async recall(tile) {
     this.controller.recall(tile);
-    this.data.recall(tile);
+    return this.data.recall(tile);
   }
 
   async swap(first, second) {
     this.controller.swap(first, second);
-    this.data.recall(first, second);
+    return this.data.recall(first, second);
   }
 
   async move(tile, pos) {
     this.controller.move(tile, pos);
-    this.data.move(tile, pos);
+    return this.data.move(tile, pos);
   }
 
   async play(tile, pos) {
     this.controller.move(tile, pos);
-    this.data.move(tile, pos);
+    return this.data.move(tile, pos);
   }
 }
 

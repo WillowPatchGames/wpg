@@ -41,13 +41,13 @@ class Game extends React.Component {
         discarding: [],
         padding: this.props.readOnly ? [0,0] : PADDING,
       },
-      data: props.data,
+      interface: props.interface,
     };
-    this.state.data.grid.padding(this.state.presentation.padding);
-    if (this.state.data.tiles && !this.state.presentation.readOnly) {
-      var adder = this.state.data.tiles.onAdd;
-      this.state.data.tiles.onAdd = (...tiles) => {
-        adder.call(this.state.data.tiles, ...tiles);
+    this.state.interface.data.grid.padding(this.state.presentation.padding);
+    if (this.state.interface.data.tiles && !this.state.presentation.readOnly) {
+      var adder = this.state.interface.data.tiles.onAdd;
+      this.state.interface.data.tiles.onAdd = (...tiles) => {
+        adder.call(this.state.interface.data.tiles, ...tiles);
         this.setState(this.repad.bind(this));
       };
     }
@@ -63,9 +63,6 @@ class Game extends React.Component {
 
   componentWillUnmount() {
     if (this.unmount) this.unmount();
-    if (this.state.data.cancel) {
-      this.state.data.cancel();
-    }
     if (!this.state.presentation.readOnly) {
       enableBodyScroll(this.board.current);
       enableBodyScroll(this.droppoints[["bank",""]]);
@@ -97,7 +94,7 @@ class Game extends React.Component {
               if (this.state.presentation.selected || this.state.presentation.last_selected) {
                 let here = this.state.presentation.selected || this.state.presentation.last_selected;
                 if (here[0] === "bank") {
-                  let letters = this.state.data.grid.letterPoses();
+                  let letters = this.state.interface.data.grid.letterPositions();
                   let row = Math.max(...letters.map(({pos}) => pos[0]));
                   if (isFinite(row)) {
                     // Select a letter in the middle
@@ -106,7 +103,7 @@ class Game extends React.Component {
                     this.select(["grid", ...letter.pos]);
                   } else {
                     // Select in center
-                    this.select(["grid", Math.floor(this.state.data.grid.rows/2), Math.floor(this.state.data.grid.cols/2)]);
+                    this.select(["grid", Math.floor(this.state.interface.data.grid.rows/2), Math.floor(this.state.interface.data.grid.cols/2)]);
                   }
                 } else if (here[0] === "grid") {
                   if (here[1] > 0) {
@@ -119,7 +116,7 @@ class Game extends React.Component {
               if (this.state.presentation.selected || this.state.presentation.last_selected) {
                 let here = this.state.presentation.selected || this.state.presentation.last_selected;
                 if (here[0] === "grid") {
-                  if (here[1] < this.state.data.grid.rows - 1) {
+                  if (here[1] < this.state.interface.data.grid.rows - 1) {
                     this.select([here[0], here[1]+1, here[2]]);
                   }
                 }
@@ -143,11 +140,11 @@ class Game extends React.Component {
               if (this.state.presentation.selected || this.state.presentation.last_selected) {
                 let here = this.state.presentation.selected || this.state.presentation.last_selected;
                 if (here[0] === "grid") {
-                  if (here[2] < this.state.data.grid.cols - 1) {
+                  if (here[2] < this.state.interface.data.grid.cols - 1) {
                     this.select([here[0], here[1], here[2]+1]);
                   }
                 } else if (here[0] === "bank") {
-                  if (here[1] < this.state.data.bank.length - 1) {
+                  if (here[1] < this.state.interface.data.bank.length - 1) {
                     this.select([here[0], here[1]+1]);
                   }
                 }
@@ -161,11 +158,11 @@ class Game extends React.Component {
           // Places we can select:
           // - matching letters in the bank
           // - matching letters isolated on the grid
-          let places = this.state.data.letterPoses(true).filter(({letter, pos}) => {
+          let places = this.state.interface.data.letterPositions(true).filter(({letter, pos}) => {
             if (String(letter).toUpperCase() !== key) return false;
             if (pos[0] === "grid") {
-              if (this.state.data.get([pos[0], pos[1]-1, pos[2]]) || this.state.data.get([pos[0], pos[1], pos[2]-1]) ||
-                  this.state.data.get([pos[0], pos[1]+1, pos[2]]) || this.state.data.get([pos[0], pos[1], pos[2]+1]))
+              if (this.state.interface.data.get([pos[0], pos[1]-1, pos[2]]) || this.state.interface.data.get([pos[0], pos[1], pos[2]-1]) ||
+                  this.state.interface.data.get([pos[0], pos[1]+1, pos[2]]) || this.state.interface.data.get([pos[0], pos[1], pos[2]+1]))
                 return false;
             }
             return true;
@@ -223,7 +220,7 @@ class Game extends React.Component {
           }
         };
       }
-    } else if (this.state.data.words) {
+    } else if (this.state.interface.data.words) {
       this.check();
     }
   }
@@ -287,7 +284,7 @@ class Game extends React.Component {
   repad(state) {
     if (!state) state = this.state;
     let padding = [...this.state.presentation.padding];
-    if (!state.data.grid.letterPoses().length) {
+    if (!state.data.grid.letterPositions().length) {
       padding[0] = padding[0]*2 + 1;
       padding[1] = padding[1]*2 + 1;
     }
@@ -297,13 +294,13 @@ class Game extends React.Component {
       this.pending.scroll[1] += SIZE*adj[0];
     } else {
       let where =
-        state.data.grid.letterPoses().concat([{pos:[Math.max(0, adj[0]), Math.max(0, adj[1])]}])
+        state.data.grid.letterPositions().concat([{pos:[Math.max(0, adj[0]), Math.max(0, adj[1])]}])
         .map(({pos}) => ["grid", ...pos])
-        .filter(pos => this.droppoints[pos]?.ref && pos[1]-adj[0] < this.state.data.grid.rows && pos[2]-adj[0] < this.state.data.grid.cols)
+        .filter(pos => this.droppoints[pos]?.ref && pos[1]-adj[0] < this.state.interface.data.grid.rows && pos[2]-adj[0] < this.state.interface.data.grid.cols)
         [0];
       if (where) {
         let tgt = [where[0], where[1]-adj[0], where[2]-adj[1]];
-        //console.log(where, tgt, this.state.data.grid.rows, this.state.data.grid.cols);
+        //console.log(where, tgt, this.state.interface.data.grid.rows, this.state.interface.data.grid.cols);
         let bb = this.droppoints[where].ref.getBoundingClientRect();
         this.pending.maintain = {
           element: () => this.droppoints[tgt]?.ref,
@@ -397,14 +394,14 @@ class Game extends React.Component {
       } else if (there.length === 1 && here.length === 1) {
         this.select(here);
       } else if (there.length === 1) {
-        if (this.state.data.get(here)) {
+        if (this.state.interface.data.get(here)) {
           this.interact(here, there);
         }
       } else if (here.length === 1) {
-        if (this.state.data.get(there)) {
+        if (this.state.interface.data.get(there)) {
           this.interact(here, there);
         }
-      } else if (!this.state.data.get(here) && !this.state.data.get(there)) {
+      } else if (!this.state.interface.data.get(here) && !this.state.interface.data.get(there)) {
         this.select(here);
       } else {
         this.interact(here, there);
@@ -446,8 +443,8 @@ class Game extends React.Component {
     this.interact(here, ["bank",""], dropped);
   }
   async discard(here, dropped) {
-    if (here && this.state.data.get(here) && !this.state.presentation.discarding.includes(this.state.data.get(here))) {
-      var letter = this.state.data.get(here);
+    if (here && this.state.interface.data.get(here) && !this.state.presentation.discarding.includes(this.state.interface.data.get(here))) {
+      var letter = this.state.interface.data.get(here);
       this.setState((state) => {
         state.presentation.selected = null;
         if (dropped) state.presentation.dropped = here;
@@ -455,7 +452,7 @@ class Game extends React.Component {
         return state;
       });
       try {
-        await this.state.data.discard(here);
+        await this.state.interface.discard(here);
       } finally {
         this.setState((state) => {
           var i = state.presentation.discarding.indexOf(letter);
@@ -471,14 +468,17 @@ class Game extends React.Component {
     if (this.state.presentation.drawing) return;
     var unwords;
     var noted = false;
-    if (!this.state.data.bank.empty() || this.state.data.grid.components().length > 1) {
+    if (!this.state.interface.data.bank.empty() || this.state.interface.data.grid.components().length > 1) {
       console.log("You must connect all of your tiles together before drawing!");
       if (this.props.notify) {
         this.props.notify("You must connect all of your tiles together before drawing!", "error");
       }
       noted = true;
     }
-    if ((unwords = await this.state.data.check()).length) {
+    console.log(this.state);
+    console.log(this.state.interface);
+    console.log(this.state.interface.check());
+    if ((unwords = await this.state.interface.check()).length) {
       if (!noted && this.props.notify) {
         if (unwords.length === 1) {
           this.props.notify('"' + unwords[0] + '"' + " is not a valid word!", "error");
@@ -499,7 +499,7 @@ class Game extends React.Component {
         return state;
       });
       try {
-        await this.state.data.draw();
+        await this.state.interface.draw();
       } finally {
         // NOTE: this technically leaks, and may execute after the component unmounts (especially on game over events)
         this.setState(state => {
@@ -510,7 +510,7 @@ class Game extends React.Component {
     }
   }
   async check() {
-    var unwords = await this.state.data.check();
+    var unwords = await this.state.interface.check();
     if (unwords.length) console.log("Invalid words: ", unwords.map(String));
     this.setState((state) => {
       state.presentation.unwords = unwords;
@@ -527,7 +527,7 @@ class Game extends React.Component {
       if (here[0] === "bank") {
         this.select(null);
         return;
-      } else if (!this.state.data.get(here)) {
+      } else if (!this.state.interface.data.get(here)) {
         return;
       }
       there = ["bank",""];
@@ -535,7 +535,7 @@ class Game extends React.Component {
       if (there[0] === "bank") {
         this.select(null);
         return;
-      } else if (!this.state.data.get(there)) {
+      } else if (!this.state.interface.data.get(there)) {
         return;
       }
       here = ["bank",""];
@@ -586,10 +586,10 @@ class Game extends React.Component {
           })
         }
       },
-      e('tbody', {}, Array.from(this.state.data.grid.data).map((row, i) =>
+      e('tbody', {}, Array.from(this.state.interface.data.grid.data).map((row, i) =>
         e('tr', {key: i}, Array.from(row).map((dat, j) =>
           e('td', {
-            className: (dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.data.grid)).length ? "unword" : "") : "empty") + (this.state.presentation.readOnly ? " read-only" : "") + (this.state.presentation.discarding.includes(dat) ? " discarding" : ""),
+            className: (dat ? (this.state.presentation.unwords.filter(w => w.present() && w.includes(i, j, this.state.interface.data.grid)).length ? "unword" : "") : "empty") + (this.state.presentation.readOnly ? " read-only" : "") + (this.state.presentation.discarding.includes(dat) ? " discarding" : ""),
             ref: this.droppable(["grid",i,j]),
             style: FIXED ? {} : {"position":"relative"},
             key: j, onClick: this.handler(["grid",i,j]),
@@ -600,7 +600,7 @@ class Game extends React.Component {
     ))));
     let bank = e('div', {key: "bank", className: "word bank", ref: this.droppable(["bank",""], true)},
       [
-        e('div', {key: "letters", className: "letters"}, this.state.data.bank.map((letter, i) =>
+        e('div', {key: "letters", className: "letters"}, this.state.interface.data.bank.map((letter, i) =>
           e('span', {
             key: i, className: "letter" + (letter ? (this.state.presentation.readOnly ? "" : " draggable") : " empty") + (this.state.presentation.discarding.includes(letter) ? " discarding" : ""),
             ref: this.droppable(["bank", i]),
@@ -618,7 +618,7 @@ class Game extends React.Component {
             }, "Check"),
             e(Button, {
               raised: true,
-              disabled: !this.state.data.bank.empty() || this.state.data.grid.components().length > 1,
+              disabled: !this.state.interface.data.bank.empty() || this.state.interface.data.grid.components().length > 1,
               key: "draw",
               onClick: this.draw.bind(this),
               icon: this.state.presentation.drawing ? <CircularProgress theme="onPrimary"/> : null,
