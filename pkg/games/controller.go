@@ -3,6 +3,7 @@ package games
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"strconv"
 	"sync"
 )
@@ -52,6 +53,11 @@ type PlayerData struct {
 	// InboundMsgs to keep track of replies to individual messages. This is
 	// only for messages sent to the client that we expect a response to.
 	OutboundReplies map[int]int `json:"outbound_replies"`
+
+	// Notifications to undispatch. Once processed above, data can be queued here
+	// until Undispatch is called by the Websocket. This isn't persisted as we
+	// don't need to access it.
+	Notifications chan interface{} `json:"-"`
 }
 
 type GameData struct {
@@ -68,7 +74,7 @@ type GameData struct {
 	State interface{} `json:"state"`
 
 	// Mapping from database user id to player information.
-	ToPlayer map[uint64]PlayerData `json:"players"`
+	ToPlayer map[uint64]*PlayerData `json:"players"`
 }
 
 // Common header for all inbound and outbound messages.
@@ -93,13 +99,13 @@ type MessageHeader struct {
 // from corrupting the state.
 type Controller struct {
 	lock   sync.Mutex
-	ToGame map[uint64]GameData `json:"games"`
+	ToGame map[uint64]*GameData `json:"games"`
 }
 
 // Initialize a Controller object.
 func (c *Controller) Init() {
 	// Locks don't need to be initialized.
-	c.ToGame = make(map[uint64]GameData)
+	c.ToGame = make(map[uint64]*GameData)
 }
 
 // Whether or not a given game exists and is tracked by this controller
@@ -140,12 +146,12 @@ func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config i
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.ToGame[gid] = GameData{
+	c.ToGame[gid] = &GameData{
 		gid,
 		mode,
 		owner,
 		state,
-		make(map[uint64]PlayerData),
+		make(map[uint64]*PlayerData),
 	}
 
 	return nil
@@ -194,13 +200,16 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 
 	// By default, the owner of the game is already admitted into the game.
 	var owner bool = uid == game.Owner
-	game.ToPlayer[uid] = PlayerData{
+	game.ToPlayer[uid] = &PlayerData{
 		UID:             uid,
-		Admitted:        owner,
+		Index:           -1,
+		Admitted:        owner || true,
 		InboundMsgs:     make(map[int]interface{}),
+		OutboundID:      1,
 		OutboundMsgs:    make(map[int]interface{}),
 		InboundReplies:  make(map[int]int),
 		OutboundReplies: make(map[int]int),
+		Notifications:   make(chan interface{}, 64),
 	}
 
 	return false, nil
@@ -266,6 +275,24 @@ func (c *Controller) RemovePlayer(gid uint64, uid uint64) error {
 	return nil
 }
 
+// Return the underlying channel for a player so callers can get updates.
+func (c *Controller) Undispatch(gid uint64, uid uint64) (chan interface{}, error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if !c.GameExists(gid) {
+		return nil, errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") doesn't exist in controller; possible double delete")
+	}
+
+	if !c.PlayerExists(gid, uid) {
+		return nil, errors.New("player with specified id (" + strconv.FormatUint(uid, 10) + ") does not exists in controller (" + strconv.FormatUint(gid, 10) + ")")
+	}
+
+	game := c.ToGame[gid]
+	player := game.ToPlayer[uid]
+	return player.Notifications, nil
+}
+
 func getMessageModeAndID(message []byte) (MessageHeader, error) {
 	var obj MessageHeader
 
@@ -277,31 +304,46 @@ func getMessageModeAndID(message []byte) (MessageHeader, error) {
 }
 
 func (c *Controller) Dispatch(message []byte) error {
-	var obj MessageHeader
+	var header MessageHeader
 	var err error
 
-	obj, err = getMessageModeAndID(message)
+	header, err = getMessageModeAndID(message)
 	if err != nil {
 		return err
 	}
 
-	if obj.Mode != "rush" {
+	if header.Mode != "rush" {
 		return errors.New("unknown type of message")
 	}
 
-	gameData, ok := c.ToGame[obj.ID]
+	gameData, ok := c.ToGame[header.ID]
 	if !ok || gameData.State == nil {
-		return errors.New("unable to find game by id (" + strconv.FormatUint(obj.ID, 10) + ")")
+		return errors.New("unable to find game by id (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
 
-	if gameData.Mode.String() != obj.Mode {
+	if gameData.Mode.String() != header.Mode {
 		return errors.New("game modes don't match internal expectations")
 	}
 
-	playerData, ok := gameData.ToPlayer[obj.Player]
+	playerData, ok := gameData.ToPlayer[header.Player]
 	if !ok {
-		return errors.New("user (" + strconv.FormatUint(obj.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(obj.ID, 10) + ")")
+		return errors.New("user (" + strconv.FormatUint(header.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
 
-	return c.dispatch(message, gameData, obj.MessageType, playerData)
+	return c.dispatch(message, header, gameData, playerData)
+}
+
+func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id int, reply_to int, obj interface{}) {
+	player.OutboundMsgs[message_id] = obj
+
+	if reply_to > 0 {
+		player.InboundReplies[reply_to] = message_id
+	}
+
+	_, err := json.Marshal(obj)
+	if err != nil {
+		log.Println("Unable to marshal data to send to peer:", player.UID, err, obj)
+	} else {
+		player.Notifications <- obj
+	}
 }

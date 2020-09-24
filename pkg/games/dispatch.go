@@ -40,15 +40,16 @@ type RushPlay struct {
 	Y      int `json:"y"`
 }
 
-func (c *Controller) dispatchRush(message []byte, data GameData, messageType string, player PlayerData) error {
+func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *GameData, player *PlayerData) error {
 	var err error
 	var state *RushState = data.State.(*RushState)
 	if state == nil {
 		panic("internal state is nil; this shouldn't happen when the game is started")
 	}
 
-	switch messageType {
+	switch header.MessageType {
 	case "start":
+		// First count the number of people playing.
 		var players int = 0
 		for _, player := range data.ToPlayer {
 			if player.Admitted {
@@ -56,7 +57,35 @@ func (c *Controller) dispatchRush(message []byte, data GameData, messageType str
 			}
 		}
 
-		err = state.Start(players)
+		// Then start the underlying Rush game to populate game data.
+		if err = state.Start(players); err != nil {
+			return err
+		}
+
+		// Then assign indices to players who are playing and send out their
+		// initial state data.
+		var player_index int = 0
+		for _, indexed_player := range data.ToPlayer {
+			if indexed_player.Admitted {
+				indexed_player.Index = player_index
+
+				var response RushStateNotification
+				response.LoadFromGame(state, player_index)
+				response.LoadFromController(data, player)
+
+				// Only reply to the original sender; the rest get a message but don't
+				// get it as a reply.
+				if indexed_player.UID == player.UID {
+					response.ReplyTo = header.MessageID
+				} else {
+					response.ReplyTo = 0
+				}
+
+				c.undispatch(data, indexed_player, response.MessageID, response.ReplyTo, response)
+
+				player_index++
+			}
+		}
 	case "play":
 		var data RushPlay
 		if err := json.Unmarshal(message, &data); err != nil {
@@ -126,7 +155,7 @@ func (c *Controller) dispatchRush(message []byte, data GameData, messageType str
 	case "check":
 		err = state.IsValidBoard(player.Index)
 	default:
-		err = errors.New("unknown message_type issued to rush game: " + messageType)
+		err = errors.New("unknown message_type issued to rush game: " + header.MessageType)
 	}
 
 	return err
@@ -148,14 +177,14 @@ type GameIsWord struct {
 	Word string `json:"word"`
 }
 
-func (c *Controller) dispatch(message []byte, game GameData, messageType string, player PlayerData) error {
+func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
 	// First try and handle some common message types. Note that since c.Dispatch
 	// doesn't hold a lock, we can safely call back into c.MarkAdmitted(...) and
 	// c.MarkReady(...).
 	//
 	// Note that start messages can't be handled here; they are specific to the
 	// individual game type.
-	switch messageType {
+	switch header.MessageType {
 	case "admit":
 		var data GameAdmit
 		if err := json.Unmarshal(message, &data); err != nil {
@@ -188,5 +217,5 @@ func (c *Controller) dispatch(message []byte, game GameData, messageType string,
 		panic("Valid but unsupported game mode: " + game.Mode.String())
 	}
 
-	return c.dispatchRush(message, game, messageType, player)
+	return c.dispatchRush(message, header, game, player)
 }

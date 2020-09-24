@@ -9,11 +9,18 @@ import (
 type RushPlayer struct {
 	Board LetterGrid   `json:"board"`
 	Hand  []LetterTile `json:"hand"`
+
+	// The following fields are temporary and aren't persisted to the database
+	// because, if the game were to restart, all data here is already present in
+	// hand or board. When a client reconnects, they'll start with all data in
+	// `board` or `hand` and won't need any of the data here.
+	NewTiles []LetterTile `json:"-"`
 }
 
 func (rp *RushPlayer) Init() {
 	rp.Board.Init()
 	rp.Hand = make([]LetterTile, 0)
+	rp.NewTiles = make([]LetterTile, 0)
 }
 
 func (rp *RushPlayer) FindTile(tileID int) (int, bool) {
@@ -147,8 +154,6 @@ func (rs *RushState) HasValidWords(player int) error {
 	}
 
 	return rs.Players[player].Board.VisitAllWordsOnBoard(func(lg *LetterGrid, start LetterPos, end LetterPos, word string) error {
-		log.Println("Visiting word:", word, "rooted at:", start, "IsWord:", IsWord(word))
-
 		if !IsWord(word) {
 			return errors.New("not a valid word: " + word)
 		}
@@ -195,6 +200,7 @@ func (rs *RushState) DrawTiles(player int, count int) error {
 	rs.Tiles = rs.Tiles[count:]
 
 	rs.Players[player].Hand = append(rs.Players[player].Hand, drawn...)
+	rs.Players[player].NewTiles = append(rs.Players[player].NewTiles, drawn...)
 
 	return nil
 }

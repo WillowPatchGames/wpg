@@ -17,11 +17,11 @@ type LetterPos struct {
 }
 
 type LetterGrid struct {
-	Tiles       []LetterTile `json:"tiles"`
-	ToTile      map[int]LetterTile
-	PositionsOf map[int]LetterPos `json:"positions"`
-	AtPosition  map[LetterPos]int
-	Drift       []int `json:"drift"`
+	Tiles       []LetterTile       `json:"tiles"`
+	ToTile      map[int]LetterTile `json:"-"`
+	PositionsOf map[int]LetterPos  `json:"positions"`
+	AtPosition  map[LetterPos]int  `json:"-"`
+	Drift       []int              `json:"drift"`
 }
 
 func (lg *LetterGrid) Init() {
