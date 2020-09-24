@@ -63,15 +63,21 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 		}
 
 		// Then assign indices to players who are playing and send out their
-		// initial state data.
+		// initial state data. Also notify all players that the game has started.
 		var player_index int = 0
 		for _, indexed_player := range data.ToPlayer {
+			// Tell everyone interested that the game has started.
+			var started ControllerNotifyStarted
+			started.LoadFromController(data, indexed_player)
+			c.undispatch(data, indexed_player, started.MessageID, 0, started)
+
+			// Only assign indices to people who were admitted by the game admin.
 			if indexed_player.Admitted {
 				indexed_player.Index = player_index
 
 				var response RushStateNotification
 				response.LoadFromGame(state, player_index)
-				response.LoadFromController(data, player)
+				response.LoadFromController(data, indexed_player)
 
 				// Only reply to the original sender; the rest get a message but don't
 				// get it as a reply.
@@ -81,6 +87,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 					response.ReplyTo = 0
 				}
 
+				// XXX: Handle 3 2 1 countdown.
 				c.undispatch(data, indexed_player, response.MessageID, response.ReplyTo, response)
 
 				player_index++
@@ -195,14 +202,16 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return errors.New("player not authorized to admit other players")
 		}
 
-		return c.MarkAdmitted(game.GID, data.Target, data.Admit)
+		if err := c.markAdmitted(game.GID, data.Target, data.Admit); err != nil {
+			return err
+		}
 	case "ready":
 		var data GameReady
 		if err := json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
-		return c.MarkReady(game.GID, player.UID, data.Ready)
+		return c.markReady(game.GID, player.UID, data.Ready)
 	case "word":
 		var data GameIsWord
 		if err := json.Unmarshal(message, &data); err != nil {

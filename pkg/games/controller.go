@@ -203,7 +203,7 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 	game.ToPlayer[uid] = &PlayerData{
 		UID:             uid,
 		Index:           -1,
-		Admitted:        owner || true,
+		Admitted:        owner,
 		InboundMsgs:     make(map[int]interface{}),
 		OutboundID:      1,
 		OutboundMsgs:    make(map[int]interface{}),
@@ -212,14 +212,31 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 		Notifications:   make(chan interface{}, 64),
 	}
 
-	return false, nil
+	return false, c.notifyAdmin(game, uid)
+}
+
+func (c *Controller) notifyAdmin(game *GameData, joined uint64) error {
+	// Don't notify the owner that they joined. Presumably, they already know.
+	if game.Owner == joined {
+		return nil
+	}
+
+	var admin *PlayerData = game.ToPlayer[game.Owner]
+	if admin == nil {
+		return errors.New("unable to join game without a connected admin")
+	}
+
+	var notification ControllerNotifyAdminJoin
+	notification.LoadFromController(game, admin, joined)
+
+	c.undispatch(game, admin, notification.MessageID, 0, notification)
+	return nil
 }
 
 // Mark a player as being ready to play. This can and should be controlled
 // by the player and not by a game admin.
-func (c *Controller) MarkReady(gid uint64, uid uint64, ready bool) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+func (c *Controller) markReady(gid uint64, uid uint64, ready bool) error {
+	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
 
 	if !c.GameExists(gid) {
 		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") does not exists in controller")
@@ -239,9 +256,8 @@ func (c *Controller) MarkReady(gid uint64, uid uint64, ready bool) error {
 // the game admin and not the players themselves. The exception to this is
 // that users joining by individual invite tokens should be auto-admitted as
 // they were previously invited individually.
-func (c *Controller) MarkAdmitted(gid uint64, uid uint64, admitted bool) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool) error {
+	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
 
 	if !c.GameExists(gid) {
 		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") does not exists in controller")
@@ -254,6 +270,11 @@ func (c *Controller) MarkAdmitted(gid uint64, uid uint64, admitted bool) error {
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
 	player.Admitted = admitted
+
+	var notification ControllerNotifyAdmitted
+	notification.LoadFromController(game, player)
+	c.undispatch(game, player, notification.MessageID, 0, notification)
+
 	return nil
 }
 
@@ -293,7 +314,7 @@ func (c *Controller) Undispatch(gid uint64, uid uint64) (chan interface{}, error
 	return player.Notifications, nil
 }
 
-func getMessageModeAndID(message []byte) (MessageHeader, error) {
+func parseMessageHeader(message []byte) (MessageHeader, error) {
 	var obj MessageHeader
 
 	if err := json.Unmarshal(message, &obj); err != nil {
@@ -307,7 +328,7 @@ func (c *Controller) Dispatch(message []byte) error {
 	var header MessageHeader
 	var err error
 
-	header, err = getMessageModeAndID(message)
+	header, err = parseMessageHeader(message)
 	if err != nil {
 		return err
 	}
@@ -315,6 +336,9 @@ func (c *Controller) Dispatch(message []byte) error {
 	if header.Mode != "rush" {
 		return errors.New("unknown type of message")
 	}
+
+	c.lock.Lock()
+	defer c.lock.Unlock()
 
 	gameData, ok := c.ToGame[header.ID]
 	if !ok || gameData.State == nil {
@@ -330,7 +354,17 @@ func (c *Controller) Dispatch(message []byte) error {
 		return errors.New("user (" + strconv.FormatUint(header.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
 
-	return c.dispatch(message, header, gameData, playerData)
+	err = c.dispatch(message, header, gameData, playerData)
+	if err != nil {
+		// There was an error handling this action. Send the error to the client.
+		var notification ControllerNotifyError
+		notification.LoadFromController(gameData, playerData, err)
+		notification.ReplyTo = header.MessageID
+
+		c.undispatch(gameData, playerData, notification.MessageID, notification.ReplyTo, notification)
+	}
+
+	return err
 }
 
 func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id int, reply_to int, obj interface{}) {
@@ -343,6 +377,7 @@ func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id i
 	_, err := json.Marshal(obj)
 	if err != nil {
 		log.Println("Unable to marshal data to send to peer:", player.UID, err, obj)
+		panic("Panicing due to unrecoverable error in game program: attempt to send an unmarshable object to peer")
 	} else {
 		player.Notifications <- obj
 	}

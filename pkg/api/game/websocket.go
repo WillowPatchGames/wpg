@@ -358,6 +358,10 @@ func (hub *Hub) deleteGame(gameID GameID) {
 }
 
 func (hub *Hub) deleteClient(client *Client) {
+	// XXX: Implement correctly. We can't actually remove players from the
+	// game controller until the game has either finished or expired. That way,
+	// if they rejoin they reuse their existing session content.
+
 	if !hub.controller.GameExists(uint64(client.gameID)) {
 		// Client can't possibly exist any more because the game is no longer
 		// present. This means the game is already deleted and the player's
@@ -383,11 +387,6 @@ func (hub *Hub) deleteClient(client *Client) {
 		// ProcessPlayerMessages(...) can frequently be stuck holding a
 		// client connection while it is being removed elsewhere.
 		return
-	}
-
-	err := hub.controller.RemovePlayer(uint64(client.gameID), uint64(client.userID))
-	if err != nil {
-		log.Println("Got unexpected error while removing player:", err)
 	}
 
 	if deleteGame {

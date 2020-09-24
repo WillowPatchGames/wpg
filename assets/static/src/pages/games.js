@@ -32,9 +32,12 @@ import { RushGame } from '../games/rush.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
+
   if (!game.interface) {
+    // XXX: Update to support multiple game types.
     game.interface = new RushGame(game);
   }
+
   return game;
 }
 
@@ -61,8 +64,8 @@ function processor(processing) {
     console.log(buf);
     var data = JSON.parse(buf);
     if (!data) console.log("Error: ", buf);
-    if (processing[data.type]) {
-      processing[data.type](data);
+    if (processing[data.message_type]) {
+      processing[data.message_type](data);
     }
     if (processing[""]) {
       processing[""](data);
@@ -252,13 +255,17 @@ class PreGameAdminPage extends React.Component {
     this.state = {
       waitlist: [],
     };
+
     this.game = this.props.game || {};
     loadGame(this.game);
+
     this.unmount = addEv(this.game.ws, "message", processor({
-      "invite": data => {
-        console.log(data.user);
-        this.state.waitlist.push(Object.assign(data.user, { admitted: false }));
-        this.setState(state => state);
+      "notify-join": data => {
+        var userPromise = UserModel.FromId(data.joined);
+        userPromise.then((user) => {
+          this.state.waitlist.push(Object.assign(user, { admitted: false }));
+          this.setState(state => state);
+        });
       },
       "started": data => {
         this.props.setPage('playing');
@@ -269,6 +276,7 @@ class PreGameAdminPage extends React.Component {
         }
       },
     }));
+
     this.code_ref = React.createRef();
     this.link_ref = React.createRef();
   }
@@ -278,11 +286,9 @@ class PreGameAdminPage extends React.Component {
   toggleAdmitted(user) {
     for (let u in this.state.waitlist) {
       if (this.state.waitlist[u] === user) {
-        if (user.admitted === false) {
-          user.admitted = true;
-          this.setState(state => state);
-          this.game.interface.controller.admitPlayer(user);
-        }
+        user.admitted = !user.admitted;
+        this.setState(state => state);
+        this.game.interface.controller.admitPlayer(user.id, user.admitted);
       }
     }
   }
