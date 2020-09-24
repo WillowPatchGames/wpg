@@ -90,7 +90,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	client := &Client{
 		hub:    handle.Hub,
 		conn:   conn,
-		send:   make(chan []byte, 256),
+		send:   nil,
 		gameID: GameID(gamedb.ID),
 		userID: UserID(handle.user.ID),
 	}

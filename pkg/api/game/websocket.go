@@ -1,6 +1,7 @@
 package game
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"strconv"
@@ -29,6 +30,9 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 1) / 4
 
+	// Waiting period for notification channel to be created.
+	notificationCreateWaitPeriod = 1 * time.Second
+
 	// ReadBufferSize must be limited in order to prevent the client from
 	// starving resources from other players.
 	readBufferSize = 256 * 1024 // 256KB
@@ -36,6 +40,12 @@ const (
 	// SendBufferSize must be limited because players could send messages which
 	// result in large response messages, starving resources from other players.
 	sendBufferSize = 256 * 1024 // 256KB
+
+	// Register and unregister channel buffer size
+	registerChannelSize = 32
+
+	// Inbound messages channel buffer size
+	messageChannelSize = 32 * 512
 )
 
 // Client holds the underlying websocket connection and the
@@ -47,7 +57,7 @@ type Client struct {
 	conn *websocket.Conn
 
 	// Buffered channel of outbound messages.
-	send chan []byte
+	send chan interface{}
 
 	// GameID this client is playing.
 	gameID GameID
@@ -117,7 +127,11 @@ func (c *Client) writePump() {
 	// messages from the server to the client every so often. This period is
 	// determined by the pingPeriod constant. Create a ticker so we can be
 	// notified when we need to send a new ping message.
-	ticker := time.NewTicker(pingPeriod)
+	//
+	// However, until the outbound send channel is present, default to waiting
+	// notificationCreateWaitPeriod -- this lets us exit the select and check if
+	// the channel exists.
+	ticker := time.NewTicker(notificationCreateWaitPeriod)
 
 	defer func() {
 		// If we can no longer write to the client, we should consider the client
@@ -129,10 +143,21 @@ func (c *Client) writePump() {
 		_ = c.conn.Close()
 	}()
 
+	var empty chan interface{} = make(chan interface{})
+
 	for {
+		var c_send chan interface{}
+		if c.send == nil {
+			c_send = empty
+			ticker = time.NewTicker(notificationCreateWaitPeriod)
+		} else {
+			c_send = c.send
+			ticker = time.NewTicker(pingPeriod)
+		}
+
 		// See above; select from either of our two channels to read from.
 		select {
-		case message, ok := <-c.send:
+		case message, ok := <-c_send:
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel; notify the client and exit this
@@ -141,7 +166,17 @@ func (c *Client) writePump() {
 				return
 			}
 
-			err := c.conn.WriteMessage(websocket.TextMessage, message)
+			message_data, err := json.Marshal(message)
+			if err != nil {
+				log.Println("Got error trying to marshal to peer:", err)
+
+				// We need to continue with the read/write pump in case we get future
+				// messages. We shouldn't treat this as fatal, unlike when the actual
+				// send fails.
+				break
+			}
+
+			err = c.conn.WriteMessage(websocket.TextMessage, message_data)
 			if err != nil {
 				log.Println("Got error trying to write message to peer:", err)
 				return
@@ -205,8 +240,8 @@ func NewHub() *Hub {
 	var ret = &Hub{
 		connections: make(map[GameID]map[UserID]*Client),
 		dbgames:     make(map[GameID]*models.GameModel),
-		register:    make(chan *Client),
-		unregister:  make(chan *Client),
+		register:    make(chan *Client, registerChannelSize),
+		unregister:  make(chan *Client, registerChannelSize),
 		process:     make(map[GameID]chan ClientMessage),
 	}
 
@@ -255,7 +290,7 @@ func (hub *Hub) ensureGameExists(gameid uint64) error {
 	// requests to hub.controller.Dispatch -- that's where ProcessPlayerMessages
 	// comes into play. It takes requests from clients and turns them into
 	// dispatches to the controller.
-	hub.process[GameID(gameid)] = make(chan ClientMessage)
+	hub.process[GameID(gameid)] = make(chan ClientMessage, messageChannelSize)
 	log.Println("Spawning ProcessPlayerMessages for ", gameid)
 	go hub.ProcessPlayerMessages(GameID(gameid))
 
@@ -293,15 +328,14 @@ func (hub *Hub) connectPlayer(client *Client) error {
 
 	// The controller handles creating or resuming all of the player state
 	// information.
-	exists, err := hub.controller.AddPlayer(uint64(client.gameID), uint64(client.userID))
-	if err != nil || exists {
-		// If the player exists, err should be nil and so we'll return nil here;
-		// there is nothing else we have to do here.
+	_, err = hub.controller.AddPlayer(uint64(client.gameID), uint64(client.userID))
+	if err != nil {
 		return err
 	}
 
 	hub.connections[client.gameID][client.userID] = client
-	return nil
+	client.send, err = hub.controller.Undispatch(uint64(client.gameID), uint64(client.userID))
+	return err
 }
 
 func (hub *Hub) registerClient(client *Client) {
@@ -350,8 +384,6 @@ func (hub *Hub) deleteClient(client *Client) {
 		// client connection while it is being removed elsewhere.
 		return
 	}
-
-	close(client.send)
 
 	err := hub.controller.RemovePlayer(uint64(client.gameID), uint64(client.userID))
 	if err != nil {
