@@ -13,7 +13,7 @@ class MessageController {
       "game_mode": this.game.mode,
       "game_id": this.game.id,
       "player_id": this.game.user.id,
-      "timestamp": new Date().getMilliseconds(),
+      "timestamp": Date.now(),
       "message_id": this.message_id++,
     };
 
