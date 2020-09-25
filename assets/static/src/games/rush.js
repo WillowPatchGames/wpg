@@ -108,6 +108,8 @@ class RushData {
     // of `new RushData(old)` results in a full deep copy.
     this.grid = old?.grid ? new LetterGrid(old.grid) : new LetterGrid();
     this.bank = old?.bank ? new LetterBank(old.bank) : new LetterBank();
+
+    this.onAdd = (...tiles) => {};
   }
 
   // Arbitrary data grabber for bank and grid using types.
@@ -176,13 +178,14 @@ class RushData {
 
   check(result) {
     // XXX: Determine what to do at the controller layer w.r.t. invalid words.
-    console.log("Here?");
+    console.log("Trying to determine what to do with check result?");
     console.log(result);
-    return {};
+    return [];
   }
 
-  draw(...tile) {
-    this.bank.add(...tile);
+  draw(...tiles) {
+    this.bank.add(...tiles);
+    this.onAdd(...tiles);
   }
 
   discard(tile) {
@@ -259,9 +262,7 @@ class RushGame {
 
   async check() {
     var ret = await this.controller.draw();
-    if (ret.message_type === "error") {
-      // return this.data.check(ret);
-    }
+    return this.data.check(ret);
   }
 
   async draw() {

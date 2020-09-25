@@ -200,7 +200,10 @@ class LetterGrid {
 
   // Sets the tile at a certain position.
   set(row, col, value) {
-    if (!value) this.delete(row, col);
+    if (!value) {
+      return this.delete(row, col);
+    }
+
     if (!this.data[row]) this.data[row] = [];
     this.data[row][col] = value;
     return this;

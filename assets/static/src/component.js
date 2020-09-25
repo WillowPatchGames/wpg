@@ -44,10 +44,14 @@ class Game extends React.Component {
       interface: props.interface,
     };
     this.state.interface.data.grid.padding(this.state.presentation.padding);
-    if (this.state.interface.data.tiles && !this.state.presentation.readOnly) {
-      var adder = this.state.interface.data.tiles.onAdd;
-      this.state.interface.data.tiles.onAdd = (...tiles) => {
-        adder.call(this.state.interface.data.tiles, ...tiles);
+    if (this.state.interface.data && !this.state.presentation.readOnly) {
+      let adder = this.state.interface.data.onAdd;
+      this.state.interface.data.onAdd = (...tiles) => {
+        console.log("OnAdd called with arguments:", ...tiles);
+        if (adder !== null) {
+          adder.call(this.state.interface.data, ...tiles);
+        }
+
         this.setState(this.repad.bind(this));
       };
     }
@@ -284,17 +288,17 @@ class Game extends React.Component {
   repad(state) {
     if (!state) state = this.state;
     let padding = [...this.state.presentation.padding];
-    if (!state.data.grid.letterPositions().length) {
+    if (!state.interface.data.grid.letterPositions().length) {
       padding[0] = padding[0]*2 + 1;
       padding[1] = padding[1]*2 + 1;
     }
-    var adj = state.data.grid.padding(padding);
+    var adj = state.interface.data.grid.padding(padding);
     if (false) {
       this.pending.scroll[0] += SIZE*adj[1];
       this.pending.scroll[1] += SIZE*adj[0];
     } else {
       let where =
-        state.data.grid.letterPositions().concat([{pos:[Math.max(0, adj[0]), Math.max(0, adj[1])]}])
+        state.interface.data.grid.letterPositions().concat([{pos:[Math.max(0, adj[0]), Math.max(0, adj[1])]}])
         .map(({pos}) => ["grid", ...pos])
         .filter(pos => this.droppoints[pos]?.ref && pos[1]-adj[0] < this.state.interface.data.grid.rows && pos[2]-adj[0] < this.state.interface.data.grid.cols)
         [0];
@@ -511,7 +515,7 @@ class Game extends React.Component {
   }
   async check() {
     var unwords = await this.state.interface.check();
-    if (unwords.length) console.log("Invalid words: ", unwords.map(String));
+    if (unwords && unwords.length) console.log("Invalid words: ", unwords.map(String));
     this.setState((state) => {
       state.presentation.unwords = unwords;
       return state;
@@ -544,14 +548,14 @@ class Game extends React.Component {
       state = Object.assign({}, state);
       if (dropped) state.presentation.dropped = here;
       var ALEX = true;
-      if (ALEX && here[0] === "bank" && there[0] === "grid" && state.data.get(there)) {
+      if (ALEX && here[0] === "bank" && there[0] === "grid" && state.interface.data.get(there)) {
         state.presentation.selected = here;
-      } else if (ALEX && there[0] === "bank" && here[0] === "grid" && state.data.get(here)) {
+      } else if (ALEX && there[0] === "bank" && here[0] === "grid" && state.interface.data.get(here)) {
         state.presentation.selected = there;
       } else {
         state.presentation.selected = null;
       }
-      state.data.swap(here,there);
+      state.interface.data.swap(here,there);
       state = this.repad(state);
       return state;
     });
