@@ -40,9 +40,9 @@ type RushPlay struct {
 	Y      int `json:"y"`
 }
 
-func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *GameData, player *PlayerData) error {
+func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
 	var err error
-	var state *RushState = data.State.(*RushState)
+	var state *RushState = game.State.(*RushState)
 	if state == nil {
 		panic("internal state is nil; this shouldn't happen when the game is started")
 	}
@@ -51,7 +51,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 	case "start":
 		// First count the number of people playing.
 		var players int = 0
-		for _, player := range data.ToPlayer {
+		for _, player := range game.ToPlayer {
 			if player.Admitted {
 				players += 1
 			}
@@ -65,11 +65,11 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 		// Then assign indices to players who are playing and send out their
 		// initial state data. Also notify all players that the game has started.
 		var player_index int = 0
-		for _, indexed_player := range data.ToPlayer {
+		for _, indexed_player := range game.ToPlayer {
 			// Tell everyone interested that the game has started.
 			var started ControllerNotifyStarted
-			started.LoadFromController(data, indexed_player)
-			c.undispatch(data, indexed_player, started.MessageID, 0, started)
+			started.LoadFromController(game, indexed_player)
+			c.undispatch(game, indexed_player, started.MessageID, 0, started)
 
 			// Only assign indices to people who were admitted by the game admin.
 			if indexed_player.Admitted {
@@ -77,7 +77,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 
 				var response RushStateNotification
 				response.LoadFromGame(state, player_index)
-				response.LoadFromController(data, indexed_player)
+				response.LoadFromController(game, indexed_player)
 
 				// Only reply to the original sender; the rest get a message but don't
 				// get it as a reply.
@@ -88,14 +88,14 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 				}
 
 				// XXX: Handle 3 2 1 countdown.
-				c.undispatch(data, indexed_player, response.MessageID, response.ReplyTo, response)
+				c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
 
 				player_index++
 			}
 		}
 	case "play":
 		var data RushPlay
-		if err := json.Unmarshal(message, &data); err != nil {
+		if err = json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
@@ -106,7 +106,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 		err = state.PlayTile(player.Index, data.TileID, data.X, data.Y)
 	case "move":
 		var data RushMove
-		if err := json.Unmarshal(message, &data); err != nil {
+		if err = json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
@@ -117,7 +117,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 		err = state.MoveTile(player.Index, data.TileID, data.X, data.Y)
 	case "swap":
 		var data RushSwap
-		if err := json.Unmarshal(message, &data); err != nil {
+		if err = json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
@@ -128,7 +128,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 		err = state.SwapTile(player.Index, data.FirstID, data.SecondID)
 	case "recall":
 		var data RushRecall
-		if err := json.Unmarshal(message, &data); err != nil {
+		if err = json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
@@ -139,7 +139,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 		err = state.RecallTile(player.Index, data.TileID)
 	case "discard":
 		var data RushDiscard
-		if err := json.Unmarshal(message, &data); err != nil {
+		if err = json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
@@ -147,10 +147,20 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 			return errors.New("unknown tile identifier")
 		}
 
-		err = state.Discard(player.Index, data.TileID)
+		if err = state.Discard(player.Index, data.TileID); err != nil {
+			return err
+		}
+
+		// No error, send a state message back to the player.
+		var response RushStateNotification
+		response.LoadFromGame(state, player.Index)
+		response.LoadFromController(game, player)
+		response.ReplyTo = header.MessageID
+
+		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
 	case "draw":
 		var data RushDraw
-		if err := json.Unmarshal(message, &data); err != nil {
+		if err = json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
@@ -158,7 +168,17 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, data *Ga
 			return errors.New("unknown draw identifier")
 		}
 
-		err = state.Draw(player.Index, data.DrawID)
+		if err = state.Draw(player.Index, data.DrawID); err != nil {
+			return err
+		}
+
+		// No error, send a state message back to the player.
+		var response RushStateNotification
+		response.LoadFromGame(state, player.Index)
+		response.LoadFromController(game, player)
+		response.ReplyTo = header.MessageID
+
+		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
 	case "check":
 		err = state.IsValidBoard(player.Index)
 	default:

@@ -92,13 +92,14 @@ func main() {
 		// stuff. Static asset handler is either a path on disk (when using a
 		// production build) or a URL/proxy-pass type deal when using a debug node
 		// auto-reloading server.
-		if _, err := os.Stat(staticPath); err == nil {
+		var parsed_url *url.URL
+		if _, err = os.Stat(staticPath); err == nil {
 			log.Println("Adding static asset routing: " + staticPath)
 			fileHandler := http.FileServer(http.Dir(staticPath))
 			router.PathPrefix("/").Handler(fileHandler)
-		} else if url, err := url.Parse(staticPath); err == nil {
+		} else if parsed_url, err = url.Parse(staticPath); err == nil {
 			log.Println("Adding proxied routing: " + staticPath)
-			proxyHandler := httputil.NewSingleHostReverseProxy(url)
+			proxyHandler := httputil.NewSingleHostReverseProxy(parsed_url)
 			router.PathPrefix("/").Handler(proxyHandler)
 		}
 	}

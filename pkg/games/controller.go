@@ -118,6 +118,9 @@ func (c *Controller) GameExists(gid uint64) bool {
 // Add a new game to a controller. Note that, while configuration information
 // is populated, the game isn't yet started.
 func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config interface{}) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	// If the game exists, throw an error.
 	if c.GameExists(gid) {
 		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") already exists in controller")
@@ -142,9 +145,6 @@ func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config i
 	if err := state.Init(*rushConfig); err != nil {
 		return err
 	}
-
-	c.lock.Lock()
-	defer c.lock.Unlock()
 
 	c.ToGame[gid] = &GameData{
 		gid,
@@ -279,6 +279,9 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool) error {
 }
 
 // Remove a given game once it is no longer needed.
+//
+// XXX: Decide if we actually want this or not. Usually it probably isn't a
+// good idea to remove a player before we flush the results to the database.
 func (c *Controller) RemovePlayer(gid uint64, uid uint64) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
