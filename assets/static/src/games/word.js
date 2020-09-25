@@ -50,7 +50,13 @@ class LetterBank extends Array {
   }
 
   add(...values) {
-    this.push(...values);
+    for (let value of values) {
+      if (!(value instanceof LetterTile)) {
+        value = new LetterTile(value);
+      }
+
+      this.push(value);
+    }
     return this;
   }
 

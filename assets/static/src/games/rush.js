@@ -8,22 +8,8 @@ import {
   WebSocketController
 } from './common.js';
 
-class RushInterface {
-  /*
-    check = () => {};
-    draw = () => {};
-    discard = (tile) => {};
-    recall = (tile) => {};
-    swap = (first, second) => {};
-    move = (tile, pos) => {};
-    play = (tile, pos) => {};
-  */
-}
-
-class RushController extends RushInterface {
+class RushController {
   constructor(game) {
-    super();
-
     this.game = game;
     this.draw_id = 1;
 
@@ -51,7 +37,7 @@ class RushController extends RushInterface {
     });
   }
 
-  async draw() {
+  async check() {
     return await this.wsController.sendAndWait({
       'message_type': 'check',
     });
@@ -109,12 +95,14 @@ class RushController extends RushInterface {
       'message_type': 'peek',
     });
   }
+
+  onMessage(type, handler) {
+    return this.wsController.onMessage(type, handler);
+  }
 }
 
-class RushData extends RushInterface {
+class RushData {
   constructor(old) {
-    super();
-
     // If the old grid and bank exist, copy them into a new LetterGrid
     // instance. We assume this happens recursively, i.e., that the result
     // of `new RushData(old)` results in a full deep copy.
@@ -189,11 +177,12 @@ class RushData extends RushInterface {
   check(result) {
     // XXX: Determine what to do at the controller layer w.r.t. invalid words.
     console.log("Here?");
+    console.log(result);
     return {};
   }
 
   draw(...tile) {
-    this.bank.push(...tile);
+    this.bank.add(...tile);
   }
 
   discard(tile) {
@@ -250,23 +239,36 @@ class RushData extends RushInterface {
   }
 }
 
-class RushGame extends RushInterface {
+class RushGame {
   constructor(game) {
-    super();
-
     this.game = game;
-    this.data = new RushData(game);
     this.controller = new RushController(game);
+    this.data = new RushData(game);
+
+    this.controller.onMessage("state", (data) => { this.handleNewState(data) });
+  }
+
+  handleNewState(message) {
+    console.log("Got new state pushed:", message);
+    if (message.added !== undefined && message.added !== null) {
+      if (message.added.hand !== undefined && message.added.hand !== null) {
+        this.data.draw(...message.added.hand);
+      }
+    }
   }
 
   async check() {
     var ret = await this.controller.draw();
-    return this.data.check(ret);
+    if (ret.message_type === "error") {
+      // return this.data.check(ret);
+    }
   }
 
   async draw() {
     var ret = await this.controller.draw();
-    return this.data.draw(ret);
+    if (ret.message_type !== "state") {
+      // What to do?
+    }
   }
 
   async discard(tile) {

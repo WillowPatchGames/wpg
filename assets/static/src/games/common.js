@@ -212,7 +212,7 @@ class WebSocketController {
   }
 
   // Notify on an incoming message of a particular type.
-  notify(message_type, handler) {
+  onMessage(message_type, handler) {
     var event_handler = (message_event) => {
       var data = JSON.parse(message_event.data);
       if (data.message_type === message_type) {
@@ -221,6 +221,7 @@ class WebSocketController {
     };
 
     this.game.ws.addEventListener("message", event_handler);
+    return () => this.game.ws.removeEventListener("message", event_handler);
   }
 }
 

@@ -41,10 +41,18 @@ function loadGame(game) {
   return game;
 }
 
-function addEv(tgt, typ, cb, ...mod) {
-  let callback = (...arg) => cb(...arg);
-  tgt.addEventListener(typ, callback, ...mod);
-  return () => tgt.removeEventListener(typ, callback, ...mod);
+function addEv(game, events) {
+  let unmounts = [];
+  for (let message_type in events) {
+    var handler = events[message_type];
+    let unmount = game.interface.controller.onMessage(message_type, handler);
+    unmounts.push(unmount);
+  }
+  return () => {
+    for (let unmount of unmounts) {
+      unmount();
+    }
+  };
 }
 
 function notify(snackbar, message, type) {
@@ -59,19 +67,6 @@ function notify(snackbar, message, type) {
     actions: [{ title: type === "error" ? "Aw shucks" : "Cool" }],
   });
 }
-function processor(processing) {
-  return ({ data: buf }) => {
-    console.log(buf);
-    var data = JSON.parse(buf);
-    if (!data) console.log("Error: ", buf);
-    if (processing[data.message_type]) {
-      processing[data.message_type](data);
-    }
-    if (processing[""]) {
-      processing[""](data);
-    }
-  }
-}
 
 class RushGamePage extends React.Component {
   constructor(props) {
@@ -81,7 +76,7 @@ class RushGamePage extends React.Component {
     let user = usr => usr ? (usr.id === this.props.user.id ? "You" : usr.display) : "Someone ";
     if (this.game) {
       this.state.interface = this.game.interface;
-      this.unmount = addEv(this.game.ws, "message", processor({
+      this.unmount = addEv(this.game, {
         "gamestart": data => {
           data.message = user(data.user) + " drew first!";
         },
@@ -98,7 +93,7 @@ class RushGamePage extends React.Component {
             notify(this.props.snackbar, data.message, data.type);
           }
         },
-      }));
+      });
     }
   }
   componentWillUnmount() {
@@ -138,9 +133,8 @@ class AfterPartyPage extends React.Component {
     var wordmanager = new JSWordManager();
     wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
     /*
-    XXX: Upgrade AfterPartyPage to work again... :-)
-
-    this.unmount = addEv(this.game.ws, "message", processor({
+    // XXX - Make this work again
+    this.unmount = addEv(this.game, {
       "snapshots": async (data) => {
         if (data.snapshots) {
           data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
@@ -169,7 +163,7 @@ class AfterPartyPage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
         }
       },
-    }));*/
+    });*/
   }
   componentDidMount() {
     this.game.ws.send(JSON.stringify({"type": "peek"}));
@@ -217,7 +211,7 @@ class PreGameUserPage extends React.Component {
     }
     this.game = this.props.game || {};
     loadGame(this.game);
-    this.unmount = addEv(this.game.ws, "message", processor({
+    this.unmount = addEv(this.game, {
       "admitted": data => {
         this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
       },
@@ -229,7 +223,7 @@ class PreGameUserPage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
         }
       },
-    }));
+    });
   }
   componentWillUnmount() {
     if (this.unmount) this.unmount();
@@ -259,7 +253,7 @@ class PreGameAdminPage extends React.Component {
     this.game = this.props.game || {};
     loadGame(this.game);
 
-    this.unmount = addEv(this.game.ws, "message", processor({
+    this.unmount = addEv(this.game, {
       "notify-join": data => {
         var userPromise = UserModel.FromId(data.joined);
         userPromise.then((user) => {
@@ -275,7 +269,7 @@ class PreGameAdminPage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
         }
       },
-    }));
+    });
 
     this.code_ref = React.createRef();
     this.link_ref = React.createRef();
