@@ -68,7 +68,7 @@ class Game extends React.Component {
       smooth_scroll: [0,0],
     };
 
-    this.unmount = ()=>{};
+    this.unmount = () => {};
   }
 
   componentWillUnmount() {
@@ -217,12 +217,12 @@ class Game extends React.Component {
               break;
             // Enter to draw
             case "Enter":
-              this.draw();
+              this.doDraw();
               e.preventDefault();
               break;
             // Space to check words
             case " ": case "Spacebar":
-              this.check();
+              this.doCheck();
               e.preventDefault();
               break;
             default: break;
@@ -236,7 +236,7 @@ class Game extends React.Component {
         };
       }
     } else if (this.state.interface.data.words) {
-      this.check();
+      this.doCheck();
     }
   }
   componentDidUpdate() {
@@ -274,7 +274,6 @@ class Game extends React.Component {
   }
 
   droppable(where, area) {
-    console.log("Droppable called with ", where, " and area ", area);
     return (ref) => {
       if (ref) {
         this.droppoints[where] = {ref, where, area};
@@ -463,15 +462,30 @@ class Game extends React.Component {
   recall(here, dropped) {
     this.interact(here, ["bank",""], dropped);
   }
-  async discard(here, dropped) {
+
+  isDiscard(here, there) {
+    return here[0] === "discard" || there[0] === "discard";
+  }
+
+  discardArgs(here, there) {
+    if (here === "discard") {
+      return there;
+    }
+
+    return here;
+  }
+
+  async doDiscard(here, dropped) {
     if (here && this.state.interface.data.get(here) && !this.state.presentation.discarding.includes(this.state.interface.data.get(here))) {
       var letter = this.state.interface.data.get(here);
+
       this.setState((state) => {
         state.presentation.selected = null;
         if (dropped) state.presentation.dropped = here;
         state.presentation.discarding.push(letter);
         return state;
       });
+
       try {
         await this.state.interface.discard(here);
       } finally {
@@ -485,52 +499,33 @@ class Game extends React.Component {
       }
     }
   }
-  async draw() {
+
+  async doDraw() {
     if (this.state.presentation.drawing) return;
-    var unwords;
-    var noted = false;
-    if (!this.state.interface.data.bank.empty() || this.state.interface.data.grid.components().length > 1) {
-      console.log("You must connect all of your tiles together before drawing!");
-      if (this.props.notify) {
-        this.props.notify("You must connect all of your tiles together before drawing!", "error");
-      }
-      noted = true;
-    }
-    console.log(this.state);
-    console.log(this.state.interface);
-    console.log(this.state.interface.check());
-    if ((unwords = await this.state.interface.check()).length) {
-      if (!noted && this.props.notify) {
-        if (unwords.length === 1) {
-          this.props.notify('"' + unwords[0] + '"' + " is not a valid word!", "error");
-        } else {
-          this.props.notify("You have invalid words on the board", "error");
+
+    this.setState(state => {
+      state.presentation.selected = null;
+      state.presentation.drawing = true;
+      return state;
+    });
+
+    try {
+      var ret = await this.state.interface.draw();
+      if (ret && ret.message_type === "error") {
+        if (this.props.notify) {
+          this.props.notify(ret.error);
         }
       }
-      console.log("Invalid words: ", unwords.map(String));
-      this.setState((state) => {
-        state.presentation.unwords = unwords;
-        state.presentation.selected = null;
-        return state;
-      });
-    } else if (!noted) {
+    } finally {
+      // NOTE: this technically leaks, and may execute after the component unmounts (especially on game over events)
       this.setState(state => {
-        state.presentation.selected = null;
-        state.presentation.drawing = true;
+        state.presentation.drawing = false;
         return state;
       });
-      try {
-        await this.state.interface.draw();
-      } finally {
-        // NOTE: this technically leaks, and may execute after the component unmounts (especially on game over events)
-        this.setState(state => {
-          state.presentation.drawing = false;
-          return state;
-        });
-      }
     }
   }
-  async check() {
+
+  async doCheck() {
     var unwords = await this.state.interface.check();
     if (unwords && unwords.length) console.log("Invalid words: ", unwords.map(String));
     this.setState((state) => {
@@ -539,31 +534,197 @@ class Game extends React.Component {
     });
   }
 
-  interact(here,there,dropped) {
-    if (there[0] === "discard") {
-      return this.discard(here, dropped);
-    } else if (here[0] === "discard") {
-      return this.discard(there, dropped);
+  isRecall(here, there) {
+    var here_tile = this.state.interface.data.get(here);
+    var there_tile = this.state.interface.data.get(there);
+
+    var here_there_recall = here_tile !== null && there[0] === "bank" && there[1] === "";
+    var there_here_recall = there_tile !== null && here[0] === "bank" && here[1] === "";
+
+    return here[0] === "recall" || there[0] === "recall" || here_there_recall || there_here_recall;
+  }
+
+  recallArgs(here, there) {
+    if (here[0] === "recall") {
+      return there;
     } else if (there[0] === "recall") {
-      if (here[0] === "bank") {
+      return here;
+    } else if (here[0] === "bank" && here[1] === "") {
+      return there;
+    } else if (there[0] === "bank" && there[1] === "") {
+      return here;
+    } else {
+      throw new Error("Shouldn't be here!" + here + " || " + there);
+    }
+  }
+
+  async doRecall(here, dropped) {
+    this.setState(state => {
+      state = Object.assign({}, state);
+      if (dropped) {
+        state.presentation.dropped = here;
+      }
+
+      if (here && this.state.interface.data.get(here)) {
+        var tile = this.state.interface.data.get(here);
+        this.state.interface.recall(tile);
+      }
+
+      return state;
+    });
+  }
+
+  isPlay(here, there) {
+    var here_tile = this.state.interface.data.get(here);
+    var there_tile = this.state.interface.data.get(there);
+
+    var here_there_play = here[0] === "bank" && here_tile !== null && there_tile === null;
+    var there_here_play = there[0] === "bank" && there_tile !== null && here_tile === null;
+
+    return here_there_play || there_here_play;
+  }
+
+  playArgs(here, there) {
+    var here_tile = this.state.interface.data.get(here);
+    var there_tile = this.state.interface.data.get(there);
+
+    if (here_tile !== null) {
+      return {
+        tile: here_tile,
+        pos: there,
+      };
+    }
+
+    return {
+      tile: there_tile,
+      pos: here,
+    };
+  }
+
+  async doPlay(tile, pos, dropped) {
+    console.log("doPlay(", tile, ",", pos, ",", dropped, ")");
+
+    this.setState(state => {
+      state = Object.assign({}, state);
+      if (dropped) {
+        state.presentation.dropped = pos;
+      }
+
+      state.interface.data.play(tile, pos);
+
+      state = this.repad(state);
+      return state;
+    });
+  }
+
+  isMove(here, there) {
+    var here_tile = this.state.interface.data.get(here);
+    var there_tile = this.state.interface.data.get(there);
+
+    var here_there_move = here[0] === "grid" && here_tile !== null && there_tile === null;
+    var there_here_move = there[0] === "grid" && there_tile !== null && here_tile === null;
+
+    return here_there_move || there_here_move;
+  }
+
+  moveArgs(here, there) {
+    var here_tile = this.state.interface.data.get(here);
+    var there_tile = this.state.interface.data.get(there);
+
+    if (here_tile !== null) {
+      return {
+        tile: here_tile,
+        pos: there,
+      };
+    }
+
+    return {
+      tile: there_tile,
+      pos: here,
+    };
+  }
+
+  async doMove(tile, pos, dropped) {
+    console.log("doMove(", tile, ",", pos, ",", dropped, ")");
+
+    this.setState(state => {
+      state = Object.assign({}, state);
+      if (dropped) {
+        state.presentation.dropped = pos;
+      }
+
+      state.interface.data.move(tile, pos);
+
+      state = this.repad(state);
+      return state;
+    });
+  }
+
+  isSwap(here, there) {
+    var here_tile = this.state.interface.data.get(here);
+    var there_tile = this.state.interface.data.get(there);
+    return here_tile !== null && there_tile !== null && here[0] !== "bank" && there[0] !== "bank";
+  }
+
+  swapArgs(here, there) {
+    var here_tile = this.state.interface.data.get(here);
+    var there_tile = this.state.interface.data.get(there);
+
+    return {
+      first: here_tile,
+      second: there_tile,
+    }
+  }
+
+  async doSwap(here, first, second, dropped) {
+    console.log("doSwap(", here, ",", first, ",", second, ",", dropped, ")");
+
+    this.setState(state => {
+      state = Object.assign({}, state);
+      if (dropped) {
+        state.presentation.dropped = here;
+      }
+
+      state.interface.data.swap(first, second);
+
+      state = this.repad(state);
+      return state;
+    });
+  }
+
+  interact(here, there, dropped) {
+    console.log("Interact called with:", here, this.state.interface.data.get(here), there, this.state.interface.data.get(there), dropped);
+
+    if (this.isDiscard(here, there)) {
+      var discard_pos = this.discardArgs(here, there);
+      return this.doDiscard(discard_pos, dropped);
+    } else if (this.isRecall(here, there)) {
+      var recall_pos = this.recallArgs(here, there);
+      if (recall_pos[0] === "bank") {
         this.select(null);
         return;
       } else if (!this.state.interface.data.get(here)) {
         return;
       }
-      there = ["bank",""];
-    } else if (here[0] === "recall") {
-      if (there[0] === "bank") {
-        this.select(null);
-        return;
-      } else if (!this.state.interface.data.get(there)) {
-        return;
-      }
-      here = ["bank",""];
+
+      return this.doRecall(recall_pos, dropped);
+    } else if (this.isPlay(here, there)) {
+      var play_args = this.playArgs(here, there);
+      return this.doPlay(play_args.tile, play_args.pos, dropped);
+    } else if (this.isMove(here, there)) {
+      var move_args = this.moveArgs(here, there);
+      return this.doMove(move_args.tile, move_args.pos, dropped);
+    } else if (this.isSwap(here, there)) {
+      var swap_args = this.swapArgs(here, there);
+      return this.doSwap(here, swap_args.first, swap_args.second, dropped);
     }
-    this.setState(state => {
-      state = Object.assign({}, state);
-      if (dropped) state.presentation.dropped = here;
+
+    console.log("Unknown interaction type!!!");
+
+
+    /*
+      // XXX: Make this work again.
+
       var ALEX = true;
       if (ALEX && here[0] === "bank" && there[0] === "grid" && state.interface.data.get(there)) {
         state.presentation.selected = here;
@@ -572,10 +733,7 @@ class Game extends React.Component {
       } else {
         state.presentation.selected = null;
       }
-      state.interface.data.swap(here,there);
-      state = this.repad(state);
-      return state;
-    });
+    */
   }
 
   render() {
@@ -635,13 +793,13 @@ class Game extends React.Component {
               raised: true,
               key: "check",
               theme: ['secondaryBg', 'onSecondary'],
-              onClick: this.check.bind(this),
+              onClick: this.doCheck.bind(this),
             }, "Check"),
             e(Button, {
               raised: true,
               disabled: !this.state.interface.data.bank.empty() || this.state.interface.data.grid.components().length > 1,
               key: "draw",
-              onClick: this.draw.bind(this),
+              onClick: this.doDraw.bind(this),
               icon: this.state.presentation.drawing ? <CircularProgress theme="onPrimary"/> : null,
             }, "Draw"),
             e(Button, {

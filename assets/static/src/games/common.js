@@ -10,7 +10,7 @@ class MessageController {
 
   template(data) {
     let ret = {
-      "game_mode": this.game.mode,
+      "game_mode": this.game.mode ? this.game.mode : this.game.style,
       "game_id": this.game.id,
       "player_id": this.game.user.id,
       "timestamp": Date.now(),
@@ -29,16 +29,31 @@ class WebSocketController {
     this.msg_ctrl = new MessageController(game);
     this.cache = [];
 
-    this.wsConnect();
+    console.log("WebSocketController game:", game);
+
+    this.game.update().then(() => {
+      this.wsConnect().then(() => {
+        this.send({"message_type": "join"})
+      });
+    });
+
+    this.listeners = {};
   }
 
-  wsConnect() {
+  async wsConnect() {
     // In the event that our websocket points to the wrong endpoint, that
     // we don't have a websocket, or that we have a closed websocket, open a
     // new one.
     if (!this.game.ws || this.game.ws.url !== this.game.endpoint ||
           this.game.ws.readyState !== WebSocket.OPEN) {
       this.game.ws = new WebSocket(this.game.endpoint);
+
+      // Re-add all pending listeners to the websocket.
+      for (let type in this.listeners) {
+        for (let handler of this.listeners[type]) {
+          this.game.ws.addEventListener(type, handler);
+        }
+      }
 
       // After the WebSocket was opened, attempt to flush the cache of
       // messages waiting to be sent.
@@ -167,12 +182,13 @@ class WebSocketController {
     // open result. In the case when we're already open, we should resolve.
     // However, in the case when the socket is actually closed, we should
     // reject instead of resolving.
-    if (!this.game.ws.readyState) {
-      return this.wsPromise(resolve => ({ open: resolve }));
-    } else if (this.game.ws.readyState === WebSocket.OPEN) {
+    if (this.game.ws.readyState === WebSocket.OPEN) {
       return Promise.resolve();
+    } else if (!this.game.ws.readyState) {
+      return this.wsPromise(resolve => ({ open: resolve }));
     } else {
-      return Promise.reject();
+      this.wsConnect();
+      return this.waitOpen();
     }
   }
 
@@ -198,7 +214,9 @@ class WebSocketController {
 
   // Send an object to our peer. Wait for the peer to reply with a specific
   // message destined for us.
-  sendAndWait(data) {
+  async sendAndWait(data) {
+    await this.waitOpen();
+
     var wire_data = this.msg_ctrl.template(data);
     var message_id = wire_data.message_id;
     this.game.ws.send(JSON.stringify(wire_data));
@@ -206,9 +224,38 @@ class WebSocketController {
   }
 
   // Send an object to our peer but don't wait for a reply.
-  send(data) {
+  async send(data) {
+    await this.waitOpen();
+
     var wire_data = this.msg_ctrl.template(data);
     return this.game.ws.send(JSON.stringify(wire_data));
+  }
+
+  addEventListener(type, handler) {
+    if (!this.listeners[type]) {
+      this.listeners[type] = [];
+    }
+
+    if (this.listeners[type].indexOf(handler) === -1) {
+      this.listeners[type].push(handler);
+    }
+
+    if (this.game.ws) {
+      this.game.ws.addEventListener(type, handler);
+    }
+  }
+
+  removeEventListener(type, handler) {
+    if (this.listeners[type]) {
+      var index = this.listeners[type].indexOf(handler);
+      if (index >= 0) {
+        this.listeners[type].splice(index, 1);
+      }
+    }
+
+    if (this.game.ws) {
+      this.game.ws.removeEventListener(type, handler);
+    }
   }
 
   // Notify on an incoming message of a particular type.
@@ -220,8 +267,8 @@ class WebSocketController {
       }
     };
 
-    this.game.ws.addEventListener("message", event_handler);
-    return () => this.game.ws.removeEventListener("message", event_handler);
+    this.addEventListener("message", event_handler);
+    return () => this.removeEventListener("message", event_handler);
   }
 }
 

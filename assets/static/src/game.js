@@ -1,13 +1,3 @@
-import {
-  LetterTile,
-  LetterBank,
-  LetterGrid,
-} from './games/word.js';
-
-function def(v) {
-  return v !== undefined && v !== null;
-}
-
 class WordManager {
   cancel() {}
   async check(words) {}

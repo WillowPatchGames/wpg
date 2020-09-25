@@ -76,7 +76,7 @@ class LetterBank extends Array {
     letter = +letter;
 
     for (let index in this) {
-      if (+this[index].id === letter) {
+      if (def(this[index]) && this[index].id === letter) {
         return [index];
       }
     }
@@ -157,15 +157,17 @@ class LetterGrid {
     } else {
       this.drift = [0, 0];
     }
+
+    console.log("Setting drift to:", this.drift);
   }
 
   // Getter on rows. Returns the current number of rows in this grid.
-  get rowCount() {
+  get rows() {
     return this.data.length;
   }
 
   // Setter on the size rows;
-  set rowCount(len) {
+  set rows(len) {
     this.data.length = len;
 
     for (let i = 0; i < len; i++) {
@@ -177,7 +179,7 @@ class LetterGrid {
     this.cols = (null, this.cols);
   }
 
-  get columnCount() {
+  get cols() {
     var res = 0;
     for (let row in this.data) {
       if (this.data[row].length > res) {
@@ -187,7 +189,7 @@ class LetterGrid {
     return res;
   }
 
-  set columnCount(len) {
+  set cols(len) {
     for (let row in this.data) {
       this.data[row].length = len;
     }
@@ -238,6 +240,8 @@ class LetterGrid {
     if (amt[0] < 0) amt[0] = 0;
     if (amt[1] < 0) amt[1] = 0;
 
+    console.log("Determined amt to be:", amt);
+
     var i = this.rows, I = 0, j = this.cols, J = 0;
     var empty = true;
     for (let row in this.data) {
@@ -249,6 +253,8 @@ class LetterGrid {
         }
       }
     }
+
+    console.log("Got i, I, j, J of:", [i, I, j, J]);
 
     if (empty) {
       this.rows = amt[0];
@@ -267,6 +273,8 @@ class LetterGrid {
 
     this.drift[0] += amt[0] - i;
     this.drift[1] += amt[1] - j;
+
+    console.log("Setting drift in padding to:", this.drift);
     return [amt[0] - i, amt[1] - j];
   }
 
@@ -342,7 +350,7 @@ class LetterGrid {
     for (let row in this.data) {
       var result = this.data[row].findLetter(letter);
       if (result !== null) {
-        return result.unpush(row);
+        return ["grid", row, ...result];
       }
     }
 
@@ -383,6 +391,8 @@ class LetterGrid {
         positions[tile.id] = new LetterPos(row, col);
       }
     }
+
+    console.log("Got drift of:", this.drift);
 
     return {
       'tiles': tiles,
@@ -466,6 +476,7 @@ class Gridded extends String {
 
 export {
   LetterTile,
+  LetterPos,
   LetterBank,
   LetterGrid,
   Gridded

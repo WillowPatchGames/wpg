@@ -48,9 +48,12 @@ function addEv(game, events) {
     let unmount = game.interface.controller.onMessage(message_type, handler);
     unmounts.push(unmount);
   }
+
   return () => {
     for (let unmount of unmounts) {
-      unmount();
+      if (unmount !== undefined && unmount !== null) {
+        unmount();
+      }
     }
   };
 }
