@@ -113,18 +113,23 @@ class RushData {
   }
 
   // Arbitrary data grabber for bank and grid using types.
-  get(type, ...indices) {
+  get(here) {
+    var type = here[0];
+    console.log("Getting ", here);
+
     if (type === "grid") {
-      return this.grid.get(...indices);
+      return this.grid.get(...here.shift());
     } else if (type === "bank") {
-      return this.bank.get(...indices);
+      return this.bank.get(...here.shift());
     } else {
-      throw new Error("Unknown type for RushData locations: " + type);
+      throw new Error("Unknown type for RushData locations: " + here);
     }
   }
 
   // Set a tile at a given position.
   set(here, value) {
+    console.log("Setting ", here, " = ", value);
+
     if (this.get(here) === value) {
       return;
     }
@@ -144,6 +149,8 @@ class RushData {
 
   // Arbitrary data deleter for bank and grid using types.
   delete(here) {
+    console.log("Deleting ", here);
+
     if (here instanceof LetterTile) {
       here = this.findById(here);
     }
@@ -163,6 +170,8 @@ class RushData {
 
   // Find a letter by identifier.
   findById(obj) {
+    console.log("Find by identifier: " + obj);
+
     var result = this.grid.findLetter(obj);
     if (result !== null) {
       return result.unpush("grid");

@@ -27,6 +27,7 @@ var ALLOW_SCALE = false;
 class Game extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       presentation: {
         selected: null,
@@ -43,11 +44,14 @@ class Game extends React.Component {
       },
       interface: props.interface,
     };
+
     this.state.interface.data.grid.padding(this.state.presentation.padding);
     if (this.state.interface.data && !this.state.presentation.readOnly) {
+      console.log("Assigning adder...");
       let adder = this.state.interface.data.onAdd;
       this.state.interface.data.onAdd = (...tiles) => {
         console.log("OnAdd called with arguments:", ...tiles);
+
         if (adder !== null) {
           adder.call(this.state.interface.data, ...tiles);
         }
@@ -55,6 +59,7 @@ class Game extends React.Component {
         this.setState(this.repad.bind(this));
       };
     }
+
     this.droppoints = {};
     this.board = React.createRef();
     this.pending = {
@@ -62,10 +67,12 @@ class Game extends React.Component {
       scroll: [0,0],
       smooth_scroll: [0,0],
     };
+
     this.unmount = ()=>{};
   }
 
   componentWillUnmount() {
+    console.log("Component will unmount...");
     if (this.unmount) this.unmount();
     if (!this.state.presentation.readOnly) {
       enableBodyScroll(this.board.current);
@@ -75,11 +82,13 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
+    console.log("Component did mount!");
     if (!this.state.presentation.readOnly) {
       let allowTouchMove = (e) => DRAGGABLES.includes(e);
       disableBodyScroll(this.board.current, {allowTouchMove});
       disableBodyScroll(this.droppoints[["bank",""]].ref, {allowTouchMove});
       var size = window.getComputedStyle(this.board.current).getPropertyValue("--tile-size");
+      console.log("Setting presentation size to ", size);
       this.setState(state => {
         state.presentation.size = size;
         return state;
@@ -87,6 +96,8 @@ class Game extends React.Component {
       if (!this.state.presentation.readOnly) {
         let release = [];
         release.push(listenIn("keydown", (e) => {
+          console.log("Key mechanics listener fired");
+
           var handled = [" ", "Spacebar", "Backspace", "Del", "Delete"];
           handled.push(...["Up","Down","Left","Right"].flatMap(a => [a,"Arrow"+a]));
           if (handled.includes(e.key)) {
@@ -229,6 +240,7 @@ class Game extends React.Component {
     }
   }
   componentDidUpdate() {
+    console.log("componentDidUpdate fired");
     if (this.pending.maintain) {
       let bb = this.pending.maintain.element()?.getBoundingClientRect();
       let parent = this.pending.maintain.parent || this.board.current;
@@ -262,6 +274,7 @@ class Game extends React.Component {
   }
 
   droppable(where, area) {
+    console.log("Droppable called with ", where, " and area ", area);
     return (ref) => {
       if (ref) {
         this.droppoints[where] = {ref, where, area};
@@ -272,13 +285,14 @@ class Game extends React.Component {
   }
 
   recalc() {
+    console.log("Recalc called...");
     if (!this.board.current || !this.droppoints[["grid",0,0]]) return;
     var prev = [...this.state.presentation.padding];
     var bb = this.board.current.getBoundingClientRect();
     var bb0 = this.droppoints[["grid",0,0]].ref.getBoundingClientRect();
     var next = [bb.height/bb0.height, bb.width/bb0.width].map(a => Math.max(Math.ceil((a-1)/2), 7));
     if (next[0] !== prev[0] || next[1] !== prev[1]) {
-      //console.log(bb, bb0, prev, next);
+      console.log("recalc determined new values are: ", bb, bb0, prev, next);
       this.setState(state => {
         state.presentation.padding = next;
         return this.repad(state);
@@ -287,12 +301,15 @@ class Game extends React.Component {
   }
   repad(state) {
     if (!state) state = this.state;
+    console.log("Repad called on state:", state);
+
     let padding = [...this.state.presentation.padding];
     if (!state.interface.data.grid.letterPositions().length) {
       padding[0] = padding[0]*2 + 1;
       padding[1] = padding[1]*2 + 1;
     }
     var adj = state.interface.data.grid.padding(padding);
+    console.log("interface.data.grid.padding(", padding, ") -> ", adj);
     if (false) {
       this.pending.scroll[0] += SIZE*adj[1];
       this.pending.scroll[1] += SIZE*adj[0];
