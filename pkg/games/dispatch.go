@@ -93,6 +93,23 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 				player_index++
 			}
 		}
+	case "join":
+		if state.Started {
+			var started ControllerNotifyStarted
+			started.LoadFromController(game, player)
+			c.undispatch(game, player, started.MessageID, 0, started)
+
+			if player.Admitted && player.Index >= 0 {
+				var response RushStateNotification
+				response.LoadFromGame(state, player.Index)
+				response.LoadFromController(game, player)
+
+				response.ReplyTo = header.MessageID
+				c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
+			}
+		}
+
+		return nil
 	case "play":
 		var data RushPlay
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -222,9 +239,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return errors.New("player not authorized to admit other players")
 		}
 
-		if err := c.markAdmitted(game.GID, data.Target, data.Admit); err != nil {
-			return err
-		}
+		return c.markAdmitted(game.GID, data.Target, data.Admit)
 	case "ready":
 		var data GameReady
 		if err := json.Unmarshal(message, &data); err != nil {

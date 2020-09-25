@@ -91,10 +91,12 @@ func (cfg RushConfig) Validate() error {
 }
 
 type RushState struct {
-	Tiles   []LetterTile `json:"tiles"`
-	DrawID  int          `json:"draw"`
-	Players []RushPlayer `json:"players"`
-	Config  RushConfig   `json:"config"`
+	Tiles    []LetterTile `json:"tiles"`
+	DrawID   int          `json:"draw"`
+	Players  []RushPlayer `json:"players"`
+	Config   RushConfig   `json:"config"`
+	Started  bool         `json:"started"`
+	Finished bool         `json:"finished"`
 }
 
 func (rs *RushState) Init(cfg RushConfig) error {
@@ -144,6 +146,7 @@ func (rs *RushState) Start(players int) error {
 	// need to draw. (Initial DrawID on the client side is 0; this forces them
 	// to load their hands).
 	rs.DrawID = 1
+	rs.Started = true
 
 	return nil
 }
@@ -381,6 +384,7 @@ func (rs *RushState) Draw(player int, lastID int) error {
 
 	var tilesNeeded = rs.Config.DrawSize * rs.Config.NumPlayers
 	if tilesNeeded >= len(rs.Tiles) {
+		rs.Finished = true
 		return errors.New("game is over; unable to satisfy draw requirements")
 	}
 
