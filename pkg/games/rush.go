@@ -107,6 +107,8 @@ func (rs *RushState) Init(cfg RushConfig) error {
 	}
 
 	rs.Config = cfg
+	rs.Started = false
+	rs.Finished = false
 
 	return nil
 }

@@ -100,6 +100,20 @@ func (c *Client) readPump() {
 		// Set the deadline on the read command below.
 		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 
+		// Validate that our client connection is still good.
+		game_conns, ok := c.hub.connections[c.gameID]
+		if !ok {
+			// Game was deleted under us.
+			return
+		}
+
+		current_connection, ok := game_conns[c.userID]
+		if !ok || current_connection != c {
+			// Client was deleted under us or client reconnected from somewhere
+			// else
+			return
+		}
+
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
 			log.Println("Got an error during reading?", err)
@@ -155,6 +169,20 @@ func (c *Client) writePump() {
 			ticker = time.NewTicker(pingPeriod)
 		}
 
+		// Validate that our client connection is still good.
+		game_conns, ok := c.hub.connections[c.gameID]
+		if !ok {
+			// Game was deleted under us.
+			return
+		}
+
+		current_connection, ok := game_conns[c.userID]
+		if !ok || current_connection != c {
+			// Client was deleted under us or client reconnected from somewhere
+			// else
+			return
+		}
+
 		// See above; select from either of our two channels to read from.
 		select {
 		case message, ok := <-c_send:
@@ -178,7 +206,11 @@ func (c *Client) writePump() {
 
 			err = c.conn.WriteMessage(websocket.TextMessage, message_data)
 			if err != nil {
-				log.Println("Got error trying to write message to peer:", err)
+				// Since we got _some_ message, we know we've had a non-empty channel
+				// so stash this message to re-send to the client if/when they
+				// reconnect. We're returning here too so we'll deregister and some
+				// other client will take our place.
+				c_send <- message
 				return
 			}
 
@@ -347,14 +379,19 @@ func (hub *Hub) registerClient(client *Client) {
 }
 
 func (hub *Hub) deleteGame(gameID GameID) {
-	delete(hub.connections, gameID)
-	delete(hub.dbgames, gameID)
-	delete(hub.process, gameID)
+	/*
+		// XXX -- Figure out when to actually delete games! Persist them to the
+		// database first. :-)
 
-	err := hub.controller.RemoveGame(uint64(gameID))
-	if err != nil {
-		log.Println("Got unexpected error while removing game:", err)
-	}
+		delete(hub.connections, gameID)
+		delete(hub.dbgames, gameID)
+		delete(hub.process, gameID)
+
+		err := hub.controller.RemoveGame(uint64(gameID))
+		if err != nil {
+			log.Println("Got unexpected error while removing game:", err)
+		}
+	*/
 }
 
 func (hub *Hub) deleteClient(client *Client) {
@@ -371,6 +408,12 @@ func (hub *Hub) deleteClient(client *Client) {
 	}
 
 	var deleteGame bool = false
+
+	if hub.connections[client.gameID][client.userID] != client {
+		// Only remove the client if they're actually the ones playing. Otherwise
+		// we risk disrupting some other connection of the client's.
+		return
+	}
 
 	delete(hub.connections[client.gameID], client.userID)
 	if len(hub.connections[client.gameID]) == 0 {

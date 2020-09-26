@@ -3,6 +3,7 @@ package games
 import (
 	"encoding/json"
 	"errors"
+	"log"
 )
 
 type RushDraw struct {
@@ -62,6 +63,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			return err
 		}
 
+		log.Println("Continuing despite error?")
+
 		// Then assign indices to players who are playing and send out their
 		// initial state data. Also notify all players that the game has started.
 		var player_index int = 0
@@ -94,10 +97,13 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			}
 		}
 	case "join":
-		if state.Started {
+		log.Println("Handling join message -- ", state.Started, state.Finished)
+		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted
 			started.LoadFromController(game, player)
 			c.undispatch(game, player, started.MessageID, 0, started)
+
+			log.Println("Sent notification that game started -- ", player.Admitted, player.Index)
 
 			if player.Admitted && player.Index >= 0 {
 				var response RushStateNotification
@@ -106,6 +112,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 
 				response.ReplyTo = header.MessageID
 				c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
+
+				log.Println("Sent game state!")
 			}
 		}
 
