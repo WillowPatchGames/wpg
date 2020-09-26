@@ -10,7 +10,6 @@ package parsel
 // parsing net/url's Query string values into their relevant struct fields.
 
 import (
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -56,9 +55,6 @@ func (r RouteVisitor) parseFieldTag(tagData string) (string, bool, bool) {
 func (r RouteVisitor) Visit(field reflect.Value, tagData string, debug bool) error {
 	key, omitempty, present := r.parseFieldTag(tagData)
 	if !present {
-		if debug {
-			log.Println("tag not present in query string")
-		}
 		return nil
 	}
 
@@ -76,10 +72,6 @@ func (r RouteVisitor) Visit(field reflect.Value, tagData string, debug bool) err
 			return err
 		}
 
-		if debug {
-			log.Println("Set boolean value:", bValue)
-		}
-
 		field.SetBool(bValue)
 	} else if field.Kind() == reflect.Int || field.Kind() == reflect.Int8 || field.Kind() == reflect.Int16 || field.Kind() == reflect.Int32 || field.Kind() == reflect.Int64 {
 		iValue, err := strconv.ParseInt(value, 10, 64)
@@ -87,9 +79,6 @@ func (r RouteVisitor) Visit(field reflect.Value, tagData string, debug bool) err
 			return err
 		}
 
-		if debug {
-			log.Println("Set int value:", iValue)
-		}
 		field.SetInt(iValue)
 	} else if field.Kind() == reflect.Uint || field.Kind() == reflect.Uint8 || field.Kind() == reflect.Uint16 || field.Kind() == reflect.Uint32 || field.Kind() == reflect.Uint64 {
 		uValue, err := strconv.ParseUint(value, 10, 64)
@@ -97,19 +86,11 @@ func (r RouteVisitor) Visit(field reflect.Value, tagData string, debug bool) err
 			return err
 		}
 
-		if debug {
-			log.Println("Set uint value:", uValue)
-		}
-
 		field.SetUint(uValue)
 	} else if field.Kind() == reflect.Float32 || field.Kind() == reflect.Float64 {
 		fValue, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return err
-		}
-
-		if debug {
-			log.Println("Set float value:", fValue)
 		}
 
 		field.SetFloat(fValue)

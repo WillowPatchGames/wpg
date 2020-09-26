@@ -1,7 +1,6 @@
 package hwaterr
 
 import (
-	"log"
 	"net/http"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
@@ -22,7 +21,6 @@ type errableHandler struct {
 
 func (eh errableHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error = eh.next.ServeErrableHTTP(w, r)
-	log.Println("hwaterr: calling down returned", err)
 	if err != nil {
 		WriteError(w, r, err)
 	}

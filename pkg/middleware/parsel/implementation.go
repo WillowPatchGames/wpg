@@ -12,7 +12,6 @@ package parsel
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"reflect"
 	"strings"
@@ -120,9 +119,6 @@ func (p parselmouth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (p parselmouth) fromHeader(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
 	var obj = inner.GetObjectPointer()
-	if p.config.DebugLogging {
-		log.Println("parselmouth.fromHeader(): Got object:", obj)
-	}
 
 	var v HeaderVisitor
 	v.header = r.Header
@@ -136,9 +132,6 @@ func (p parselmouth) fromHeader(w http.ResponseWriter, r *http.Request, inner Pa
 
 func (p parselmouth) fromQuery(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
 	var obj = inner.GetObjectPointer()
-	if p.config.DebugLogging {
-		log.Println("parselmouth.fromQuery(): Got object:", obj)
-	}
 
 	var v QueryVisitor
 	v.query = r.URL.Query()
@@ -152,9 +145,6 @@ func (p parselmouth) fromQuery(w http.ResponseWriter, r *http.Request, inner Par
 
 func (p parselmouth) fromMuxRoute(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
 	var obj = inner.GetObjectPointer()
-	if p.config.DebugLogging {
-		log.Println("parselmouth.fromMuxRoute(): Got object:", obj)
-	}
 
 	var v RouteVisitor
 	v.vars = mux.Vars(r)
@@ -168,9 +158,6 @@ func (p parselmouth) fromMuxRoute(w http.ResponseWriter, r *http.Request, inner 
 
 func (p parselmouth) fromJSON(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
 	var obj = inner.GetObjectPointer()
-	if p.config.DebugLogging {
-		log.Println("parselmouth.fromJSON(): Got object:", obj)
-	}
 
 	var decoder = json.NewDecoder(r.Body)
 	defer r.Body.Close()
@@ -208,9 +195,6 @@ func (p parselmouth) fromJSON(w http.ResponseWriter, r *http.Request, inner Pars
 
 func (p parselmouth) fromSchema(w http.ResponseWriter, r *http.Request, inner Parseltongue) error {
 	var obj = inner.GetObjectPointer()
-	if p.config.DebugLogging {
-		log.Println("parselmouth.fromSchema(): Got object:", obj)
-	}
 
 	if p.schemaDecoder == nil {
 		p.schemaDecoder = schema.NewDecoder()

@@ -81,10 +81,6 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	var data []byte
-	data, _ = json.Marshal(handle.req)
-	log.Println("Request:", string(data))
-
 	tx, err := database.GetTransaction()
 	if err != nil {
 		return err

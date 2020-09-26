@@ -8,7 +8,6 @@ package hwaterr
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
@@ -54,7 +53,6 @@ func EncodeError(ret error) (int, []byte) {
 
 func WriteError(w http.ResponseWriter, r *http.Request, ret error) {
 	code, data := EncodeError(ret)
-	log.Println("Got:", code, " -> ", string(data))
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)

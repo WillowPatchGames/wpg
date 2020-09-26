@@ -15,19 +15,13 @@ package parsel
 
 import (
 	"errors"
-	"log"
 	"reflect"
-	"strconv"
 )
 
 func (p parselmouth) nestedReflect(obj interface{}, tagKey string, v visitor) error {
 	var vObj reflect.Value = reflect.ValueOf(obj)
 
 	for vObj.Kind() == reflect.Ptr && !vObj.IsNil() {
-		if p.config.DebugLogging {
-			log.Println("parselmouth.nestedReflect(): Resolving object:", vObj.String())
-		}
-
 		vObj = vObj.Elem()
 	}
 
@@ -49,15 +43,7 @@ func (p parselmouth) nestedReflect(obj interface{}, tagKey string, v visitor) er
 		var sfField reflect.StructField = tObj.Field(fieldI)
 		var vField = vObj.Field(fieldI)
 
-		if p.config.DebugLogging {
-			log.Println("parselmouth.nestedReflect(): Parsing field[" + strconv.Itoa(fieldI) + "]: " + sfField.Name + " == " + vField.String())
-		}
-
 		for vField.Kind() == reflect.Ptr && !vField.IsNil() {
-			if p.config.DebugLogging {
-				log.Println("parselmouth.nestedReflect(): Resolving field object:", vField.String())
-			}
-
 			vField = vField.Elem()
 		}
 
@@ -71,19 +57,11 @@ func (p parselmouth) nestedReflect(obj interface{}, tagKey string, v visitor) er
 		}
 
 		if !vField.CanSet() {
-			if p.config.DebugLogging {
-				log.Println("parselmouth.nestedReflect(): Skipping field[" + strconv.Itoa(fieldI) + "]: " + sfField.Name + " == " + vField.String())
-			}
-
 			continue
 		}
 
 		tagValue, present := sfField.Tag.Lookup(tagKey)
 		if present {
-			if p.config.DebugLogging {
-				log.Println("parselmouth.nestedReflect(): Visiting field with tagKey `" + tagKey + "` present on field: " + strconv.Itoa(fieldI))
-			}
-
 			err := v.Visit(vField, tagValue, p.config.DebugLogging)
 			if err != nil {
 				return err

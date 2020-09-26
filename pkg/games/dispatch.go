@@ -59,7 +59,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		// Then start the underlying Rush game to populate game data.
-		if err = state.Start(players); err != nil {
+		err = state.Start(players)
+		if err != nil {
 			return err
 		}
 

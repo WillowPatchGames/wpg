@@ -57,12 +57,11 @@ func (a *authMW) GetObjectPointer() interface{} {
 func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	tx, err := database.GetTransaction()
 	if err != nil {
-		log.Println("Authed: Begin transaction?", err)
+		log.Println("Authed: Error beginning transaction:", err)
 		return err
 	}
 
 	var token string = a.next.GetToken()
-	log.Println("Got token: " + token)
 
 	var user *models.UserModel = new(models.UserModel)
 
@@ -74,20 +73,15 @@ func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error 
 				log.Print("Authed: Unable to rollback:", rollbackErr)
 			}
 
-			log.Println("Authed: Getting user?", err)
-
 			if a.requireAuth {
-				log.Println("Authed: Required auth, so returning error")
 				return err
 			}
 		} else {
 			err = tx.Commit()
 			if err != nil {
-				log.Println("Authed: Commit transaction?", err)
+				log.Println("Authed: Error committing transaction:", err)
 				return err
 			}
-
-			log.Println("Authed: OK as " + user.Display)
 		}
 	}
 
