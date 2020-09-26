@@ -2,7 +2,8 @@ import {
   LetterTile,
   LetterPos,
   LetterBank,
-  LetterGrid
+  LetterGrid,
+  Gridded,
 } from './word.js';
 
 import {
@@ -130,6 +131,7 @@ class RushData {
     // of `new RushData(old)` results in a full deep copy.
     this.grid = old?.grid ? new LetterGrid(old.grid) : new LetterGrid();
     this.bank = old?.bank ? new LetterBank(old.bank) : new LetterBank();
+    this.unwords = [];
 
     this.onAdd = (...tiles) => {};
   }
@@ -233,9 +235,19 @@ class RushData {
     return null;
   }
 
-  check(result) {
-    // XXX: Determine what to do at the controller layer w.r.t. invalid words.
-    return [];
+  check(message) {
+    this.unwords = [];
+
+    if (message.unwords) {
+      var words = this.grid.words();
+      for (let word of words) {
+        if (message.unwords.indexOf(String(word)) !== -1) {
+          this.unwords.push(word);
+        }
+      }
+    }
+
+    return message.error ? message.error : null;
   }
 
   draw(...tiles) {
@@ -348,10 +360,6 @@ class RushGame {
 
   async check() {
     var ret = await this.controller.check();
-    if (ret.message_type === "error") {
-      return ret;
-    }
-
     return this.data.check(ret);
   }
 

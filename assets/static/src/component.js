@@ -525,18 +525,14 @@ class Game extends React.Component {
 
   async doCheck() {
     var result = await this.state.interface.check();
-    var unwords = [];
-    if (result && result.message_type && result.message_type === "error" && result.error) {
+    if (result) {
       if (this.props.notify) {
-        this.props.notify(result.error);
+        this.props.notify(result);
       }
-    } else {
-      unwords = result;
     }
 
-    if (unwords && unwords.length) console.log("Invalid words: ", unwords.map(String));
     this.setState((state) => {
-      state.presentation.unwords = unwords;
+      state.presentation.unwords = this.state.interface.data.unwords;
       return state;
     });
   }
