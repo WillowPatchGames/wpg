@@ -34,7 +34,7 @@ class RushController {
   }
 
   async startGame() {
-    return await this.wsController.send({
+    return await this.wsController.sendAndWait({
       'message_type': 'start',
     });
   }
@@ -316,7 +316,7 @@ class RushGame {
 
     // If this message was in reply to another, ignore it. Don't process added
     // events to give draw/discard a chance to work.
-    if (this.started && message.reply_to && message.reply_to !== 0) {
+    if (message.reply_to && message.reply_to !== 0) {
       return;
     }
 

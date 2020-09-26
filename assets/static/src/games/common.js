@@ -31,7 +31,7 @@ class WebSocketController {
     this.listeners = {};
 
     this.wsConnect();
-    console.log("Sending join message", this.send({"message_type": "join"}).catch((data) => { console.log("Failed to send websocket data:", data)} ).then((data) => { console.log("Sent websocket data:", data)} ));
+    this.send({"message_type": "join"});
   }
 
   wsConnect() {
@@ -44,7 +44,7 @@ class WebSocketController {
       var old = this.game.ws;
 
       if (old !== undefined && old !== null) {
-        // Re-add all pending listeners to the websocket.
+        // Remove all listeners from the old websocket.
         for (let type in this.listeners) {
           for (let handler of this.listeners[type]) {
             old.removeEventListener(type, handler);
@@ -60,7 +60,7 @@ class WebSocketController {
 
       this.game.ws = new WebSocket(this.game.endpoint);
 
-      // Re-add all pending listeners to the websocket.
+      // Re-add all listeners to the websocket.
       for (let type in this.listeners) {
         for (let handler of this.listeners[type]) {
           this.game.ws.addEventListener(type, handler);
@@ -281,7 +281,7 @@ class WebSocketController {
   onMessage(message_type, handler) {
     var event_handler = (message_event) => {
       var data = JSON.parse(message_event.data);
-      if (data.message_type === message_type) {
+      if (message_type === "" || data.message_type === message_type) {
         handler(data);
       }
     };

@@ -80,18 +80,23 @@ class RushGamePage extends React.Component {
 
     console.log("RGP", this.game, "vs", this.props.game);
 
-    let user = usr => usr ? (usr.id === this.props.user.id ? "You" : usr.display) : "Someone ";
+    let user = usr => usr === this.props.user.id ? "You" : "Someone ";
     if (this.game) {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
-        "gamestart": data => {
-          data.message = user(data.user) + " drew first!";
+        "started": data => {
+          console.log("started", data);
+          data.message = "Let the games begin!";
+          notify(this.props.snackbar, data.message, data.type);
         },
         "draw": data => {
-          data.message = user(data.user) + " drew!";
+          console.log("draw", data);
+          data.message = user(data.drawer) + " drew!";
+          notify(this.props.snackbar, data.message, data.type);
         },
-        "gameover": data => {
+        "finished": data => {
           data.message = user(data.user) + " won!";
+          notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.user;
           this.props.setPage('afterparty');
         },
@@ -297,8 +302,13 @@ class PreGameAdminPage extends React.Component {
       }
     }
   }
-  start() {
-    this.game.interface.controller.startGame();
+  async start() {
+    var ret = await this.game.interface.controller.startGame();
+    if (ret && ret.message_type && ret.message_type === "error") {
+      notify(this.props.snackbar, ret.error, "error");
+      return;
+    }
+
     this.props.setPage('playing');
   }
   render() {

@@ -47,3 +47,39 @@ func (rsn *RushStateNotification) LoadFromController(data *GameData, player *Pla
 	player.OutboundID++
 	rsn.Timestamp = uint64(time.Now().Unix())
 }
+
+type RushDrawNotification struct {
+	MessageHeader
+
+	Drawer uint64 `json:"drawer"`
+}
+
+func (rdn *RushDrawNotification) LoadFromController(data *GameData, player *PlayerData, drawer uint64) {
+	rdn.Mode = data.Mode.String()
+	rdn.ID = data.GID
+	rdn.Player = player.UID
+	rdn.MessageType = "draw"
+	rdn.MessageID = player.OutboundID
+	player.OutboundID++
+	rdn.Timestamp = uint64(time.Now().Unix())
+
+	rdn.Drawer = drawer
+}
+
+type RushFinishedNotification struct {
+	MessageHeader
+
+	Winner uint64 `json:"winner"`
+}
+
+func (rwn *RushFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+	rwn.Mode = data.Mode.String()
+	rwn.ID = data.GID
+	rwn.Player = player.UID
+	rwn.MessageType = "finished"
+	rwn.MessageID = player.OutboundID
+	player.OutboundID++
+	rwn.Timestamp = uint64(time.Now().Unix())
+
+	rwn.Winner = winner
+}

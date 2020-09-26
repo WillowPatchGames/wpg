@@ -48,6 +48,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		panic("internal state is nil; this shouldn't happen when the game is started")
 	}
 
+	var was_finished = state.Finished
+
 	switch header.MessageType {
 	case "start":
 		// First count the number of people playing.
@@ -59,12 +61,9 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		// Then start the underlying Rush game to populate game data.
-		err = state.Start(players)
-		if err != nil {
+		if err = state.Start(players); err != nil {
 			return err
 		}
-
-		log.Println("Continuing despite error?")
 
 		// Then assign indices to players who are playing and send out their
 		// initial state data. Also notify all players that the game has started.
@@ -73,7 +72,16 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			// Tell everyone interested that the game has started.
 			var started ControllerNotifyStarted
 			started.LoadFromController(game, indexed_player)
-			c.undispatch(game, indexed_player, started.MessageID, 0, started)
+
+			// Only reply to the original sender; the rest get a message but don't
+			// get it as a reply.
+			if indexed_player.UID == player.UID {
+				started.ReplyTo = header.MessageID
+			} else {
+				started.ReplyTo = 0
+			}
+
+			c.undispatch(game, indexed_player, started.MessageID, started.ReplyTo, started)
 
 			// Only assign indices to people who were admitted by the game admin.
 			if indexed_player.Admitted {
@@ -83,16 +91,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 				response.LoadFromGame(state, player_index)
 				response.LoadFromController(game, indexed_player)
 
-				// Only reply to the original sender; the rest get a message but don't
-				// get it as a reply.
-				if indexed_player.UID == player.UID {
-					response.ReplyTo = header.MessageID
-				} else {
-					response.ReplyTo = 0
-				}
-
 				// XXX: Handle 3 2 1 countdown.
-				c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
+				c.undispatch(game, indexed_player, response.MessageID, 0, response)
 
 				player_index++
 			}
@@ -102,7 +102,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted
 			started.LoadFromController(game, player)
-			c.undispatch(game, player, started.MessageID, 0, started)
+			started.ReplyTo = header.MessageID
+			c.undispatch(game, player, started.MessageID, started.ReplyTo, started)
 
 			log.Println("Sent notification that game started -- ", player.Admitted, player.Index)
 
@@ -111,14 +112,22 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 				response.LoadFromGame(state, player.Index)
 				response.LoadFromController(game, player)
 
-				response.ReplyTo = header.MessageID
-				c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
-
-				log.Println("Sent game state!")
+				c.undispatch(game, player, response.MessageID, 0, response)
 			}
-		}
+		} else if state.Finished {
+			var winner uint64 = 0
+			for _, indexed_player := range game.ToPlayer {
+				if state.Winner == indexed_player.Index {
+					winner = indexed_player.UID
+					break
+				}
+			}
 
-		return nil
+			var finished RushFinishedNotification
+			finished.LoadFromController(game, player, winner)
+			finished.ReplyTo = header.MessageID
+			c.undispatch(game, player, finished.MessageID, finished.ReplyTo, finished)
+		}
 	case "play":
 		var data RushPlay
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -173,7 +182,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			return errors.New("unknown tile identifier")
 		}
 
-		if err = state.Discard(player.Index, data.TileID); err != nil {
+		if err = state.Discard(player.Index, data.TileID); err != nil && !state.Finished {
 			return err
 		}
 
@@ -194,21 +203,46 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			return errors.New("unknown draw identifier")
 		}
 
-		if err = state.Draw(player.Index, data.DrawID); err != nil {
+		if err = state.Draw(player.Index, data.DrawID); err != nil && !state.Finished {
+			log.Println("Returning", err, state.Finished)
 			return err
 		}
 
-		// No error, send a state message back to the player.
-		var response RushStateNotification
-		response.LoadFromGame(state, player.Index)
-		response.LoadFromController(game, player)
-		response.ReplyTo = header.MessageID
+		if err == nil {
+			// Notify everyone else that this player drew. In the event that this
+			// player won, err != nil and we skip this step.
+			for _, indexed_player := range game.ToPlayer {
+				var drew RushDrawNotification
+				drew.LoadFromController(game, indexed_player, player.UID)
+				c.undispatch(game, indexed_player, drew.MessageID, 0, drew)
 
-		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
+				// If this player has game state, notify them that the state changed.
+				if indexed_player.Index >= 0 {
+					var response RushStateNotification
+					response.LoadFromGame(state, indexed_player.Index)
+					response.LoadFromController(game, indexed_player)
+
+					if indexed_player.UID == player.UID {
+						response.ReplyTo = header.MessageID
+					}
+
+					c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
+				}
+			}
+		}
 	case "check":
 		err = state.IsValidBoard(player.Index)
 	default:
 		err = errors.New("unknown message_type issued to rush game: " + header.MessageType)
+	}
+
+	if !was_finished && state.Finished {
+		// Notify everyone that the game ended and that this active player won.
+		for _, indexed_player := range game.ToPlayer {
+			var finished RushFinishedNotification
+			finished.LoadFromController(game, indexed_player, player.UID)
+			c.undispatch(game, indexed_player, finished.MessageID, 0, finished)
+		}
 	}
 
 	return err
