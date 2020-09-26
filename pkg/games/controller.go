@@ -6,6 +6,12 @@ import (
 	"log"
 	"strconv"
 	"sync"
+	"time"
+)
+
+const (
+	// Time between countdown events
+	countdownDelay = 2 * time.Second
 )
 
 type PlayerData struct {
@@ -54,6 +60,11 @@ type PlayerData struct {
 	// only for messages sent to the client that we expect a response to.
 	OutboundReplies map[int]int `json:"outbound_replies"`
 
+	// When the game is starting, we do a full round-trip for countdown events.
+	// This ensures that everyone listening is actively participating and that
+	// nobody is missing.
+	Countback int `json:"countdown"`
+
 	// Notifications to undispatch. Once processed above, data can be queued here
 	// until Undispatch is called by the Websocket. This isn't persisted as we
 	// don't need to access it.
@@ -75,6 +86,13 @@ type GameData struct {
 
 	// Mapping from database user id to player information.
 	ToPlayer map[uint64]*PlayerData `json:"players"`
+
+	// When starting the game and using a countdown, the current value of the
+	// countdown.
+	Countdown int `json:"countdown"`
+
+	// Timer to ensure we delay between countdown events.
+	CountdownTimer *time.Timer `json:"-"`
 }
 
 // Common header for all inbound and outbound messages.
@@ -152,6 +170,8 @@ func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config i
 		owner,
 		state,
 		make(map[uint64]*PlayerData),
+		0,
+		nil,
 	}
 
 	return nil

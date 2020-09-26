@@ -85,9 +85,13 @@ class RushGamePage extends React.Component {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
         "started": data => {
-          console.log("started", data);
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
+        },
+        "countdown": data => {
+          data.message = "Game starting in " + data.value;
+          notify(this.props.snackbar, data.message, data.type);
+          this.state.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
         },
         "draw": data => {
           console.log("draw", data);
@@ -231,7 +235,14 @@ class PreGameUserPage extends React.Component {
         this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
       },
       "started": data => {
+        data.message = "Let the games begin!";
+        notify(this.props.snackbar, data.message, data.type);
         this.props.setPage('playing');
+      },
+      "countdown": data => {
+        data.message = "Game starting in " + data.value;
+        notify(this.props.snackbar, data.message, data.type);
+        this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
       },
       "": data => {
         if (data.message) {
@@ -278,7 +289,14 @@ class PreGameAdminPage extends React.Component {
         });
       },
       "started": data => {
+        data.message = "Let the games begin!";
+        notify(this.props.snackbar, data.message, data.type);
         this.props.setPage('playing');
+      },
+      "countdown": data => {
+        data.message = "Game starting in " + data.value;
+        notify(this.props.snackbar, data.message, data.type);
+        this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
       },
       "": data => {
         if (data.message) {

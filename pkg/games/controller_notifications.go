@@ -65,3 +65,19 @@ func (cns *ControllerNotifyStarted) LoadFromController(data *GameData, player *P
 	player.OutboundID++
 	cns.Timestamp = uint64(time.Now().Unix())
 }
+
+type ControllerCountdown struct {
+	MessageHeader
+	Value int `json:"value"`
+}
+
+func (cc *ControllerCountdown) LoadFromController(data *GameData, player *PlayerData) {
+	cc.Mode = data.Mode.String()
+	cc.ID = data.GID
+	cc.Player = player.UID
+	cc.MessageType = "countdown"
+	cc.MessageID = player.OutboundID
+	player.OutboundID++
+	cc.Timestamp = uint64(time.Now().Unix())
+	cc.Value = data.Countdown
+}
