@@ -53,6 +53,18 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 
 	switch header.MessageType {
 	case "start":
+		var players int = 0
+		for _, player := range game.ToPlayer {
+			if player.Admitted {
+				players += 1
+			}
+		}
+
+		state.Config.NumPlayers = players
+		if err = state.Config.Validate(); err != nil {
+			return err
+		}
+
 		return c.handleCountdown(game)
 	case "join":
 		log.Println("Handling join message -- ", state.Started, state.Finished)
@@ -326,7 +338,7 @@ func (c *Controller) handleCountdown(game *GameData) error {
 
 	var sendNext bool = true
 	for _, player := range game.ToPlayer {
-		if player.Countback != game.Countdown {
+		if player.Admitted && player.Countback != game.Countdown {
 			sendNext = false
 		}
 	}
@@ -342,7 +354,14 @@ func (c *Controller) handleCountdown(game *GameData) error {
 		game.CountdownTimer = time.NewTimer(countdownDelay)
 
 		for _, player := range game.ToPlayer {
+			// Only send coundown notifications to players who are admitted.
+			// Otherwise it doesn't matter too much.
+			if !player.Admitted {
+				continue
+			}
+
 			player.Countback = game.Countdown + 1
+
 			var message ControllerCountdown
 			message.LoadFromController(game, player)
 			c.undispatch(game, player, message.MessageID, 0, message)
@@ -368,6 +387,10 @@ func (c *Controller) handleCountdown(game *GameData) error {
 		game.CountdownTimer = time.NewTimer(countdownDelay)
 
 		for _, player := range game.ToPlayer {
+			if !player.Admitted {
+				continue
+			}
+
 			player.Countback = game.Countdown + 1
 			var message ControllerCountdown
 			message.LoadFromController(game, player)
