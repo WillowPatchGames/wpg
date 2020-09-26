@@ -76,6 +76,8 @@ class RushGamePage extends React.Component {
     super(props);
     this.state = {};
     this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+
     let user = usr => usr ? (usr.id === this.props.user.id ? "You" : usr.display) : "Someone ";
     if (this.game) {
       this.state.interface = this.game.interface;
@@ -119,6 +121,7 @@ class PreGamePage extends React.Component {
     this.state = null;
     this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
     this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
@@ -213,7 +216,7 @@ class PreGameUserPage extends React.Component {
       status: "pending",
     }
     this.game = this.props.game || {};
-    loadGame(this.game);
+    this.props.setGame(loadGame(this.game));
     this.unmount = addEv(this.game, {
       "admitted": data => {
         this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
@@ -254,7 +257,7 @@ class PreGameAdminPage extends React.Component {
     };
 
     this.game = this.props.game || {};
-    loadGame(this.game);
+    this.props.setGame(loadGame(this.game));
 
     this.unmount = addEv(this.game, {
       "notify-join": data => {

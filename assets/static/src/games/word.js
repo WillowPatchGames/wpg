@@ -52,6 +52,7 @@ class LetterBank extends Array {
   add(...values) {
     for (let value of values) {
       if (!(value instanceof LetterTile)) {
+        console.log("--->", value);
         value = new LetterTile(value);
       }
 
@@ -61,6 +62,11 @@ class LetterBank extends Array {
   }
 
   delete(here) {
+    if (here instanceof LetterTile) {
+      var location = this.findLetter(here);
+      return this.delete(location);
+    }
+
     if (!this.get(here)) return;
     this.splice(here, 1);
     return this;
@@ -128,7 +134,7 @@ class LetterBank extends Array {
     var ret = new LetterBank();
 
     for (let letter of letters) {
-      ret.set(new LetterTile(letter));
+      ret.push(new LetterTile(letter));
     }
 
     return ret;
@@ -157,8 +163,6 @@ class LetterGrid {
     } else {
       this.drift = [0, 0];
     }
-
-    console.log("Setting drift to:", this.drift);
   }
 
   // Getter on rows. Returns the current number of rows in this grid.
@@ -206,7 +210,7 @@ class LetterGrid {
       return this.delete(row, col);
     }
 
-    if (!this.data[row]) this.data[row] = [];
+    if (!this.data[row]) this.data[row] = new LetterBank();
     this.data[row][col] = value;
     return this;
   }
@@ -218,7 +222,7 @@ class LetterGrid {
 
   writeWord(word, row, col, vert, cons) {
     for (let letter of word) {
-      if (!this.data[row]) this.data[row] = [];
+      if (!this.data[row]) this.data[row] = new LetterBank();
       this.data[row][col] = cons ? new cons(letter) : cons;
       if (vert) {
         row += 1;
@@ -240,8 +244,6 @@ class LetterGrid {
     if (amt[0] < 0) amt[0] = 0;
     if (amt[1] < 0) amt[1] = 0;
 
-    console.log("Determined amt to be:", amt);
-
     var i = this.rows, I = 0, j = this.cols, J = 0;
     var empty = true;
     for (let row in this.data) {
@@ -253,8 +255,6 @@ class LetterGrid {
         }
       }
     }
-
-    console.log("Got i, I, j, J of:", [i, I, j, J]);
 
     if (empty) {
       this.rows = amt[0];
@@ -274,7 +274,6 @@ class LetterGrid {
     this.drift[0] += amt[0] - i;
     this.drift[1] += amt[1] - j;
 
-    console.log("Setting drift in padding to:", this.drift);
     return [amt[0] - i, amt[1] - j];
   }
 
@@ -392,39 +391,20 @@ class LetterGrid {
       }
     }
 
-    console.log("Got drift of:", this.drift);
-
     return {
       'tiles': tiles,
-      'positions': positions,
-      'drift': this.drift
+      'positions': positions
     }
   }
 
-  static deserialize(letters) {
-    var adj = [
-      -Math.min(...letters.map(l => l.pos[0])),
-      -Math.min(...letters.map(l => l.pos[1])),
-    ];
-    if (!isFinite(adj[0])) adj[0] = 0;
-    if (!isFinite(adj[1])) adj[1] = 0;
-    var jda = [
-      Math.max(...letters.map(l => l.pos[0])),
-      Math.max(...letters.map(l => l.pos[1])),
-    ];
-    if (!isFinite(jda[0])) jda[0] = 0;
-    if (!isFinite(jda[1])) jda[1] = 0;
-    //console.log(adj, jda, letters);
+  static deserialize(grid) {
     var ret = new LetterGrid();
-    if (!letters.length) return ret;
-    ret.rows = jda[0] + adj[0];
-    ret.cols = jda[1] + adj[1];
-    for (let letter of letters) {
-      let pos = letter.pos;
-      pos[0] += adj[0];
-      pos[1] += adj[1];
-      ret.set(...pos, new LetterTile(letter.letter));
+
+    for (let tile of grid.tiles) {
+      var pos = grid.positions[tile.id];
+      ret.set(pos.x, pos.y, new LetterTile(tile));
     }
+
     return ret;
   }
 }

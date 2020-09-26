@@ -28,24 +28,36 @@ class WebSocketController {
     this.game = game;
     this.msg_ctrl = new MessageController(game);
     this.cache = [];
-
-    console.log("WebSocketController game:", game);
-
-    this.game.update().then(() => {
-      this.wsConnect().then(() => {
-        this.send({"message_type": "join"})
-      });
-    });
-
     this.listeners = {};
+
+    this.wsConnect()
+    this.send({"message_type": "join"});
   }
 
-  async wsConnect() {
+  wsConnect() {
     // In the event that our websocket points to the wrong endpoint, that
     // we don't have a websocket, or that we have a closed websocket, open a
     // new one.
     if (!this.game.ws || this.game.ws.url !== this.game.endpoint ||
           this.game.ws.readyState !== WebSocket.OPEN) {
+      console.log("Generating new WebSocket connection...", this.game.ws, this.game.endpoint);
+      var old = this.game.ws;
+
+      if (old !== undefined && old !== null) {
+        // Re-add all pending listeners to the websocket.
+        for (let type in this.listeners) {
+          for (let handler of this.listeners[type]) {
+            old.removeEventListener(type, handler);
+          }
+        }
+
+        try {
+          old.close();
+        } catch {
+          // Do nothing.
+        }
+      }
+
       this.game.ws = new WebSocket(this.game.endpoint);
 
       // Re-add all pending listeners to the websocket.

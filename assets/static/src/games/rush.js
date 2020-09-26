@@ -150,10 +150,8 @@ class RushData {
     }
 
     var type = here[0];
-    console.log("Getting ", here);
 
     var ret = null;
-
     if (type === "tile" && here.length === 2) {
       ret = this.get(this.positionOf(here[1]));
     } else if (type === "grid" && here.length === 3) {
@@ -175,8 +173,6 @@ class RushData {
 
   // Set a tile at a given position.
   set(here, value) {
-    console.log("Setting ", here, " = ", value);
-
     if (this.get(here) === value) {
       return;
     }
@@ -196,20 +192,21 @@ class RushData {
 
   // Arbitrary data deleter for bank and grid using types.
   delete(here) {
-    console.log("Deleting ", here);
-
     if (here instanceof LetterTile) {
       here = this.positionOf(here);
     }
 
     if (here === null || !this.get(here)) {
+      console.log("Deleting failed because here was null or didn't exist in the game...");
       return;
     }
 
     if (here[0] === "grid") {
-      this.grid.delete(...here.shift());
+      here.shift();
+      return this.grid.delete(...here);
     } else if (here[0] === "bank") {
-      this.bank.delete(...here.shift());
+      here.shift();
+      return this.bank.delete(...here);
     } else {
       throw new Error("Unknown type for RushData locations: " + here[0]);
     }
@@ -217,10 +214,7 @@ class RushData {
 
   // Find a letter by identifier.
   positionOf(obj) {
-    console.log("Find by identifier: " + obj);
-
     var result = this.grid.findLetter(obj);
-    console.log("this.grid.findLetter(", obj, ") -> ", result);
     if (result !== undefined && result !== null) {
       if (result[0] !== "grid") {
         result.unshift("grid");
@@ -230,7 +224,6 @@ class RushData {
     }
 
     result = this.bank.findLetter(obj);
-    console.log("this.bank.findLetter(", obj, ") -> ", result);
     if (result !== undefined && result !== null) {
       if (result[0] !== "bank") {
         result.unshift("bank");
@@ -313,29 +306,48 @@ class RushGame {
     this.data = new RushData(game);
 
     this.controller.onMessage("state", (data) => { this.handleNewState(data) });
+    this.started = false;
+
+    this.onChange = () => {};
   }
 
   handleNewState(message) {
     this.controller.draw_id = Math.max(message.draw_id, this.controller.draw_id);
     this.controller.remaining_tiles = message.remaining;
 
+    console.log("Got state message:", message);
+
     // If this message was in reply to another, ignore it. Don't process added
     // events to give draw/discard a chance to work.
-    if (!message.reply_to || message.reply_to === 0) {
+    if (this.started && message.reply_to && message.reply_to !== 0) {
       return;
     }
 
-    console.log("Got new state pushed:", message);
+    if (!this.started) {
+      if (message.hand && this.data.bank.empty()) {
+        this.data.bank = LetterBank.deserialize(message.hand);
+      }
 
-    if (message.added !== undefined && message.added !== null) {
-      if (message.added.hand !== undefined && message.added.hand !== null) {
-        this.data.draw(...message.added.hand);
+      if (message.board && this.data.grid.empty()) {
+        this.data.grid = LetterGrid.deserialize(message.board);
+      }
+    } else {
+      if (message.added !== undefined && message.added !== null) {
+        if (message.added.hand !== undefined && message.added.hand !== null) {
+          this.data.draw(...message.added.hand);
+        }
       }
     }
+
+    // After the first state message, consider ourselves started and let the
+    // reply rules apply.
+    this.started = true;
+
+    this.onChange(this);
   }
 
   async check() {
-    var ret = await this.controller.draw();
+    var ret = await this.controller.check();
     if (ret.message_type === "error") {
       return ret;
     }
@@ -359,7 +371,11 @@ class RushGame {
   async discard(tile) {
     this.data.discard(tile);
     var ret = await this.controller.discard(tile);
-    return this.data.draw(ret);
+    if (ret.message_type && ret.message_type === "state" && ret.added && ret.added.hand) {
+      this.data.draw(...ret.added.hand);
+    }
+
+    return ret;
   }
 
   async recall(tile) {
@@ -368,20 +384,23 @@ class RushGame {
   }
 
   async swap(first, second) {
-    var ret = this.data.recall(first, second);
+    var ret = this.data.swap(first, second);
     this.controller.swap(first, second);
     return ret;
   }
 
   async move(tile, pos) {
+    var tile_pos = new LetterPos(pos[1] + this.data.grid.drift[0], pos[2] + this.data.grid.drift[1]);
     var ret = this.data.move(tile, pos);
-    this.controller.move(tile, pos);
+    this.controller.move(tile, tile_pos);
     return ret;
   }
 
   async play(tile, pos) {
-    var ret = this.data.move(tile, pos);
-    this.controller.move(tile, pos);
+    var tile_pos = new LetterPos(pos[1] + this.data.grid.drift[0], pos[2] + this.data.grid.drift[1]);
+
+    var ret = this.data.play(tile, pos);
+    this.controller.play(tile, tile_pos);
     return ret;
   }
 }

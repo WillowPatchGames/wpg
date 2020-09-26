@@ -47,17 +47,18 @@ class Game extends React.Component {
 
     this.state.interface.data.grid.padding(this.state.presentation.padding);
     if (this.state.interface.data && !this.state.presentation.readOnly) {
-      console.log("Assigning adder...");
       let adder = this.state.interface.data.onAdd;
       this.state.interface.data.onAdd = (...tiles) => {
-        console.log("OnAdd called with arguments:", ...tiles);
-
         if (adder !== null) {
           adder.call(this.state.interface.data, ...tiles);
         }
 
         this.setState(this.repad.bind(this));
       };
+
+      this.state.interface.onChange = () => {
+        this.setState(this.repad.bind(this));
+      }
     }
 
     this.droppoints = {};
@@ -72,7 +73,6 @@ class Game extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log("Component will unmount...");
     if (this.unmount) this.unmount();
     if (!this.state.presentation.readOnly) {
       enableBodyScroll(this.board.current);
@@ -82,13 +82,11 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
-    console.log("Component did mount!");
     if (!this.state.presentation.readOnly) {
       let allowTouchMove = (e) => DRAGGABLES.includes(e);
       disableBodyScroll(this.board.current, {allowTouchMove});
       disableBodyScroll(this.droppoints[["bank",""]].ref, {allowTouchMove});
       var size = window.getComputedStyle(this.board.current).getPropertyValue("--tile-size");
-      console.log("Setting presentation size to ", size);
       this.setState(state => {
         state.presentation.size = size;
         return state;
@@ -96,8 +94,6 @@ class Game extends React.Component {
       if (!this.state.presentation.readOnly) {
         let release = [];
         release.push(listenIn("keydown", (e) => {
-          console.log("Key mechanics listener fired");
-
           var handled = [" ", "Spacebar", "Backspace", "Del", "Delete"];
           handled.push(...["Up","Down","Left","Right"].flatMap(a => [a,"Arrow"+a]));
           if (handled.includes(e.key)) {
@@ -240,7 +236,6 @@ class Game extends React.Component {
     }
   }
   componentDidUpdate() {
-    console.log("componentDidUpdate fired");
     if (this.pending.maintain) {
       let bb = this.pending.maintain.element()?.getBoundingClientRect();
       let parent = this.pending.maintain.parent || this.board.current;
@@ -284,14 +279,12 @@ class Game extends React.Component {
   }
 
   recalc() {
-    console.log("Recalc called...");
     if (!this.board.current || !this.droppoints[["grid",0,0]]) return;
     var prev = [...this.state.presentation.padding];
     var bb = this.board.current.getBoundingClientRect();
     var bb0 = this.droppoints[["grid",0,0]].ref.getBoundingClientRect();
     var next = [bb.height/bb0.height, bb.width/bb0.width].map(a => Math.max(Math.ceil((a-1)/2), 7));
     if (next[0] !== prev[0] || next[1] !== prev[1]) {
-      console.log("recalc determined new values are: ", bb, bb0, prev, next);
       this.setState(state => {
         state.presentation.padding = next;
         return this.repad(state);
@@ -300,7 +293,6 @@ class Game extends React.Component {
   }
   repad(state) {
     if (!state) state = this.state;
-    console.log("Repad called on state:", state);
 
     let padding = [...this.state.presentation.padding];
     if (!state.interface.data.grid.letterPositions().length) {
@@ -308,7 +300,6 @@ class Game extends React.Component {
       padding[1] = padding[1]*2 + 1;
     }
     var adj = state.interface.data.grid.padding(padding);
-    console.log("interface.data.grid.padding(", padding, ") -> ", adj);
     if (false) {
       this.pending.scroll[0] += SIZE*adj[1];
       this.pending.scroll[1] += SIZE*adj[0];
@@ -487,7 +478,7 @@ class Game extends React.Component {
       });
 
       try {
-        await this.state.interface.discard(here);
+        await this.state.interface.discard(letter);
       } finally {
         this.setState((state) => {
           var i = state.presentation.discarding.indexOf(letter);
@@ -526,7 +517,16 @@ class Game extends React.Component {
   }
 
   async doCheck() {
-    var unwords = await this.state.interface.check();
+    var result = await this.state.interface.check();
+    var unwords = [];
+    if (result && result.message_type && result.message_type === "error" && result.error) {
+      if (this.props.notify) {
+        this.props.notify(result.error);
+      }
+    } else {
+      unwords = result;
+    }
+
     if (unwords && unwords.length) console.log("Invalid words: ", unwords.map(String));
     this.setState((state) => {
       state.presentation.unwords = unwords;
@@ -610,7 +610,7 @@ class Game extends React.Component {
         state.presentation.dropped = pos;
       }
 
-      state.interface.data.play(tile, pos);
+      state.interface.play(tile, pos);
 
       state = this.repad(state);
       return state;
@@ -653,7 +653,7 @@ class Game extends React.Component {
         state.presentation.dropped = pos;
       }
 
-      state.interface.data.move(tile, pos);
+      state.interface.move(tile, pos);
 
       state = this.repad(state);
       return state;
@@ -685,7 +685,7 @@ class Game extends React.Component {
         state.presentation.dropped = here;
       }
 
-      state.interface.data.swap(first, second);
+      state.interface.swap(first, second);
 
       state = this.repad(state);
       return state;
