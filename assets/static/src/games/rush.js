@@ -3,7 +3,6 @@ import {
   LetterPos,
   LetterBank,
   LetterGrid,
-  Gridded,
 } from './word.js';
 
 import {
@@ -366,6 +365,7 @@ class RushGame {
   async draw() {
     var ret = await this.controller.draw();
     if (ret.message_type === "error") {
+      await this.check();
       return ret;
     }
 

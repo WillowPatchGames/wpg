@@ -30,6 +30,10 @@ type PlayerData struct {
 	// Whether or not the player is ready for the game to begin.
 	Ready bool `json:"ready"`
 
+	// Whether or not this player is allowed to spectate while the game is going
+	// on.
+	Spectator bool `json:"spectator"`
+
 	// Highest (last seen) incoming message identifier from this player.
 	InboundID int `json:"last_inbound_id"`
 
@@ -276,7 +280,7 @@ func (c *Controller) markReady(gid uint64, uid uint64, ready bool) error {
 // the game admin and not the players themselves. The exception to this is
 // that users joining by individual invite tokens should be auto-admitted as
 // they were previously invited individually.
-func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool) error {
+func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, spectator bool) error {
 	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
 
 	if !c.GameExists(gid) {
@@ -289,7 +293,14 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool) error {
 
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
-	player.Admitted = admitted
+
+	if !admitted {
+		player.Admitted = false
+		player.Spectator = false
+	} else {
+		player.Admitted = !spectator
+		player.Spectator = spectator
+	}
 
 	var notification ControllerNotifyAdmitted
 	notification.LoadFromController(game, player)

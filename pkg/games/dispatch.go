@@ -9,8 +9,9 @@ import (
 
 type GameAdmit struct {
 	MessageHeader
-	Target uint64 `json:"target_id"`
-	Admit  bool   `json:"admit"`
+	Target    uint64 `json:"target_id"`
+	Admit     bool   `json:"admit"`
+	Spectator bool   `json:"specator"`
 }
 
 type GameReady struct {
@@ -46,7 +47,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return errors.New("player not authorized to admit other players")
 		}
 
-		return c.markAdmitted(game.GID, data.Target, data.Admit)
+		return c.markAdmitted(game.GID, data.Target, data.Admit, data.Spectator)
 	case "ready":
 		var data GameReady
 		if err := json.Unmarshal(message, &data); err != nil {

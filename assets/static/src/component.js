@@ -36,7 +36,7 @@ class Game extends React.Component {
         scale: 1,
         scaled: 1,
         size: null,
-        unwords: [],
+        unwords: props.interface.data.unwords,
         readOnly: this.props.readOnly,
         drawing: false,
         discarding: [],
@@ -55,10 +55,10 @@ class Game extends React.Component {
 
         this.setState(this.repad.bind(this));
       };
+    }
 
-      this.state.interface.onChange = () => {
-        this.setState(this.repad.bind(this));
-      }
+    this.state.interface.onChange = () => {
+      this.setState(this.repad.bind(this));
     }
 
     this.droppoints = {};
@@ -518,6 +518,7 @@ class Game extends React.Component {
       // NOTE: this technically leaks, and may execute after the component unmounts (especially on game over events)
       this.setState(state => {
         state.presentation.drawing = false;
+        state.presentation.unwords = this.state.interface.data.unwords;
         return state;
       });
     }

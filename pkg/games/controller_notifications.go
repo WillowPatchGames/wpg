@@ -54,6 +54,8 @@ func (cne *ControllerNotifyError) LoadFromController(data *GameData, player *Pla
 
 type ControllerNotifyStarted struct {
 	MessageHeader
+	Playing   bool `json:"playing"`
+	Spectator bool `json:"spectator"`
 }
 
 func (cns *ControllerNotifyStarted) LoadFromController(data *GameData, player *PlayerData) {
@@ -64,6 +66,9 @@ func (cns *ControllerNotifyStarted) LoadFromController(data *GameData, player *P
 	cns.MessageID = player.OutboundID
 	player.OutboundID++
 	cns.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+
+	cns.Playing = player.Index >= 0
+	cns.Spectator = player.Spectator
 }
 
 type ControllerCountdown struct {

@@ -218,7 +218,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			return errors.New("unable to peek at game which hasn't started yet")
 		}
 
-		if !state.Finished && player.Index >= 0 {
+		if !state.Finished && (player.Index >= 0 || !player.Spectator) {
 			return errors.New("no peeking allowed when the game isn't yet finished")
 		}
 

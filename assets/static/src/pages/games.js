@@ -26,7 +26,6 @@ import { TextField } from '@rmwc/textfield';
 
 // Application imports
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
-import { JSWordManager } from '../game.js';
 import { Game } from '../component.js';
 import { RushGame, RushData } from '../games/rush.js';
 
@@ -144,13 +143,12 @@ class AfterPartyPage extends React.Component {
     this.state = {
       snapshots: null,
       winner: this.game.winner,
+      finished: false,
     };
-    var wordmanager = new JSWordManager();
-    wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
 
     this.unmount = addEv(this.game, {
       "game-state": async (data) => {
-        let snapshots = [];
+        var snapshots = [];
         for (let snapshot_index in data.player_data) {
           let snapshot_data = data.player_data[snapshot_index];
           let snapshot = {};
@@ -158,20 +156,22 @@ class AfterPartyPage extends React.Component {
           snapshot.interface = new RushGame(this.game, true);
           snapshot.interface.data = RushData.deserialize(snapshot_data);
           snapshot.interface.data.grid.padding(0);
-          snapshot.unwords = snapshot.unwords ? snapshot.unwords : [];
+          snapshot.interface.data.check({ unwords: snapshot_data.unwords });
           snapshots.push(snapshot);
         }
-
-        console.log(snapshots);
 
         snapshots.sort((a,b) => (
           (-(a.user.display === data.winner.display) - - (b.user.display === data.winner.display)) ||
           (a.interface.data.bank.length - b.interface.data.bank.length) ||
           (a.interface.data.grid.components().length - b.interface.data.grid.components().length) ||
-          (a.unwords.length - b.unwords.length)
+          (a.interface.data.unwords.length - b.interface.data.unwords.length)
         ));
 
-        this.setState(state => Object.assign({}, state, { snapshots: snapshots, winner: data.winner }));
+        // HACK: When refreshData() is called from the button, we don't redraw
+        // the screen even though new data is sent. Use snapshots to send only
+        // the data we care about.
+        this.setState(state => Object.assign({}, state, { snapshots: [] }));
+        this.setState(state => Object.assign({}, state, { snapshots: snapshots, winner: data.winner, finished: data.finished }));
       },
       "": data => {
         if (data.message) {
@@ -181,17 +181,21 @@ class AfterPartyPage extends React.Component {
     });
   }
   componentDidMount() {
-    this.game.interface.controller.wsController.send({"message_type": "peek"});
+    this.refreshData();
   }
   componentWillUnmount() {
     this.props.setGame(null);
     if (this.unmount) this.unmount();
+  }
+  refreshData() {
+    this.game.interface.controller.wsController.send({"message_type": "peek"});
   }
   returnToRoom() {
     this.props.setGame(null);
     this.props.setPage("room");
   }
   render() {
+    console.log("Rerender called?", this.state.snapshots);
     return (
       <div>
         { this.state.winner
@@ -201,6 +205,9 @@ class AfterPartyPage extends React.Component {
         <h2>That was fun, wasn't it?</h2>
         {
           this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+        }
+        {
+          !this.state.finished ? <Button onClick={ () => this.refreshData() } raised >Look again!</Button> : <></>
         }
         <ol className="results">
           { this.state.snapshots
