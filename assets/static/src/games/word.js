@@ -52,7 +52,6 @@ class LetterBank extends Array {
   add(...values) {
     for (let value of values) {
       if (!(value instanceof LetterTile)) {
-        console.log("--->", value);
         value = new LetterTile(value);
       }
 
@@ -427,16 +426,12 @@ class LetterGrid {
     ret.rows = jda[0] + adj[0];
     ret.cols = jda[1] + adj[1];
 
-    console.log("Setting: ", ret.rows, ret.cols, adj, jda);
-
     for (let tile of grid.tiles) {
       let pos = grid.positions[tile.id];
       ret.set(pos.x + adj[0], pos.y + adj[1], new LetterTile(tile));
     }
 
-    ret.drift = [-adj[0], -adj[1]];
-
-    console.log(ret);
+    ret.drift = [adj[0], adj[1]];
 
     return ret;
   }

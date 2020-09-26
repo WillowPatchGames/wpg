@@ -97,9 +97,4 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Connect Player to ActiveGame, Client to Hub
 	handle.Hub.register <- client
-
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.writePump()
-	go client.readPump()
 }

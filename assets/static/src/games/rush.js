@@ -162,8 +162,6 @@ class RushData {
       console.log("Unknown type for RushData locations: ", here);
     }
 
-    console.log("RushGame -- Got ", here, " = ", ret);
-
     if (ret === undefined) {
       ret = null;
     }
@@ -316,8 +314,6 @@ class RushGame {
     this.controller.draw_id = Math.max(message.draw_id, this.controller.draw_id);
     this.controller.remaining_tiles = message.remaining;
 
-    console.log("Got state message:", message);
-
     // If this message was in reply to another, ignore it. Don't process added
     // events to give draw/discard a chance to work.
     if (this.started && message.reply_to && message.reply_to !== 0) {
@@ -391,14 +387,14 @@ class RushGame {
   }
 
   async move(tile, pos) {
-    var tile_pos = new LetterPos(pos[1] + this.data.grid.drift[0], pos[2] + this.data.grid.drift[1]);
+    var tile_pos = new LetterPos(pos[1] - this.data.grid.drift[0], pos[2] - this.data.grid.drift[1]);
     var ret = this.data.move(tile, pos);
     this.controller.move(tile, tile_pos);
     return ret;
   }
 
   async play(tile, pos) {
-    var tile_pos = new LetterPos(pos[1] + this.data.grid.drift[0], pos[2] + this.data.grid.drift[1]);
+    var tile_pos = new LetterPos(pos[1] - this.data.grid.drift[0], pos[2] - this.data.grid.drift[1]);
 
     var ret = this.data.play(tile, pos);
     this.controller.play(tile, tile_pos);

@@ -602,8 +602,6 @@ class Game extends React.Component {
   }
 
   async doPlay(tile, pos, dropped) {
-    console.log("doPlay(", tile, ",", pos, ",", dropped, ")");
-
     this.setState(state => {
       state = Object.assign({}, state);
       if (dropped) {
@@ -611,6 +609,8 @@ class Game extends React.Component {
       }
 
       state.interface.play(tile, pos);
+
+      state.presentation.selected = null;
 
       state = this.repad(state);
       return state;
@@ -645,8 +645,6 @@ class Game extends React.Component {
   }
 
   async doMove(tile, pos, dropped) {
-    console.log("doMove(", tile, ",", pos, ",", dropped, ")");
-
     this.setState(state => {
       state = Object.assign({}, state);
       if (dropped) {
@@ -654,6 +652,8 @@ class Game extends React.Component {
       }
 
       state.interface.move(tile, pos);
+
+      state.presentation.selected = null;
 
       state = this.repad(state);
       return state;
@@ -663,22 +663,24 @@ class Game extends React.Component {
   isSwap(here, there) {
     var here_tile = this.state.interface.data.get(here);
     var there_tile = this.state.interface.data.get(there);
-    return here_tile !== null && there_tile !== null && here[0] !== "bank" && there[0] !== "bank";
+    return here_tile !== null && there_tile !== null && (here[0] !== "bank" || there[0] !== "bank");
   }
 
   swapArgs(here, there) {
     var here_tile = this.state.interface.data.get(here);
     var there_tile = this.state.interface.data.get(there);
 
+    var select_here = here[0] === "bank" && there[0] === "grid";
+    var select_there = there[0] === "bank" && here[0] === "grid";
+
     return {
       first: here_tile,
       second: there_tile,
+      selected: select_here ? here : (select_there ? there : null ),
     }
   }
 
-  async doSwap(here, first, second, dropped) {
-    console.log("doSwap(", here, ",", first, ",", second, ",", dropped, ")");
-
+  async doSwap(here, first, second, dropped, selected) {
     this.setState(state => {
       state = Object.assign({}, state);
       if (dropped) {
@@ -687,14 +689,14 @@ class Game extends React.Component {
 
       state.interface.swap(first, second);
 
+      state.presentation.selected = selected;
+
       state = this.repad(state);
       return state;
     });
   }
 
   interact(here, there, dropped) {
-    console.log("Interact called with:", here, this.state.interface.data.get(here), there, this.state.interface.data.get(there), dropped);
-
     if (this.isDiscard(here, there)) {
       var discard_pos = this.discardArgs(here, there);
       return this.doDiscard(discard_pos, dropped);
@@ -716,7 +718,7 @@ class Game extends React.Component {
       return this.doMove(move_args.tile, move_args.pos, dropped);
     } else if (this.isSwap(here, there)) {
       var swap_args = this.swapArgs(here, there);
-      return this.doSwap(here, swap_args.first, swap_args.second, dropped);
+      return this.doSwap(here, swap_args.first, swap_args.second, dropped, swap_args.selected);
     }
 
     console.log("Unknown interaction type!!!");

@@ -30,8 +30,8 @@ class WebSocketController {
     this.cache = [];
     this.listeners = {};
 
-    this.wsConnect()
-    this.send({"message_type": "join"});
+    this.wsConnect();
+    console.log("Sending join message", this.send({"message_type": "join"}).catch((data) => { console.log("Failed to send websocket data:", data)} ).then((data) => { console.log("Sent websocket data:", data)} ));
   }
 
   wsConnect() {
@@ -66,11 +66,11 @@ class WebSocketController {
           this.game.ws.addEventListener(type, handler);
         }
       }
-
-      // After the WebSocket was opened, attempt to flush the cache of
-      // messages waiting to be sent.
-      this.flushCache();
     }
+
+    // After the WebSocket was opened, attempt to flush the cache of
+    // messages waiting to be sent.
+    this.flushCache();
   }
 
   // flushCache assumes an open WebSocket.
@@ -194,6 +194,10 @@ class WebSocketController {
     // open result. In the case when we're already open, we should resolve.
     // However, in the case when the socket is actually closed, we should
     // reject instead of resolving.
+    if (!this.game.ws) {
+      this.wsConnect();
+    }
+
     if (this.game.ws.readyState === WebSocket.OPEN) {
       return Promise.resolve();
     } else if (!this.game.ws.readyState) {
@@ -237,7 +241,10 @@ class WebSocketController {
 
   // Send an object to our peer but don't wait for a reply.
   async send(data) {
+    console.log("Waiting for websocket to open...");
     await this.waitOpen();
+
+    console.log("Sending data:", data);
 
     var wire_data = this.msg_ctrl.template(data);
     return this.game.ws.send(JSON.stringify(wire_data));

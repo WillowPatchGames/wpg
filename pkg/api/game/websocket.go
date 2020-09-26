@@ -74,6 +74,24 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize:  sendBufferSize,
 }
 
+func (c *Client) isActive() bool {
+	// Validate that our client connection is still good.
+	game_conns, ok := c.hub.connections[c.gameID]
+	if !ok {
+		// Game was deleted under us.
+		return false
+	}
+
+	current_connection, ok := game_conns[c.userID]
+	if !ok || current_connection != c {
+		// Client was deleted under us or client reconnected from somewhere
+		// else
+		return false
+	}
+
+	return true
+}
+
 // client.readPump() pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -97,22 +115,13 @@ func (c *Client) readPump() {
 	})
 
 	for {
+		if !c.isActive() {
+			log.Println("Closing stale readPump()")
+			return
+		}
+
 		// Set the deadline on the read command below.
 		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
-
-		// Validate that our client connection is still good.
-		game_conns, ok := c.hub.connections[c.gameID]
-		if !ok {
-			// Game was deleted under us.
-			return
-		}
-
-		current_connection, ok := game_conns[c.userID]
-		if !ok || current_connection != c {
-			// Client was deleted under us or client reconnected from somewhere
-			// else
-			return
-		}
 
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
@@ -169,23 +178,20 @@ func (c *Client) writePump() {
 			ticker = time.NewTicker(pingPeriod)
 		}
 
-		// Validate that our client connection is still good.
-		game_conns, ok := c.hub.connections[c.gameID]
-		if !ok {
-			// Game was deleted under us.
-			return
-		}
-
-		current_connection, ok := game_conns[c.userID]
-		if !ok || current_connection != c {
-			// Client was deleted under us or client reconnected from somewhere
-			// else
+		if !c.isActive() {
+			log.Println("Closing stale writePump()")
 			return
 		}
 
 		// See above; select from either of our two channels to read from.
 		select {
 		case message, ok := <-c_send:
+			if !c.isActive() {
+				c_send <- message
+				log.Println("Closing stale readPump()")
+				return
+			}
+
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel; notify the client and exit this
@@ -376,6 +382,14 @@ func (hub *Hub) registerClient(client *Client) {
 		log.Println(err)
 		return
 	}
+
+	// Allow concurrent reading and writing from the peer only after the
+	// register message has been processed. This is beacuse readPump and
+	// writePump validate that they're the currently active client. If we start
+	// them in SocketHandler like we used to, they'll exit prematurely because
+	// their not the currently active client.
+	go client.writePump()
+	go client.readPump()
 }
 
 func (hub *Hub) deleteGame(gameID GameID) {

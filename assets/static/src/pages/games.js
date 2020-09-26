@@ -78,6 +78,8 @@ class RushGamePage extends React.Component {
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
 
+    console.log("RGP", this.game, "vs", this.props.game);
+
     let user = usr => usr ? (usr.id === this.props.user.id ? "You" : usr.display) : "Someone ";
     if (this.game) {
       this.state.interface = this.game.interface;
@@ -122,6 +124,7 @@ class PreGamePage extends React.Component {
     this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
+    console.log("PGP", this.game, "vs", this.props.game);
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
@@ -217,6 +220,7 @@ class PreGameUserPage extends React.Component {
     }
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
+    console.log("PGUP", this.game, "vs", this.props.game);
     this.unmount = addEv(this.game, {
       "admitted": data => {
         this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
@@ -258,6 +262,7 @@ class PreGameAdminPage extends React.Component {
 
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
+    console.log("PGAP", this.game, "vs", this.props.game);
 
     this.unmount = addEv(this.game, {
       "notify-join": data => {
