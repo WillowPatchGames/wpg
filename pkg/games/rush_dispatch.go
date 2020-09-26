@@ -54,7 +54,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 	case "start":
 		var players int = 0
 		for _, player := range game.ToPlayer {
-			if player.Admitted {
+			if player.Playing {
 				players += 1
 			}
 		}
@@ -73,9 +73,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			started.ReplyTo = header.MessageID
 			c.undispatch(game, player, started.MessageID, started.ReplyTo, started)
 
-			log.Println("Sent notification that game started -- ", player.Admitted, player.Index)
-
-			if player.Admitted && player.Index >= 0 {
+			if player.Playing && player.Index >= 0 {
 				var response RushStateNotification
 				response.LoadFromGame(state, player.Index)
 				response.LoadFromController(game, player)
@@ -218,7 +216,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			return errors.New("unable to peek at game which hasn't started yet")
 		}
 
-		if !state.Finished && (player.Index >= 0 || !player.Spectator) {
+		if !state.Finished && (player.Index >= 0 || player.Playing) {
 			return errors.New("no peeking allowed when the game isn't yet finished")
 		}
 
@@ -247,7 +245,7 @@ func (c *Controller) doRushStart(game *GameData, state *RushState) error {
 	// First count the number of people playing.
 	var players int = 0
 	for _, player := range game.ToPlayer {
-		if player.Admitted {
+		if player.Playing {
 			players += 1
 		}
 	}
@@ -266,8 +264,9 @@ func (c *Controller) doRushStart(game *GameData, state *RushState) error {
 		started.LoadFromController(game, indexed_player)
 		c.undispatch(game, indexed_player, started.MessageID, started.ReplyTo, started)
 
-		// Only assign indices to people who were admitted by the game admin.
-		if indexed_player.Admitted {
+		// Only assign indices to people who were marked as players by the game
+		// admin.
+		if indexed_player.Playing {
 			indexed_player.Index = player_index
 
 			var response RushStateNotification

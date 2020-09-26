@@ -18,11 +18,12 @@ class RushController {
     this.wsController = new WebSocketController(this.game);
   }
 
-  async admitPlayer(player, admit) {
+  async admitPlayer(player, admit, playing) {
     return await this.wsController.send({
       'message_type': 'admit',
       'target_id': +player,
       'admit': admit,
+      'playing': playing,
     });
   }
 

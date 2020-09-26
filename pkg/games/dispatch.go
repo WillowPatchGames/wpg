@@ -3,15 +3,14 @@ package games
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
 )
 
 type GameAdmit struct {
 	MessageHeader
-	Target    uint64 `json:"target_id"`
-	Admit     bool   `json:"admit"`
-	Spectator bool   `json:"specator"`
+	Target  uint64 `json:"target_id"`
+	Admit   bool   `json:"admit"`
+	Playing bool   `json:"playing"`
 }
 
 type GameReady struct {
@@ -37,6 +36,21 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 	// Note that start messages can't be handled here; they are specific to the
 	// individual game type.
 	switch header.MessageType {
+	case "join":
+		// When the user is the admin, send them a bunch of notify-joins again.
+		// This lets them see users who are already in the room... :-)
+		if player.UID == game.Owner {
+			for _, indexed_player := range game.ToPlayer {
+				if indexed_player.UID == game.Owner {
+					continue
+				}
+
+				err := c.notifyAdmin(game, indexed_player.UID)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	case "admit":
 		var data GameAdmit
 		if err := json.Unmarshal(message, &data); err != nil {
@@ -47,7 +61,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return errors.New("player not authorized to admit other players")
 		}
 
-		return c.markAdmitted(game.GID, data.Target, data.Admit, data.Spectator)
+		return c.markAdmitted(game.GID, data.Target, data.Admit, data.Playing)
 	case "ready":
 		var data GameReady
 		if err := json.Unmarshal(message, &data); err != nil {
@@ -84,43 +98,25 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 }
 
 func (c *Controller) handleCountdown(game *GameData) error {
-	log.Println("handleCountdown - ", game)
-
 	var sendNext bool = true
 	for _, player := range game.ToPlayer {
-		if player.Admitted && player.Countback != game.Countdown {
+		// Only check for countbacks from players. We don't care whether or not
+		// spectators can see the board.
+		if player.Admitted && player.Playing && player.Countback != game.Countdown {
 			sendNext = false
 		}
 	}
 
 	if !sendNext {
-		log.Println("Not sending next -- at least one mismatch")
 		return nil
 	}
 
 	if game.Countdown == 0 && game.CountdownTimer == nil {
-		log.Println("Starting countdown at 3...")
-		game.Countdown = 3
-		game.CountdownTimer = time.NewTimer(countdownDelay)
-
-		for _, player := range game.ToPlayer {
-			// Only send coundown notifications to players who are admitted.
-			// Otherwise it doesn't matter too much.
-			if !player.Admitted {
-				continue
-			}
-
-			player.Countback = game.Countdown + 1
-
-			var message ControllerCountdown
-			message.LoadFromController(game, player)
-			c.undispatch(game, player, message.MessageID, 0, message)
-
-			log.Println("Sent message to ", player)
-		}
+		game.Countdown = 4
+		game.CountdownTimer = time.NewTimer(1 * time.Nanosecond)
+		// Fall through -- this decrements the above countdown by one and sends out
+		// the countdown messages.
 	} else if game.Countdown == 0 {
-		log.Println("Countdown at 0, starting game!")
-
 		// XXX: Update when adding more modes
 		if game.Mode != RushGame {
 			panic("Unknown game mode: " + game.Mode.String())
@@ -128,24 +124,25 @@ func (c *Controller) handleCountdown(game *GameData) error {
 
 		var state *RushState = game.State.(*RushState)
 		return c.doRushStart(game, state)
-	} else {
-		log.Println("Continuing countdown...", game.Countdown)
+		// Must return!
+	}
 
-		// Ensure the previous timer has elapsed, or wait until it does.
-		<-game.CountdownTimer.C
-		game.Countdown = game.Countdown - 1
-		game.CountdownTimer = time.NewTimer(countdownDelay)
+	// Ensure the previous timer has elapsed, or wait until it does.
+	// XXX -- this blocks currently. Make it async or put in a separate
+	// goroutine.
+	<-game.CountdownTimer.C
+	game.Countdown = game.Countdown - 1
+	game.CountdownTimer = time.NewTimer(countdownDelay)
 
-		for _, player := range game.ToPlayer {
-			if !player.Admitted {
-				continue
-			}
-
-			player.Countback = game.Countdown + 1
-			var message ControllerCountdown
-			message.LoadFromController(game, player)
-			c.undispatch(game, player, message.MessageID, 0, message)
+	for _, player := range game.ToPlayer {
+		if !player.Admitted {
+			continue
 		}
+
+		player.Countback = game.Countdown + 1
+		var message ControllerCountdown
+		message.LoadFromController(game, player)
+		c.undispatch(game, player, message.MessageID, 0, message)
 	}
 
 	return nil

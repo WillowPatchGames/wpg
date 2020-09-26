@@ -120,7 +120,7 @@ type RushGameStateNotification struct {
 
 	Players   []RushPlayerState `json:"player_data"`
 	PlayerMap map[int]uint64    `json:"player_map"`
-	Winner    uint64            `json:"winner"`
+	Winner    uint64            `json:"winner,omitempty"`
 	winner    int
 }
 

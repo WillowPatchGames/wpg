@@ -22,17 +22,15 @@ type PlayerData struct {
 	// array of players instead of using the uid.
 	Index int `json:"index"`
 
-	// Whether or not this player has been admitted to this game. By default,
-	// they start with admitted = false, requiring an admin to admit them, unless
-	// they join with an individual invite link.
+	// Whether or not this player has been admitted to this game. This lets them
+	// see notifications about the game.
 	Admitted bool `json:"admitted"`
+
+	// Whether or not this player is playing the game or is a spectator.
+	Playing bool `json:"playing"`
 
 	// Whether or not the player is ready for the game to begin.
 	Ready bool `json:"ready"`
-
-	// Whether or not this player is allowed to spectate while the game is going
-	// on.
-	Spectator bool `json:"spectator"`
 
 	// Highest (last seen) incoming message identifier from this player.
 	InboundID int `json:"last_inbound_id"`
@@ -239,15 +237,20 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 	return false, c.notifyAdmin(game, uid)
 }
 
-func (c *Controller) notifyAdmin(game *GameData, joined uint64) error {
+func (c *Controller) notifyAdmin(game *GameData, uid uint64) error {
 	// Don't notify the owner that they joined. Presumably, they already know.
-	if game.Owner == joined {
+	if game.Owner == uid {
 		return nil
 	}
 
 	var admin *PlayerData = game.ToPlayer[game.Owner]
 	if admin == nil {
 		return errors.New("unable to join game without a connected admin")
+	}
+
+	var joined *PlayerData = game.ToPlayer[uid]
+	if joined == nil {
+		return errors.New("unable to notify admin of player who doesn't exist")
 	}
 
 	var notification ControllerNotifyAdminJoin
@@ -280,7 +283,7 @@ func (c *Controller) markReady(gid uint64, uid uint64, ready bool) error {
 // the game admin and not the players themselves. The exception to this is
 // that users joining by individual invite tokens should be auto-admitted as
 // they were previously invited individually.
-func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, spectator bool) error {
+func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, playing bool) error {
 	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
 
 	if !c.GameExists(gid) {
@@ -294,12 +297,17 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, spectat
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
 
+	// The owner has to be admitted. :-)
+	if uid == game.Owner {
+		admitted = true
+	}
+
 	if !admitted {
 		player.Admitted = false
-		player.Spectator = false
+		player.Playing = false
 	} else {
-		player.Admitted = !spectator
-		player.Spectator = spectator
+		player.Admitted = true
+		player.Playing = playing
 	}
 
 	var notification ControllerNotifyAdmitted

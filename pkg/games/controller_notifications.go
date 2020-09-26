@@ -6,10 +6,12 @@ import (
 
 type ControllerNotifyAdminJoin struct {
 	MessageHeader
-	Joined uint64 `json:"joined"`
+	Joined   uint64 `json:"joined"`
+	Admitted bool   `json:"admitted"`
+	Playing  bool   `json:"playing"`
 }
 
-func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player *PlayerData, joined uint64) {
+func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player *PlayerData, joined *PlayerData) {
 	cnaj.Mode = data.Mode.String()
 	cnaj.ID = data.GID
 	cnaj.Player = player.UID
@@ -18,7 +20,9 @@ func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player
 	player.OutboundID++
 	cnaj.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
-	cnaj.Joined = joined
+	cnaj.Joined = joined.UID
+	cnaj.Admitted = joined.Admitted
+	cnaj.Playing = joined.Playing
 }
 
 type ControllerNotifyAdmitted struct {
@@ -54,8 +58,7 @@ func (cne *ControllerNotifyError) LoadFromController(data *GameData, player *Pla
 
 type ControllerNotifyStarted struct {
 	MessageHeader
-	Playing   bool `json:"playing"`
-	Spectator bool `json:"spectator"`
+	Playing bool `json:"playing"`
 }
 
 func (cns *ControllerNotifyStarted) LoadFromController(data *GameData, player *PlayerData) {
@@ -67,8 +70,7 @@ func (cns *ControllerNotifyStarted) LoadFromController(data *GameData, player *P
 	player.OutboundID++
 	cns.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
-	cns.Playing = player.Index >= 0
-	cns.Spectator = player.Spectator
+	cns.Playing = player.Playing
 }
 
 type ControllerCountdown struct {

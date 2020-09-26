@@ -84,6 +84,10 @@ class RushGamePage extends React.Component {
         "started": data => {
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
+
+          if (!data.playing) {
+            this.props.setPage('afterparty');
+          }
         },
         "countdown": data => {
           data.message = "Game starting in " + data.value;
@@ -144,6 +148,8 @@ class AfterPartyPage extends React.Component {
       snapshots: null,
       winner: this.game.winner,
       finished: false,
+      message: "Loading results...",
+      timeout: null,
     };
 
     this.unmount = addEv(this.game, {
@@ -167,11 +173,24 @@ class AfterPartyPage extends React.Component {
           (a.interface.data.unwords.length - b.interface.data.unwords.length)
         ));
 
+        var winner = null;
+        if (data.winner && data.winner !== 0) {
+          winner = await UserModel.FromId(data.winner);
+        }
+
         // HACK: When refreshData() is called from the button, we don't redraw
         // the screen even though new data is sent. Use snapshots to send only
         // the data we care about.
         this.setState(state => Object.assign({}, state, { snapshots: [] }));
-        this.setState(state => Object.assign({}, state, { snapshots: snapshots, winner: data.winner, finished: data.finished }));
+        this.setState(state => Object.assign({}, state, { snapshots: snapshots, winner: winner, finished: data.finished }));
+      },
+      "error": (data) => {
+        var message = "Unable to load game data.";
+        if (data.error) {
+          message = data.error;
+        }
+
+        this.setState(state => Object.assign({}, state, { message }));
       },
       "": data => {
         if (data.message) {
@@ -185,10 +204,20 @@ class AfterPartyPage extends React.Component {
   }
   componentWillUnmount() {
     this.props.setGame(null);
+    if (this.state.timeout) {
+      clearTimeout(this.state.timeout);
+    }
     if (this.unmount) this.unmount();
   }
   refreshData() {
     this.game.interface.controller.wsController.send({"message_type": "peek"});
+
+    if (!this.state.finished) {
+      this.setState(state => Object.assign({}, state, { timeout: setTimeout(() => {
+          this.refreshData()
+        }, 5000)
+      }));
+    }
   }
   returnToRoom() {
     this.props.setGame(null);
@@ -198,16 +227,19 @@ class AfterPartyPage extends React.Component {
     console.log("Rerender called?", this.state.snapshots);
     return (
       <div>
-        { this.state.winner
+        { this.state.finished && this.state.winner
         ? <h1>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
-        : <></>
+        : <h1>Please wait while the game finishes...</h1>
         }
-        <h2>That was fun, wasn't it?</h2>
+        { this.state.finished
+          ? <h2>That was fun, wasn't it?</h2>
+          : <></>
+        }
         {
           this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
         }
         {
-          !this.state.finished ? <Button onClick={ () => this.refreshData() } raised >Look again!</Button> : <></>
+          !this.state.finished ? <span className="leftpad"><Button onClick={ () => this.refreshData() } raised >Look again!</Button></span> : <></>
         }
         <ol className="results">
           { this.state.snapshots
@@ -217,7 +249,7 @@ class AfterPartyPage extends React.Component {
                 <Game interface={ snapshot.interface } readOnly={ true } />
               </li>
             )
-          : <p>Loading results …</p>
+          : <p>{ this.state.message }</p>
           }
         </ol>
       </div>
@@ -242,7 +274,11 @@ class PreGameUserPage extends React.Component {
       "started": data => {
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
-        this.props.setPage('playing');
+        if (data.playing) {
+          this.props.setPage('playing');
+        } else {
+          this.props.setPage('afterparty');
+        }
       },
       "countdown": data => {
         data.message = "Game starting in " + data.value;
@@ -284,7 +320,7 @@ class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      waitlist: [],
+      waitlist: [Object.assign(this.props.user, { admitted: true, playing: false })],
     };
 
     this.game = this.props.game || {};
@@ -295,14 +331,29 @@ class PreGameAdminPage extends React.Component {
       "notify-join": data => {
         var userPromise = UserModel.FromId(data.joined);
         userPromise.then((user) => {
-          this.state.waitlist.push(Object.assign(user, { admitted: false }));
+          var missing = true;
+          for (let player of this.state.waitlist) {
+            if (player.id === data.joined) {
+              Object.assign(player, user);
+              missing = false;
+            }
+          }
+
+          if (missing) {
+            this.state.waitlist.push(Object.assign(user, { admitted: data.admitted, playing: data.playing }));
+          }
+
           this.setState(state => state);
         });
       },
       "started": data => {
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
-        this.props.setPage('playing');
+        if (data.playing) {
+          this.props.setPage('playing');
+        } else {
+          this.props.setPage('afterparty');
+        }
       },
       "countdown": data => {
         data.message = "Game starting in " + data.value;
@@ -331,9 +382,29 @@ class PreGameAdminPage extends React.Component {
   toggleAdmitted(user) {
     for (let u in this.state.waitlist) {
       if (this.state.waitlist[u] === user) {
-        user.admitted = !user.admitted;
+        if (user.id !== this.props.user.id) {
+          user.admitted = !user.admitted;
+        }
+
+        if (!user.admitted) {
+          this.playing = false;
+        }
+
         this.setState(state => state);
-        this.game.interface.controller.admitPlayer(user.id, user.admitted);
+        this.game.interface.controller.admitPlayer(user.id, user.admitted, user.playing);
+      }
+    }
+  }
+  toggleSpectator(user) {
+    for (let u in this.state.waitlist) {
+      if (this.state.waitlist[u] === user) {
+        user.playing = !user.playing;
+        if (!user.admitted) {
+          this.playing = false;
+        }
+
+        this.setState(state => state);
+        this.game.interface.controller.admitPlayer(user.id, user.admitted, user.playing);
       }
     }
   }
@@ -381,7 +452,13 @@ class PreGameAdminPage extends React.Component {
                 <l.ListItem key={user.display} >
                 {user.display}
                 <l.ListItemMeta>
-                  <Checkbox checked={user.admitted} label="Admitted" onChange={ user.admitted ? () => this.setState(state => state) : () => this.toggleAdmitted(user) } />
+                  <Checkbox checked={user.admitted} label="Admitted" onChange={ () => this.toggleAdmitted(user) } />
+                  {
+                    user.admitted ?
+                      <span className="leftpad"><Switch checked={ user.playing } label={ user.playing ? "Player" : "Spectator" } onChange={ () => this.toggleSpectator(user) } /></span>
+                      :
+                      <></>
+                  }
                 </l.ListItemMeta>
                 </l.ListItem>
             )}

@@ -156,3 +156,7 @@ article.text p {
 .flexible {
   margin: 1rem;
 }
+
+.leftpad {
+  margin-left: 2rem;
+}
