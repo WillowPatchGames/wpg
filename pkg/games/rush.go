@@ -161,7 +161,7 @@ func (rs *RushState) HasValidWords(player int) error {
 		return errors.New("game hasn't started yet")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -179,7 +179,7 @@ func (rs *RushState) IsValidBoard(player int) error {
 		return errors.New("game hasn't started yet")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -204,7 +204,7 @@ func (rs *RushState) IsValidBoard(player int) error {
 }
 
 func (rs *RushState) drawTiles(player int, count int) error {
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -231,7 +231,7 @@ func (rs *RushState) PlayTile(player int, tileID int, x int, y int) error {
 		return errors.New("game has already finished")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -267,7 +267,7 @@ func (rs *RushState) MoveTile(player int, tileID int, x int, y int) error {
 		return errors.New("game has already finished")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -324,7 +324,7 @@ func (rs *RushState) SwapTile(player int, first int, second int) error {
 		return errors.New("game has already finished")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -358,7 +358,7 @@ func (rs *RushState) RecallTile(player int, tileID int) error {
 		return errors.New("game has already finished")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -383,7 +383,7 @@ func (rs *RushState) Discard(player int, tileID int) error {
 		return errors.New("game has already finished")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
@@ -428,7 +428,7 @@ func (rs *RushState) Draw(player int, lastID int) error {
 		return errors.New("game has already finished")
 	}
 
-	if player >= len(rs.Players) {
+	if player < 0 || player >= len(rs.Players) {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 

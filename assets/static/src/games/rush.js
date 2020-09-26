@@ -292,19 +292,22 @@ class RushData {
   // Deserialize RushData we got from the server.
   static deserialize(obj) {
     return new RushData({
-      grid: LetterGrid.deserialize(obj.board),
-      bank: LetterBank.deserialize(obj.hand),
+      grid: obj.board ? LetterGrid.deserialize(obj.board) : new LetterGrid(),
+      bank: obj.hand ? LetterBank.deserialize(obj.hand) : new LetterBank(),
     });
   }
 }
 
 class RushGame {
-  constructor(game) {
+  constructor(game, readonly) {
     this.game = game;
-    this.controller = new RushController(game);
+    if (readonly === undefined || readonly === null || readonly === false) {
+      this.controller = new RushController(game);
+      this.controller.onMessage("state", (data) => { this.handleNewState(data) });
+    }
+
     this.data = new RushData(game);
 
-    this.controller.onMessage("state", (data) => { this.handleNewState(data) });
     this.started = false;
 
     this.onChange = () => {};
@@ -403,5 +406,6 @@ class RushGame {
 }
 
 export {
+  RushData,
   RushGame,
 };

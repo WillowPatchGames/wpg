@@ -28,7 +28,7 @@ import { TextField } from '@rmwc/textfield';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { JSWordManager } from '../game.js';
 import { Game } from '../component.js';
-import { RushGame } from '../games/rush.js';
+import { RushGame, RushData } from '../games/rush.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
@@ -78,9 +78,7 @@ class RushGamePage extends React.Component {
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
 
-    console.log("RGP", this.game, "vs", this.props.game);
-
-    let user = usr => usr === this.props.user.id ? "You" : "Someone ";
+    let userify = usr => usr === this.props.user.id ? "You" : "Someone ";
     if (this.game) {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
@@ -95,11 +93,11 @@ class RushGamePage extends React.Component {
         },
         "draw": data => {
           console.log("draw", data);
-          data.message = user(data.drawer) + " drew!";
+          data.message = userify(data.drawer) + " drew!";
           notify(this.props.snackbar, data.message, data.type);
         },
         "finished": data => {
-          data.message = user(data.user) + " won!";
+          data.message = userify(data.user) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.user;
           this.props.setPage('afterparty');
@@ -133,7 +131,6 @@ class PreGamePage extends React.Component {
     this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
-    console.log("PGP", this.game, "vs", this.props.game);
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
@@ -143,48 +140,48 @@ class PreGamePage extends React.Component {
 class AfterPartyPage extends React.Component {
   constructor(props) {
     super(props);
-    this.game = this.props.game;
+    this.game = loadGame(this.props.game);
     this.state = {
       snapshots: null,
       winner: this.game.winner,
     };
     var wordmanager = new JSWordManager();
     wordmanager.fromURL(process.env.PUBLIC_URL + "csw15.txt");
-    /*
-    // XXX - Make this work again
+
     this.unmount = addEv(this.game, {
-      "snapshots": async (data) => {
-        if (data.snapshots) {
-          data.snapshots = data.snapshots.filter(({ snapshot }) => snapshot);
-          for (let snapshot of data.snapshots) {
-            snapshot.game = new GameInterface(
-              Object.assign(GameData.deserialize(snapshot.snapshot), {words: wordmanager})
-            );
-            snapshot.game.grid.padding(0);
-          }
-          console.log(data.snapshots);
-          await Promise.all(data.snapshots.map(async (snapshot) => {
-            snapshot.unwords = await snapshot.game.check();
-            console.log(snapshot);
-          }));
-          data.snapshots.sort((a,b) => (
-            (-(a.user.display === this.state.winner.display) - - (b.user.display === this.state.winner.display)) ||
-            (a.game.bank.length - b.game.bank.length) ||
-            (a.game.grid.components().length - b.game.grid.components().length) ||
-            (a.unwords.length - b.unwords.length)
-          ));
-          this.setState(state => Object.assign({}, state, { snapshots: data.snapshots }));
+      "game-state": async (data) => {
+        let snapshots = [];
+        for (let snapshot_index in data.player_data) {
+          let snapshot_data = data.player_data[snapshot_index];
+          let snapshot = {};
+          snapshot.user = await UserModel.FromId(data.player_map[snapshot_index]);
+          snapshot.interface = new RushGame(this.game, true);
+          snapshot.interface.data = RushData.deserialize(snapshot_data);
+          snapshot.interface.data.grid.padding(0);
+          snapshot.unwords = snapshot.unwords ? snapshot.unwords : [];
+          snapshots.push(snapshot);
         }
+
+        console.log(snapshots);
+
+        snapshots.sort((a,b) => (
+          (-(a.user.display === data.winner.display) - - (b.user.display === data.winner.display)) ||
+          (a.interface.data.bank.length - b.interface.data.bank.length) ||
+          (a.interface.data.grid.components().length - b.interface.data.grid.components().length) ||
+          (a.unwords.length - b.unwords.length)
+        ));
+
+        this.setState(state => Object.assign({}, state, { snapshots: snapshots, winner: data.winner }));
       },
       "": data => {
         if (data.message) {
           notify(this.props.snackbar, data.message, data.type);
         }
       },
-    });*/
+    });
   }
   componentDidMount() {
-    this.game.ws.send(JSON.stringify({"type": "peek"}));
+    this.game.interface.controller.wsController.send({"message_type": "peek"});
   }
   componentWillUnmount() {
     this.props.setGame(null);
@@ -210,7 +207,7 @@ class AfterPartyPage extends React.Component {
           ? this.state.snapshots.map(snapshot =>
               <li key={ snapshot.user.display }>
                 <h1>{ snapshot.user.display }</h1>
-                <Game data={ snapshot.game } readOnly={ true } />
+                <Game interface={ snapshot.interface } readOnly={ true } />
               </li>
             )
           : <p>Loading results …</p>
@@ -229,7 +226,8 @@ class PreGameUserPage extends React.Component {
     }
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
-    console.log("PGUP", this.game, "vs", this.props.game);
+
+    let userify = usr => usr === this.props.user.id ? "You" : "Someone ";
     this.unmount = addEv(this.game, {
       "admitted": data => {
         this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
@@ -243,6 +241,12 @@ class PreGameUserPage extends React.Component {
         data.message = "Game starting in " + data.value;
         notify(this.props.snackbar, data.message, data.type);
         this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
+      },
+      "finished": data => {
+        data.message = userify(data.user) + " won!";
+        notify(this.props.snackbar, data.message, data.type);
+        this.game.winner = data.user;
+        this.props.setPage('afterparty');
       },
       "": data => {
         if (data.message) {
@@ -278,8 +282,8 @@ class PreGameAdminPage extends React.Component {
 
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
-    console.log("PGAP", this.game, "vs", this.props.game);
 
+    let userify = usr => usr === this.props.user.id ? "You" : "Someone ";
     this.unmount = addEv(this.game, {
       "notify-join": data => {
         var userPromise = UserModel.FromId(data.joined);
@@ -297,6 +301,12 @@ class PreGameAdminPage extends React.Component {
         data.message = "Game starting in " + data.value;
         notify(this.props.snackbar, data.message, data.type);
         this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
+      },
+      "finished": data => {
+        data.message = userify(data.user) + " won!";
+        notify(this.props.snackbar, data.message, data.type);
+        this.game.winner = data.user;
+        this.props.setPage('afterparty');
       },
       "": data => {
         if (data.message) {

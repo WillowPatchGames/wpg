@@ -183,6 +183,23 @@ func (lg *LetterGrid) VisitAllWordsOnBoard(visitor func(lg *LetterGrid, start Le
 	return nil
 }
 
+func (lg *LetterGrid) FindUnwords() []string {
+	var ret []string
+
+	err := lg.VisitAllWordsOnBoard(func(lg *LetterGrid, start LetterPos, end LetterPos, word string) error {
+		if !IsWord(word) {
+			ret = append(ret, word)
+		}
+
+		return nil
+	})
+	if err != nil {
+		panic("Got unexpected error from VisitAllWordsOnBoard: " + err.Error())
+	}
+
+	return ret
+}
+
 func (lg *LetterGrid) IsAllConnected() bool {
 	if len(lg.Tiles) <= 1 {
 		// Trivially connected board is the empty board.

@@ -94,6 +94,7 @@ class Game extends React.Component {
       if (!this.state.presentation.readOnly) {
         let release = [];
         release.push(listenIn("keydown", (e) => {
+          console.log("keydown selection:", this.state.presentation.selected, this.state.presentation.last_selected);
           var handled = [" ", "Spacebar", "Backspace", "Del", "Delete"];
           handled.push(...["Up","Down","Left","Right"].flatMap(a => [a,"Arrow"+a]));
           if (handled.includes(e.key)) {
@@ -165,6 +166,7 @@ class Game extends React.Component {
           }
         }, { passive: false }));
         release.push(listenIn("keyup", (e) => {
+          console.log("keyup selection:", this.state.presentation.selected, this.state.presentation.last_selected);
           let key = e.key.toUpperCase();
           // Places we can select:
           // - matching letters in the bank
@@ -292,6 +294,7 @@ class Game extends React.Component {
     }
   }
   repad(state) {
+    console.log("repad start selection:", this.state.presentation.selected, this.state.presentation.last_selected);
     if (!state) state = this.state;
 
     let padding = [...this.state.presentation.padding];
@@ -331,6 +334,7 @@ class Game extends React.Component {
       state.presentation.last_selected[1] += adj[0];
       state.presentation.last_selected[2] += adj[1];
     }
+    console.log("repad end selection:", this.state.presentation.selected, this.state.presentation.last_selected);
     return state;
   }
 
@@ -390,6 +394,7 @@ class Game extends React.Component {
   handler(here) {
     if (this.state.presentation.readOnly) return null;
     return () => {
+      console.log("here vs dropped in handler: ", here, this.state.presentation.dropped);
       if (shallowEqual(here, this.state.presentation.dropped)) {
         this.setState(state => {
           state.presentation.dropped = null;
@@ -446,6 +451,7 @@ class Game extends React.Component {
       if (here) {
         state.presentation.last_selected = state.presentation.selected;
       }
+      console.log("select selection:", state.presentation.selected, state.presentation.last_selected);
       return state;
     });
   }
@@ -459,7 +465,7 @@ class Game extends React.Component {
   }
 
   discardArgs(here, there) {
-    if (here === "discard") {
+    if (here[0] === "discard") {
       return there;
     }
 
@@ -471,6 +477,7 @@ class Game extends React.Component {
       var letter = this.state.interface.data.get(here);
 
       this.setState((state) => {
+        state.presentation.last_selected = null;
         state.presentation.selected = null;
         if (dropped) state.presentation.dropped = here;
         state.presentation.discarding.push(letter);
@@ -565,10 +572,17 @@ class Game extends React.Component {
         state.presentation.dropped = here;
       }
 
-      if (here && this.state.interface.data.get(here)) {
-        var tile = this.state.interface.data.get(here);
-        this.state.interface.recall(tile);
+      var new_pos = null;
+
+      if (here && state.interface.data.get(here)) {
+        var tile = state.interface.data.get(here);
+        state.interface.recall(tile);
+        new_pos = state.interface.data.positionOf(tile);
+        console.log("Got new position:", new_pos);
       }
+
+      state.presentation.last_selected = new_pos;
+      state.presentation.selected = null;
 
       return state;
     });
@@ -605,12 +619,14 @@ class Game extends React.Component {
     this.setState(state => {
       state = Object.assign({}, state);
       if (dropped) {
-        state.presentation.dropped = pos;
+        state.presentation.dropped = state.interface.data.positionOf(tile);
       }
 
       state.interface.play(tile, pos);
 
+      state.presentation.last_selected = pos;
       state.presentation.selected = null;
+      console.log("play selection:", state.presentation.selected, state.presentation.last_selected);
 
       state = this.repad(state);
       return state;
@@ -633,26 +649,28 @@ class Game extends React.Component {
 
     if (here_tile !== null) {
       return {
+        here: here,
         tile: here_tile,
         pos: there,
       };
     }
 
     return {
+      here: there,
       tile: there_tile,
       pos: here,
     };
   }
 
-  async doMove(tile, pos, dropped) {
+  async doMove(here, tile, pos, dropped) {
     this.setState(state => {
       state = Object.assign({}, state);
       if (dropped) {
-        state.presentation.dropped = pos;
+        state.presentation.dropped = here;
       }
 
       state.interface.move(tile, pos);
-
+      state.presentation.last_selected = null;
       state.presentation.selected = null;
 
       state = this.repad(state);
@@ -689,7 +707,9 @@ class Game extends React.Component {
 
       state.interface.swap(first, second);
 
+      state.presentation.last_selected = state.presentation.selected;
       state.presentation.selected = selected;
+      console.log("swap selection:", state.presentation.selected, state.presentation.last_selected);
 
       state = this.repad(state);
       return state;
@@ -705,7 +725,7 @@ class Game extends React.Component {
       if (recall_pos[0] === "bank") {
         this.select(null);
         return;
-      } else if (!this.state.interface.data.get(here)) {
+      } else if (!this.state.interface.data.get(recall_pos)) {
         return;
       }
 
@@ -715,13 +735,13 @@ class Game extends React.Component {
       return this.doPlay(play_args.tile, play_args.pos, dropped);
     } else if (this.isMove(here, there)) {
       var move_args = this.moveArgs(here, there);
-      return this.doMove(move_args.tile, move_args.pos, dropped);
+      return this.doMove(move_args.here, move_args.tile, move_args.pos, dropped);
     } else if (this.isSwap(here, there)) {
       var swap_args = this.swapArgs(here, there);
       return this.doSwap(here, swap_args.first, swap_args.second, dropped, swap_args.selected);
     }
 
-    console.log("Unknown interaction type!!!");
+    console.log("Unknown interaction type!!!", );
 
 
     /*
@@ -739,6 +759,7 @@ class Game extends React.Component {
   }
 
   render() {
+    console.log("render selection:", this.state.presentation.selected, this.state.presentation.last_selected);
     let grid = e('div', {key: "grid", className: "board", ref: this.board}, e('table',
       {
         className: "word grid" + (this.state.presentation.readOnly ? " read-only" : ""),

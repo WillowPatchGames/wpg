@@ -82,7 +82,7 @@ class LetterBank extends Array {
 
     for (let index in this) {
       if (def(this[index]) && this[index].id === letter) {
-        return [index];
+        return [+index];
       }
     }
 
@@ -348,7 +348,7 @@ class LetterGrid {
     for (let row in this.data) {
       var result = this.data[row].findLetter(letter);
       if (result !== null) {
-        return ["grid", row, ...result];
+        return ["grid", +row, ...result];
       }
     }
 

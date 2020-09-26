@@ -16,7 +16,7 @@ func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player
 	cnaj.MessageType = "notify-join"
 	cnaj.MessageID = player.OutboundID
 	player.OutboundID++
-	cnaj.Timestamp = uint64(time.Now().Unix())
+	cnaj.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	cnaj.Joined = joined
 }
@@ -32,7 +32,7 @@ func (cjna *ControllerNotifyAdmitted) LoadFromController(data *GameData, player 
 	cjna.MessageType = "admitted"
 	cjna.MessageID = player.OutboundID
 	player.OutboundID++
-	cjna.Timestamp = uint64(time.Now().Unix())
+	cjna.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 }
 
 type ControllerNotifyError struct {
@@ -47,7 +47,7 @@ func (cne *ControllerNotifyError) LoadFromController(data *GameData, player *Pla
 	cne.MessageType = "error"
 	cne.MessageID = player.OutboundID
 	player.OutboundID++
-	cne.Timestamp = uint64(time.Now().Unix())
+	cne.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	cne.Error = err.Error()
 }
@@ -63,7 +63,7 @@ func (cns *ControllerNotifyStarted) LoadFromController(data *GameData, player *P
 	cns.MessageType = "started"
 	cns.MessageID = player.OutboundID
 	player.OutboundID++
-	cns.Timestamp = uint64(time.Now().Unix())
+	cns.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 }
 
 type ControllerCountdown struct {
@@ -78,6 +78,6 @@ func (cc *ControllerCountdown) LoadFromController(data *GameData, player *Player
 	cc.MessageType = "countdown"
 	cc.MessageID = player.OutboundID
 	player.OutboundID++
-	cc.Timestamp = uint64(time.Now().Unix())
+	cc.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 	cc.Value = data.Countdown
 }
