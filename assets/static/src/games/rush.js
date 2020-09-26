@@ -250,7 +250,8 @@ class RushData {
   }
 
   recall(tile) {
-    this.grid.delete(tile);
+    var here = this.grid.findLetter(tile);
+    this.grid.delete(...here.slice(1));
     this.draw(tile);
   }
 

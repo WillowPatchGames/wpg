@@ -64,7 +64,7 @@ class LetterBank extends Array {
   delete(here) {
     if (here instanceof LetterTile) {
       var location = this.findLetter(here);
-      return this.delete(location);
+      return this.delete(...location);
     }
 
     if (!this.get(here)) return;
@@ -398,12 +398,45 @@ class LetterGrid {
   }
 
   static deserialize(grid) {
+    var xlocs = [];
+    var ylocs = [];
+    for (let key in grid.positions) {
+      let pos = grid.positions[key];
+      xlocs.push(pos.x);
+      ylocs.push(pos.y);
+    }
+
+    var adj = [
+      -Math.min(...xlocs),
+      -Math.min(...ylocs)
+    ];
+
+    if (!isFinite(adj[0])) adj[0] = 0;
+    if (!isFinite(adj[1])) adj[1] = 0;
+
+    var jda = [
+      Math.max(...xlocs),
+      Math.max(...ylocs)
+    ];
+
+    if (!isFinite(jda[0])) jda[0] = 0;
+    if (!isFinite(jda[1])) jda[1] = 0;
+
     var ret = new LetterGrid();
 
+    ret.rows = jda[0] + adj[0];
+    ret.cols = jda[1] + adj[1];
+
+    console.log("Setting: ", ret.rows, ret.cols, adj, jda);
+
     for (let tile of grid.tiles) {
-      var pos = grid.positions[tile.id];
-      ret.set(pos.x, pos.y, new LetterTile(tile));
+      let pos = grid.positions[tile.id];
+      ret.set(pos.x + adj[0], pos.y + adj[1], new LetterTile(tile));
     }
+
+    ret.drift = [-adj[0], -adj[1]];
+
+    console.log(ret);
 
     return ret;
   }
