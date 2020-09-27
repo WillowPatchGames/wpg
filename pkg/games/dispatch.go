@@ -123,8 +123,10 @@ func (c *Controller) handleCountdown(game *GameData) error {
 		}
 
 		var state *RushState = game.State.(*RushState)
-		return c.doRushStart(game, state)
-		// Must return!
+		if !state.Started {
+			return c.doRushStart(game, state)
+			// Must return!
+		}
 	}
 
 	// Ensure the previous timer has elapsed, or wait until it does.

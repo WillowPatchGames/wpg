@@ -120,6 +120,11 @@ func (rs *RushState) Init(cfg RushConfig) error {
 func (rs *RushState) Start(players int) error {
 	var err error
 
+	if rs.Started {
+		log.Println("Error! Double start occurred...", err)
+		return errors.New("double start occurred")
+	}
+
 	rs.Config.NumPlayers = players
 
 	err = rs.Config.Validate()

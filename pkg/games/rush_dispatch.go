@@ -306,12 +306,15 @@ func (c *Controller) doRushStart(game *GameData, state *RushState) error {
 			var response RushStateNotification
 			response.LoadFromGame(state, player_index)
 			response.LoadFromController(game, indexed_player)
-
-			// XXX: Handle 3 2 1 countdown.
 			c.undispatch(game, indexed_player, response.MessageID, 0, response)
 
 			player_index++
 		}
+
+		// Give everyone the initial synopsis.
+		var synopsis RushSynopsisNotification
+		synopsis.LoadData(game, state, indexed_player)
+		c.undispatch(game, indexed_player, synopsis.MessageID, 0, synopsis)
 	}
 
 	return nil
