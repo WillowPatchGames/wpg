@@ -92,9 +92,11 @@ var scrabbleFrequencies = map[string]float64{
 }
 
 var frequencyMap []map[string]float64 = []map[string]float64{
+	nil,
 	standardFrequencies,
 	bananagramsFrequencies,
 	scrabbleFrequencies,
+	nil,
 }
 
 type Frequency int
