@@ -72,6 +72,10 @@ func (handle *DeleteHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	if game.OwnerID != handle.user.ID {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
 		return hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusUnauthorized)
 	}
 

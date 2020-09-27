@@ -126,6 +126,10 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
 		log.Println("Getting user from database failed:", err)
 		return hwaterr.WrapError(err, http.StatusNotFound)
 	}
@@ -134,6 +138,10 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 	var auth models.AuthModel
 	err = auth.FromPassword(tx, user, handle.req.Password)
 	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
 		log.Println("Unable to authenticate user by password:", err)
 		return err
 	}

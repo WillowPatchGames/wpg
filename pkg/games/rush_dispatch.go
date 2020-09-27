@@ -48,6 +48,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 	}
 
 	var was_finished = state.Finished
+	var send_synopsis = false
 
 	switch header.MessageType {
 	case "start":
@@ -77,6 +78,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 				response.LoadFromController(game, player)
 
 				c.undispatch(game, player, response.MessageID, 0, response)
+
+				send_synopsis = true
 			}
 		} else if state.Finished {
 			var winner uint64 = 0
@@ -103,6 +106,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		err = state.PlayTile(player.Index, data.TileID, data.X, data.Y)
+		send_synopsis = err == nil
 	case "move":
 		var data RushMove
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -114,6 +118,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		err = state.MoveTile(player.Index, data.TileID, data.X, data.Y)
+		send_synopsis = err == nil
 	case "swap":
 		var data RushSwap
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -125,6 +130,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		err = state.SwapTile(player.Index, data.FirstID, data.SecondID)
+		send_synopsis = err == nil
 	case "recall":
 		var data RushRecall
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -136,6 +142,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		err = state.RecallTile(player.Index, data.TileID)
+		send_synopsis = err == nil
 	case "discard":
 		var data RushDiscard
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -157,6 +164,8 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		response.ReplyTo = header.MessageID
 
 		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
+
+		send_synopsis = true
 	case "draw":
 		var data RushDraw
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -192,6 +201,15 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 					c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
 				}
 			}
+
+			send_synopsis = true
+		}
+
+		// If we don't clear err now (when state is Finished), we end up sending
+		// the user back an error message rather than letting them see the message
+		// that they won.
+		if state.Finished && err.Error() == RushYouWon {
+			err = nil
 		}
 	case "check":
 		err = state.IsValidBoard(player.Index)
@@ -226,16 +244,31 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		response.LoadFromController(game, player)
 		response.ReplyTo = header.MessageID
 		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
+
+		// Only send this user a synopsis.
+		var synopsis RushSynopsisNotification
+		synopsis.LoadData(game, state, player)
+		c.undispatch(game, player, synopsis.MessageID, 0, synopsis)
 	default:
 		return errors.New("unknown message_type issued to rush game: " + header.MessageType)
 	}
 
+	// If this game ended during this dispatch call, notify everyone.
 	if !was_finished && state.Finished {
 		// Notify everyone that the game ended and that this active player won.
 		for _, indexed_player := range game.ToPlayer {
 			var finished RushFinishedNotification
 			finished.LoadFromController(game, indexed_player, player.UID)
 			c.undispatch(game, indexed_player, finished.MessageID, 0, finished)
+		}
+	}
+
+	// If someone changed something, notify everyone.
+	if send_synopsis {
+		for _, indexed_player := range game.ToPlayer {
+			var synopsis RushSynopsisNotification
+			synopsis.LoadData(game, state, indexed_player)
+			c.undispatch(game, indexed_player, synopsis.MessageID, 0, synopsis)
 		}
 	}
 

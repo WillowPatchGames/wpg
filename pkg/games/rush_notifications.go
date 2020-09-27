@@ -54,6 +54,42 @@ func (rsn *RushStateNotification) LoadFromController(data *GameData, player *Pla
 	rsn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 }
 
+type RushPlayerSynopsis struct {
+	UID     uint64 `json:"user"`
+	Playing bool   `json:"playing"`
+	OnBoard int    `json:"on_board"`
+	InHand  int    `json:"in_hand"`
+}
+
+type RushSynopsisNotification struct {
+	MessageHeader
+
+	Players []RushPlayerSynopsis `json:"players"`
+}
+
+func (rsn *RushSynopsisNotification) LoadData(data *GameData, state *RushState, player *PlayerData) {
+	rsn.Mode = data.Mode.String()
+	rsn.ID = data.GID
+	rsn.Player = player.UID
+	rsn.MessageType = "synopsis"
+	rsn.MessageID = player.OutboundID
+	player.OutboundID++
+	rsn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+
+	for _, indexed_player := range data.ToPlayer {
+		var synopsis RushPlayerSynopsis
+		synopsis.UID = indexed_player.UID
+		synopsis.Playing = indexed_player.Playing
+
+		if indexed_player.Index >= 0 {
+			synopsis.OnBoard = len(state.Players[indexed_player.Index].Board.Tiles)
+			synopsis.InHand = len(state.Players[indexed_player.Index].Hand)
+		}
+
+		rsn.Players = append(rsn.Players, synopsis)
+	}
+}
+
 type RushDrawNotification struct {
 	MessageHeader
 

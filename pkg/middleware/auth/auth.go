@@ -55,17 +55,17 @@ func (a *authMW) GetObjectPointer() interface{} {
 }
 
 func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Authed: Error beginning transaction:", err)
-		return err
-	}
-
 	var token string = a.next.GetToken()
 
 	var user *models.UserModel = new(models.UserModel)
 
 	if token != "" {
+		tx, err := database.GetTransaction()
+		if err != nil {
+			log.Println("Authed: Error beginning transaction:", err)
+			return err
+		}
+
 		err = user.FromAPIToken(tx, token)
 		if err != nil {
 			user = nil

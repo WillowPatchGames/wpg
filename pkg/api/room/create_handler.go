@@ -92,6 +92,10 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	var user models.UserModel
 	err = user.FromID(tx, handle.req.OwnerID)
 	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
 		return err
 	}
 

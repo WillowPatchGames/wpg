@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+const RushYouWon string = "game is over; you won"
+
 type RushPlayer struct {
 	Board LetterGrid   `json:"board"`
 	Hand  []LetterTile `json:"hand"`
@@ -457,7 +459,7 @@ func (rs *RushState) Draw(player int, lastID int) error {
 	if tilesNeeded >= len(rs.Tiles) {
 		rs.Finished = true
 		rs.Winner = player
-		return errors.New("game is over; you won")
+		return errors.New(RushYouWon)
 	}
 
 	// Draw for all players
