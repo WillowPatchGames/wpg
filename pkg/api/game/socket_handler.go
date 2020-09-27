@@ -54,6 +54,10 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Verify user
 	if handle.req.UserID != handle.user.ID {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
 		err = hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusForbidden)
 		log.Println(err)
 		hwaterr.WriteError(w, r, err)
@@ -64,6 +68,10 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var gamedb models.GameModel
 	err = gamedb.FromID(tx, handle.req.GameID)
 	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
 		log.Println(err)
 		hwaterr.WriteError(w, r, err)
 		return
@@ -72,6 +80,10 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Initialize the Websocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
 		log.Println(err)
 		hwaterr.WriteError(w, r, err)
 		return

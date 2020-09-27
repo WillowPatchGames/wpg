@@ -154,6 +154,11 @@ class AfterPartyPage extends React.Component {
 
     this.unmount = addEv(this.game, {
       "game-state": async (data) => {
+        var winner = null;
+        if (data.winner && data.winner !== 0) {
+          winner = await UserModel.FromId(data.winner);
+        }
+
         var snapshots = [];
         for (let snapshot_index in data.player_data) {
           let snapshot_data = data.player_data[snapshot_index];
@@ -166,17 +171,16 @@ class AfterPartyPage extends React.Component {
           snapshots.push(snapshot);
         }
 
+        if (!data.winner) {
+          data.winner = 0;
+        }
+
         snapshots.sort((a,b) => (
           (-(a.user.display === data.winner.display) - - (b.user.display === data.winner.display)) ||
           (a.interface.data.bank.length - b.interface.data.bank.length) ||
           (a.interface.data.grid.components().length - b.interface.data.grid.components().length) ||
           (a.interface.data.unwords.length - b.interface.data.unwords.length)
         ));
-
-        var winner = null;
-        if (data.winner && data.winner !== 0) {
-          winner = await UserModel.FromId(data.winner);
-        }
 
         // HACK: When refreshData() is called from the button, we don't redraw
         // the screen even though new data is sent. Use snapshots to send only

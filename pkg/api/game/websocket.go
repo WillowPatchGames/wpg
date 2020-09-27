@@ -46,6 +46,12 @@ const (
 
 	// Inbound messages channel buffer size
 	messageChannelSize = 32 * 512
+
+	// Timeout between database persistance operations
+	databasePersistDuration = 10 * time.Second
+
+	// Timeout between game save operations
+	gamePersistWaitDuration = 10 * time.Millisecond
 )
 
 // Client holds the underlying websocket connection and the
@@ -309,14 +315,10 @@ func (hub *Hub) ensureGameExists(gameid uint64) error {
 		return err
 	}
 
-	var config games.RushConfig
-	err = gamedb.GetConfig(tx, &config)
-	if err != nil {
-		log.Println("Unable to load game config", err)
-		return err
-	}
+	// Save it to let others re-use the object.
+	hub.dbgames[GameID(gameid)] = &gamedb
 
-	err = hub.controller.AddGame("rush", gameid, gamedb.OwnerID, &config)
+	err = hub.controller.LoadGame(&gamedb, tx)
 	if err != nil {
 		log.Println("Unable to add game to controller:", err)
 		return err
@@ -393,19 +395,48 @@ func (hub *Hub) registerClient(client *Client) {
 }
 
 func (hub *Hub) deleteGame(gameID GameID) {
-	/*
-		// XXX -- Figure out when to actually delete games! Persist them to the
-		// database first. :-)
+	tx, err := database.GetTransaction()
+	if err != nil {
+		log.Println("Unable to open database transaction:", err)
+		return
+	}
 
-		delete(hub.connections, gameID)
-		delete(hub.dbgames, gameID)
-		delete(hub.process, gameID)
-
-		err := hub.controller.RemoveGame(uint64(gameID))
+	if model, ok := hub.dbgames[gameID]; !ok || model == nil {
+		var gamedb models.GameModel
+		err = gamedb.FromID(tx, uint64(gameID))
 		if err != nil {
-			log.Println("Got unexpected error while removing game:", err)
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Println("Unable to rollback:", rollbackErr)
+			}
+
+			log.Println("Unable to load game (", gameID, "):", err)
+			return
 		}
-	*/
+
+		hub.dbgames[gameID] = &gamedb
+	}
+
+	if err := hub.controller.PersistGame(hub.dbgames[gameID], tx); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Println("Unable to rollback:", rollbackErr)
+		}
+
+		log.Println(err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Println(err)
+		return
+	}
+
+	delete(hub.connections, gameID)
+	delete(hub.dbgames, gameID)
+	delete(hub.process, gameID)
+
+	if err := hub.controller.RemoveGame(uint64(gameID)); err != nil {
+		log.Println("Got unexpected error while removing game:", err)
+	}
 }
 
 func (hub *Hub) deleteClient(client *Client) {
@@ -454,12 +485,66 @@ func (hub *Hub) deleteClient(client *Client) {
 // Run only processes register/unregister messages. A separate goroutine
 // running ProcessPlayerMessages handles messages for specific games.
 func (hub *Hub) Run() {
+	go hub.PersistGames()
+
 	for {
 		select {
 		case new_client := <-hub.register:
 			hub.registerClient(new_client)
 		case existing_client := <-hub.unregister:
 			hub.deleteClient(existing_client)
+		}
+	}
+}
+
+func (hub *Hub) PersistGames() {
+	for {
+		var between_runs *time.Timer = time.NewTimer(databasePersistDuration)
+		<-between_runs.C
+
+		for gameid := range hub.controller.ToGame {
+			var between_games *time.Timer = time.NewTimer(gamePersistWaitDuration)
+			<-between_games.C
+
+			if !hub.controller.GameExists(gameid) {
+				// Skip this game for now.
+				continue
+			}
+
+			tx, err := database.GetTransaction()
+			if err != nil {
+				log.Println("Unable to open database transaction:", err)
+				break
+			}
+
+			if model, ok := hub.dbgames[GameID(gameid)]; !ok || model == nil {
+				var gamedb models.GameModel
+				err = gamedb.FromID(tx, gameid)
+				if err != nil {
+					if rollbackErr := tx.Rollback(); rollbackErr != nil {
+						log.Println("Unable to rollback:", rollbackErr)
+					}
+
+					log.Println("Unable to load game (", gameid, "):", err)
+					break
+				}
+
+				hub.dbgames[GameID(gameid)] = &gamedb
+			}
+
+			if err := hub.controller.PersistGame(hub.dbgames[GameID(gameid)], tx); err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					log.Println("Unable to rollback:", rollbackErr)
+				}
+
+				log.Println(err)
+				continue
+			}
+
+			if err := tx.Commit(); err != nil {
+				log.Println(err)
+				continue
+			}
 		}
 	}
 }

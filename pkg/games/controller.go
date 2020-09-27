@@ -1,12 +1,15 @@
 package games
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
 	"strconv"
 	"sync"
 	"time"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 )
 
 const (
@@ -135,12 +138,57 @@ func (c *Controller) GameExists(gid uint64) bool {
 	return ok
 }
 
-// Add a new game to a controller. Note that, while configuration information
-// is populated, the game isn't yet started.
-func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config interface{}) error {
+func (c *Controller) LoadGame(gamedb *models.GameModel, tx *sql.Tx) error {
+	if gamedb == nil {
+		return errors.New("got unexpectedly null database when attempting to load game into controller")
+	}
+
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
+	var data GameData
+	data.State = new(RushState)
+
+	if err := gamedb.GetState(tx, &data); err != nil {
+		return err
+	}
+
+	if data.GID != gamedb.ID {
+		// Assume this game hasn't yet been initialized. Create a new game and then
+		// persist it back to the database.
+		var config RushConfig
+		if err := gamedb.GetConfig(tx, &config); err != nil {
+			return err
+		}
+
+		// Add and initialize a new game object.
+		if err := c.addGame(gamedb.Style, gamedb.ID, gamedb.OwnerID, &config); err != nil {
+			return err
+		}
+	} else {
+		// Otherwise, update our copy of the game data with missing fields and
+		// then add it to the controller.
+		data.CountdownTimer = nil
+		for _, indexed_player := range data.ToPlayer {
+			indexed_player.Notifications = make(chan interface{}, 64)
+		}
+
+		c.ToGame[gamedb.ID] = &data
+	}
+
+	var state *RushState = c.ToGame[gamedb.ID].State.(*RushState)
+	if state != nil {
+		if err := state.ReInit(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Add a new game to a controller. Note that, while configuration information
+// is populated, the game isn't yet started.
+func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config interface{}) error {
 	// If the game exists, throw an error.
 	if c.GameExists(gid) {
 		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") already exists in controller")
@@ -174,6 +222,43 @@ func (c *Controller) AddGame(modeRepr string, gid uint64, owner uint64, config i
 		make(map[uint64]*PlayerData),
 		0,
 		nil,
+	}
+
+	return nil
+}
+
+func (c *Controller) PersistGame(gamedb *models.GameModel, tx *sql.Tx) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if !c.GameExists(gamedb.ID) {
+		return errors.New("game with specified id (" + strconv.FormatUint(gamedb.ID, 10) + ") doesn't exist in controller")
+	}
+
+	var game *GameData = c.ToGame[gamedb.ID]
+	if game.State != nil {
+		var state *RushState = game.State.(*RushState)
+		var config = state.Config
+
+		if err := gamedb.SetConfig(tx, &config); err != nil {
+			return err
+		}
+
+		if !state.Started {
+			gamedb.Lifecycle = "pending"
+		} else if state.Started && !state.Finished {
+			gamedb.Lifecycle = "playing"
+		} else {
+			gamedb.Lifecycle = "finished"
+		}
+	}
+
+	if err := gamedb.SetState(tx, game); err != nil {
+		return err
+	}
+
+	if err := gamedb.Save(tx); err != nil {
+		return err
 	}
 
 	return nil

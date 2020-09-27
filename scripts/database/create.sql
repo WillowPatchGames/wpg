@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS metadata (
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (8);
+INSERT INTO metadata (version) VALUES (9);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
@@ -48,23 +48,6 @@ CREATE TABLE rooms (
   UNIQUE(join_code)
 );
 
-CREATE TYPE room_member_type AS ENUM ('pending', 'spectator', 'admin', 'player');
-
-CREATE TABLE room_members (
-  id          BIGSERIAL PRIMARY KEY,
-  room_id     BIGINT,
-  user_id     BIGINT,
-  class       room_member_type DEFAULT 'pending',
-  invite_code VARCHAR(1024),
-  config      TEXT DEFAULT '{}',
-  created     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-  FOREIGN KEY (room_id) REFERENCES rooms(id),
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  UNIQUE(room_id, user_id),
-  UNIQUE(invite_code)
-);
-
 CREATE TYPE game_mode AS ENUM ('rush');
 CREATE TYPE game_lifecycle AS ENUM ('pending', 'playing', 'finished');
 
@@ -85,23 +68,6 @@ CREATE TABLE games (
   UNIQUE(join_code)
 );
 
-CREATE TYPE game_player_type AS ENUM ('pending', 'spectator', 'player');
-
-CREATE TABLE game_players (
-  id          BIGSERIAL PRIMARY KEY,
-  game_id     BIGINT,
-  user_id     BIGINT,
-  class       game_player_type DEFAULT 'pending',
-  invite_code VARCHAR(1024),
-  state       TEXT DEFAULT '{}',
-  created   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-  FOREIGN KEY (game_id) REFERENCES games(id),
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  UNIQUE(game_id, user_id),
-  UNIQUE(invite_code)
-);
-
 CREATE USER wpg WITH PASSWORD 'CHANGEME';
 GRANT ALL PRIVILEGES ON DATABASE wpgdb TO wpg;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO wpg;
@@ -109,6 +75,4 @@ ALTER TABLE metadata OWNER TO wpg;
 ALTER TABLE users OWNER TO wpg;
 ALTER TABLE authentication OWNER TO wpg;
 ALTER TABLE rooms OWNER TO wpg;
-ALTER TABLE room_member OWNER TO wpg;
 ALTER TABLE games OWNER TO wpg;
-ALTER TABLE game_players OWNER TO wpg;

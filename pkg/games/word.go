@@ -30,6 +30,13 @@ func (lg *LetterGrid) Init() {
 	lg.AtPosition = make(map[LetterPos]int)
 }
 
+func (lg *LetterGrid) ReInit() {
+	if lg.ToTile == nil || lg.AtPosition == nil {
+		lg.inverseMap()
+		lg.letterMap()
+	}
+}
+
 func (lg *LetterGrid) FromJSON(data []byte) error {
 	err := json.Unmarshal(data, lg)
 	if err != nil {
@@ -58,6 +65,8 @@ func (lg *LetterGrid) letterMap() {
 }
 
 func (lg *LetterGrid) AddTile(tile LetterTile, x int, y int) {
+	lg.ReInit()
+
 	var pos LetterPos = LetterPos{x, y}
 
 	lg.Tiles = append(lg.Tiles, tile)
@@ -67,6 +76,8 @@ func (lg *LetterGrid) AddTile(tile LetterTile, x int, y int) {
 }
 
 func (lg *LetterGrid) MoveTile(tileID int, x int, y int) {
+	lg.ReInit()
+
 	var oldPos LetterPos = lg.PositionsOf[tileID]
 	var newPos LetterPos = LetterPos{x, y}
 
@@ -79,6 +90,8 @@ func (lg *LetterGrid) MoveTile(tileID int, x int, y int) {
 }
 
 func (lg *LetterGrid) SwapTile(first int, second int) {
+	lg.ReInit()
+
 	var firstPos LetterPos = lg.PositionsOf[first]
 	var secondPos LetterPos = lg.PositionsOf[second]
 
@@ -90,6 +103,8 @@ func (lg *LetterGrid) SwapTile(first int, second int) {
 }
 
 func (lg *LetterGrid) RemoveTile(tileID int) {
+	lg.ReInit()
+
 	var tileIndex = -1
 	for index, tile := range lg.Tiles {
 		if tile.ID == tileID {
@@ -144,6 +159,8 @@ func (lg *LetterGrid) visitTopToBottom(start LetterPos, visitor func(lg *LetterG
 }
 
 func (lg *LetterGrid) VisitAllWordsOnBoard(visitor func(lg *LetterGrid, start LetterPos, end LetterPos, word string) error) error {
+	lg.ReInit()
+
 	// Words on a LetterGrid are formed either top->down or left->right. Visit
 	// all two-letter-or-more words in this order, once. To do so, we only visit
 	// when a particular location is the start of a word, and skip trying to find
@@ -201,6 +218,8 @@ func (lg *LetterGrid) FindUnwords() []string {
 }
 
 func (lg *LetterGrid) IsAllConnected() bool {
+	lg.ReInit()
+
 	if len(lg.Tiles) <= 1 {
 		// Trivially connected board is the empty board.
 		return true

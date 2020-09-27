@@ -156,6 +156,15 @@ func (rs *RushState) Start(players int) error {
 	return nil
 }
 
+func (rs *RushState) ReInit() error {
+	for _, player := range rs.Players {
+		player.NewTiles = make([]LetterTile, 0)
+		player.Board.ReInit()
+	}
+
+	return nil
+}
+
 func (rs *RushState) HasValidWords(player int) error {
 	if !rs.Started {
 		return errors.New("game hasn't started yet")
