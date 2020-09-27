@@ -88,6 +88,7 @@ class UserModel {
       ret.authed = true;
       ret.token = token;
     }
+
     return ret;
   }
 

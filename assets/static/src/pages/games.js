@@ -1,18 +1,20 @@
+// Library imports
 import React from 'react';
 
-import '../App.css';
-import '@rmwc/icon/styles';
+import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/checkbox/styles';
 import '@rmwc/dialog/styles';
 import '@rmwc/grid/styles';
+import '@rmwc/icon/styles';
 import '@rmwc/list/styles';
 import '@rmwc/select/styles';
 import '@rmwc/switch/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 
+import { Avatar } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
@@ -25,10 +27,12 @@ import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
 // Application imports
+import '../App.css';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { Game } from '../component.js';
 import { RushGame, RushData } from '../games/rush.js';
 import { UserCache } from '../utils/cache.js';
+import BlankProfile from '../images/blank-profile.png';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
@@ -81,10 +85,116 @@ function killable(func, interval) {
   return killer;
 }
 
+class RushGameSynopsis extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      players: null
+    }
+
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+
+    if (this.game) {
+      this.state.interface = this.game.interface;
+      this.unmount = addEv(this.game, {
+        "synopsis": async (data) => {
+          if (data && data.players) {
+            let players = {};
+            for (let player of data.players) {
+              var id = +player.user;
+              player.user = await UserCache.FromId(id);
+              player.user_id = id;
+
+              if (!player.user) {
+                player.user = {};
+                player.user.display = "unknown";
+                if (player.user_id === this.props.user) {
+                  player.user.display = "you";
+                }
+              }
+
+              players[+id] = player;
+            }
+
+            this.setState(state => Object.assign({}, state, { players }));
+          }
+        },
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
+  }
+
+  render() {
+    var player_view = [];
+    if (this.state.players) {
+      if (this.state.players[this.props.user.id]) {
+        var us = this.state.players[this.props.user.id];
+        player_view.push(
+          <div className="playerSummary">
+            <Avatar src={ BlankProfile } name="You" size="xlarge" />
+            {
+              us.playing
+              ?
+                <span className="playerSummaryInfo">
+                  <span className="playerSummaryInHand" title="Tiles in Hand">{ us.in_hand }</span>
+                  /
+                  <span className="playerSummaryOnBoard" title="Tiles on Board">{ us.on_board }</span>
+                </span>
+              :
+                <span className="playerSummaryInfo">Spectator</span>
+            }
+          </div>
+        );
+      }
+
+      for (let player_id in this.state.players) {
+        if (+player_id === this.props.user.id) {
+          continue;
+        }
+
+        let them = this.state.players[player_id];
+        player_view.push(
+          <div className="playerSummary">
+            <Avatar src={ BlankProfile } name={ them.user.display } size="large" />
+            {
+              them.playing
+              ?
+                <span className="playerSummaryInfo">
+                  <span className="playerSummaryInHand" title="Tiles in Hand">{ them.in_hand }</span>
+                  /
+                  <span className="playerSummaryOnBoard" title="Tiles on Board">{ them.on_board }</span>
+                </span>
+              :
+                <span className="playerSummaryInfo">Spectator</span>
+            }
+          </div>
+        );
+      }
+    }
+
+    return (
+      <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+        <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+          <h1 className="gameMode text-left">Rush!</h1>
+          <div className="text-left">
+            { player_view }
+          </div>
+        </c.Card>
+      </div>
+    );
+  }
+}
+
 class RushGamePage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
 
@@ -129,7 +239,7 @@ class RushGamePage extends React.Component {
   render() {
     return (
       <div>
-        <h1>Rush! game</h1>
+        <RushGameSynopsis {...this.props} />
         <Game interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
     );
@@ -244,33 +354,36 @@ class AfterPartyPage extends React.Component {
   }
   render() {
     return (
-      <div>
-        { this.state.finished && this.state.winner
-        ? <h1>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
-        : <h1>Please wait while the game finishes...</h1>
-        }
-        { this.state.finished
-          ? <h2>That was fun, wasn't it?</h2>
-          : <></>
-        }
-        {
-          this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
-        }
-        {
-          !this.state.finished ? <span className="leftpad"><Button onClick={ () => this.state.timeout.exec() } raised >Look again!</Button></span> : <></>
-        }
-        <ol className="results">
-          { this.state.snapshots
-          ? this.state.snapshots.map(snapshot =>
-              <li key={ snapshot.user.display }>
-                <h1>{ snapshot.user.display }</h1>
-                <Game interface={ snapshot.interface } readOnly={ true } />
-              </li>
-            )
-          : <p>{ this.state.message }</p>
+      <>
+        <RushGameSynopsis {...this.props} />
+        <div>
+          { this.state.finished && this.state.winner
+          ? <h1>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
+          : <h1>Please wait while the game finishes...</h1>
           }
-        </ol>
-      </div>
+          { this.state.finished
+            ? <h2>That was fun, wasn't it?</h2>
+            : <></>
+          }
+          {
+            this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+          }
+          {
+            !this.state.finished ? <span className="leftpad"><Button onClick={ () => this.state.timeout.exec() } raised >Look again!</Button></span> : <></>
+          }
+          <ol className="results">
+            { this.state.snapshots
+            ? this.state.snapshots.map(snapshot =>
+                <li key={ snapshot.user.display }>
+                  <h1>{ snapshot.user.display }</h1>
+                  <Game interface={ snapshot.interface } readOnly={ true } />
+                </li>
+              )
+            : <p>{ this.state.message }</p>
+            }
+          </ol>
+        </div>
+      </>
     );
   }
 }

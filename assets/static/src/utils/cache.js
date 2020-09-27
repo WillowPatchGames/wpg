@@ -1,7 +1,7 @@
 import { UserModel } from '../models.js';
 
 function loaded(v) {
-  return v !== undefined && v !== null && !v.error;
+  return v !== undefined && v !== null && v.model && !v.model.error && v.model.display;
 }
 
 class UserCacheSingleton {
@@ -11,20 +11,16 @@ class UserCacheSingleton {
   }
 
   async FromId(id) {
-    if (!loaded(this.cache[id])) {
-      this.cache[id] = {};
-      this.cache[id].model = await UserModel.FromId(id);
-      this.cache[id].access = 0;
+    if (!loaded(this.cache[id]) || this.cache[id].access === this.access_threshhold) {
+      this.cache[id] = await {
+        model: await UserModel.FromId(id),
+        access: 0,
+      };
     }
 
     this.cache[id].access += 1;
-    if (this.cache[id].access === this.access_threshhold) {
-      // Refresh it for next time.
-      this.cache[id].model.refresh();
-    }
 
     return this.cache[id].model;
-
   }
 }
 

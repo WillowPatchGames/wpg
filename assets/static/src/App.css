@@ -160,3 +160,9 @@ article.text p {
 .leftpad {
   margin-left: 2rem;
 }
+
+.playerSummary {
+  display: inline;
+  width: 100px;
+  margin-right: 25px;
+}
