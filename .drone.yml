@@ -14,3 +14,19 @@ steps:
     - mkdir -p /tmp/cache/node_modules /tmp/cache/go
     - buildah bud --volume /tmp/cache/node_modules:/home/wpg/assets/static/node_modules:z --volume /tmp/cache/go:/root/go:z --volume /var/cache/dnf:/var/cache/dnf:z -f scripts/Dockerfiles/build -t wpg-build:latest .
     - podman run --volume /tmp/cache/node_modules:/home/wpg/assets/static/node_modules:z --volume /tmp/cache/go:/root/go:z --volume /var/cache/dnf:/var/cache/dnf:z --privileged -ti wpg-build:latest
+---
+kind: pipeline
+type: exec
+name: beta-deploy
+
+trigger:
+  branch:
+  - master
+
+steps:
+- name: Deploy beta.willowpatchgames.com
+  commands:
+  - bash scripts/deploy.sh
+  environment:
+    BETA_DEPLOY_SSH_KEY:
+      from_secret: drone-beta-deploy-ssh
