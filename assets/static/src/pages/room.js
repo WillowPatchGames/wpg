@@ -34,6 +34,10 @@ class RoomPage extends React.Component {
     this.state.timeout.exec();
   }
 
+  componentWillUnmount() {
+    this.state.timeout.kill();
+  }
+
   async checkForGames() {
     await this.props.room.update();
 

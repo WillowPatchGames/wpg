@@ -28,6 +28,7 @@ import { TextField } from '@rmwc/textfield';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { Game } from '../component.js';
 import { RushGame, RushData } from '../games/rush.js';
+import { UserCache } from '../utils/cache.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
@@ -165,14 +166,14 @@ class AfterPartyPage extends React.Component {
       "game-state": async (data) => {
         var winner = null;
         if (data.winner && data.winner !== 0) {
-          winner = await UserModel.FromId(data.winner);
+          winner = await UserCache.FromId(data.winner);
         }
 
         var snapshots = [];
         for (let snapshot_index in data.player_data) {
           let snapshot_data = data.player_data[snapshot_index];
           let snapshot = {};
-          snapshot.user = await UserModel.FromId(data.player_map[snapshot_index]);
+          snapshot.user = await UserCache.FromId(data.player_map[snapshot_index]);
           snapshot.interface = new RushGame(this.game, true);
           snapshot.interface.data = RushData.deserialize(snapshot_data);
           snapshot.interface.data.grid.padding(0);
@@ -224,9 +225,7 @@ class AfterPartyPage extends React.Component {
   }
   componentWillUnmount() {
     this.props.setGame(null);
-    if (this.state.timeout) {
-      clearTimeout(this.state.timeout);
-    }
+    this.state.timeout.kill();
     if (this.unmount) this.unmount();
   }
   refreshData() {
@@ -341,7 +340,7 @@ class PreGameAdminPage extends React.Component {
     let userify = usr => usr === this.props.user.id ? "You" : "Someone ";
     this.unmount = addEv(this.game, {
       "notify-join": data => {
-        var userPromise = UserModel.FromId(data.joined);
+        var userPromise = UserCache.FromId(data.joined);
         userPromise.then((user) => {
           var missing = true;
           for (let player of this.state.waitlist) {
