@@ -88,7 +88,7 @@ class RushGamePage extends React.Component {
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
 
-    let userify = usr => usr === this.props.user.id ? "You" : "Someone ";
+    let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     if (this.game) {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
@@ -105,14 +105,14 @@ class RushGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
           this.state.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
         },
-        "draw": data => {
-          data.message = userify(data.drawer) + " drew!";
+        "draw": async (data) => {
+          data.message = await personalize(data.drawer) + " drew!";
           notify(this.props.snackbar, data.message, data.type);
         },
-        "finished": data => {
-          data.message = userify(data.user) + " won!";
+        "finished": async (data) => {
+          data.message = await personalize(data.winner) + " won!";
           notify(this.props.snackbar, data.message, data.type);
-          this.game.winner = data.user;
+          this.game.winner = data.winner;
           this.props.setPage('afterparty');
         },
         "": data => {
@@ -200,7 +200,10 @@ class AfterPartyPage extends React.Component {
 
 
         if (data.finished) {
-          this.state.timeout.kill();
+          if (this.state.timeout) {
+            this.state.timeout.kill();
+          }
+
           this.setState(state => Object.assign({}, state, { timeout: null }));
         }
       },
@@ -225,7 +228,11 @@ class AfterPartyPage extends React.Component {
   }
   componentWillUnmount() {
     this.props.setGame(null);
-    this.state.timeout.kill();
+
+    if (this.state.timeout) {
+      this.state.timeout.kill();
+    }
+
     if (this.unmount) this.unmount();
   }
   refreshData() {
@@ -277,7 +284,7 @@ class PreGameUserPage extends React.Component {
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
 
-    let userify = usr => usr === this.props.user.id ? "You" : "Someone ";
+    let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     this.unmount = addEv(this.game, {
       "admitted": data => {
         this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
@@ -296,10 +303,10 @@ class PreGameUserPage extends React.Component {
         notify(this.props.snackbar, data.message, data.type);
         this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
       },
-      "finished": data => {
-        data.message = userify(data.user) + " won!";
+      "finished": async (data) => {
+        data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
-        this.game.winner = data.user;
+        this.game.winner = data.winner;
         this.props.setPage('afterparty');
       },
       "": data => {
@@ -337,7 +344,7 @@ class PreGameAdminPage extends React.Component {
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
 
-    let userify = usr => usr === this.props.user.id ? "You" : "Someone ";
+    let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     this.unmount = addEv(this.game, {
       "notify-join": data => {
         var userPromise = UserCache.FromId(data.joined);
@@ -371,10 +378,10 @@ class PreGameAdminPage extends React.Component {
         notify(this.props.snackbar, data.message, data.type);
         this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
       },
-      "finished": data => {
-        data.message = userify(data.user) + " won!";
+      "finished": async (data) => {
+        data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
-        this.game.winner = data.user;
+        this.game.winner = data.winner;
         this.props.setPage('afterparty');
       },
       "": data => {

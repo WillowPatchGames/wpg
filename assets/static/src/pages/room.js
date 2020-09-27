@@ -35,7 +35,9 @@ class RoomPage extends React.Component {
   }
 
   componentWillUnmount() {
-    this.state.timeout.kill();
+    if (this.state.timeout) {
+      this.state.timeout.kill();
+    }
   }
 
   async checkForGames() {
