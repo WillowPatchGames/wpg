@@ -3,7 +3,6 @@ package games
 import (
 	"encoding/json"
 	"errors"
-	"log"
 )
 
 type RushDraw struct {
@@ -66,7 +65,6 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 
 		return c.handleCountdown(game)
 	case "join":
-		log.Println("Handling join message -- ", state.Started, state.Finished)
 		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted
 			started.LoadFromController(game, player)
@@ -170,7 +168,6 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		if err = state.Draw(player.Index, data.DrawID); err != nil && !state.Finished {
-			log.Println("Returning", err, state.Finished)
 			return err
 		}
 
@@ -214,6 +211,10 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 	case "peek":
 		if !state.Started {
 			return errors.New("unable to peek at game which hasn't started yet")
+		}
+
+		if !player.Admitted {
+			return errors.New("not authorized to peak at this game")
 		}
 
 		if !state.Finished && (player.Index >= 0 || player.Playing) {

@@ -562,7 +562,7 @@ func (hub *Hub) processMessage(client *Client, message []byte) error {
 
 	err := hub.controller.Dispatch(message)
 	if err != nil {
-		log.Println(err, string(message))
+		log.Println("Got error processing message:", err, string(message))
 	}
 
 	return err
@@ -581,10 +581,7 @@ func (hub *Hub) ProcessPlayerMessages(gid GameID) {
 
 		select {
 		case news := <-channel:
-			err := hub.processMessage(news.client, news.message)
-			if err != nil {
-				log.Println("Got error processing message:", err)
-			}
+			_ = hub.processMessage(news.client, news.message)
 		case <-ticker.C:
 			// Don't do anything; this ensures we check hub.process above in case
 			// the socket was closed under us.
