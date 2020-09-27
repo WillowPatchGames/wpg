@@ -70,6 +70,16 @@ function notify(snackbar, message, type) {
   });
 }
 
+function killable(func, interval) {
+  var killer = {};
+  killer.func = func;
+  killer.interval = interval;
+  killer.kill = () => { clearTimeout(killer.timeout) };
+  killer.exec = () => { killer.kill() ; killer.func() ; killer.restart() };
+  killer.restart = () => { killer.timeout = setTimeout(() => { killer.exec() }, killer.interval) };
+  return killer;
+}
+
 class RushGamePage extends React.Component {
   constructor(props) {
     super(props);
@@ -95,7 +105,6 @@ class RushGamePage extends React.Component {
           this.state.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
         },
         "draw": data => {
-          console.log("draw", data);
           data.message = userify(data.drawer) + " drew!";
           notify(this.props.snackbar, data.message, data.type);
         },
@@ -149,7 +158,7 @@ class AfterPartyPage extends React.Component {
       winner: this.game.winner,
       finished: false,
       message: "Loading results...",
-      timeout: null,
+      timeout: killable(() => { this.refreshData() }, 5000),
     };
 
     this.unmount = addEv(this.game, {
@@ -187,6 +196,12 @@ class AfterPartyPage extends React.Component {
         // the data we care about.
         this.setState(state => Object.assign({}, state, { snapshots: [] }));
         this.setState(state => Object.assign({}, state, { snapshots: snapshots, winner: winner, finished: data.finished }));
+
+
+        if (data.finished) {
+          this.state.timeout.kill();
+          this.setState(state => Object.assign({}, state, { timeout: null }));
+        }
       },
       "error": (data) => {
         var message = "Unable to load game data.";
@@ -194,17 +209,18 @@ class AfterPartyPage extends React.Component {
           message = data.error;
         }
 
+        notify(this.props.snackbar, message, data.message_type);
         this.setState(state => Object.assign({}, state, { message }));
       },
       "": data => {
         if (data.message) {
-          notify(this.props.snackbar, data.message, data.type);
+          notify(this.props.snackbar, data.message, data.message_type);
         }
       },
     });
   }
   componentDidMount() {
-    this.refreshData();
+    this.state.timeout.exec();
   }
   componentWillUnmount() {
     this.props.setGame(null);
@@ -215,20 +231,12 @@ class AfterPartyPage extends React.Component {
   }
   refreshData() {
     this.game.interface.controller.wsController.send({"message_type": "peek"});
-
-    if (!this.state.finished) {
-      this.setState(state => Object.assign({}, state, { timeout: setTimeout(() => {
-          this.refreshData()
-        }, 5000)
-      }));
-    }
   }
   returnToRoom() {
     this.props.setGame(null);
     this.props.setPage("room");
   }
   render() {
-    console.log("Rerender called?", this.state.snapshots);
     return (
       <div>
         { this.state.finished && this.state.winner
@@ -243,7 +251,7 @@ class AfterPartyPage extends React.Component {
           this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
         }
         {
-          !this.state.finished ? <span className="leftpad"><Button onClick={ () => this.refreshData() } raised >Look again!</Button></span> : <></>
+          !this.state.finished ? <span className="leftpad"><Button onClick={ () => this.state.timeout.exec() } raised >Look again!</Button></span> : <></>
         }
         <ol className="results">
           { this.state.snapshots
@@ -1001,6 +1009,8 @@ class JoinGamePage extends React.Component {
 }
 
 export {
+  loadGame,
+  killable,
   AfterPartyPage,
   CreateGamePage,
   CreateGameForm,
@@ -1008,5 +1018,4 @@ export {
   JoinGamePage,
   PreGamePage,
   RushGamePage,
-  loadGame
 };

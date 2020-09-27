@@ -241,10 +241,7 @@ class WebSocketController {
 
   // Send an object to our peer but don't wait for a reply.
   async send(data) {
-    console.log("Waiting for websocket to open...");
     await this.waitOpen();
-
-    console.log("Sending data:", data);
 
     var wire_data = this.msg_ctrl.template(data);
     return this.game.ws.send(JSON.stringify(wire_data));

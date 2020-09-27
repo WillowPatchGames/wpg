@@ -198,8 +198,6 @@ class GuestProfilePage extends React.Component {
       return;
     }
 
-    console.log(username, email, display, password);
-
     await this.props.user.upgrade(username, email, display, password);
 
     if (this.props.user.error) {

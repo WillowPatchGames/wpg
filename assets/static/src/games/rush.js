@@ -313,6 +313,7 @@ class RushData {
 class RushGame {
   constructor(game, readonly) {
     this.game = game;
+
     if (readonly === undefined || readonly === null || readonly === false) {
       this.controller = new RushController(game);
       this.controller.onMessage("state", (data) => { this.handleNewState(data) });

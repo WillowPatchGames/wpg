@@ -15,8 +15,6 @@ import liz_mayo from '../images/liz-mayo.jpg';
 
 class AboutPage extends React.Component {
   render() {
-    console.log(willows);
-
     return (
       <div className="App-page">
         <g.Grid fixedColumnWidth={ true }>

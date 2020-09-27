@@ -60,12 +60,10 @@ class App extends React.Component {
         return;
       }
       serialization = guest_serialization;
-      console.log("Using: " + guest_serialization)
     }
 
     var user = UserModel.FromJSON(serialization);
     if (!user || user.token == null) {
-      console.log("Bad user? " + user.ToJSON());
       return;
     }
 
@@ -76,7 +74,6 @@ class App extends React.Component {
 
     var verified_user = await UserModel.FromId(user_id, token);
     if (verified_user.error || verified_user.authed === false) {
-      console.log("LoadUser() - Got error: " + verified_user.error);
       localStorage.removeItem('user');
       localStorage.removeItem('guest');
       this.setUser(null);
@@ -132,10 +129,11 @@ class App extends React.Component {
   }
 
   setPage(page) {
-    window.location.hash = '#' + page;
+    if (page !== "" && page !== null) {
+      window.location.hash = '#' + page;
+    }
 
     if (this.state.page === page) {
-      console.log("Early return from setPage: already there");
       return;
     }
 

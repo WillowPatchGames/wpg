@@ -14,7 +14,7 @@ import * as l from '@rmwc/list';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
-import { CreateGameForm, PreGamePage } from './games.js';
+import { killable, CreateGameForm, PreGamePage } from './games.js';
 import { GameModel } from '../models.js';
 
 class RoomPage extends React.Component {
@@ -22,7 +22,8 @@ class RoomPage extends React.Component {
     super(props);
 
     this.state = {
-      game_choices: null
+      game_choices: null,
+      timeout: killable(() => { this.checkForGames() }, 5000),
     };
 
     this.code_ref = React.createRef();
@@ -30,7 +31,7 @@ class RoomPage extends React.Component {
   }
 
   componentDidMount() {
-    this.checkForGames();
+    this.state.timeout.exec();
   }
 
   async checkForGames() {
@@ -107,7 +108,7 @@ class RoomPage extends React.Component {
         }
 
         right_panel = <>
-          <Button label="Refresh Games" raised onClick={() => this.checkForGames() } />
+          <Button label="Refresh Games" raised onClick={() => this.state.timeout.exec() } />
           <br /><br />
           {
             games ? <div>{ games }</div> : <></>
@@ -115,7 +116,6 @@ class RoomPage extends React.Component {
         </>
       }
     } else {
-      console.log("There's already a game!");
       right_panel = <PreGamePage {...this.props} />;
     }
 

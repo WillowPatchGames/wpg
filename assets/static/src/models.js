@@ -79,7 +79,6 @@ class UserModel {
 
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       ret.error = result;
       return ret;
     }
@@ -117,7 +116,6 @@ class UserModel {
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -144,7 +142,6 @@ class UserModel {
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -194,7 +191,6 @@ class UserModel {
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -233,7 +229,6 @@ class UserModel {
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -267,7 +262,6 @@ class UserModel {
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -321,7 +315,6 @@ class RoomModel {
 
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       ret.error = result;
       return ret;
     }
@@ -353,7 +346,6 @@ class RoomModel {
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -381,7 +373,6 @@ class RoomModel {
 
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -441,7 +432,6 @@ class GameModel {
 
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       ret.error = result;
       return ret;
     }
@@ -487,7 +477,6 @@ class GameModel {
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -515,7 +504,6 @@ class GameModel {
 
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
@@ -542,7 +530,6 @@ class GameModel {
 
     if ('type' in result && result['type'] === 'error') {
       console.log(result);
-
       this.error = result;
       return this;
     }
