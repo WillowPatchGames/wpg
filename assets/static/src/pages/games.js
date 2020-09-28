@@ -101,7 +101,7 @@ class RushGameSynopsis extends React.Component {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
         "synopsis": async (data) => {
-          if (data && data.players && data.remaining) {
+          if (data && data.players && data.remaining !== undefined) {
             let players = {};
             for (let player of data.players) {
               var id = +player.user;
@@ -132,7 +132,7 @@ class RushGameSynopsis extends React.Component {
 
   render() {
     var player_view = [];
-    if (this.state.remaining) {
+    if (this.state.remaining !== null) {
       player_view.push(
         <div className="playerSummary">
           <span className="playerSummaryInHand" title="Tiles in Pool">{ this.state.remaining } in pool</span>
