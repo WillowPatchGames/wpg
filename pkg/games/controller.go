@@ -103,17 +103,6 @@ type GameData struct {
 	CountdownTimer *time.Timer `json:"-"`
 }
 
-// Common header for all inbound and outbound messages.
-type MessageHeader struct {
-	Mode        string `json:"game_mode"`
-	ID          uint64 `json:"game_id"`
-	Player      uint64 `json:"player_id"`
-	MessageType string `json:"message_type"`
-	MessageID   int    `json:"message_id"`
-	Timestamp   uint64 `json:"timestamp"`
-	ReplyTo     int    `json:"reply_to,omitempty"`
-}
-
 // Controller wraps game data and handles the parsing of messages from the
 // websocket or other connection. dispatch.go handles the actual dispatch
 // into game specific commands understood by a game implementation. We lock

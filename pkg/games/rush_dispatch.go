@@ -52,6 +52,14 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 
 	switch header.MessageType {
 	case "start":
+		if state.Started {
+			return errors.New("unable to start game that is already in progress")
+		}
+
+		if player.UID != game.Owner {
+			return errors.New("unable to start game that you're not the owner of")
+		}
+
 		var players int = 0
 		for _, player := range game.ToPlayer {
 			if player.Playing {

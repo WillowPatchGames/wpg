@@ -50,6 +50,12 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 					return err
 				}
 			}
+		} else if player.Admitted {
+			// If this player is already admitted, tell them so and indicate their
+			// status as a player/spectator.
+			var notification ControllerNotifyAdmitted
+			notification.LoadFromController(game, player)
+			c.undispatch(game, player, notification.MessageID, 0, notification)
 		}
 	case "admit":
 		var data GameAdmit
@@ -61,11 +67,22 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return errors.New("player not authorized to admit other players")
 		}
 
+		// XXX -- fix once more game types are supported
+		var state *RushState = game.State.(*RushState)
+		if state.Started {
+			return errors.New("can't admit player into game that has already started")
+		}
+
 		return c.markAdmitted(game.GID, data.Target, data.Admit, data.Playing)
 	case "ready":
 		var data GameReady
 		if err := json.Unmarshal(message, &data); err != nil {
 			return err
+		}
+
+		var state *RushState = game.State.(*RushState)
+		if state.Started {
+			return errors.New("can't change ready status in game that has already started")
 		}
 
 		return c.markReady(game.GID, player.UID, data.Ready)

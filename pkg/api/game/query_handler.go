@@ -20,12 +20,13 @@ type queryHandlerData struct {
 }
 
 type queryHandlerResponse struct {
-	GameID    uint64 `json:"id"`
-	Owner     uint64 `json:"owner"`
-	Room      uint64 `json:"room"`
-	Style     string `json:"style"`
-	Open      bool   `json:"open"`
-	Lifecycle string `json:"lifecycle"`
+	GameID    uint64      `json:"id"`
+	Owner     uint64      `json:"owner"`
+	Room      uint64      `json:"room"`
+	Style     string      `json:"style"`
+	Open      bool        `json:"open"`
+	Lifecycle string      `json:"lifecycle"`
+	Config    interface{} `json:"config"`
 }
 
 type QueryHandler struct {
@@ -107,6 +108,14 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
+	var gameConfig map[string]interface{}
+
+	err = game.GetConfig(tx, &gameConfig)
+	if err != nil {
+		log.Println("Getting config?", err)
+		return err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		log.Println("Commiting?", err)
@@ -121,6 +130,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open
 	handle.resp.Lifecycle = game.Lifecycle
+	handle.resp.Config = gameConfig
 
 	utils.SendResponse(w, r, handle)
 	return nil

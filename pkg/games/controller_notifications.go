@@ -4,6 +4,26 @@ import (
 	"time"
 )
 
+// Common header for all inbound and outbound messages.
+type MessageHeader struct {
+	Mode        string `json:"game_mode"`
+	ID          uint64 `json:"game_id"`
+	Player      uint64 `json:"player_id"`
+	MessageType string `json:"message_type"`
+	MessageID   int    `json:"message_id"`
+	Timestamp   uint64 `json:"timestamp"`
+	ReplyTo     int    `json:"reply_to,omitempty"`
+}
+
+func (mh *MessageHeader) LoadHeader(data *GameData, player *PlayerData) {
+	mh.Mode = data.Mode.String()
+	mh.ID = data.GID
+	mh.Player = player.UID
+	mh.MessageID = player.OutboundID
+	player.OutboundID++
+	mh.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+}
+
 type ControllerNotifyAdminJoin struct {
 	MessageHeader
 	Joined   uint64 `json:"joined"`
@@ -12,13 +32,8 @@ type ControllerNotifyAdminJoin struct {
 }
 
 func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player *PlayerData, joined *PlayerData) {
-	cnaj.Mode = data.Mode.String()
-	cnaj.ID = data.GID
-	cnaj.Player = player.UID
+	cnaj.LoadHeader(data, player)
 	cnaj.MessageType = "notify-join"
-	cnaj.MessageID = player.OutboundID
-	player.OutboundID++
-	cnaj.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	cnaj.Joined = joined.UID
 	cnaj.Admitted = joined.Admitted
@@ -27,16 +42,17 @@ func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player
 
 type ControllerNotifyAdmitted struct {
 	MessageHeader
+
+	Admitted bool `json:"admitted"`
+	Playing  bool `json:"playing"`
 }
 
-func (cjna *ControllerNotifyAdmitted) LoadFromController(data *GameData, player *PlayerData) {
-	cjna.Mode = data.Mode.String()
-	cjna.ID = data.GID
-	cjna.Player = player.UID
-	cjna.MessageType = "admitted"
-	cjna.MessageID = player.OutboundID
-	player.OutboundID++
-	cjna.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+func (cna *ControllerNotifyAdmitted) LoadFromController(data *GameData, player *PlayerData) {
+	cna.LoadHeader(data, player)
+	cna.MessageType = "admitted"
+
+	cna.Admitted = player.Admitted
+	cna.Playing = player.Playing
 }
 
 type ControllerNotifyError struct {
@@ -45,13 +61,8 @@ type ControllerNotifyError struct {
 }
 
 func (cne *ControllerNotifyError) LoadFromController(data *GameData, player *PlayerData, err error) {
-	cne.Mode = data.Mode.String()
-	cne.ID = data.GID
-	cne.Player = player.UID
+	cne.LoadHeader(data, player)
 	cne.MessageType = "error"
-	cne.MessageID = player.OutboundID
-	player.OutboundID++
-	cne.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	cne.Error = err.Error()
 }
@@ -62,13 +73,8 @@ type ControllerNotifyStarted struct {
 }
 
 func (cns *ControllerNotifyStarted) LoadFromController(data *GameData, player *PlayerData) {
-	cns.Mode = data.Mode.String()
-	cns.ID = data.GID
-	cns.Player = player.UID
+	cns.LoadHeader(data, player)
 	cns.MessageType = "started"
-	cns.MessageID = player.OutboundID
-	player.OutboundID++
-	cns.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	cns.Playing = player.Playing
 }
@@ -79,12 +85,22 @@ type ControllerCountdown struct {
 }
 
 func (cc *ControllerCountdown) LoadFromController(data *GameData, player *PlayerData) {
-	cc.Mode = data.Mode.String()
-	cc.ID = data.GID
-	cc.Player = player.UID
+	cc.LoadHeader(data, player)
 	cc.MessageType = "countdown"
-	cc.MessageID = player.OutboundID
-	player.OutboundID++
-	cc.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+
 	cc.Value = data.Countdown
+}
+
+type ControllerNotifyWord struct {
+	MessageHeader
+	Word  string `json:"word"`
+	Valid bool   `json:"valid"`
+}
+
+func (cnw *ControllerNotifyWord) LoadFromController(data *GameData, player *PlayerData, word string) {
+	cnw.LoadHeader(data, player)
+	cnw.MessageType = "countdown"
+
+	cnw.Word = word
+	cnw.Valid = IsWord(word)
 }

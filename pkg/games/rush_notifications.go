@@ -1,9 +1,5 @@
 package games
 
-import (
-	"time"
-)
-
 type RushPlayerState struct {
 	Board   LetterGrid   `json:"board,omitempty"`
 	Hand    []LetterTile `json:"hand,omitempty"`
@@ -43,13 +39,8 @@ func (rsn *RushStateNotification) LoadFromGame(game *RushState, player int) {
 }
 
 func (rsn *RushStateNotification) LoadFromController(data *GameData, player *PlayerData) {
-	rsn.Mode = data.Mode.String()
-	rsn.ID = data.GID
-	rsn.Player = player.UID
+	rsn.LoadHeader(data, player)
 	rsn.MessageType = "state"
-	rsn.MessageID = player.OutboundID
-	player.OutboundID++
-	rsn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 }
 
 type RushPlayerSynopsis struct {
@@ -67,13 +58,8 @@ type RushSynopsisNotification struct {
 }
 
 func (rsn *RushSynopsisNotification) LoadData(data *GameData, state *RushState, player *PlayerData) {
-	rsn.Mode = data.Mode.String()
-	rsn.ID = data.GID
-	rsn.Player = player.UID
+	rsn.LoadHeader(data, player)
 	rsn.MessageType = "synopsis"
-	rsn.MessageID = player.OutboundID
-	player.OutboundID++
-	rsn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	rsn.RemainingTiles = len(state.Tiles)
 
@@ -98,13 +84,8 @@ type RushDrawNotification struct {
 }
 
 func (rdn *RushDrawNotification) LoadFromController(data *GameData, player *PlayerData, drawer uint64) {
-	rdn.Mode = data.Mode.String()
-	rdn.ID = data.GID
-	rdn.Player = player.UID
+	rdn.LoadHeader(data, player)
 	rdn.MessageType = "draw"
-	rdn.MessageID = player.OutboundID
-	player.OutboundID++
-	rdn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	rdn.Drawer = drawer
 }
@@ -120,13 +101,8 @@ func (rcn *RushCheckNotification) LoadFromGame(game *RushState, player int) {
 }
 
 func (rcn *RushCheckNotification) LoadFromController(data *GameData, player *PlayerData, err error) {
-	rcn.Mode = data.Mode.String()
-	rcn.ID = data.GID
-	rcn.Player = player.UID
+	rcn.LoadHeader(data, player)
 	rcn.MessageType = "checked"
-	rcn.MessageID = player.OutboundID
-	player.OutboundID++
-	rcn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	if err != nil {
 		rcn.Error = err.Error()
@@ -140,13 +116,8 @@ type RushFinishedNotification struct {
 }
 
 func (rwn *RushFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
-	rwn.Mode = data.Mode.String()
-	rwn.ID = data.GID
-	rwn.Player = player.UID
+	rwn.LoadHeader(data, player)
 	rwn.MessageType = "finished"
-	rwn.MessageID = player.OutboundID
-	player.OutboundID++
-	rwn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	rwn.Winner = winner
 }
@@ -158,7 +129,9 @@ type RushGameStateNotification struct {
 	Players   []RushPlayerState `json:"player_data"`
 	PlayerMap map[int]uint64    `json:"player_map"`
 	Winner    uint64            `json:"winner,omitempty"`
-	winner    int
+
+	// Used to map winner from internal state index to external UID
+	winner int
 }
 
 func (rgsn *RushGameStateNotification) LoadFromGame(game *RushState) {
@@ -178,13 +151,8 @@ func (rgsn *RushGameStateNotification) LoadFromGame(game *RushState) {
 }
 
 func (rgsn *RushGameStateNotification) LoadFromController(data *GameData, player *PlayerData) {
-	rgsn.Mode = data.Mode.String()
-	rgsn.ID = data.GID
-	rgsn.Player = player.UID
+	rgsn.LoadHeader(data, player)
 	rgsn.MessageType = "game-state"
-	rgsn.MessageID = player.OutboundID
-	player.OutboundID++
-	rgsn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 
 	rgsn.PlayerMap = make(map[int]uint64)
 	for _, indexed_player := range data.ToPlayer {
