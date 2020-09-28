@@ -77,6 +77,9 @@ type PlayerData struct {
 }
 
 type GameData struct {
+	// Lock for doing operations on the game data.
+	lock sync.Mutex
+
 	// Identifier of the game in the internal database.
 	GID uint64 `json:"game_id"`
 
@@ -215,6 +218,7 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 	}
 
 	c.ToGame[gid] = &GameData{
+		sync.Mutex{},
 		gid,
 		mode,
 		owner,
@@ -437,6 +441,10 @@ func (c *Controller) Undispatch(gid uint64, uid uint64) (chan interface{}, error
 	}
 
 	game := c.ToGame[gid]
+
+	game.lock.Lock()
+	defer game.lock.Unlock()
+
 	player := game.ToPlayer[uid]
 	return player.Notifications, nil
 }
@@ -464,13 +472,22 @@ func (c *Controller) Dispatch(message []byte) error {
 		return errors.New("unknown type of message")
 	}
 
+	// We're going to release this lock right away, so don't bother with
+	// a defer unlock call.
 	c.lock.Lock()
-	defer c.lock.Unlock()
 
 	gameData, ok := c.ToGame[header.ID]
 	if !ok || gameData.State == nil {
+		c.lock.Unlock()
 		return errors.New("unable to find game by id (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
+
+	// Because we're not going to be accessing the controller any more,
+	// and only referencing the game, release this lock.
+	c.lock.Unlock()
+
+	gameData.lock.Lock()
+	defer gameData.lock.Unlock()
 
 	if gameData.Mode.String() != header.Mode {
 		return errors.New("game modes don't match internal expectations")
