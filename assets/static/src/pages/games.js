@@ -90,7 +90,8 @@ class RushGameSynopsis extends React.Component {
     super(props);
 
     this.state = {
-      players: null
+      players: null,
+      remaining: null,
     }
 
     this.game = loadGame(this.props.game);
@@ -100,7 +101,7 @@ class RushGameSynopsis extends React.Component {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
         "synopsis": async (data) => {
-          if (data && data.players) {
+          if (data && data.players && data.remaining) {
             let players = {};
             for (let player of data.players) {
               var id = +player.user;
@@ -118,7 +119,7 @@ class RushGameSynopsis extends React.Component {
               players[+id] = player;
             }
 
-            this.setState(state => Object.assign({}, state, { players }));
+            this.setState(state => Object.assign({}, state, { players, remaining: data.remaining }));
           }
         },
       });
@@ -131,6 +132,14 @@ class RushGameSynopsis extends React.Component {
 
   render() {
     var player_view = [];
+    if (this.state.remaining) {
+      player_view.push(
+        <div className="playerSummary">
+          <span className="playerSummaryInHand" title="Tiles in Pool">{ this.state.remaining } in pool</span>
+        </div>
+      );
+    }
+
     if (this.state.players) {
       if (this.state.players[this.props.user.id]) {
         var us = this.state.players[this.props.user.id];
@@ -141,9 +150,7 @@ class RushGameSynopsis extends React.Component {
               us.playing
               ?
                 <span className="playerSummaryInfo">
-                  <span className="playerSummaryInHand" title="Tiles in Hand">{ us.in_hand }</span>
-                  /
-                  <span className="playerSummaryOnBoard" title="Tiles on Board">{ us.on_board }</span>
+                  <span className="playerSummaryInHand" title="Tiles in Hand">{ us.in_hand } in hand</span>
                 </span>
               :
                 <span className="playerSummaryInfo">Spectator</span>
@@ -160,14 +167,12 @@ class RushGameSynopsis extends React.Component {
         let them = this.state.players[player_id];
         player_view.push(
           <div className="playerSummary">
-            <Avatar src={ BlankProfile } name={ them.user.display } size="large" />
+            <Avatar src={ BlankProfile } name={ them.user.display } size="xlarge" />
             {
               them.playing
               ?
                 <span className="playerSummaryInfo">
-                  <span className="playerSummaryInHand" title="Tiles in Hand">{ them.in_hand }</span>
-                  /
-                  <span className="playerSummaryOnBoard" title="Tiles on Board">{ them.on_board }</span>
+                  <span className="playerSummaryInHand" title="Tiles in Hand">{ them.in_hand } in hand</span>
                 </span>
               :
                 <span className="playerSummaryInfo">Spectator</span>
