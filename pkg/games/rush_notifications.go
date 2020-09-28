@@ -11,11 +11,10 @@ type RushPlayerState struct {
 }
 
 type RushGameState struct {
-	DrawID         int        `json:"draw_id"`
-	Config         RushConfig `json:"config"`
-	RemainingTiles int        `json:"remaining"`
-	Started        bool       `json:"started"`
-	Finished       bool       `json:"finished"`
+	DrawID   int        `json:"draw_id"`
+	Config   RushConfig `json:"config"`
+	Started  bool       `json:"started"`
+	Finished bool       `json:"finished"`
 }
 
 type RushStateNotification struct {
@@ -33,7 +32,6 @@ func (rsn *RushStateNotification) LoadFromGame(game *RushState, player int) {
 
 	rsn.DrawID = game.DrawID
 	rsn.Config = game.Config
-	rsn.RemainingTiles = len(game.Tiles)
 	rsn.Started = game.Started
 	rsn.Finished = game.Finished
 
@@ -64,7 +62,8 @@ type RushPlayerSynopsis struct {
 type RushSynopsisNotification struct {
 	MessageHeader
 
-	Players []RushPlayerSynopsis `json:"players"`
+	Players        []RushPlayerSynopsis `json:"players"`
+	RemainingTiles int                  `json:"remaining"`
 }
 
 func (rsn *RushSynopsisNotification) LoadData(data *GameData, state *RushState, player *PlayerData) {
@@ -75,6 +74,8 @@ func (rsn *RushSynopsisNotification) LoadData(data *GameData, state *RushState, 
 	rsn.MessageID = player.OutboundID
 	player.OutboundID++
 	rsn.Timestamp = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+
+	rsn.RemainingTiles = len(state.Tiles)
 
 	for _, indexed_player := range data.ToPlayer {
 		var synopsis RushPlayerSynopsis
@@ -163,7 +164,6 @@ type RushGameStateNotification struct {
 func (rgsn *RushGameStateNotification) LoadFromGame(game *RushState) {
 	rgsn.DrawID = game.DrawID
 	rgsn.Config = game.Config
-	rgsn.RemainingTiles = len(game.Tiles)
 	rgsn.Started = game.Started
 	rgsn.Finished = game.Finished
 

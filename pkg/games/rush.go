@@ -78,7 +78,7 @@ func (cfg RushConfig) Validate() error {
 	var oneDraw int = cfg.DrawSize * cfg.NumPlayers
 	var numRounds = (totalTiles - initialTiles) / oneDraw
 
-	if totalTiles <= (initialTiles+oneDraw) || numRounds > 75 {
+	if totalTiles < (initialTiles+oneDraw) || numRounds > 75 {
 		var tilesRepr string = strconv.Itoa(cfg.NumTiles)
 		if cfg.TilesPerPlayer {
 			tilesRepr += " per player"
@@ -86,7 +86,7 @@ func (cfg RushConfig) Validate() error {
 			tilesRepr += " total"
 		}
 
-		return GameConfigError{"number of tiles", tilesRepr, "enough for 1 to 75 rounds"}
+		return GameConfigError{"number of tiles", tilesRepr, "must be enough for 1 to 75 rounds of drawing"}
 	}
 
 	return nil
@@ -224,7 +224,7 @@ func (rs *RushState) drawTiles(player int, count int) error {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
-	if count >= len(rs.Tiles) {
+	if count > len(rs.Tiles) {
 		rs.Finished = true
 		return errors.New("too few tiles remaining to draw requested number")
 	}
@@ -461,7 +461,7 @@ func (rs *RushState) Draw(player int, lastID int) error {
 	}
 
 	var tilesNeeded = rs.Config.DrawSize * rs.Config.NumPlayers
-	if tilesNeeded >= len(rs.Tiles) {
+	if tilesNeeded > len(rs.Tiles) {
 		rs.Finished = true
 		rs.Winner = player
 		return errors.New(RushYouWon)
