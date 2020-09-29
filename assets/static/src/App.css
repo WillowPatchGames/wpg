@@ -166,3 +166,11 @@ article.text p {
   width: 100px;
   margin-right: 25px;
 }
+
+.playerSummaryInHand {
+  margin-left: 0.5rem;
+}
+
+.unselectable {
+  user-select: none;
+}

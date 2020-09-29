@@ -159,7 +159,7 @@ class RushGameSynopsis extends React.Component {
         );
       }
 
-      for (let player_id in this.state.players) {
+      for (let player_id of Object.keys(this.state.players).sort()) {
         if (+player_id === this.props.user.id) {
           continue;
         }
@@ -313,7 +313,6 @@ class AfterPartyPage extends React.Component {
         this.setState(state => Object.assign({}, state, { snapshots: [] }));
         this.setState(state => Object.assign({}, state, { snapshots: snapshots, winner: winner, finished: data.finished }));
 
-
         if (data.finished) {
           if (this.state.timeout) {
             this.state.timeout.kill();
@@ -398,14 +397,20 @@ class PreGameUserPage extends React.Component {
     super(props);
     this.state = {
       status: "pending",
+      players: null,
     }
+
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
 
     let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     this.unmount = addEv(this.game, {
       "admitted": data => {
-        this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
+        if (data.admitted) {
+          this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
+        } else {
+          this.setState(state => Object.assign({}, this.state, { status: "pending", players: null }));
+        }
       },
       "started": data => {
         data.message = "Let the games begin!";
@@ -420,6 +425,28 @@ class PreGameUserPage extends React.Component {
         data.message = "Game starting in " + data.value;
         notify(this.props.snackbar, data.message, data.type);
         this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
+      },
+      "notify-users": async (data) => {
+        if (data && data.players) {
+          let players = {};
+          for (let player of data.players) {
+            var id = +player.user;
+            player.user = await UserCache.FromId(id);
+            player.user_id = id;
+
+            if (!player.user) {
+              player.user = {};
+              player.user.display = "unknown";
+              if (player.user_id === this.props.user) {
+                player.user.display = "you";
+              }
+            }
+
+            players[+id] = player;
+          }
+
+          this.setState(state => Object.assign({}, state, { players }));
+        }
       },
       "finished": async (data) => {
         data.message = await personalize(data.winner) + " won!";
@@ -444,9 +471,66 @@ class PreGameUserPage extends React.Component {
     } else if (this.state.status === "waiting") {
       message = "Waiting for the game to start...";
     }
+
+    let users = [];
+    if (this.state.players !== null) {
+      var i = 0;
+      for (let player_id of Object.keys(this.state.players).sort()) {
+        let player = this.state.players[player_id];
+        var display = +player_id === +this.props.user.id ? "You" : player.user.display;
+        users.push(
+          <l.ListItem key={display} disabled>
+            <span className="unselectable">{+i + 1}.&nbsp;</span> {display}
+            <l.ListItemMeta>
+              <span className="leftpad"><Switch checked={ player.playing } label={ player.playing ? "Player" : "Spectator" } disabled /></span>
+            </l.ListItemMeta>
+          </l.ListItem>
+        );
+        i += 1;
+      }
+    }
+
+    let content = <c.Card>
+      <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+        <b>
+          { message }
+        </b>
+
+        <l.List>
+          <l.CollapsibleList handle={
+              <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+            }
+          >
+            <CreateGameForm {...this.props} editable={ false } />
+          </l.CollapsibleList>
+          <l.ListGroup>
+            <l.ListItem disabled>
+              <b>Users</b>
+            </l.ListItem>
+            { users }
+          </l.ListGroup>
+        </l.List>
+      </div>
+    </c.Card>;
+
+    if (this.props.room === null) {
+      return (
+        <div>
+          <h1>Game #{ this.props.game.id }</h1>
+          <g.Grid fixedColumnWidth={ true }>
+            <g.GridCell align="left" span={3} />
+            <g.GridCell align="right" span={6}>
+              { content }
+            </g.GridCell>
+          </g.Grid>
+        </div>
+      );
+    }
+
     return (
       <div>
-        <p>{ message }</p>
+        <h1>Game #{ this.props.game.id }</h1>
+        { content }
       </div>
     );
   }
@@ -559,6 +643,9 @@ class PreGameAdminPage extends React.Component {
       invite =
       <l.ListGroup>
         <l.ListItem disabled>
+          <b>Join</b>
+        </l.ListItem>
+        <l.ListItem disabled>
           <p>Share this code to let users join:</p>
         </l.ListItem>
         <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
@@ -571,7 +658,7 @@ class PreGameAdminPage extends React.Component {
           <p>Or have them visit this link:</p>
         </l.ListItem>
         <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-          <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
+          <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
         </l.ListItem>
       </l.ListGroup>;
     }
@@ -580,13 +667,19 @@ class PreGameAdminPage extends React.Component {
       <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
         <l.List twoLine>
           { invite }
+          <l.CollapsibleList handle={
+              <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+            }
+          >
+            <CreateGameForm {...this.props} editable={ false } />
+          </l.CollapsibleList>
           <l.ListGroup>
             <l.ListItem disabled>
-              <p>Users in this game:</p>
+              <b>Users</b>
             </l.ListItem>
             { this.state.waitlist.map((user, i) =>
-                <l.ListItem key={user.display} >
-                {user.display}
+                <l.ListItem key={user.display} disabled>
+                <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}
                 <l.ListItemMeta>
                   <Checkbox checked={user.admitted} label="Admitted" onChange={ () => this.toggleAdmitted(user) } />
                   {
@@ -607,7 +700,7 @@ class PreGameAdminPage extends React.Component {
     if (this.props.room === null) {
       return (
         <div>
-          <h1>Users to be admitted</h1>
+          <h1>Game #{ this.props.game.id }</h1>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} />
             <g.GridCell align="right" span={6}>
@@ -616,14 +709,14 @@ class PreGameAdminPage extends React.Component {
           </g.Grid>
         </div>
       );
-    } else {
-      return (
-        <div>
-          <h1>Users to be admitted</h1>
-          { content }
-        </div>
-      );
     }
+
+    return (
+      <div>
+        <h1>Game #{ this.props.game.id }</h1>
+        { content }
+      </div>
+    );
   }
 }
 
@@ -631,23 +724,37 @@ class CreateGameForm extends React.Component {
   constructor(props) {
     super(props);
 
+    var have_game = this.props.game !== undefined && this.props.game !== null && this.props.game.config !== undefined && this.props.game.config !== null;
+    var game = have_game ? this.props.game : undefined;
+    var config = have_game ? game.config : undefined;
+    var editable = this.props.editable === undefined || this.props.editable;
+
+    console.log(have_game, game, config);
+
     this.state = {
+      editable: editable,
       error: null,
-      mode: 'rush',
-      open: true,
-      spectators: true,
-      num_players: 4,
-      num_tiles: 75,
-      tiles_per_player: false,
-      start_size: 12,
-      draw_size: 1,
-      discard_penalty: 3,
-      frequency: 1,
+      mode: have_game ? game.style : 'rush',
+      open: have_game ? game.open : true,
+      spectators: have_game && game.spectator !== undefined ? game.spectator : true,
+      num_players: have_game ? config.num_players : 4,
+      num_tiles: have_game ? config.num_tiles : 75,
+      tiles_per_player: have_game ? config.tiles_per_player : false,
+      start_size: have_game ? config.start_size : 12,
+      draw_size: have_game ? config.draw_size : 1,
+      discard_penalty: have_game ? config.discard_penalty : 3,
+      frequency: have_game ? config.frequency : 1,
     }
+
+    console.log(this.state);
   }
 
   async handleSubmit(event) {
     event.preventDefault();
+
+    if (!this.state.editable) {
+      return;
+    }
 
     if (this.props.user === null || !this.props.user.authed) {
       this.setError("Need to have a user account before doing this action!");
@@ -685,6 +792,10 @@ class CreateGameForm extends React.Component {
   }
 
   newState(fn, cb) {
+    if (!this.state.editable) {
+      return;
+    }
+
     return this.setState(state => Object.assign({}, state, fn(state)));
   }
 
@@ -714,15 +825,21 @@ class CreateGameForm extends React.Component {
             <l.List twoLine>
               <l.ListGroup>
                 <l.ListGroupSubheader>Player Options</l.ListGroupSubheader>
-                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label="Open for anyone to join (or just those invited)" checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
-                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("spectators") }><Switch label="Allow spectators" checked={ this.state.spectators } onChange={ () => this.toggle("spectators", true) } /></l.ListItem>
-                <l.ListItem><TextField fullwidth type="number" label="Number of players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" /></l.ListItem>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") } disabled={ !this.state.editable }>
+                  <Switch label="Open for anyone to join (or just those invited)" checked={ this.state.open } onChange={ () => this.toggle("open", true) } disabled={ !this.state.editable } />
+                </l.ListItem>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("spectators") } disabled={ !this.state.editable }>
+                  <Switch label="Allow spectators" checked={ this.state.spectators } onChange={ () => this.toggle("spectators", true) } disabled={ !this.state.editable } />
+                </l.ListItem>
+                <l.ListItem disabled>
+                  <TextField fullwidth type="number" label="Number of players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" disabled={ !this.state.editable } />
+                </l.ListItem>
               </l.ListGroup>
               <br />
               <br />
               <l.ListGroup>
                 <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-                <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") } options={
+                <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") }  disabled={ !this.state.editable } options={
                   [
                     {
                       label: 'Rush (Fast-Paced Game)',
@@ -736,16 +853,19 @@ class CreateGameForm extends React.Component {
                   <p>In rush mode, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!</p>
                   : <></>
                 }
-                <l.ListItem><TextField fullwidth type="number" label="Number of tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" /></l.ListItem>
-                <l.ListItem>
-                  <Switch label="Tiles per player or in total" name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } />
+                <l.ListItem disabled>
+                  <TextField fullwidth type="number" label="Number of tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" disabled={ !this.state.editable } />
                 </l.ListItem>
-                { this.state.tiles_per_player
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("tiles_per_player") } disabled={ !this.state.editable }>
+                  <Switch label="Tiles per player or in total" name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } disabled={ !this.state.editable } />
+                </l.ListItem>
+                {
+                  this.state.tiles_per_player
                   ? <p>There will be { this.state.num_tiles } tiles per player</p>
                   : <p>There will be { this.state.num_tiles } tiles overall</p>
                 }
                 <br />
-                <Select label="Tile Frequency" enhanced value={ "" + this.state.frequency } onChange={ this.inputHandler("frequency") } options={
+                <Select label="Tile Frequency" enhanced value={ "" + this.state.frequency } onChange={ this.inputHandler("frequency") }  disabled={ !this.state.editable } options={
                   [
                     {
                       label: 'Standard US English Letter Frequencies',
@@ -773,18 +893,21 @@ class CreateGameForm extends React.Component {
                   )
                 }
                 <br />
-                <l.ListItem>
-                  <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="7" max="25" step="1" />
+                <l.ListItem disabled>
+                  <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="7" max="25" step="1" disabled={ !this.state.editable } />
                   <p></p>
                 </l.ListItem>
-                <l.ListItem><TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="10" step="1" /></l.ListItem>
-                <l.ListItem><TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" /></l.ListItem>
+                <l.ListItem disabled>
+                  <TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="10" step="1" disabled={ !this.state.editable } />
+                </l.ListItem>
+                <l.ListItem disabled>
+                  <TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" disabled={ !this.state.editable } />
+                </l.ListItem>
                 <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
                 <br/>
               </l.ListGroup>
             </l.List>
-
-            <Button label="Create" raised />
+            { this.state.editable ? <Button label="Create" raised disabled={ !this.state.editable } /> : <></> }
           </form>
           <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
             <d.DialogTitle>Error!</d.DialogTitle>
@@ -1052,7 +1175,7 @@ class JoinGamePage extends React.Component {
               <l.List twoLine>
                 <l.ListGroup>
                   <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
-                  <l.ListItem><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
+                  <l.ListItem disabled><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
                 </l.ListGroup>
               </l.List>
 

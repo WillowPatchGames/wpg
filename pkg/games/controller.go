@@ -392,6 +392,17 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, playing
 	notification.LoadFromController(game, player)
 	c.undispatch(game, player, notification.MessageID, 0, notification)
 
+	for _, indexed_player := range game.ToPlayer {
+		// Only let admitted players know who else is in the room.
+		if !indexed_player.Admitted {
+			continue
+		}
+
+		var users ControllerListUsersInGame
+		users.LoadFromController(game, indexed_player)
+		c.undispatch(game, indexed_player, users.MessageID, 0, users)
+	}
+
 	return nil
 }
 

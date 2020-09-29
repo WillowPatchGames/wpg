@@ -37,6 +37,9 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 	// individual game type.
 	switch header.MessageType {
 	case "join":
+		// In the below, don't monopolize the Reply ID; save it for games who might
+		// need specific replies.
+
 		// When the user is the admin, send them a bunch of notify-joins again.
 		// This lets them see users who are already in the room... :-)
 		if player.UID == game.Owner {
@@ -50,12 +53,19 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 					return err
 				}
 			}
-		} else if player.Admitted {
-			// If this player is already admitted, tell them so and indicate their
-			// status as a player/spectator.
+		}
+
+		// If this player is already admitted, tell them so and indicate their
+		// status as a player/spectator. Also let them know who else is in the
+		// room. Note that admins don't necessarily rely on this information.
+		if player.Admitted {
 			var notification ControllerNotifyAdmitted
 			notification.LoadFromController(game, player)
 			c.undispatch(game, player, notification.MessageID, 0, notification)
+
+			var users ControllerListUsersInGame
+			users.LoadFromController(game, player)
+			c.undispatch(game, player, users.MessageID, 0, users)
 		}
 	case "admit":
 		var data GameAdmit

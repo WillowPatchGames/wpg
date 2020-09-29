@@ -104,3 +104,29 @@ func (cnw *ControllerNotifyWord) LoadFromController(data *GameData, player *Play
 	cnw.Word = word
 	cnw.Valid = IsWord(word)
 }
+
+type ControllerPlayerState struct {
+	UID     uint64 `json:"user"`
+	Playing bool   `json:"playing"`
+}
+
+type ControllerListUsersInGame struct {
+	MessageHeader
+
+	Players []ControllerPlayerState `json:"players"`
+}
+
+func (cluig *ControllerListUsersInGame) LoadFromController(data *GameData, player *PlayerData) {
+	cluig.LoadHeader(data, player)
+	cluig.MessageType = "notify-users"
+
+	for _, indexed_player := range data.ToPlayer {
+		if indexed_player.Admitted {
+			var state ControllerPlayerState
+			state.UID = indexed_player.UID
+			state.Playing = indexed_player.Playing
+
+			cluig.Players = append(cluig.Players, state)
+		}
+	}
+}
