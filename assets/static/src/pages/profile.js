@@ -2,6 +2,7 @@ import React from 'react';
 
 import '../App.css';
 
+import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/dialog/styles';
@@ -9,6 +10,7 @@ import '@rmwc/grid/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/typography/styles';
 
+import { Avatar } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
@@ -17,6 +19,7 @@ import { TextField } from '@rmwc/textfield';
 import { Typography } from '@rmwc/typography';
 
 import { LoadingPage } from './common.js';
+import { gravatarify } from '../utils/gravatar.js';
 
 class UserProfilePage extends React.Component {
   constructor(props) {
@@ -116,6 +119,10 @@ class UserProfilePage extends React.Component {
       <>
         <div>
           <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <Avatar src={ gravatarify(this.props.user) } name={ this.state.display } size="xlarge" />
+              <p>Change your profile picture on <a href="https://www.gravatar.com" target="_blank" rel="noopener noreferrer">Gravatar</a> or add your email to link Gravatar.</p>
+            </div>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <form onSubmit={ this.handleNamesSubmit.bind(this) }>
                 <TextField fullwidth placeholder="email" name="email" value={ this.state.email } onChange={ this.inputHandler("email") } /><br />
@@ -264,7 +271,6 @@ class ProfilePage extends React.Component {
           <g.GridCell align="middle" span={6}>
             <article>
               <Typography use="headline2">Profile Preferences</Typography>
-              <p>Here you can configure your account and change several settings.</p>
               <div>
                 { React.createElement(component, this.props, this.props.children) }
               </div>

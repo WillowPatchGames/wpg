@@ -16,6 +16,13 @@ type UserModel struct {
 	email    sql.NullString
 	Email    string
 	Guest    bool
+
+	Config *UserConfigModel
+}
+
+type UserConfigModel struct {
+	gravatarHash sql.NullString
+	GravatarHash string `json:"gravatar,omitempty"`
 }
 
 func (user *UserModel) FromID(transaction *sql.Tx, id uint64) error {
@@ -253,4 +260,52 @@ func (user *UserModel) ComparePassword(transaction *sql.Tx, given string) error 
 	}
 
 	return crypter.Compare([]byte(given))
+}
+
+func (user *UserModel) LoadConfig(transaction *sql.Tx) error {
+	if user.ID == 0 {
+		panic("Uninitialized user object passed to LoadConfig")
+	}
+
+	var config UserConfigModel
+
+	stmt, err := transaction.Prepare(database.GetConfig)
+	if err != nil {
+		return err
+	}
+
+	config.GravatarHash = ""
+	err = stmt.QueryRow(user.ID, "gravatar-hash").Scan(&config.gravatarHash)
+	if err == nil && config.gravatarHash.Valid {
+		config.GravatarHash = config.gravatarHash.String
+	}
+
+	user.Config = &config
+
+	return nil
+}
+
+func (user *UserModel) SetConfig(transaction *sql.Tx) error {
+	if user.ID == 0 || user.Config == nil {
+		panic("Uninitialized user object passed to SetConfig")
+	}
+
+	if user.Config.GravatarHash == "" {
+		user.Config.gravatarHash.Valid = false
+	} else {
+		user.Config.gravatarHash.String = user.Config.GravatarHash
+		user.Config.gravatarHash.Valid = true
+	}
+
+	stmt, err := transaction.Prepare(database.UpdateIsertConfig)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(user.ID, "gravatar-hash", user.Config.gravatarHash)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

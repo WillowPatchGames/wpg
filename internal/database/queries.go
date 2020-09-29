@@ -1,6 +1,8 @@
 package database
 
 const tUsers = "users"
+const tUserConfigs = "user_configs"
+
 const tAuths = "authentication"
 const tRooms = "rooms"
 
@@ -26,6 +28,14 @@ const UpdateUser = "UPDATE " + tUsers + " SET username=$1, email=$2, display=$3,
 
 const SetPassword = "INSERT INTO " + tAuths + " (user_id, category, key, value) VALUES ($1, 'password', 'current-password', $2)"
 const GetPassword = "SELECT value FROM " + tAuths + " WHERE user_id=$1 AND category='password' AND key='current-password'"
+
+// User Config
+
+const GetConfig = "SELECT value FROM " + tUserConfigs + " WHERE user_id=$1 AND key=$2"
+
+const UpdateIsertConfig = "INSERT INTO " + tUserConfigs + " (user_id, key, value) " +
+	"VALUES ($1, $2, $3) ON CONFLICT (user_id, key) DO UPDATE SET value=$3 " +
+	"WHERE " + tUserConfigs + ".user_id=$1 AND " + tUserConfigs + ".key=$2"
 
 // Auth Model
 

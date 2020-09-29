@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -25,11 +26,12 @@ type updateHandlerData struct {
 }
 
 type updateHandlerResponse struct {
-	UserID   uint64 `json:"id"`
-	Username string `json:"username,omitempty"`
-	Display  string `json:"display,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Guest    bool   `json:"guest"`
+	UserID   uint64                  `json:"id"`
+	Username string                  `json:"username,omitempty"`
+	Display  string                  `json:"display"`
+	Email    string                  `json:"email,omitempty"`
+	Guest    bool                    `json:"guest"`
+	Config   *models.UserConfigModel `json:"config,omitempty"`
 }
 
 type UpdateHandler struct {
@@ -118,13 +120,29 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		return err
 	}
 
+	err = user.LoadConfig(tx)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
+		log.Println("Not authorized?", err)
+		return err
+	}
+
 	var changePassword bool = false
 Fields:
 	for _, field := range handle.req.Fields {
 		switch field {
 		case "email":
 			log.Println("Update email", user.Email, "->", handle.req.Email)
-			user.Email = handle.req.Email
+			if !user.Guest {
+				user.Email = handle.req.Email
+				user.Config.GravatarHash = utils.GravatarHash(user.Email)
+			} else {
+				err = errors.New("unable to change email on guest user account")
+				break Fields
+			}
 		case "display":
 			log.Println("Update display", user.Display, "->", handle.req.Display)
 			err = api.ValidateDisplayName(handle.req.Display)
@@ -136,7 +154,12 @@ Fields:
 			}
 		case "password", "old_password", "new_password":
 			log.Println("Update password...")
-			changePassword = true
+			if !user.Guest {
+				changePassword = true
+			} else {
+				err = errors.New("unable to change password on guest user account")
+				break Fields
+			}
 		default:
 			log.Println("Field:", field)
 			err = api_errors.ErrMissingRequest
@@ -174,6 +197,16 @@ Fields:
 		}
 	}
 
+	err = user.SetConfig(tx)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
+		log.Println("Set config?", err)
+		return err
+	}
+
 	err = user.Save(tx)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
@@ -194,9 +227,15 @@ Fields:
 	handle.resp.Display = user.Display
 
 	if handle.user != nil && handle.user.ID == user.ID {
-		handle.resp.Username = user.Username
-		handle.resp.Email = user.Email
 		handle.resp.Guest = user.Guest
+		if !user.Guest {
+			handle.resp.Username = user.Username
+			handle.resp.Email = user.Email
+		}
+	}
+
+	if !user.Guest {
+		handle.resp.Config = user.Config
 	}
 
 	utils.SendResponse(w, r, handle)

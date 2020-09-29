@@ -22,11 +22,12 @@ type queryHandlerData struct {
 }
 
 type queryHandlerResponse struct {
-	UserID   uint64 `json:"id"`
-	Username string `json:"username,omitempty"`
-	Display  string `json:"display,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Guest    bool   `json:"guest"`
+	UserID   uint64                  `json:"id"`
+	Username string                  `json:"username,omitempty"`
+	Display  string                  `json:"display"`
+	Email    string                  `json:"email,omitempty"`
+	Guest    bool                    `json:"guest"`
+	Config   *models.UserConfigModel `json:"config,omitempty"`
 }
 
 type QueryHandler struct {
@@ -120,6 +121,16 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
+	err = user.LoadConfig(tx)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Print("Unable to rollback:", rollbackErr)
+		}
+
+		log.Println("Getting config?", err)
+		return err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		log.Println("Commiting?")
@@ -130,9 +141,15 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	handle.resp.Display = user.Display
 
 	if handle.user != nil && handle.user.ID == user.ID {
-		handle.resp.Username = user.Username
-		handle.resp.Email = user.Email
 		handle.resp.Guest = user.Guest
+		if !user.Guest {
+			handle.resp.Username = user.Username
+			handle.resp.Email = user.Email
+		}
+	}
+
+	if !user.Guest {
+		handle.resp.Config = user.Config
 	}
 
 	utils.SendResponse(w, r, handle)

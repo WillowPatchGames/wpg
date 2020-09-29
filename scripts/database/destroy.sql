@@ -5,6 +5,7 @@ DROP TABLE room_member;
 DROP TABLE room_members;
 DROP TABLE rooms;
 DROP TABLE authentication;
+DROP TABLE user_configs;
 DROP TABLE users;
 DROP TABLE metadata;
 

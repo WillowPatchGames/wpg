@@ -22,12 +22,13 @@ type registerHandlerData struct {
 }
 
 type registerHandlerResponse struct {
-	UserID   uint64 `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Display  string `json:"display"`
-	Guest    bool   `json:"guest"`
-	Token    string `json:"token,omitempty"`
+	UserID   uint64                  `json:"id"`
+	Username string                  `json:"username,omitempty"`
+	Email    string                  `json:"email,omitempty"`
+	Display  string                  `json:"display"`
+	Guest    bool                    `json:"guest"`
+	Token    string                  `json:"token,omitempty"`
+	Config   *models.UserConfigModel `json:"config,omitempty"`
 }
 
 type RegisterHandler struct {
@@ -94,13 +95,16 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	var user models.UserModel
-	user.Username = handle.req.Username
-	user.Email = handle.req.Email
 	user.Display = handle.req.Display
-	if user.Display == "" && user.Username != "" {
-		user.Display = user.Username
+	if user.Display == "" && handle.req.Username != "" {
+		user.Display = handle.req.Username
 	}
 	user.Guest = handle.req.Guest
+	if !user.Guest {
+		// Only set email and username on non-guest accounts
+		user.Email = handle.req.Email
+		user.Username = handle.req.Username
+	}
 
 	err = user.Create(tx)
 	if err != nil {
@@ -134,6 +138,30 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 
 			return err
 		}
+
+		// Only allow non-guest accounts to add gravatar information
+		if user.Email != "" {
+			err = user.LoadConfig(tx)
+			if err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					log.Print("Unable to rollback:", rollbackErr)
+				}
+
+				return err
+			}
+
+			user.Config.GravatarHash = utils.GravatarHash(user.Email)
+
+			err = user.SetConfig(tx)
+			if err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					log.Print("Unable to rollback:", rollbackErr)
+				}
+
+				log.Println("SetConfig?", err)
+				return err
+			}
+		}
 	}
 
 	err = tx.Commit()
@@ -142,10 +170,13 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	handle.resp.UserID = user.ID
-	handle.resp.Username = user.Username
 	handle.resp.Display = user.Display
-	handle.resp.Email = user.Email
 	handle.resp.Guest = user.Guest
+	if !user.Guest {
+		handle.resp.Config = user.Config
+		handle.resp.Username = user.Username
+		handle.resp.Email = user.Email
+	}
 	// handle.resp.Token set above if the user is a guest user.
 
 	utils.SendResponse(w, r, &handle)

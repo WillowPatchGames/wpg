@@ -32,7 +32,7 @@ import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { Game } from '../component.js';
 import { RushGame, RushData } from '../games/rush.js';
 import { UserCache } from '../utils/cache.js';
-import BlankProfile from '../images/blank-profile.png';
+import { gravatarify } from '../utils/gravatar.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
@@ -145,7 +145,7 @@ class RushGameSynopsis extends React.Component {
         var us = this.state.players[this.props.user.id];
         player_view.push(
           <div className="playerSummary">
-            <Avatar src={ BlankProfile } name="You" size="xlarge" />
+            <Avatar src={ gravatarify(us.user) } name="You" size="xlarge" />
             {
               us.playing
               ?
@@ -167,7 +167,7 @@ class RushGameSynopsis extends React.Component {
         let them = this.state.players[player_id];
         player_view.push(
           <div className="playerSummary">
-            <Avatar src={ BlankProfile } name={ them.user.display } size="xlarge" />
+            <Avatar src={ gravatarify(them.user) } name={ them.user.display } size="xlarge" />
             {
               them.playing
               ?

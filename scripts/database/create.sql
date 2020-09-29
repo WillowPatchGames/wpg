@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS metadata (
   UNIQUE(version)
 );
 
-INSERT INTO metadata (version) VALUES (9);
+INSERT INTO metadata (version) VALUES (10);
 
 CREATE TABLE users (
   id       BIGSERIAL PRIMARY KEY,
@@ -15,6 +15,17 @@ CREATE TABLE users (
   created  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(username),
   UNIQUE(email)
+);
+
+CREATE TABLE user_configs (
+  user_id  BIGINT,
+  key      VARCHAR(1024),
+  value    TEXT,
+  created  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(user_id, key)
 );
 
 CREATE TYPE auth_source AS ENUM ('password', 'api_token', 'TOTP');
@@ -73,6 +84,7 @@ GRANT ALL PRIVILEGES ON DATABASE wpgdb TO wpg;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO wpg;
 ALTER TABLE metadata OWNER TO wpg;
 ALTER TABLE users OWNER TO wpg;
+ALTER TABLE user_configs OWNER TO wpg;
 ALTER TABLE authentication OWNER TO wpg;
 ALTER TABLE rooms OWNER TO wpg;
 ALTER TABLE games OWNER TO wpg;
