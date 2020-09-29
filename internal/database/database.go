@@ -1,10 +1,9 @@
 package database
 
 import (
-	"database/sql"
-	// Required for postgres database connection, the only type we currently
-	// support. Ensures postgres dependency gets tracked in go.mod.
-	_ "github.com/lib/pq"
+	"gorm.io/driver/sqlite"
+  "gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // Database connection. Most

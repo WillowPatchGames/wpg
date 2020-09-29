@@ -8,14 +8,6 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 )
 
-type RoomModel struct {
-	ID       uint64
-	OwnerID  uint64
-	Style    string
-	Open     bool
-	JoinCode string
-}
-
 func (room *RoomModel) FromID(transaction *sql.Tx, id uint64) error {
 	stmt, err := transaction.Prepare(database.GetRoomFromID)
 	if err != nil {

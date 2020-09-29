@@ -1,20 +1,13 @@
 package models
 
 import (
-	"database/sql"
 	"errors"
 	"log"
 
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
+  "gorm.io/gorm"
 )
 
-type AuthModel struct {
-	UserID   uint64
-	APIToken string
-}
-
-func (token *AuthModel) FromPassword(transaction *sql.Tx, user UserModel, password string) error {
+func (token *AuthModel) FromPassword(password string) error {
 	err := user.ComparePassword(transaction, password)
 	if err != nil {
 		return err
@@ -42,8 +35,8 @@ func (token *AuthModel) FromPassword(transaction *sql.Tx, user UserModel, passwo
 	return stmt.Close()
 }
 
-func (token *AuthModel) GuestToken(transaction *sql.Tx, user UserModel) error {
-	if !user.Guest {
+func (token *AuthModel) GuestToken() error {
+	if !token.User.Guest {
 		return nil
 	}
 
