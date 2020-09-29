@@ -782,6 +782,7 @@ class CreateGameForm extends React.Component {
     if (game.error !== null) {
       this.setError(game.error.message);
     } else {
+      game = await GameModel.FromId(this.props.user, game.id);
       this.props.setGame(game);
 
       if (this.props.room === null) {
