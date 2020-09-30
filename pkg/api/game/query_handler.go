@@ -25,6 +25,7 @@ type queryHandlerResponse struct {
 	Room      uint64      `json:"room"`
 	Style     string      `json:"style"`
 	Open      bool        `json:"open"`
+	JoinCode  string      `json:"code"`
 	Lifecycle string      `json:"lifecycle"`
 	Config    interface{} `json:"config"`
 }
@@ -129,6 +130,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open
+	handle.resp.JoinCode = game.JoinCode
 	handle.resp.Lifecycle = game.Lifecycle
 	handle.resp.Config = gameConfig
 
