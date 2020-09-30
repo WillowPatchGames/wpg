@@ -11,7 +11,7 @@ require (
 	github.com/lib/pq v1.8.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gorm.io/driver/postgres v1.0.2 // indirect
-	gorm.io/driver/sqlite v1.1.3 // indirect
-	gorm.io/gorm v1.20.2 // indirect
+	gorm.io/driver/postgres v1.0.2
+	gorm.io/driver/sqlite v1.1.3
+	gorm.io/gorm v1.20.2
 )

@@ -19,20 +19,22 @@ import (
 	"github.com/gorilla/mux"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/auth"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/game"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/room"
-	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/user"
-)
+	/*
+		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/auth"
+		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/game"
+		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/room"
+		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/user"*/)
 
-const dbFmt string = "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s"
+const dbFmt string = "host=%s user=%s password=%s database=%s sslmode=%s"
 
+var dbType string
 var dbHost string
 var dbPort int
 var dbUser string
 var dbPassword string
 var dbName string
 var dbSslmode string
+var dbDry bool
 
 // In debug mode, we use this function to walk the set of routes we've added,
 // showing them in the logs.
@@ -54,34 +56,43 @@ func main() {
 	var staticPath string
 
 	flag.StringVar(&addr, "addr", "localhost:8042", "Address to listen for HTTP requests on")
-	flag.StringVar(&dbHost, "db_host", "localhost", "Hostname to contact the database over")
+
+	// Database connection flags
+	flag.StringVar(&dbType, "db_type", "postgres", "Type of the database (`sqlite` or `postgres`)")
+	flag.StringVar(&dbHost, "db_host", "/var/run/postgresql", "Hostname to contact the database over or filename to database if sqlite")
 	flag.IntVar(&dbPort, "db_port", 5432, "Port to contact the database on")
-	flag.StringVar(&dbUser, "db_user", "psql", "Username to contact the database with")
+	flag.StringVar(&dbUser, "db_user", "wpg", "Username to contact the database with")
 	flag.StringVar(&dbPassword, "db_password", "password", "Password to authentication against the database with")
 	flag.StringVar(&dbName, "db_name", "wpgdb", "Database to connect to with")
 	flag.StringVar(&dbSslmode, "db_sslmode", "require", "SSL Validation mode (require, verify-full, verify-ca, or disable)")
+	flag.BoolVar(&dbDry, "db_dry", false, "Whether or not we we're doing a dry run")
+
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
 	flag.BoolVar(&proxy, "proxy", false, "Enable proxy")
 	flag.StringVar(&staticPath, "static_path", "assets/static/public", "Path to web UI static assets")
 	flag.Parse()
 
-	// Open Database connection first. Currently we only support postgres
-	// databases but we could change that in the future.
-	dbconn = fmt.Sprintf(dbFmt, dbHost, dbPort, dbUser, dbPassword, dbName, dbSslmode)
+	// Open Database connection first.
+	if dbType == "postgres" {
+		dbconn = fmt.Sprintf(dbFmt, dbHost, dbUser, dbPassword, dbName, dbSslmode)
+	} else if dbType == "sqlite" {
+		dbconn = dbHost
+	} else {
+		log.Fatal("Unknown database type:", dbType, " -- recognized types are `sqlite` and `postgres`")
+	}
 
 	if debug {
 		log.Println("Database connection string", dbconn)
 	}
 
-	err = database.OpenDatabase("postgres", dbconn)
+	err = database.OpenDatabase(dbType, dbconn, dbDry)
 	if err != nil {
 		panic(err)
 	}
-	defer database.Close()
 
+	router := mux.NewRouter()
 	// Add our main API handlers. This extends the main router with relevant
 	// routes.
-	router := mux.NewRouter()
 	auth.BuildRouter(router, debug)
 	game.BuildRouter(router, debug)
 	room.BuildRouter(router, debug)

@@ -1,35 +1,44 @@
 package database
 
 import (
+	"database/sql"
+
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
-  "gorm.io/driver/postgres"
+
 	"gorm.io/gorm"
 )
 
 // Database connection. Most
-var db *sql.DB
+var db *gorm.DB
 
-func OpenDatabase(format string, conn string) error {
+func OpenDatabase(format string, conn string, dry bool) error {
 	var err error
 
-	db, err = sql.Open(format, conn)
-	if err != nil {
-		return err
+	var config = gorm.Config{
+		PrepareStmt: true,
+		DryRun:      dry,
 	}
 
-	err = db.Ping()
-	if err != nil {
-		_ = db.Close()
-		return err
+	if format == "sqlite" {
+		db, err = gorm.Open(sqlite.Open(conn), &config)
+		if err != nil {
+			return err
+		}
+	} else if format == "postgres" {
+		db, err = gorm.Open(postgres.Open(conn), &config)
+		if err != nil {
+			return err
+		}
+	} else {
+		panic("Unknown database type: " + format)
 	}
+
+	db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &Game{})
 
 	return nil
 }
 
-func Close() error {
-	return db.Close()
-}
-
-func GetTransaction() (*sql.Tx, error) {
-	return db.Begin()
+func InTransaction(handler func(tx *gorm.DB) error, opts ...*sql.TxOptions) error {
+	return db.Transaction(handler, opts...)
 }
