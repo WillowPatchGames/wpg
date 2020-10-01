@@ -23,12 +23,12 @@ type queryHandlerData struct {
 }
 
 type queryHandlerResponse struct {
-	UserID   uint64               `json:"id"`
-	Username string               `json:"username,omitempty"`
-	Display  string               `json:"display"`
-	Email    string               `json:"email,omitempty"`
-	Guest    bool                 `json:"guest"`
-	Config   *database.UserConfig `json:"config,omitempty"`
+	UserID   uint64          `json:"id"`
+	Username string          `json:"username,omitempty"`
+	Display  string          `json:"display"`
+	Email    string          `json:"email,omitempty"`
+	Guest    bool            `json:"guest"`
+	Config   *JSONUserConfig `json:"config,omitempty"`
 }
 
 type QueryHandler struct {
@@ -136,7 +136,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if !user.Guest {
-		handle.resp.Config = &user.Config
+		handle.resp.Config = FromConfigModel(user.Config, handle.user != nil && handle.user.ID == user.ID)
 	}
 
 	utils.SendResponse(w, r, handle)

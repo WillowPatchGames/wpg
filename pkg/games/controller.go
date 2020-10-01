@@ -246,7 +246,7 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 			return err
 		}
 
-		if err := tx.Model(&game).Update("Config", encoded).Error; err != nil {
+		if err := tx.Model(gamedb).Update("Config", string(encoded)).Error; err != nil {
 			return err
 		}
 
@@ -264,7 +264,7 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 		return err
 	}
 
-	if err := tx.Model(&game).Update("State", encoded_state).Error; err != nil {
+	if err := tx.Model(gamedb).Update("State", string(encoded_state)).Error; err != nil {
 		return err
 	}
 

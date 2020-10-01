@@ -23,13 +23,13 @@ type registerHandlerData struct {
 }
 
 type registerHandlerResponse struct {
-	UserID   uint64               `json:"id"`
-	Username string               `json:"username,omitempty"`
-	Email    string               `json:"email,omitempty"`
-	Display  string               `json:"display"`
-	Guest    bool                 `json:"guest"`
-	Token    string               `json:"token,omitempty"`
-	Config   *database.UserConfig `json:"config,omitempty"`
+	UserID   uint64          `json:"id"`
+	Username string          `json:"username,omitempty"`
+	Email    string          `json:"email,omitempty"`
+	Display  string          `json:"display"`
+	Guest    bool            `json:"guest"`
+	Token    string          `json:"token,omitempty"`
+	Config   *JSONUserConfig `json:"config,omitempty"`
 }
 
 type RegisterHandler struct {
@@ -144,7 +144,8 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 	handle.resp.Display = user.Display
 	handle.resp.Guest = user.Guest
 	if !user.Guest {
-		handle.resp.Config = &user.Config
+		handle.resp.Config = FromConfigModel(user.Config, true)
+
 		if user.Username.Valid {
 			handle.resp.Username = user.Username.String
 		}

@@ -27,12 +27,12 @@ type updateHandlerData struct {
 }
 
 type updateHandlerResponse struct {
-	UserID   uint64               `json:"id"`
-	Username string               `json:"username,omitempty"`
-	Display  string               `json:"display"`
-	Email    string               `json:"email,omitempty"`
-	Guest    bool                 `json:"guest"`
-	Config   *database.UserConfig `json:"config,omitempty"`
+	UserID   uint64          `json:"id"`
+	Username string          `json:"username,omitempty"`
+	Display  string          `json:"display"`
+	Email    string          `json:"email,omitempty"`
+	Guest    bool            `json:"guest"`
+	Config   *JSONUserConfig `json:"config,omitempty"`
 }
 
 type UpdateHandler struct {
@@ -183,7 +183,7 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	if !user.Guest {
-		handle.resp.Config = &user.Config
+		handle.resp.Config = FromConfigModel(user.Config, handle.user != nil && handle.user.ID == user.ID)
 	}
 
 	utils.SendResponse(w, r, handle)
