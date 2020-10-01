@@ -1,8 +1,10 @@
 package game
 
 import (
-	"log"
+	"encoding/json"
 	"net/http"
+
+	"gorm.io/gorm"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
@@ -39,7 +41,7 @@ type CreateHandler struct {
 
 	req  createHandlerData
 	resp createHandlerResponse
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle CreateHandler) GetResponse() interface{} {
@@ -54,7 +56,7 @@ func (handle *CreateHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *CreateHandler) SetUser(user *models.UserModel) {
+func (handle *CreateHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
@@ -79,71 +81,41 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		return err
-	}
+	var room *database.Room
+	var game database.Game
 
-	var room *models.RoomModel
-	if handle.req.RoomID > 0 {
-		room = new(models.RoomModel)
-		err = room.FromID(tx, handle.req.RoomID)
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if handle.req.RoomID > 0 {
+			if err := tx.First(&room, handle.req.RoomID).Error; err != nil {
+				return err
 			}
 
-			log.Print("Get room?", err)
-			return err
+			if err := api.UserCanCreateGame(*handle.user, *room); err != nil {
+				return err
+			}
 		}
 
-		err = api.UserCanCreateGame(*handle.user, *room)
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
+		game.OwnerID = handle.user.ID
+		if room != nil {
+			game.RoomID.Valid = true
+			game.RoomID.Int64 = int64(room.ID)
+		}
+		game.Style = handle.req.Style
+		game.Open = handle.req.Open
+
+		if handle.req.Config != nil {
+			data, err := json.Marshal(handle.req.Config)
+			if err != nil {
+				return err
 			}
 
-			log.Print("Not authorized?", err)
+			game.Config = string(data)
+		}
+
+		if err := tx.Create(&game).Error; err != nil {
 			return err
 		}
-	}
-
-	var game models.GameModel
-	game.OwnerID = handle.user.ID
-	if room != nil {
-		game.RoomID = room.ID
-	}
-	game.Style = handle.req.Style
-	game.Open = handle.req.Open
-
-	err = game.Create(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Print("Create?", err)
-		return err
-	}
-
-	log.Println("Created game")
-
-	if handle.req.Config != nil {
-		err = game.SetConfig(tx, handle.req.Config)
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
-			}
-
-			log.Print("Config?", err)
-			return err
-		}
-	}
-
-	log.Println("Set config")
-
-	err = tx.Commit()
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/gorilla/websocket"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
@@ -265,7 +267,7 @@ type Hub struct {
 	// dbgames maps gid to a loaded GameModel instance. In the future, some cache
 	// invalidation should occur and we should figure out when to reload it from
 	// the database.
-	dbgames map[GameID]*models.GameModel
+	dbgames map[GameID]*database.Game
 
 	// Register handles join requests from the clients.
 	register chan *Client
@@ -282,7 +284,7 @@ func NewHub() *Hub {
 	// Note that inner maps and channels must be created per-game.
 	var ret = &Hub{
 		connections: make(map[GameID]map[UserID]*Client),
-		dbgames:     make(map[GameID]*models.GameModel),
+		dbgames:     make(map[GameID]*database.Game),
 		register:    make(chan *Client, registerChannelSize),
 		unregister:  make(chan *Client, registerChannelSize),
 		process:     make(map[GameID]chan ClientMessage),
@@ -300,26 +302,20 @@ func (hub *Hub) ensureGameExists(gameid uint64) error {
 		return nil
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		return err
-	}
+	var gamedb database.Game
 
-	defer tx.Commit()
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if err := tx.First(&gamedb, gameid).Error; err != nil {
+			return err
+		}
 
-	var gamedb models.GameModel
-	err = gamedb.FromID(tx, gameid)
-	if err != nil {
-		log.Println("Unable to load game (", gameid, "):", err)
-		return err
-	}
+		// Save it to let others re-use the object.
+		hub.dbgames[GameID(gameid)] = &gamedb
 
-	// Save it to let others re-use the object.
-	hub.dbgames[GameID(gameid)] = &gamedb
-
-	err = hub.controller.LoadGame(&gamedb, tx)
-	if err != nil {
-		log.Println("Unable to add game to controller:", err)
+		if err := hub.controller.LoadGame(&gamedb); err != nil {
+			return err
+		}
+	}); err != nil {
 		return err
 	}
 

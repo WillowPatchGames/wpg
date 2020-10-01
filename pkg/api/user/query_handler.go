@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -21,12 +23,12 @@ type queryHandlerData struct {
 }
 
 type queryHandlerResponse struct {
-	UserID   uint64                  `json:"id"`
-	Username string                  `json:"username,omitempty"`
-	Display  string                  `json:"display"`
-	Email    string                  `json:"email,omitempty"`
-	Guest    bool                    `json:"guest"`
-	Config   *models.UserConfigModel `json:"config,omitempty"`
+	UserID   uint64               `json:"id"`
+	Username string               `json:"username,omitempty"`
+	Display  string               `json:"display"`
+	Email    string               `json:"email,omitempty"`
+	Guest    bool                 `json:"guest"`
+	Config   *database.UserConfig `json:"config,omitempty"`
 }
 
 type QueryHandler struct {
@@ -36,7 +38,7 @@ type QueryHandler struct {
 
 	req  queryHandlerData
 	resp queryHandlerResponse
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle QueryHandler) GetResponse() interface{} {
@@ -51,7 +53,7 @@ func (handle *QueryHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *QueryHandler) SetUser(user *models.UserModel) {
+func (handle *QueryHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
@@ -96,43 +98,23 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Transaction?")
-		return err
-	}
+	var user database.User
 
-	var user models.UserModel
-	if handle.req.UserID != 0 {
-		err = user.FromID(tx, handle.req.UserID)
-	} else if handle.req.Username != "" {
-		err = user.FromUsername(tx, handle.req.Username)
-	} else if handle.req.Email != "" {
-		err = user.FromEmail(tx, handle.req.Email)
-	}
-
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if handle.req.UserID != 0 {
+			if err := tx.Preload("UserConfig").First(&user, handle.req.UserID).Error; err != nil {
+				return err
+			}
+		} else if handle.req.Username != "" {
+			if err := tx.Preload("UserConfig").First(&user, "username = ?", handle.req.Username).Error; err != nil {
+				return err
+			}
+		} else if handle.req.Email != "" {
+			if err := tx.Preload("UserConfig").First(&user, "email = ?", handle.req.Email).Error; err != nil {
+				return err
+			}
 		}
-
-		log.Println("Getting?", err)
-		return err
-	}
-
-	err = user.LoadConfig(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Getting config?", err)
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Println("Commiting?")
+	}); err != nil {
 		return err
 	}
 
@@ -142,13 +124,17 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	if handle.user != nil && handle.user.ID == user.ID {
 		handle.resp.Guest = user.Guest
 		if !user.Guest {
-			handle.resp.Username = user.Username
-			handle.resp.Email = user.Email
+			if user.Username.Valid {
+				handle.resp.Username = user.Username.String
+			}
+			if user.Email.Valid {
+				handle.resp.Email = user.Email.String
+			}
 		}
 	}
 
 	if !user.Guest {
-		handle.resp.Config = user.Config
+		handle.resp.Config = &user.Config
 	}
 
 	utils.SendResponse(w, r, handle)

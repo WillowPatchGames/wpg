@@ -1,13 +1,14 @@
 package games
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
 	"strconv"
 	"sync"
 	"time"
+
+	"gorm.io/gorm"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 )
@@ -130,7 +131,7 @@ func (c *Controller) GameExists(gid uint64) bool {
 	return ok
 }
 
-func (c *Controller) LoadGame(gamedb *models.GameModel, tx *sql.Tx) error {
+func (c *Controller) LoadGame(gamedb *database.Game) error {
 	if gamedb == nil {
 		return errors.New("got unexpectedly null database when attempting to load game into controller")
 	}
@@ -141,7 +142,7 @@ func (c *Controller) LoadGame(gamedb *models.GameModel, tx *sql.Tx) error {
 	var data GameData
 	data.State = new(RushState)
 
-	if err := gamedb.GetState(tx, &data); err != nil {
+	if err := json.Unmarshal([]byte(gamedb.State), &data); err != nil {
 		return err
 	}
 
@@ -149,7 +150,8 @@ func (c *Controller) LoadGame(gamedb *models.GameModel, tx *sql.Tx) error {
 		// Assume this game hasn't yet been initialized. Create a new game and then
 		// persist it back to the database.
 		var config RushConfig
-		if err := gamedb.GetConfig(tx, &config); err != nil {
+
+		if err := json.Unmarshal([]byte(gamedb.Config), &config); err != nil {
 			return err
 		}
 
@@ -220,7 +222,7 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 	return nil
 }
 
-func (c *Controller) PersistGame(gamedb *models.GameModel, tx *sql.Tx) error {
+func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -233,7 +235,12 @@ func (c *Controller) PersistGame(gamedb *models.GameModel, tx *sql.Tx) error {
 		var state *RushState = game.State.(*RushState)
 		var config = state.Config
 
-		if err := gamedb.SetConfig(tx, &config); err != nil {
+		encoded, err := json.Marshal(config)
+		if err != nil {
+			return err
+		}
+
+		if err := tx.Model(&game).Update("Config", encoded).Error; err != nil {
 			return err
 		}
 
@@ -246,11 +253,12 @@ func (c *Controller) PersistGame(gamedb *models.GameModel, tx *sql.Tx) error {
 		}
 	}
 
-	if err := gamedb.SetState(tx, game); err != nil {
+	encoded_state, err := json.Marshal(game)
+	if err != nil {
 		return err
 	}
 
-	if err := gamedb.Save(tx); err != nil {
+	if err := tx.Model(&game).Update("State", encoded_state).Error; err != nil {
 		return err
 	}
 

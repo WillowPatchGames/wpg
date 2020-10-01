@@ -1,8 +1,9 @@
 package room
 
 import (
-	"log"
 	"net/http"
+
+	"gorm.io/gorm"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
@@ -23,6 +24,7 @@ type queryHandlerResponse struct {
 	Owner        uint64   `json:"owner"`
 	Style        string   `json:"style"`
 	Open         bool     `json:"open"`
+	Lifecycle    string   `json:"lifecycle"`
 	CurrentGames []uint64 `json:"games"`
 }
 
@@ -33,7 +35,7 @@ type QueryHandler struct {
 
 	req  queryHandlerData
 	resp queryHandlerResponse
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle QueryHandler) GetResponse() interface{} {
@@ -48,7 +50,7 @@ func (handle *QueryHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *QueryHandler) SetUser(user *models.UserModel) {
+func (handle *QueryHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
@@ -57,54 +59,26 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		return hwaterr.WrapError(api_errors.ErrMissingRequest, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Transaction?", err)
-		return err
-	}
+	var room database.Room
+	var owner database.User
 
-	var room models.RoomModel
-
-	if handle.req.RoomID > 0 {
-		err = room.FromID(tx, handle.req.RoomID)
-	} else {
-		err = room.FromJoinCode(tx, handle.req.JoinCode)
-	}
-
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if handle.req.RoomID > 0 {
+			if err := tx.Preload("Game", "lifecycle = ?", "pending").First(&room, handle.req.RoomID).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Preload("Game", "lifecycle = ?", "pending").First(&room, "joincode = ?", handle.req.JoinCode).Error; err != nil {
+				return err
+			}
 		}
 
-		log.Println("Getting room?", err)
-		return err
-	}
-
-	var owner models.UserModel
-	err = owner.FromID(tx, room.OwnerID)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+		if err := tx.First(&owner, room.OwnerID).Error; err != nil {
+			return err
 		}
 
-		log.Println("Getting user?", err)
-		return err
-	}
-
-	var games []*models.GameModel
-	games, err = room.GetCurrentGames(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Getting game?", err)
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Println("Commiting?")
+		return nil
+	}); err != nil {
 		return err
 	}
 
@@ -112,10 +86,11 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	handle.resp.Owner = owner.ID
 	handle.resp.Style = room.Style
 	handle.resp.Open = room.Open
+	handle.resp.Lifecycle = room.Lifecycle
 
-	if len(games) > 0 {
-		handle.resp.CurrentGames = make([]uint64, len(games))
-		for index, game := range games {
+	if len(room.Games) > 0 {
+		handle.resp.CurrentGames = make([]uint64, len(room.Games))
+		for index, game := range room.Games {
 			handle.resp.CurrentGames[index] = game.ID
 		}
 	}

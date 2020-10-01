@@ -19,6 +19,7 @@ type User struct {
 	Guest    bool
 	Created  time.Time
 
+	Config     UserConfig
 	AuthTokens []Auth
 	Rooms      []Room `gorm:"foreignKey:OwnerID"`
 	Games      []Game `gorm:"foreignKey:OwnerID"`
@@ -28,7 +29,6 @@ type UserConfig struct {
 	gorm.Model
 
 	UserID uint64
-	User   User
 
 	GravatarHash sql.NullString
 }
@@ -46,11 +46,16 @@ type Auth struct {
 }
 
 type Room struct {
-	ID       uint64
-	OwnerID  uint64
-	Style    string
-	Open     bool
-	JoinCode string
+	ID      uint64
+	OwnerID uint64
+
+	Style string
+	Open  bool
+
+	JoinCode  string `gorm:"unique"`
+	Lifecycle string
+
+	Config sql.NullString
 
 	Games []Game `gorm:"foreignKey:RoomID"`
 }
@@ -63,7 +68,7 @@ type Game struct {
 	Style string
 	Open  bool
 
-	JoinCode  string
+	JoinCode  string `gorm:"unique"`
 	Lifecycle string
 
 	Config string
