@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"

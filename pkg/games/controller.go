@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 )
 
 const (

@@ -9,7 +9,6 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 )
 
 type socketHandlerRequest struct {

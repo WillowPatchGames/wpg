@@ -10,8 +10,9 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api"
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
@@ -107,55 +108,38 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	// In order to authenticate our user, we have to first get a database
-	// transaction to load the user and their password in.
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Getting transaction failed:", err)
-		return err
-	}
+	var user database.User
+	var auth database.Auth
 
-	// Load our user from the database, using the appropriate identifier.
-	var user models.UserModel
-	if handle.req.UserID != 0 {
-		err = user.FromID(tx, handle.req.UserID)
-	} else if handle.req.Username != "" {
-		err = user.FromUsername(tx, handle.req.Username)
-	} else if handle.req.Email != "" {
-		err = user.FromEmail(tx, handle.req.Email)
-	}
-
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		var err error = nil
+		if handle.req.UserID != 0 {
+			err = tx.First(&user, handle.req.UserID).Error
+		} else if handle.req.Username != "" {
+			err = tx.First(&user, "username = ?", handle.req.Username).Error
+		} else if handle.req.Email != "" {
+			err = tx.First(&user, "email = ?", handle.req.Email).Error
 		}
 
-		log.Println("Getting user from database failed:", err)
-		return hwaterr.WrapError(err, http.StatusNotFound)
-	}
-
-	// Validate the supplied password.
-	var auth models.AuthModel
-	err = auth.FromPassword(tx, user, handle.req.Password)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+		if err != nil {
+			return err
 		}
 
-		log.Println("Unable to authenticate user by password:", err)
-		return err
-	}
-
-	// Commit the transaction.
-	err = tx.Commit()
-	if err != nil {
+		return database.FromPassword(tx, &user, &auth, handle.req.Password)
+	}); err != nil {
 		return err
 	}
 
 	// Populate response data and send it.
 	handle.resp.UserID = user.ID
-	handle.resp.Username = user.Username
-	handle.resp.Email = user.Email
+	if user.Username.Valid {
+		handle.resp.Username = user.Username.String
+	}
+
+	if user.Email.Valid {
+		handle.resp.Email = user.Email.String
+	}
+
 	handle.resp.APIToken = auth.APIToken
 
 	utils.SendResponse(w, r, handle)

@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/games"
 )
 

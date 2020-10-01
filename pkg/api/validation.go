@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"unicode"
 
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 )
 
 // Validate a given username is ok for use. We assume it is at most 30
@@ -89,7 +89,7 @@ func ValidateDisplayName(displayName string) error {
 }
 
 // Whether or not a given user can modify another user.
-func UserCanModifyUser(actor models.UserModel, target models.UserModel) error {
+func UserCanModifyUser(actor database.User, target database.User) error {
 	// Currently we only allow first-party actions.
 	if actor.ID == target.ID {
 		return nil
@@ -99,7 +99,7 @@ func UserCanModifyUser(actor models.UserModel, target models.UserModel) error {
 }
 
 // Whether or not, in a given room, a user can create a game.
-func UserCanCreateGame(actor models.UserModel, room models.RoomModel) error {
+func UserCanCreateGame(actor database.User, room database.Room) error {
 	// Currently we only allow first-party actions.
 	if actor.ID == room.OwnerID {
 		return nil

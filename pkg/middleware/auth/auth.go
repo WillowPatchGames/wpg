@@ -4,16 +4,17 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	"git.cipherboy.com/WillowPatchGames/wpg/internal/models"
 )
 
 type Authed interface {
 	GetToken() string
-	SetUser(user *models.UserModel)
+	SetUser(user *database.User)
 	GetObjectPointer() interface{}
 }
 
@@ -57,31 +58,21 @@ func (a *authMW) GetObjectPointer() interface{} {
 func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	var token string = a.next.GetToken()
 
-	var user *models.UserModel = new(models.UserModel)
+	var user *database.User = nil
 
 	if token != "" {
-		tx, err := database.GetTransaction()
-		if err != nil {
-			log.Println("Authed: Error beginning transaction:", err)
+		if err := database.InTransaction(func(tx *gorm.DB) error {
+			var auth database.Auth
+			if err := tx.Preload("User").Last(&auth, "category = ? AND key = ?", "api_token", token).Error; err != nil {
+				log.Println("Unable to find user with token", token)
+				return err
+			}
+
+			user = &auth.User
+			log.Println("Got user:", user)
+			return nil
+		}); err != nil {
 			return err
-		}
-
-		err = user.FromAPIToken(tx, token)
-		if err != nil {
-			user = nil
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Authed: Unable to rollback:", rollbackErr)
-			}
-
-			if a.requireAuth {
-				return err
-			}
-		} else {
-			err = tx.Commit()
-			if err != nil {
-				log.Println("Authed: Error committing transaction:", err)
-				return err
-			}
 		}
 	}
 

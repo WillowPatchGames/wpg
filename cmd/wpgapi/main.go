@@ -19,11 +19,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
-	/*
-		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/auth"
-		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/game"
-		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/room"
-		"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/user"*/)
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/game"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/room"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/user"
+)
 
 const dbFmt string = "host=%s user=%s password=%s database=%s sslmode=%s"
 
