@@ -58,25 +58,28 @@ func (a *authMW) GetObjectPointer() interface{} {
 func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	var token string = a.next.GetToken()
 
-	var user *database.User = nil
+	var auth database.Auth
+	var user database.User
 
 	if token != "" {
 		if err := database.InTransaction(func(tx *gorm.DB) error {
-			var auth database.Auth
-			if err := tx.Preload("User").Last(&auth, "category = ? AND key = ?", "api_token", token).Error; err != nil {
+			if err := tx.First(&auth, "category = ? AND key = ?", "api-token", token).Error; err != nil {
 				log.Println("Unable to find user with token", token)
 				return err
 			}
 
-			user = &auth.User
-			log.Println("Got user:", user)
+			if err := tx.First(&user, auth.UserID).Error; err != nil {
+				return err
+			}
 			return nil
 		}); err != nil {
-			return err
+			if a.requireAuth {
+				return err
+			}
 		}
 	}
 
-	a.next.SetUser(user)
+	a.next.SetUser(&user)
 
 	if next, ok := a.next.(http.Handler); ok && next != nil {
 		next.ServeHTTP(w, r)

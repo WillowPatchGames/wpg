@@ -68,11 +68,13 @@ def test_update():
         "fields": ["email", "display"]
     }
     resp = requests.patch(f"{URL}/user/{create_user_data['id']}", headers=headers, json=req)
-    assert resp.status_code == 200
     print(resp.json())
+    assert resp.status_code == 200
 
     resp = requests.get(f"{URL}/user?id={create_user_data['id']}", headers=headers)
+    print(resp.json())
     assert resp.status_code == 200
+
     get_user_data = resp.json()
     for key in ['email', 'display']:
         assert create_user_data[key] != get_user_data[key]

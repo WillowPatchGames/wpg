@@ -40,7 +40,7 @@ func (rp *RushPlayer) FindTile(tileID int) (int, bool) {
 
 type RushConfig struct {
 	NumPlayers     int       `json:"num_players"` // 2 <= n <= 25
-	NumTiles       int       `json:"num_tiles"`   // Between 1 and 100 rounds worth
+	NumTiles       int       `json:"num_tiles"`   // Between 1 and 75 rounds worth
 	TilesPerPlayer bool      `json:"tiles_per_player"`
 	StartSize      int       `json:"start_size"`      // 5 <= n <= 25
 	DrawSize       int       `json:"draw_size"`       // 1 <= n <= 10

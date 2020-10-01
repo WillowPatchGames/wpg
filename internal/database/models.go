@@ -38,16 +38,14 @@ type UserConfig struct {
 type Auth struct {
 	gorm.Model
 
-	UserID   uint64
+	UserID   uint64 `gorm:"primaryKey"`
 	User     User
 	Category string
-	Key      string `gorm:"unique"`
+	Key      string `gorm:"primaryKey"`
 	Value    string
 
 	Created time.Time
 	Expires time.Time
-
-	APIToken string
 }
 
 type Room struct {
@@ -91,6 +89,10 @@ func getPassword(tx *gorm.DB, user *User) (string, error) {
 }
 
 func SetPassword(tx *gorm.DB, user *User, given string) error {
+	if user.ID == 0 {
+		panic("Unable to set password for NULL UserID")
+	}
+
 	var auth Auth
 	var crypter *password.Scrypt = password.NewScrypt()
 
@@ -141,10 +143,15 @@ func ComparePassword(tx *gorm.DB, user *User, given string) error {
 }
 
 func FromPassword(tx *gorm.DB, user *User, auth *Auth, password string) error {
+	if user.ID == 0 {
+		panic("Unable to set password for NULL UserID")
+	}
+
 	if err := ComparePassword(tx, user, password); err != nil {
 		return err
 	}
 
+	auth.UserID = user.ID
 	auth.Category = "api-token"
 	auth.Key = utils.RandomToken()
 	auth.Value = "user"
@@ -153,6 +160,11 @@ func FromPassword(tx *gorm.DB, user *User, auth *Auth, password string) error {
 }
 
 func GuestToken(tx *gorm.DB, user *User, auth *Auth) error {
+	if user.ID == 0 {
+		panic("Unable to set password for NULL UserID")
+	}
+
+	auth.UserID = user.ID
 	auth.Category = "api-token"
 	auth.Key = utils.RandomToken()
 	auth.Value = "guest"
@@ -161,5 +173,9 @@ func GuestToken(tx *gorm.DB, user *User, auth *Auth) error {
 }
 
 func InvalidateGuestTokens(tx *gorm.DB, user *User) error {
+	if user.ID == 0 {
+		panic("Unable to set password for NULL UserID")
+	}
+
 	return tx.Table("auth as a").Where("user_id = ? AND value = ?", user.ID, "guest").Update("expires", time.Now()).Error
 }

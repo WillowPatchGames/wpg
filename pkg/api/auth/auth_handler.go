@@ -140,7 +140,7 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 		handle.resp.Email = user.Email.String
 	}
 
-	handle.resp.APIToken = auth.APIToken
+	handle.resp.APIToken = auth.Key
 
 	utils.SendResponse(w, r, handle)
 	return nil

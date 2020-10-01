@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -86,7 +87,8 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		if handle.req.RoomID > 0 {
-			if err := tx.First(&room, handle.req.RoomID).Error; err != nil {
+			room = new(database.Room)
+			if err := tx.First(room, handle.req.RoomID).Error; err != nil {
 				return err
 			}
 
@@ -102,6 +104,8 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		}
 		game.Style = handle.req.Style
 		game.Open = handle.req.Open
+		game.Lifecycle = "pending"
+		game.JoinCode = utils.RandomWords()
 
 		if handle.req.Config != nil {
 			data, err := json.Marshal(handle.req.Config)
@@ -115,6 +119,7 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 		return tx.Create(&game).Error
 	}); err != nil {
+		log.Println("Got error from handler:", err)
 		return err
 	}
 

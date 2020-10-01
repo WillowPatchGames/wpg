@@ -64,11 +64,11 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		if handle.req.RoomID > 0 {
-			if err := tx.Preload("Game", "lifecycle = ?", "pending").First(&room, handle.req.RoomID).Error; err != nil {
+			if err := tx.Preload("Games", "lifecycle = ?", "pending").First(&room, handle.req.RoomID).Error; err != nil {
 				return err
 			}
 		} else {
-			if err := tx.Preload("Game", "lifecycle = ?", "pending").First(&room, "joincode = ?", handle.req.JoinCode).Error; err != nil {
+			if err := tx.Preload("Games", "lifecycle = ?", "pending").First(&room, "joincode = ?", handle.req.JoinCode).Error; err != nil {
 				return err
 			}
 		}

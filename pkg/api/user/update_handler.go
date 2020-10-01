@@ -97,7 +97,7 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	var user database.User
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		if err := tx.First(&user, handle.req.UserID).Error; err != nil {
+		if err := tx.Preload("Config").First(&user, handle.req.UserID).Error; err != nil {
 			return err
 		}
 
@@ -110,7 +110,7 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		for _, field := range handle.req.Fields {
 			switch field {
 			case "email":
-				if !user.Guest {
+				if user.Guest {
 					err = errors.New("unable to change email on guest user account")
 					break Fields
 				}
@@ -126,30 +126,30 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 					user.Config.GravatarHash.Valid = false
 				}
 			case "display":
-				log.Println("Update display", user.Display, "->", handle.req.Display)
 				err = api.ValidateDisplayName(handle.req.Display)
-				if err == nil {
-					user.Display = handle.req.Display
-				} else {
+				if err != nil {
 					log.Println("Invalid display name:", err)
 					break Fields
 				}
+
+				log.Println("Update display", user.Display, "->", handle.req.Display)
+				user.Display = handle.req.Display
 			case "password", "old_password", "new_password":
-				log.Println("Update password...")
-				if !user.Guest {
-					changePassword = true
-				} else {
+				if user.Guest {
 					err = errors.New("unable to change password on guest user account")
 					break Fields
 				}
+
+				changePassword = true
 			default:
 				log.Println("Field:", field)
 				err = api_errors.ErrMissingRequest
 			}
-		}
 
-		if err != nil {
-			return err
+			if err != nil {
+				log.Println("Got error modifying user:", err)
+				return err
+			}
 		}
 
 		if changePassword {

@@ -102,15 +102,15 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		if handle.req.UserID != 0 {
-			if err := tx.Preload("UserConfig").First(&user, handle.req.UserID).Error; err != nil {
+			if err := tx.Preload("Config").First(&user, handle.req.UserID).Error; err != nil {
 				return err
 			}
 		} else if handle.req.Username != "" {
-			if err := tx.Preload("UserConfig").First(&user, "username = ?", handle.req.Username).Error; err != nil {
+			if err := tx.Preload("Config").First(&user, "username = ?", handle.req.Username).Error; err != nil {
 				return err
 			}
 		} else if handle.req.Email != "" {
-			if err := tx.Preload("UserConfig").First(&user, "email = ?", handle.req.Email).Error; err != nil {
+			if err := tx.Preload("Config").First(&user, "email = ?", handle.req.Email).Error; err != nil {
 				return err
 			}
 		}

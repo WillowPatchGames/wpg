@@ -9,7 +9,7 @@ test: check
 
 dist: distui tarball
 
-check: vet gosec staticcheck crypt utils games
+check: vet gosec staticcheck crypt utils games database
 
 deps:
 	go get -u $(NAMESPACE)/...
@@ -47,6 +47,9 @@ utils: internal/utils/*.go
 games: pkg/games/*.go
 	go test $(NAMESPACE)/pkg/games
 
+database: internal/database/*.go
+	go test $(NAMESPACE)/internal/database
+
 api:
 	$(PYTHON) -c 'import pytest' || $(PYTHON) -m pip install pytest
 	cd test/api && $(PYTHON) -m pytest
@@ -69,7 +72,7 @@ remove_database:
 	cd scripts/database && ./remove.sh || true
 
 clean:
-	rm -f wpgapi
+	rm -f wpgapi wpg.sqlite3
 
 submod:
 	git submodule init && git submodule update

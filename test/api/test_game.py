@@ -2,6 +2,16 @@ import requests
 
 from common import *
 
+game_config = {
+    'num_players': 4,
+    'num_tiles': 50,
+    'tiles_per_player': True,
+    'start_size': 15,
+    'draw_size': 1,
+    'discard_penalty': 3,
+    'frequency': 1,
+}
+
 def test_create_get_game():
     # Sending the first request should be fine
     user_data, token = auth_user('test_game_test_create_get_game')
@@ -27,9 +37,7 @@ def test_create_get_game():
         'room': room_data['id'],
         'style': 'rush',
         'open': True,
-        'config': {
-
-        }
+        'config': game_config
     }
 
     resp = requests.post(URL + "/games", json=req, headers=headers)
@@ -68,7 +76,7 @@ def test_create_no_room_game():
         'owner': user_data['id'],
         'style': 'rush',
         'open': True,
-        'config': {}
+        'config': game_config
     }
 
     resp = requests.post(URL + "/games", json=req, headers=headers)

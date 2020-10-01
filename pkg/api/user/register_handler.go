@@ -112,18 +112,6 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 				user.Username.Valid = true
 				user.Username.String = handle.req.Username
 			}
-		}
-
-		if user.Guest {
-			if err := database.GuestToken(tx, &user, &auth); err != nil {
-				return err
-			}
-
-			handle.resp.Token = auth.APIToken
-		} else {
-			if err := database.SetPassword(tx, &user, handle.req.Password); err != nil {
-				return err
-			}
 
 			if user.Email.Valid {
 				user.Config.GravatarHash.Valid = true
@@ -131,7 +119,23 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 			}
 		}
 
-		return tx.Create(&user).Error
+		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+
+		if user.Guest {
+			if err := database.GuestToken(tx, &user, &auth); err != nil {
+				return err
+			}
+
+			handle.resp.Token = auth.Key
+		} else {
+			if err := database.SetPassword(tx, &user, handle.req.Password); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}); err != nil {
 		return err
 	}
