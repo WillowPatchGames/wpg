@@ -9,7 +9,7 @@ test: check
 
 dist: distui tarball
 
-check: vet gosec staticcheck crypt utils games database
+check: vet gosec staticcheck crypt utils games database api
 
 deps:
 	go get -u $(NAMESPACE)/...
@@ -51,8 +51,7 @@ database: internal/database/*.go
 	go test $(NAMESPACE)/internal/database
 
 api:
-	$(PYTHON) -c 'import pytest' || $(PYTHON) -m pip install pytest
-	cd test/api && $(PYTHON) -m pytest
+	bash ./scripts/api-tests.sh $(PYTHON)
 
 install: install_database
 
