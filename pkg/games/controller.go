@@ -142,8 +142,10 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 	var data GameData
 	data.State = new(RushState)
 
-	if err := json.Unmarshal([]byte(gamedb.State), &data); err != nil {
-		return err
+	if gamedb.State.Valid {
+		if err := json.Unmarshal([]byte(gamedb.State.String), &data); err != nil {
+			return err
+		}
 	}
 
 	if data.GID != gamedb.ID {
@@ -151,7 +153,11 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		// persist it back to the database.
 		var config RushConfig
 
-		if err := json.Unmarshal([]byte(gamedb.Config), &config); err != nil {
+		if !gamedb.Config.Valid {
+			return errors.New("got unexpectedly empty game configuration")
+		}
+
+		if err := json.Unmarshal([]byte(gamedb.Config.String), &config); err != nil {
 			return err
 		}
 

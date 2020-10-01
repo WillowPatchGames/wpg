@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -25,12 +27,12 @@ type updateHandlerData struct {
 }
 
 type updateHandlerResponse struct {
-	UserID   uint64                  `json:"id"`
-	Username string                  `json:"username,omitempty"`
-	Display  string                  `json:"display"`
-	Email    string                  `json:"email,omitempty"`
-	Guest    bool                    `json:"guest"`
-	Config   *models.UserConfigModel `json:"config,omitempty"`
+	UserID   uint64               `json:"id"`
+	Username string               `json:"username,omitempty"`
+	Display  string               `json:"display"`
+	Email    string               `json:"email,omitempty"`
+	Guest    bool                 `json:"guest"`
+	Config   *database.UserConfig `json:"config,omitempty"`
 }
 
 type UpdateHandler struct {
@@ -40,7 +42,7 @@ type UpdateHandler struct {
 
 	req  updateHandlerData
 	resp updateHandlerResponse
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle UpdateHandler) GetResponse() interface{} {
@@ -55,7 +57,7 @@ func (handle *UpdateHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *UpdateHandler) SetUser(user *models.UserModel) {
+func (handle *UpdateHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
@@ -92,133 +94,76 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Transaction?")
-		return err
-	}
+	var user database.User
 
-	var user models.UserModel
-	err = user.FromID(tx, handle.req.UserID)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Getting?", err)
-		return err
-	}
-
-	err = api.UserCanModifyUser(*handle.user, user)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Not authorized?", err)
-		return err
-	}
-
-	err = user.LoadConfig(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Not authorized?", err)
-		return err
-	}
-
-	var changePassword bool = false
-Fields:
-	for _, field := range handle.req.Fields {
-		switch field {
-		case "email":
-			log.Println("Update email", user.Email, "->", handle.req.Email)
-			if !user.Guest {
-				user.Email = handle.req.Email
-				user.Config.GravatarHash = utils.GravatarHash(user.Email)
-			} else {
-				err = errors.New("unable to change email on guest user account")
-				break Fields
-			}
-		case "display":
-			log.Println("Update display", user.Display, "->", handle.req.Display)
-			err = api.ValidateDisplayName(handle.req.Display)
-			if err == nil {
-				user.Display = handle.req.Display
-			} else {
-				log.Println("Invalid display name:", err)
-				break Fields
-			}
-		case "password", "old_password", "new_password":
-			log.Println("Update password...")
-			if !user.Guest {
-				changePassword = true
-			} else {
-				err = errors.New("unable to change password on guest user account")
-				break Fields
-			}
-		default:
-			log.Println("Field:", field)
-			err = api_errors.ErrMissingRequest
-		}
-	}
-
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Updating?", err)
-		return err
-	}
-
-	if changePassword {
-		err = user.ComparePassword(tx, handle.req.Old)
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
-			}
-
-			log.Println("Checking password?", err)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if err := tx.First(&user, handle.req.UserID).Error; err != nil {
 			return err
 		}
 
-		err = user.SetPassword(tx, handle.req.Password)
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
-			}
-
-			log.Println("Updating password", err)
+		if err := api.UserCanModifyUser(*handle.user, user); err != nil {
 			return err
 		}
-	}
 
-	err = user.SetConfig(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+		var changePassword bool = false
+	Fields:
+		for _, field := range handle.req.Fields {
+			switch field {
+			case "email":
+				if !user.Guest {
+					err = errors.New("unable to change email on guest user account")
+					break Fields
+				}
+
+				log.Println("Update email", user.Email, "->", handle.req.Email)
+				if handle.req.Email != "" {
+					user.Email.Valid = true
+					user.Email.String = handle.req.Email
+					user.Config.GravatarHash.Valid = true
+					user.Config.GravatarHash.String = utils.GravatarHash(handle.req.Email)
+				} else {
+					user.Email.Valid = false
+					user.Config.GravatarHash.Valid = false
+				}
+			case "display":
+				log.Println("Update display", user.Display, "->", handle.req.Display)
+				err = api.ValidateDisplayName(handle.req.Display)
+				if err == nil {
+					user.Display = handle.req.Display
+				} else {
+					log.Println("Invalid display name:", err)
+					break Fields
+				}
+			case "password", "old_password", "new_password":
+				log.Println("Update password...")
+				if !user.Guest {
+					changePassword = true
+				} else {
+					err = errors.New("unable to change password on guest user account")
+					break Fields
+				}
+			default:
+				log.Println("Field:", field)
+				err = api_errors.ErrMissingRequest
+			}
 		}
 
-		log.Println("Set config?", err)
-		return err
-	}
-
-	err = user.Save(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+		if err != nil {
+			return err
 		}
 
-		log.Println("Saving User?", err)
-		return err
-	}
+		if changePassword {
+			if err := database.ComparePassword(tx, &user, handle.req.Old); err != nil {
+				return err
+			}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Println("Commiting?")
+			if err := database.SetPassword(tx, &user, handle.req.Password); err != nil {
+				return err
+			}
+		}
+
+		return tx.Save(&user).Error
+	}); err != nil {
 		return err
 	}
 
@@ -228,13 +173,17 @@ Fields:
 	if handle.user != nil && handle.user.ID == user.ID {
 		handle.resp.Guest = user.Guest
 		if !user.Guest {
-			handle.resp.Username = user.Username
-			handle.resp.Email = user.Email
+			if user.Username.Valid {
+				handle.resp.Username = user.Username.String
+			}
+			if user.Email.Valid {
+				handle.resp.Email = user.Email.String
+			}
 		}
 	}
 
 	if !user.Guest {
-		handle.resp.Config = user.Config
+		handle.resp.Config = &user.Config
 	}
 
 	utils.SendResponse(w, r, handle)

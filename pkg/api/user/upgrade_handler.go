@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -37,7 +39,7 @@ type UpgradeHandler struct {
 
 	req  upgradeHandlerData
 	resp upgradeHandlerResponse
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle UpgradeHandler) GetResponse() interface{} {
@@ -52,7 +54,7 @@ func (handle *UpgradeHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *UpgradeHandler) SetUser(user *models.UserModel) {
+func (handle *UpgradeHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
@@ -103,18 +105,14 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Print("Error during database.GetTransaction", err)
-		return err
-	}
-
 	if handle.req.Username != "" {
-		handle.user.Username = handle.req.Username
+		handle.user.Username.Valid = true
+		handle.user.Username.String = handle.req.Username
 	}
 
 	if handle.req.Email != "" {
-		handle.user.Email = handle.req.Email
+		handle.user.Email.Valid = true
+		handle.user.Email.String = handle.req.Email
 	}
 
 	if handle.req.Display != "" {
@@ -125,53 +123,29 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 
 	handle.user.Guest = false
 
-	err = handle.user.SetPassword(tx, handle.req.Password)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if err := database.SetPassword(tx, handle.user, handle.req.Password); err != nil {
+			return err
 		}
 
-		log.Print("Unable to set password:", err)
-		return err
-	}
-
-	err = handle.user.Save(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+		if err := tx.Save(handle.user).Error; err != nil {
+			return err
 		}
 
-		log.Print("Unable to save user:", err)
-		return err
-	}
-
-	// Invalid
-	var auth models.AuthModel
-	auth.APIToken = handle.req.APIToken
-
-	err = auth.Invalidate(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Print("Unable to save user:", err)
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Print("Error during tx.Commit()", err)
+		return database.InvalidateGuestTokens(tx, handle.user)
+	}); err != nil {
 		return err
 	}
 
 	handle.resp.UserID = handle.user.ID
-	handle.resp.Username = handle.user.Username
+	if handle.user.Username.Valid {
+		handle.resp.Username = handle.user.Username.String
+	}
 	handle.resp.Display = handle.user.Display
-	handle.resp.Email = handle.user.Email
+	if handle.user.Email.Valid {
+		handle.resp.Email = handle.user.Email.String
+	}
 	handle.resp.Guest = handle.user.Guest
-
-	log.Println("Handle", handle.resp)
 
 	utils.SendResponse(w, r, &handle)
 	return nil

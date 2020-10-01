@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -21,13 +23,13 @@ type registerHandlerData struct {
 }
 
 type registerHandlerResponse struct {
-	UserID   uint64                  `json:"id"`
-	Username string                  `json:"username,omitempty"`
-	Email    string                  `json:"email,omitempty"`
-	Display  string                  `json:"display"`
-	Guest    bool                    `json:"guest"`
-	Token    string                  `json:"token,omitempty"`
-	Config   *models.UserConfigModel `json:"config,omitempty"`
+	UserID   uint64               `json:"id"`
+	Username string               `json:"username,omitempty"`
+	Email    string               `json:"email,omitempty"`
+	Display  string               `json:"display"`
+	Guest    bool                 `json:"guest"`
+	Token    string               `json:"token,omitempty"`
+	Config   *database.UserConfig `json:"config,omitempty"`
 }
 
 type RegisterHandler struct {
@@ -88,83 +90,49 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		return err
-	}
+	var user database.User
+	var auth database.Auth
 
-	var user models.UserModel
-	user.Display = handle.req.Display
-	if user.Display == "" && handle.req.Username != "" {
-		user.Display = handle.req.Username
-	}
-	user.Guest = handle.req.Guest
-	if !user.Guest {
-		// Only set email and username on non-guest accounts
-		user.Email = handle.req.Email
-		user.Username = handle.req.Username
-	}
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		user.Display = handle.req.Display
 
-	err = user.Create(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+		if user.Display == "" && handle.req.Username != "" {
+			user.Display = handle.req.Username
 		}
 
-		return err
-	}
-
-	if user.Guest {
-		var auth models.AuthModel
-		err = auth.GuestToken(tx, user)
-
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
+		user.Guest = handle.req.Guest
+		if !user.Guest {
+			// Only set email and username on non-guest accounts
+			if handle.req.Email != "" {
+				user.Email.Valid = true
+				user.Email.String = handle.req.Email
 			}
 
-			log.Println("")
-			return err
-		}
-
-		handle.resp.Token = auth.APIToken
-	} else {
-		err = user.SetPassword(tx, handle.req.Password)
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
+			if handle.req.Username != "" {
+				user.Username.Valid = true
+				user.Username.String = handle.req.Username
 			}
-
-			return err
 		}
 
-		// Only allow non-guest accounts to add gravatar information
-		if user.Email != "" {
-			err = user.LoadConfig(tx)
-			if err != nil {
-				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					log.Print("Unable to rollback:", rollbackErr)
-				}
-
+		if user.Guest {
+			if err := database.GuestToken(tx, &user, &auth); err != nil {
 				return err
 			}
 
-			user.Config.GravatarHash = utils.GravatarHash(user.Email)
-
-			err = user.SetConfig(tx)
-			if err != nil {
-				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					log.Print("Unable to rollback:", rollbackErr)
-				}
-
-				log.Println("SetConfig?", err)
+			handle.resp.Token = auth.APIToken
+		} else {
+			if err := database.SetPassword(tx, &user, handle.req.Password); err != nil {
 				return err
 			}
-		}
-	}
 
-	err = tx.Commit()
-	if err != nil {
+			if user.Email.Valid {
+				user.Config.GravatarHash.Valid = true
+				user.Config.GravatarHash.String = utils.GravatarHash(user.Email.String)
+			}
+		}
+
+		return tx.Create(&user).Error
+	}); err != nil {
 		return err
 	}
 
@@ -172,9 +140,13 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 	handle.resp.Display = user.Display
 	handle.resp.Guest = user.Guest
 	if !user.Guest {
-		handle.resp.Config = user.Config
-		handle.resp.Username = user.Username
-		handle.resp.Email = user.Email
+		handle.resp.Config = &user.Config
+		if user.Username.Valid {
+			handle.resp.Username = user.Username.String
+		}
+		if user.Email.Valid {
+			handle.resp.Email = user.Email.String
+		}
 	}
 	// handle.resp.Token set above if the user is a guest user.
 

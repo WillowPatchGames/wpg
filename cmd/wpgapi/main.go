@@ -25,7 +25,7 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/user"
 )
 
-const dbFmt string = "host=%s user=%s password=%s database=%s sslmode=%s"
+const dbFmt string = "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s"
 
 var dbType string
 var dbHost string
@@ -74,7 +74,7 @@ func main() {
 
 	// Open Database connection first.
 	if dbType == "postgres" {
-		dbconn = fmt.Sprintf(dbFmt, dbHost, dbUser, dbPassword, dbName, dbSslmode)
+		dbconn = fmt.Sprintf(dbFmt, dbHost, dbPort, dbUser, dbPassword, dbName, dbSslmode)
 	} else if dbType == "sqlite" {
 		dbconn = dbHost
 	} else {

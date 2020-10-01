@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"gorm.io/gorm"
+
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
@@ -28,7 +30,7 @@ type SocketHandler struct {
 	// No response object because this should be upgraded into a WebSocket
 	// connection and shouldn't return a result itself.
 
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle *SocketHandler) GetObjectPointer() interface{} {
@@ -39,56 +41,31 @@ func (handle *SocketHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *SocketHandler) SetUser(user *models.UserModel) {
+func (handle *SocketHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
 func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println(err)
-		hwaterr.WriteError(w, r, err)
-		return
-	}
-
 	// Verify user
 	if handle.req.UserID != handle.user.ID {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		err = hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusForbidden)
+		err := hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusForbidden)
 		log.Println(err)
 		hwaterr.WriteError(w, r, err)
 		return
 	}
 
 	// Verify game
-	var gamedb models.GameModel
-	err = gamedb.FromID(tx, handle.req.GameID)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
+	var gamedb database.Game
 
-		log.Println(err)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		return tx.First(&gamedb, handle.req.GameID).Error
+	}); err != nil {
 		hwaterr.WriteError(w, r, err)
 		return
 	}
 
 	// Initialize the Websocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println(err)
-		hwaterr.WriteError(w, r, err)
-		return
-	}
-
-	err = tx.Commit()
 	if err != nil {
 		log.Println(err)
 		hwaterr.WriteError(w, r, err)

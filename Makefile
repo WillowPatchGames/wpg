@@ -9,7 +9,7 @@ test: check
 
 dist: distui tarball
 
-check: vet gosec safesql staticcheck crypt utils games
+check: vet gosec staticcheck crypt utils games
 
 deps:
 	go get -u $(NAMESPACE)/...
@@ -33,10 +33,6 @@ vet:
 gosec:
 	test -e ~/go/bin/gosec || ( echo "Must install gosec: https://github.com/securego/gosec" && exit 1 )
 	$(HOME)/go/bin/gosec ./...
-
-safesql:
-	test -e ~/go/bin/safesql || ( echo "Must install gosec: https://github.com/stripe/safesql" && exit 1 )
-	$(HOME)/go/bin/safesql $(NAMESPACE)/...
 
 staticcheck:
 	test -e ~/go/bin/staticcheck || ( echo "Must install staticcheck: https://staticcheck.io/docs/" && exit 1 )

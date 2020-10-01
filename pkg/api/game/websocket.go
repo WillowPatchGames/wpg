@@ -312,9 +312,7 @@ func (hub *Hub) ensureGameExists(gameid uint64) error {
 		// Save it to let others re-use the object.
 		hub.dbgames[GameID(gameid)] = &gamedb
 
-		if err := hub.controller.LoadGame(&gamedb); err != nil {
-			return err
-		}
+		return hub.controller.LoadGame(&gamedb)
 	}); err != nil {
 		return err
 	}
@@ -390,38 +388,20 @@ func (hub *Hub) registerClient(client *Client) {
 }
 
 func (hub *Hub) deleteGame(gameID GameID) {
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Unable to open database transaction:", err)
-		return
-	}
 
-	if model, ok := hub.dbgames[gameID]; !ok || model == nil {
-		var gamedb models.GameModel
-		err = gamedb.FromID(tx, uint64(gameID))
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Println("Unable to rollback:", rollbackErr)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if model, ok := hub.dbgames[gameID]; !ok || model == nil {
+			var gamedb database.Game
+			if err := tx.First(&gamedb, uint64(gameID)).Error; err != nil {
+				return err
 			}
 
-			log.Println("Unable to load game (", gameID, "):", err)
-			return
+			hub.dbgames[gameID] = &gamedb
 		}
 
-		hub.dbgames[gameID] = &gamedb
-	}
-
-	if err := hub.controller.PersistGame(hub.dbgames[gameID], tx); err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Println("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println(err)
-		return
-	}
-
-	if err := tx.Commit(); err != nil {
-		log.Println(err)
+		return hub.controller.PersistGame(hub.dbgames[gameID], tx)
+	}); err != nil {
+		log.Println("Unable to persist game (", gameID, "):", err)
 		return
 	}
 
@@ -506,38 +486,19 @@ func (hub *Hub) PersistGames() {
 				continue
 			}
 
-			tx, err := database.GetTransaction()
-			if err != nil {
-				log.Println("Unable to open database transaction:", err)
-				break
-			}
-
-			if model, ok := hub.dbgames[GameID(gameid)]; !ok || model == nil {
-				var gamedb models.GameModel
-				err = gamedb.FromID(tx, gameid)
-				if err != nil {
-					if rollbackErr := tx.Rollback(); rollbackErr != nil {
-						log.Println("Unable to rollback:", rollbackErr)
+			if err := database.InTransaction(func(tx *gorm.DB) error {
+				if model, ok := hub.dbgames[GameID(gameid)]; !ok || model == nil {
+					var gamedb database.Game
+					if err := tx.First(&gamedb, gameid).Error; err != nil {
+						return err
 					}
 
-					log.Println("Unable to load game (", gameid, "):", err)
-					break
+					hub.dbgames[GameID(gameid)] = &gamedb
 				}
 
-				hub.dbgames[GameID(gameid)] = &gamedb
-			}
-
-			if err := hub.controller.PersistGame(hub.dbgames[GameID(gameid)], tx); err != nil {
-				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					log.Println("Unable to rollback:", rollbackErr)
-				}
-
-				log.Println(err)
-				continue
-			}
-
-			if err := tx.Commit(); err != nil {
-				log.Println(err)
+				return hub.controller.PersistGame(hub.dbgames[GameID(gameid)], tx)
+			}); err != nil {
+				log.Println("Unable to persist game (", gameid, "):", err)
 				continue
 			}
 		}

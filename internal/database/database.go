@@ -22,21 +22,17 @@ func OpenDatabase(format string, conn string, dry bool) error {
 
 	if format == "sqlite" {
 		db, err = gorm.Open(sqlite.Open(conn), &config)
-		if err != nil {
-			return err
-		}
 	} else if format == "postgres" {
 		db, err = gorm.Open(postgres.Open(conn), &config)
-		if err != nil {
-			return err
-		}
 	} else {
 		panic("Unknown database type: " + format)
 	}
 
-	db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &Game{})
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &Game{})
 }
 
 func InTransaction(handler func(tx *gorm.DB) error, opts ...*sql.TxOptions) error {

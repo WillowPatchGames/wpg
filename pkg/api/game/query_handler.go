@@ -1,8 +1,10 @@
 package game
 
 import (
-	"log"
+	"encoding/json"
 	"net/http"
+
+	"gorm.io/gorm"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
@@ -36,7 +38,7 @@ type QueryHandler struct {
 
 	req  queryHandlerData
 	resp queryHandlerResponse
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle QueryHandler) GetResponse() interface{} {
@@ -51,7 +53,7 @@ func (handle *QueryHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *QueryHandler) SetUser(user *models.UserModel) {
+func (handle *QueryHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
@@ -60,72 +62,35 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		return hwaterr.WrapError(api_errors.ErrMissingRequest, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Transaction?", err)
-		return err
-	}
-
-	var game models.GameModel
-
-	if handle.req.GameID > 0 {
-		err = game.FromID(tx, handle.req.GameID)
-	} else {
-		err = game.FromJoinCode(tx, handle.req.JoinCode)
-	}
-
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Getting game?", err)
-		return err
-	}
-
-	var owner models.UserModel
-	err = owner.FromID(tx, game.OwnerID)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Getting user?", err)
-		return err
-	}
-
-	var room *models.RoomModel
-	if game.RoomID > 0 {
-		room = new(models.RoomModel)
-		err = room.FromID(tx, game.RoomID)
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Print("Unable to rollback:", rollbackErr)
-			}
-
-			log.Println("Getting room?", err)
-			return err
-		}
-	}
-
+	var game database.Game
 	var gameConfig map[string]interface{}
 
-	err = game.GetConfig(tx, &gameConfig)
-	if err != nil {
-		log.Println("Getting config?", err)
-		return err
-	}
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if handle.req.GameID > 0 {
+			if err := tx.First(&game, handle.req.GameID).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.First(&game, "join_code = ?", handle.req.JoinCode).Error; err != nil {
+				return err
+			}
+		}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Println("Commiting?", err)
+		if game.Config.Valid {
+			if err := json.Unmarshal([]byte(game.Config.String), &gameConfig); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
 		return err
 	}
 
 	handle.resp.GameID = game.ID
-	handle.resp.Owner = owner.ID
-	if room != nil {
-		handle.resp.Room = room.ID
+	handle.resp.Owner = game.OwnerID
+	if game.RoomID.Valid {
+		handle.resp.Room = uint64(game.RoomID.Int64)
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open

@@ -114,6 +114,8 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				return err
 			}
 		}
+
+		return nil
 	}); err != nil {
 		return err
 	}

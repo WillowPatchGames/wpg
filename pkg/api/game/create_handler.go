@@ -109,12 +109,11 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				return err
 			}
 
-			game.Config = string(data)
+			game.Config.Valid = true
+			game.Config.String = string(data)
 		}
 
-		if err := tx.Create(&game).Error; err != nil {
-			return err
-		}
+		return tx.Create(&game).Error
 	}); err != nil {
 		return err
 	}

@@ -1,8 +1,9 @@
 package game
 
 import (
-	"log"
 	"net/http"
+
+	"gorm.io/gorm"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
@@ -29,7 +30,7 @@ type DeleteHandler struct {
 
 	req  deleteHandlerData
 	resp deleteHandlerResponse
-	user *models.UserModel
+	user *database.User
 }
 
 func (handle DeleteHandler) GetResponse() interface{} {
@@ -44,7 +45,7 @@ func (handle *DeleteHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *DeleteHandler) SetUser(user *models.UserModel) {
+func (handle *DeleteHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
@@ -53,46 +54,19 @@ func (handle *DeleteHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		return hwaterr.WrapError(api_errors.ErrMissingRequest, http.StatusBadRequest)
 	}
 
-	tx, err := database.GetTransaction()
-	if err != nil {
-		log.Println("Transaction?", err)
-		return err
-	}
+	var game database.Game
 
-	var game models.GameModel
-	err = game.FromID(tx, handle.req.GameID)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if err := tx.First(&game, handle.req.GameID).Error; err != nil {
+			return err
 		}
 
-		log.Println("Getting game?", err)
-		return err
-	}
-
-	if game.OwnerID != handle.user.ID {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
+		if game.OwnerID != handle.user.ID {
+			return hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusUnauthorized)
 		}
 
-		return hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusUnauthorized)
-	}
-
-	game.Lifecycle = "finished"
-
-	err = game.Save(tx)
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			log.Print("Unable to rollback:", rollbackErr)
-		}
-
-		log.Println("Saving game?", err)
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Println("Commiting?", err)
+		return tx.Model(&game).Update("lifecycle", "finished").Error
+	}); err != nil {
 		return err
 	}
 
