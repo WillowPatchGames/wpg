@@ -124,13 +124,13 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 		}
 
 		if user.Guest {
-			if err := database.GuestToken(tx, &user, &auth); err != nil {
+			if err := user.GuestToken(tx, &auth); err != nil {
 				return err
 			}
 
 			handle.resp.Token = auth.Key
 		} else {
-			if err := database.SetPassword(tx, &user, handle.req.Password); err != nil {
+			if err := user.SetPassword(tx, handle.req.Password); err != nil {
 				return err
 			}
 		}

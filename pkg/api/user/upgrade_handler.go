@@ -124,7 +124,7 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	handle.user.Guest = false
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		if err := database.SetPassword(tx, handle.user, handle.req.Password); err != nil {
+		if err := handle.user.SetPassword(tx, handle.req.Password); err != nil {
 			return err
 		}
 
@@ -132,7 +132,7 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 			return err
 		}
 
-		return database.InvalidateGuestTokens(tx, handle.user)
+		return handle.user.InvalidateGuestTokens(tx)
 	}); err != nil {
 		return err
 	}

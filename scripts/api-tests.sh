@@ -15,5 +15,6 @@ PYTHON="${1:-python3}"
 ret=$?
 
 kill %1 || true
+killall wpgapi || true
 
 exit $ret

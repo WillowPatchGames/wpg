@@ -125,7 +125,7 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 			return err
 		}
 
-		return database.FromPassword(tx, &user, &auth, handle.req.Password)
+		return user.FromPassword(tx, &auth, handle.req.Password)
 	}); err != nil {
 		return err
 	}

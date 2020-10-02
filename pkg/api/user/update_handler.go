@@ -153,11 +153,11 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		}
 
 		if changePassword {
-			if err := database.ComparePassword(tx, &user, handle.req.Old); err != nil {
+			if err := user.ComparePassword(tx, handle.req.Old); err != nil {
 				return err
 			}
 
-			if err := database.SetPassword(tx, &user, handle.req.Password); err != nil {
+			if err := user.SetPassword(tx, handle.req.Password); err != nil {
 				return err
 			}
 		}

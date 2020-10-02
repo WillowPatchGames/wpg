@@ -24,7 +24,7 @@ func TestCreateUser(t *testing.T) {
 			return err
 		}
 
-		if err := SetPassword(tx, &user, password); err != nil {
+		if err := user.SetPassword(tx, password); err != nil {
 			return err
 		}
 
@@ -45,7 +45,7 @@ func TestCreateUser(t *testing.T) {
 			return err
 		}
 
-		return FromPassword(tx, &dbuser, &auth, password)
+		return dbuser.FromPassword(tx, &auth, password)
 	}); err != nil {
 		t.Fatal(err)
 	}
