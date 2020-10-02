@@ -160,6 +160,10 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 			}
 		}
 
+		if err := tx.Save(&user.Config).Error; err != nil {
+			return err
+		}
+
 		return tx.Save(&user).Error
 	}); err != nil {
 		return err
