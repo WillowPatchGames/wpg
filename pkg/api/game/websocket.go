@@ -399,7 +399,11 @@ func (hub *Hub) deleteGame(gameID GameID) {
 			hub.dbgames[gameID] = &gamedb
 		}
 
-		return hub.controller.PersistGame(hub.dbgames[gameID], tx)
+		if err := hub.controller.PersistGame(hub.dbgames[gameID], tx); err != nil {
+			return err
+		}
+
+		return tx.Save(hub.dbgames[gameID]).Error
 	}); err != nil {
 		log.Println("Unable to persist game (", gameID, "):", err)
 		return
@@ -496,7 +500,11 @@ func (hub *Hub) PersistGames() {
 					hub.dbgames[GameID(gameid)] = &gamedb
 				}
 
-				return hub.controller.PersistGame(hub.dbgames[GameID(gameid)], tx)
+				if err := hub.controller.PersistGame(hub.dbgames[GameID(gameid)], tx); err != nil {
+					return err
+				}
+
+				return tx.Save(hub.dbgames[GameID(gameid)]).Error
 			}); err != nil {
 				log.Println("Unable to persist game (", gameid, "):", err)
 				continue
