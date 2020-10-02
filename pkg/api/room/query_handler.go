@@ -68,7 +68,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				return err
 			}
 		} else {
-			if err := tx.Preload("Games", "lifecycle = ?", "pending").First(&room, "joincode = ?", handle.req.JoinCode).Error; err != nil {
+			if err := tx.Preload("Games", "lifecycle = ?", "pending").First(&room, "join_code = ?", handle.req.JoinCode).Error; err != nil {
 				return err
 			}
 		}
