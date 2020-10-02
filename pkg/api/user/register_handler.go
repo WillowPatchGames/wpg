@@ -103,19 +103,14 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 		user.Guest = handle.req.Guest
 		if !user.Guest {
 			// Only set email and username on non-guest accounts
-			if handle.req.Email != "" {
-				user.Email.Valid = true
-				user.Email.String = handle.req.Email
-			}
-
-			if handle.req.Username != "" {
-				user.Username.Valid = true
-				user.Username.String = handle.req.Username
-			}
+			database.SetSQLFromString(&user.Email, handle.req.Email)
+			database.SetSQLFromString(&user.Username, handle.req.Username)
 
 			if user.Email.Valid {
 				user.Config.GravatarHash.Valid = true
 				user.Config.GravatarHash.String = utils.GravatarHash(user.Email.String)
+			} else {
+				user.Config.GravatarHash.Valid = false
 			}
 		}
 

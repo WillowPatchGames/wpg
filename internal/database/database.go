@@ -38,3 +38,12 @@ func OpenDatabase(format string, conn string, dry bool) error {
 func InTransaction(handler func(tx *gorm.DB) error, opts ...*sql.TxOptions) error {
 	return db.Transaction(handler, opts...)
 }
+
+func SetSQLFromString(dest *sql.NullString, src string) {
+	if src == "" {
+		dest.Valid = false
+	} else {
+		dest.Valid = true
+		dest.String = src
+	}
+}

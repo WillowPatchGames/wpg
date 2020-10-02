@@ -116,13 +116,11 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 				}
 
 				log.Println("Update email", user.Email, "->", handle.req.Email)
-				if handle.req.Email != "" {
-					user.Email.Valid = true
-					user.Email.String = handle.req.Email
+				database.SetSQLFromString(&user.Email, handle.req.Email)
+				if user.Email.Valid {
 					user.Config.GravatarHash.Valid = true
 					user.Config.GravatarHash.String = utils.GravatarHash(handle.req.Email)
 				} else {
-					user.Email.Valid = false
 					user.Config.GravatarHash.Valid = false
 				}
 			case "display":

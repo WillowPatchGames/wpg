@@ -113,8 +113,7 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				return err
 			}
 
-			game.Config.Valid = true
-			game.Config.String = string(data)
+			database.SetSQLFromString(&game.Config, string(data))
 		}
 
 		return tx.Create(&game).Error

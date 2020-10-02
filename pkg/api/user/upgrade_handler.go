@@ -105,15 +105,8 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
-	if handle.req.Username != "" {
-		handle.user.Username.Valid = true
-		handle.user.Username.String = handle.req.Username
-	}
-
-	if handle.req.Email != "" {
-		handle.user.Email.Valid = true
-		handle.user.Email.String = handle.req.Email
-	}
+	database.SetSQLFromString(&handle.user.Username, handle.req.Username)
+	database.SetSQLFromString(&handle.user.Email, handle.req.Email)
 
 	if handle.req.Display != "" {
 		handle.user.Display = handle.req.Display
