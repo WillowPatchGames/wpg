@@ -64,12 +64,6 @@ cmds: wpgapi
 wpgapi: cmd/wpgapi/main.go pkg/*/*.go internal/*/*.go
 	$(GO) build $(NAMESPACE)/cmd/wpgapi
 
-install_database:
-	cd scripts/database && ./setup.sh
-
-remove_database:
-	cd scripts/database && ./remove.sh || true
-
 clean:
 	rm -f wpgapi wpg.sqlite3
 
@@ -87,7 +81,6 @@ tarball: build
 	rm -f $(DIST) $(DIST).xz
 	tar -cf $(DIST) wpgapi assets/wordlist.txt
 	tar -rf $(DIST) -C assets/static build
-	tar -rf $(DIST) -C scripts database
 	tar -rf $(DIST) -C scripts units
 	xz $(DIST)
 
