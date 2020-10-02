@@ -144,9 +144,9 @@ class UserProfilePage extends React.Component {
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
-                <TextField fullwidth placeholder="old password" name="old" inputRef={ this.oldPassword } /><br />
-                <TextField fullwidth placeholder="new password" name="new" inputRef={ this.newPassword  } /><br />
-                <TextField fullwidth placeholder="confirm password" name="confirm" inputRef={ this.confirmPassword } /><br />
+                <TextField fullwidth placeholder="old password" name="old" type="password" inputRef={ this.oldPassword } /><br />
+                <TextField fullwidth placeholder="new password" name="new" type="password" inputRef={ this.newPassword  } /><br />
+                <TextField fullwidth placeholder="confirm password" name="confirm" type="password" inputRef={ this.confirmPassword } /><br />
                 <Button label="Change Password" raised />
               </form>
               <d.Dialog open={ this.state.passwordError !== null } onClosed={() => this.setPasswordError(null) }>

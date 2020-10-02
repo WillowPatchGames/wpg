@@ -41,7 +41,7 @@ func (user *User) SetPassword(tx *gorm.DB, given string) error {
 	if err := tx.First(&auth, "user_id = ? AND category = ? AND key = ?", user.ID, "password", "current-password").Error; err == nil {
 		var time = time.Now().Unix()
 		var key = "old-password-" + strconv.FormatInt(time, 10)
-		if err := tx.Model(&user).Update("key", key).Error; err != nil {
+		if err := tx.Model(&auth).Update("key", key).Error; err != nil {
 			return err
 		}
 	}
