@@ -47,3 +47,11 @@ func SetSQLFromString(dest *sql.NullString, src string) {
 		dest.String = src
 	}
 }
+
+func SetStringFromSQL(dest *string, src sql.NullString) {
+	if !src.Valid {
+		*dest = ""
+	} else {
+		*dest = src.String
+	}
+}

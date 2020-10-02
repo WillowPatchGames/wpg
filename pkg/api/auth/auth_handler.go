@@ -132,14 +132,8 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 
 	// Populate response data and send it.
 	handle.resp.UserID = user.ID
-	if user.Username.Valid {
-		handle.resp.Username = user.Username.String
-	}
-
-	if user.Email.Valid {
-		handle.resp.Email = user.Email.String
-	}
-
+	database.SetStringFromSQL(&handle.resp.Username, user.Username)
+	database.SetStringFromSQL(&handle.resp.Email, user.Email)
 	handle.resp.APIToken = auth.Key
 
 	utils.SendResponse(w, r, handle)

@@ -131,13 +131,9 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	handle.resp.UserID = handle.user.ID
-	if handle.user.Username.Valid {
-		handle.resp.Username = handle.user.Username.String
-	}
 	handle.resp.Display = handle.user.Display
-	if handle.user.Email.Valid {
-		handle.resp.Email = handle.user.Email.String
-	}
+	database.SetStringFromSQL(&handle.resp.Username, handle.user.Username)
+	database.SetStringFromSQL(&handle.resp.Email, handle.user.Email)
 	handle.resp.Guest = handle.user.Guest
 
 	utils.SendResponse(w, r, &handle)

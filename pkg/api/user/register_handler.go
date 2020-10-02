@@ -141,12 +141,8 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 	if !user.Guest {
 		handle.resp.Config = FromConfigModel(user.Config, true)
 
-		if user.Username.Valid {
-			handle.resp.Username = user.Username.String
-		}
-		if user.Email.Valid {
-			handle.resp.Email = user.Email.String
-		}
+		database.SetStringFromSQL(&handle.resp.Username, user.Username)
+		database.SetStringFromSQL(&handle.resp.Email, user.Email)
 	}
 	// handle.resp.Token set above if the user is a guest user.
 

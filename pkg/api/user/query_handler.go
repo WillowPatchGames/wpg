@@ -126,12 +126,8 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	if handle.user != nil && handle.user.ID == user.ID {
 		handle.resp.Guest = user.Guest
 		if !user.Guest {
-			if user.Username.Valid {
-				handle.resp.Username = user.Username.String
-			}
-			if user.Email.Valid {
-				handle.resp.Email = user.Email.String
-			}
+			database.SetStringFromSQL(&handle.resp.Username, user.Username)
+			database.SetStringFromSQL(&handle.resp.Email, user.Email)
 		}
 	}
 
