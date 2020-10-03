@@ -82,6 +82,7 @@ type Plan struct {
 	gorm.Model
 
 	ID          uint64
+	Slug        string `gorm:"unique"`
 	Name        string
 	Description string
 	Open        bool

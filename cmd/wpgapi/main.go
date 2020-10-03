@@ -18,7 +18,11 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
+	"gorm.io/gorm"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/business"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/game"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/room"
@@ -87,6 +91,13 @@ func main() {
 
 	err = database.OpenDatabase(dbType, dbconn, dbDry)
 	if err != nil {
+		panic(err)
+	}
+
+	// Add plan information
+	if err = database.InTransaction(func(tx *gorm.DB) error {
+		return business.AddPlans(tx)
+	}); err != nil {
 		panic(err)
 	}
 
