@@ -71,9 +71,9 @@ class App extends React.Component {
 
     var user_id = user.id;
     var token = user.token;
+    var verified_user = await UserModel.FromId(null, token);
 
-    var verified_user = await UserModel.FromId(user_id, token);
-    if (verified_user.error || verified_user.authed === false) {
+    if (verified_user.error || verified_user.authed === false || +user_id !== +verified_user.id) {
       localStorage.removeItem('user');
       localStorage.removeItem('guest');
       this.setUser(null);

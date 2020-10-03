@@ -57,7 +57,10 @@ class UserModel {
   static async FromId(id, token) {
     var ret = new UserModel();
 
-    var uri = ret.api + '/user/' + id;
+    var uri = ret.api + '/user';
+    if (id !== null) {
+        uri = uri + '/' + id;
+    }
 
     var headers = {
       'Accept': 'application/json',

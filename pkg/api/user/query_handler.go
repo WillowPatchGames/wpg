@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -70,6 +71,10 @@ func (handle QueryHandler) verifyRequest() error {
 		present++
 	}
 
+	if present == 0 && handle.user != nil && handle.user.ID != 0 {
+		present++
+	}
+
 	if present == 0 {
 		return api_errors.ErrMissingRequest
 	}
@@ -113,6 +118,14 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			if err := tx.Preload("Config").First(&user, "email = ?", handle.req.Email).Error; err != nil {
 				return err
 			}
+		} else if handle.user.ID != 0 {
+			if err := tx.Preload("Config").First(&user, handle.user.ID).Error; err != nil {
+				return err
+			}
+		}
+
+		if user.ID == 0 {
+			return hwaterr.WrapError(errors.New("unable to find specified user account"), http.StatusNotFound)
 		}
 
 		return nil

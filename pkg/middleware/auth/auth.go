@@ -71,6 +71,7 @@ func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error 
 			if err := tx.First(&user, auth.UserID).Error; err != nil {
 				return err
 			}
+
 			return nil
 		}); err != nil {
 			if a.requireAuth {
