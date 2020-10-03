@@ -1,6 +1,7 @@
 package business
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -31,6 +32,7 @@ func AddPlans(tx *gorm.DB) error {
 		entry.Plan.Slug = "friends-and-family"
 		entry.Plan.Name = "Friends and Family"
 		entry.Plan.Description = "The free, unlimited plan handed out by us at Willow Patch Games!"
+		entry.Plan.Open = false
 
 		entry.Plan.MinPriceCents = 0
 		entry.Plan.SuggestedPriceCents = 0
@@ -65,4 +67,19 @@ func AddPlans(tx *gorm.DB) error {
 	PlanCache[entry.Plan.ID] = entry
 
 	return nil
+}
+
+func MatchStyle(available string, given string) bool {
+	var parts []string = strings.Split(available, ",")
+	for _, part := range parts {
+		if part == "*" {
+			return true
+		}
+
+		if part == given {
+			return true
+		}
+	}
+
+	return false
 }

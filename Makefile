@@ -9,7 +9,7 @@ test: check
 
 dist: distui tarball
 
-check: vet gosec staticcheck crypt utils games database api-tests
+check: vet gosec staticcheck crypt utils games database business api-tests
 
 deps:
 	go get -u $(NAMESPACE)/...
@@ -49,6 +49,9 @@ games: pkg/games/*.go
 
 database: internal/database/*.go
 	go test $(NAMESPACE)/internal/database
+
+business: internal/business/*.go
+	go test $(NAMESPACE)/internal/business
 
 api-tests:
 	bash ./scripts/api-tests.sh $(PYTHON)
