@@ -174,3 +174,13 @@ article.text p {
 .unselectable {
   user-select: none;
 }
+
+.results li {
+  list-style: none;
+  list-style-type: none;
+}
+
+.scrollable-x {
+  overflow-x: auto;
+  white-space: nowrap;
+}

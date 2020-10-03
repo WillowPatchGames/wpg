@@ -135,7 +135,7 @@ class RushGameSynopsis extends React.Component {
     if (this.state.remaining !== null) {
       player_view.push(
         <div className="playerSummary">
-          <span className="playerSummaryInHand" title="Tiles in Pool">{ this.state.remaining } in pool</span>
+          <span className="playerSummaryInHand" title="Tiles in Pool">{ this.state.remaining }&nbsp;in&nbsp;pool</span>
         </div>
       );
     }
@@ -150,7 +150,7 @@ class RushGameSynopsis extends React.Component {
               us.playing
               ?
                 <span className="playerSummaryInfo">
-                  <span className="playerSummaryInHand" title="Tiles in Hand">{ us.in_hand } in hand</span>
+                  <span className="playerSummaryInHand" title="Tiles in Hand">{ us.in_hand }&nbsp;in&nbsp;hand</span>
                 </span>
               :
                 <span className="playerSummaryInfo">Spectator</span>
@@ -172,7 +172,7 @@ class RushGameSynopsis extends React.Component {
               them.playing
               ?
                 <span className="playerSummaryInfo">
-                  <span className="playerSummaryInHand" title="Tiles in Hand">{ them.in_hand } in hand</span>
+                  <span className="playerSummaryInHand" title="Tiles in Hand">{ them.in_hand }&nbsp;in&nbsp;hand</span>
                 </span>
               :
                 <span className="playerSummaryInfo">Spectator</span>
@@ -185,8 +185,8 @@ class RushGameSynopsis extends React.Component {
     return (
       <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-          <h1 className="gameMode text-left">Rush!</h1>
-          <div className="text-left">
+          <div className="text-left scrollable-x">
+            <b>Rush!</b>
             { player_view }
           </div>
         </c.Card>
