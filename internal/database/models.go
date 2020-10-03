@@ -45,6 +45,8 @@ type Auth struct {
 }
 
 type Room struct {
+	gorm.Model
+
 	ID      uint64
 	OwnerID uint64
 
@@ -60,6 +62,8 @@ type Room struct {
 }
 
 type Game struct {
+	gorm.Model
+
 	ID      uint64
 	OwnerID uint64
 	RoomID  sql.NullInt64
@@ -72,4 +76,55 @@ type Game struct {
 
 	Config sql.NullString
 	State  sql.NullString
+}
+
+type Plan struct {
+	gorm.Model
+
+	ID          uint64
+	Name        string
+	Description string
+	Open        bool
+
+	MinPriceCents       uint
+	SuggestedPriceCents uint
+	Billed              time.Duration
+
+	CreateRoom                  bool
+	MaxOpenRooms                int
+	MaxTotalRooms               int
+	MaxGamesInRoom              int
+	MaxPlayersInRoom            int
+	MaxRoomsInTimeframeCount    int
+	MaxRoomsInTimeframeDuration time.Duration
+
+	CreateGame                  bool
+	MaxOpenGames                int
+	MaxTotalGames               int
+	MaxPlayersInGame            int
+	MaxSpectatorsInGame         int
+	MaxGamesInTimeframeCount    int
+	MaxGamesInTimeframeDuration time.Duration
+	AvailableGameStyles         string
+
+	CanAudioChat bool
+	CanVideoChat bool
+}
+
+type UserPlan struct {
+	gorm.Model
+
+	UserID uint64
+	User   User
+
+	PlanID uint64
+	Plan   Plan
+
+	Active bool
+
+	PriceCents uint
+	Billed     time.Duration
+
+	Created time.Time
+	Expires time.Time
 }
