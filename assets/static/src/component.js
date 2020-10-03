@@ -804,12 +804,14 @@ class Game extends React.Component {
               key: "check",
               theme: ['secondaryBg', 'onSecondary'],
               onClick: this.doCheck.bind(this),
+              onTouchEnd: this.doCheck.bind(this),
             }, "Check"),
             e(Button, {
               raised: true,
               disabled: !this.state.interface.data.bank.empty() || this.state.interface.data.grid.components().length > 1,
               key: "draw",
               onClick: this.doDraw.bind(this),
+              onTouchEnd: this.doDraw.bind(this),
               icon: this.state.presentation.drawing ? <CircularProgress theme="onPrimary"/> : null,
             }, "Draw"),
             e(Button, {
