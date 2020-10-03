@@ -25,6 +25,8 @@ func ValidateUsername(username string) error {
 			return errors.New("username not allowed; character at index " + strconv.Itoa(index) + " is not printable: " + string(char))
 		} else if unicode.IsControl(char) {
 			return errors.New("username not allowed; character at index " + strconv.Itoa(index) + " is a control character: " + string(char))
+		} else if char == '@' {
+			return errors.New("username not allowed; character at index " + strconv.Itoa(index) + " is an '@' symbol; makes the username look like an email")
 		}
 	}
 
