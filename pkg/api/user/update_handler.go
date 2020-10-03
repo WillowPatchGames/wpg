@@ -160,6 +160,11 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 			}
 		}
 
+		if !user.Config.GravatarHash.Valid {
+			user.Config.GravatarHash.Valid = true
+			user.Config.GravatarHash.String = utils.GravatarHash(user.Display)
+		}
+
 		if err := tx.Save(&user.Config).Error; err != nil {
 			return err
 		}
@@ -180,9 +185,7 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	if !user.Guest {
-		handle.resp.Config = FromConfigModel(user.Config, handle.user != nil && handle.user.ID == user.ID)
-	}
+	handle.resp.Config = FromConfigModel(user.Config, handle.user != nil && handle.user.ID == user.ID)
 
 	utils.SendResponse(w, r, handle)
 	return nil

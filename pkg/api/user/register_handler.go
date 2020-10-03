@@ -109,9 +109,12 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 			if user.Email.Valid {
 				user.Config.GravatarHash.Valid = true
 				user.Config.GravatarHash.String = utils.GravatarHash(user.Email.String)
-			} else {
-				user.Config.GravatarHash.Valid = false
 			}
+		}
+
+		if !user.Config.GravatarHash.Valid {
+			user.Config.GravatarHash.Valid = true
+			user.Config.GravatarHash.String = utils.GravatarHash(user.Display)
 		}
 
 		if err := tx.Create(&user).Error; err != nil {
@@ -135,16 +138,16 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 		return err
 	}
 
+	// handle.resp.Token set above if the user is a guest user.
 	handle.resp.UserID = user.ID
 	handle.resp.Display = user.Display
 	handle.resp.Guest = user.Guest
 	if !user.Guest {
-		handle.resp.Config = FromConfigModel(user.Config, true)
-
 		database.SetStringFromSQL(&handle.resp.Username, user.Username)
 		database.SetStringFromSQL(&handle.resp.Email, user.Email)
 	}
-	// handle.resp.Token set above if the user is a guest user.
+
+	handle.resp.Config = FromConfigModel(user.Config, true)
 
 	utils.SendResponse(w, r, &handle)
 	return nil

@@ -144,9 +144,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	if !user.Guest {
-		handle.resp.Config = FromConfigModel(user.Config, handle.user != nil && handle.user.ID == user.ID)
-	}
+	handle.resp.Config = FromConfigModel(user.Config, handle.user != nil && handle.user.ID == user.ID)
 
 	utils.SendResponse(w, r, handle)
 	return nil
