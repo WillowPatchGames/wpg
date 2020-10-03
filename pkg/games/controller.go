@@ -136,6 +136,10 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		return errors.New("got unexpectedly null database when attempting to load game into controller")
 	}
 
+	if gamedb.Lifecycle == "deleted" {
+		return errors.New("refusing to load deleted game")
+	}
+
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -250,12 +254,14 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 			return err
 		}
 
-		if !state.Started {
-			gamedb.Lifecycle = "pending"
-		} else if state.Started && !state.Finished {
-			gamedb.Lifecycle = "playing"
-		} else {
-			gamedb.Lifecycle = "finished"
+		if gamedb.Lifecycle != "deleted" {
+			if !state.Started {
+				gamedb.Lifecycle = "pending"
+			} else if state.Started && !state.Finished {
+				gamedb.Lifecycle = "playing"
+			} else {
+				gamedb.Lifecycle = "finished"
+			}
 		}
 	}
 
