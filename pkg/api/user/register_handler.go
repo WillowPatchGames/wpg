@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/business"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -129,6 +130,10 @@ func (handle RegisterHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 			handle.resp.Token = auth.Key
 		} else {
 			if err := user.SetPassword(tx, handle.req.Password); err != nil {
+				return err
+			}
+
+			if err := business.AddDefaultPlans(tx, user); err != nil {
 				return err
 			}
 		}

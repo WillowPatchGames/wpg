@@ -3,8 +3,8 @@ package business
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -14,22 +14,20 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 )
 
-const (
-	CacheExpiration = 10 * time.Minute
-)
-
 type PlanCacheEntry struct {
 	Plan    database.Plan
 	Expires time.Time
 }
 
-type planConfig struct {
-	CacheExpiry time.Duration       `yaml:"cache_expiry"`
-	Plans       []database.Plan     `yaml:"plans"`
-	Assignments map[string][]string `yaml:"assignments"`
+func (entry *PlanCacheEntry) RefreshPlan(tx *gorm.DB) {
+	if time.Now().After(entry.Expires) {
+		if err := tx.First(&entry.Plan, "slug = ?", entry.Plan.Slug).Error; err != nil {
+			log.Println("Unable to update plan (", entry.Plan.Slug, "):", err)
+		}
+	}
 }
 
-var PlanCache map[uint64]PlanCacheEntry = make(map[uint64]PlanCacheEntry)
+var PlanCache map[uint64]*PlanCacheEntry = make(map[uint64]*PlanCacheEntry)
 var PlanAssignments map[string][]uint64 = make(map[string][]uint64)
 
 func LoadPlanConfig(tx *gorm.DB, path string) error {
@@ -44,10 +42,10 @@ func LoadPlanConfig(tx *gorm.DB, path string) error {
 	}
 
 	for _, plan := range cfg.Plans {
-		var entry PlanCacheEntry
+		var entry *PlanCacheEntry = new(PlanCacheEntry)
 		var save bool = false
 		var id uint64 = 0
-		if err := tx.First(&entry.Plan, "slug = ?", plan.Slug).Error; err != nil {
+		if err := tx.First(&entry.Plan, "slug = ?", plan.Slug).Error; err == nil {
 			save = true
 			id = entry.Plan.ID
 		}
@@ -87,19 +85,4 @@ func LoadPlanConfig(tx *gorm.DB, path string) error {
 	}
 
 	return nil
-}
-
-func MatchStyle(available string, given string) bool {
-	var parts []string = strings.Split(available, ",")
-	for _, part := range parts {
-		if part == "*" {
-			return true
-		}
-
-		if part == given {
-			return true
-		}
-	}
-
-	return false
 }

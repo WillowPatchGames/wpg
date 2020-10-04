@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/business"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -95,6 +96,10 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			if err := api.UserCanCreateGame(*handle.user, *room); err != nil {
 				return err
 			}
+		}
+
+		if err := business.CanCreateGame(tx, *handle.user, room, handle.req.Style); err != nil {
+			return err
 		}
 
 		game.OwnerID = handle.user.ID

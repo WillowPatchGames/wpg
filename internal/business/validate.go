@@ -2,6 +2,7 @@ package business
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -24,20 +25,24 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 
 		if err := tx.ScanRows(rows, &user_plan); err != nil {
 			candidateError = err
+			log.Println("Error loading row!", err)
 			continue
 		}
 
 		if err := tx.First(&plan, user_plan.PlanID).Error; err != nil {
+			log.Println("Error loading plan!", err)
 			continue
 		}
 
-		if !MatchStyle(plan.AvailableGameStyles, style) {
+		if !Matcher(plan.AvailableGameStyles, style) {
+			log.Println("Didn't match game:", style, plan.AvailableGameStyles)
 			continue
 		}
 
 		if room == nil {
 			var openGames int64
 			if err := tx.Model(&database.Game{}).Where("owner_id = ? AND room_id = NULL AND lifecycle = ?", user.ID, "pending").Count(&openGames).Error; err != nil {
+				log.Println("Error loading open game count:", err)
 				continue
 			}
 
@@ -48,6 +53,7 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 
 			var totalGames int64
 			if err := tx.Model(&database.Game{}).Where("owner_id = ? AND room_id = NULL", user.ID).Count(&totalGames).Error; err != nil {
+				log.Println("Error loading total game count:", err)
 				continue
 			}
 
@@ -58,7 +64,8 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 
 			var since = time.Now().Add(-1 * plan.MaxGamesInTimeframeDuration)
 			var gamesInDuration int64
-			if err := tx.Model(&database.Game{}).Where("owner_id = ? AND room_id = NULL AND created >= ?", user.ID, since).Count(&gamesInDuration).Error; err != nil {
+			if err := tx.Model(&database.Game{}).Where("owner_id = ? AND room_id = NULL AND created_at >= ?", user.ID, since).Count(&gamesInDuration).Error; err != nil {
+				log.Println("Error loading game count in duration:", err)
 				continue
 			}
 
@@ -69,6 +76,7 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 		} else {
 			var openGamesInRoom int64
 			if err := tx.Model(&database.Game{}).Where("owner_id = ? AND room_id = ? AND lifecycle = ?", user.ID, room.ID, "pending").Count(&openGamesInRoom).Error; err != nil {
+				log.Println("Error loading game count in room:", err)
 				continue
 			}
 
@@ -79,6 +87,7 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 
 			var totalGamesInRoom int64
 			if err := tx.Model(&database.Game{}).Where("owner_id = ? AND room_id = ?", user.ID, room.ID).Count(&totalGamesInRoom).Error; err != nil {
+				log.Println("Error loading game count in room in duration:", err)
 				continue
 			}
 
@@ -110,15 +119,18 @@ func CanCreateRoom(tx *gorm.DB, user database.User) error {
 
 		if err := tx.ScanRows(rows, &user_plan); err != nil {
 			candidateError = err
+			log.Println("Error loading row!", err)
 			continue
 		}
 
 		if err := tx.First(&plan, user_plan.PlanID).Error; err != nil {
+			log.Println("Error loading plan by id!", err)
 			continue
 		}
 
 		var openRooms int64
 		if err := tx.Model(&database.Room{}).Where("owner_id = ? AND lifecycle = ?", user.ID, "pending").Count(&openRooms).Error; err != nil {
+			log.Println("Error loading open rooms!", err)
 			continue
 		}
 
@@ -129,6 +141,7 @@ func CanCreateRoom(tx *gorm.DB, user database.User) error {
 
 		var totalRooms int64
 		if err := tx.Model(&database.Room{}).Where("owner_id = ?", user.ID).Count(&totalRooms).Error; err != nil {
+			log.Println("Error loading total rooms!", err)
 			continue
 		}
 
@@ -140,6 +153,7 @@ func CanCreateRoom(tx *gorm.DB, user database.User) error {
 		var since = time.Now().Add(-1 * plan.MaxRoomsInTimeframeDuration)
 		var roomsInDuration int64
 		if err := tx.Model(&database.Room{}).Where("owner_id = ? AND created_at >= ?", user.ID, since).Count(&roomsInDuration).Error; err != nil {
+			candidateError = errors.New("unable to load room in duration")
 			continue
 		}
 

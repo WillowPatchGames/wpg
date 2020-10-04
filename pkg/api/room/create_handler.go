@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/business"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -74,6 +75,10 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	var room database.Room
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
+		if err := business.CanCreateRoom(tx, *handle.user); err != nil {
+			return err
+		}
+
 		room.OwnerID = handle.user.ID
 		room.Style = handle.req.Style
 		room.Open = handle.req.Open

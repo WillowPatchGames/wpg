@@ -17,14 +17,14 @@ plans:
     max_players_in_room: -1
     max_players_in_game_in_room: -1
     max_room_in_timeframe_count: -1
-    max_room_in_timeframe_duration: 315360000000000000
+    max_room_in_timeframe_duration: 3153600000000000000
     create_game: true
     max_open_games: -1
     max_total_games: -1
     max_players_in_game: -1
     max_spectators_in_game: -1
     max_games_in_timeframe_count: -1
-    max_games_in_timeframe_duration: 315360000000000000
+    max_games_in_timeframe_duration: 3153600000000000000
     available_game_styles: "*"
     can_audio_chat: true
     can_video_chat: true
@@ -44,14 +44,14 @@ plans:
     max_players_in_room: 0
     max_players_in_game_in_room: 0
     max_room_in_timeframe_count: 0
-    max_room_in_timeframe_duration: 315360000000000000
+    max_room_in_timeframe_duration: 3153600000000000000
     create_game: true
     max_open_games: 1
     max_total_games: 3
     max_players_in_game: 5
     max_spectators_in_game: 5
     max_games_in_timeframe_count: -1
-    max_games_in_timeframe_duration: 315360000000000000
+    max_games_in_timeframe_duration: 3153600000000000000
     available_game_styles: "*"
     can_audio_chat: false
     can_video_chat: false
@@ -61,6 +61,8 @@ assignments:
   "alexander.m.scheel@gmail.com":
     - "friends-and-family"
   "bookworm.as@gmail.com":
+    - "friends-and-family"
+  "*@testing.willowpatchgames.com":
     - "friends-and-family"
   "*":
     - "free"

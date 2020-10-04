@@ -128,6 +128,5 @@ type UserPlan struct {
 	PriceCents uint
 	Billed     time.Duration
 
-	Created time.Time
 	Expires time.Time
 }

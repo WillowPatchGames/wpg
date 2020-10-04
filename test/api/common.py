@@ -7,7 +7,7 @@ URL = f"http://{HOSTNAME}:{PORT}/api/v1"
 def auth_user(username):
     assert len(username) <= 30
 
-    create_req = {'username': username, 'email': username + '@alpha.net', 'password': 'letmein'}
+    create_req = {'username': username, 'email': username + '@testing.willowpatchgames.com', 'password': 'letmein'}
     resp = requests.post(URL + "/users", json=create_req)
 
     print(resp, resp.json())
