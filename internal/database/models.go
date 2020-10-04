@@ -40,7 +40,6 @@ type Auth struct {
 	Key      string `gorm:"primaryKey"`
 	Value    string
 
-	Created time.Time
 	Expires time.Time
 }
 
@@ -94,7 +93,8 @@ type Plan struct {
 	CreateRoom                  bool
 	MaxOpenRooms                int
 	MaxTotalRooms               int
-	MaxGamesInRoom              int
+	MaxOpenGamesInRoom          int
+	MaxTotalGamesInRoom         int
 	MaxPlayersInRoom            int
 	MaxRoomsInTimeframeCount    int
 	MaxRoomsInTimeframeDuration time.Duration

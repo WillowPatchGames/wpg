@@ -41,7 +41,8 @@ func AddPlans(tx *gorm.DB) error {
 		entry.Plan.CreateRoom = true
 		entry.Plan.MaxOpenRooms = -1
 		entry.Plan.MaxTotalRooms = -1
-		entry.Plan.MaxGamesInRoom = -1
+		entry.Plan.MaxOpenGamesInRoom = -1
+		entry.Plan.MaxTotalGamesInRoom = -1
 		entry.Plan.MaxPlayersInRoom = -1
 		entry.Plan.MaxRoomsInTimeframeCount = -1
 		entry.Plan.MaxRoomsInTimeframeDuration = 10 * 365 * 24 * time.Hour
