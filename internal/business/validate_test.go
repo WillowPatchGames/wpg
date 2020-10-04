@@ -14,7 +14,7 @@ func TestCanCreateGame(t *testing.T) {
 	}
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		return AddPlans(tx)
+		return LoadPlanConfig(tx, "../../configs/plans.yaml")
 	}); err != nil {
 		t.Fatal(err)
 	}

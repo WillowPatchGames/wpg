@@ -81,35 +81,37 @@ type Plan struct {
 	gorm.Model
 
 	ID          uint64
-	Slug        string `gorm:"unique"`
-	Name        string
-	Description string
-	Open        bool
+	Slug        string `gorm:"unique" yaml:"slug"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	Open        bool   `yaml:"open"`
 
-	MinPriceCents       uint
-	SuggestedPriceCents uint
-	Billed              time.Duration
+	MinPriceCents       uint          `yaml:"min_price_cents"`
+	SuggestedPriceCents uint          `yaml:"suggested_price_cents"`
+	MaxPriceCents       uint          `yaml:"max_price_cents"`
+	Billed              time.Duration `yaml:"billed"`
 
-	CreateRoom                  bool
-	MaxOpenRooms                int
-	MaxTotalRooms               int
-	MaxOpenGamesInRoom          int
-	MaxTotalGamesInRoom         int
-	MaxPlayersInRoom            int
-	MaxRoomsInTimeframeCount    int
-	MaxRoomsInTimeframeDuration time.Duration
+	CreateRoom                  bool          `yaml:"create_room"`
+	MaxOpenRooms                int           `yaml:"max_open_rooms"`
+	MaxTotalRooms               int           `yaml:"max_total_rooms"`
+	MaxOpenGamesInRoom          int           `yaml:"max_open_games_in_room"`
+	MaxTotalGamesInRoom         int           `yaml:"max_total_games_in_room"`
+	MaxPlayersInRoom            int           `yaml:"max_players_in_room"`
+	MaxRoomsInTimeframeCount    int           `yaml:"max_rooms_in_timeframe_count"`
+	MaxRoomsInTimeframeDuration time.Duration `yaml:"max_rooms_in_timeframe_duration"`
 
-	CreateGame                  bool
-	MaxOpenGames                int
-	MaxTotalGames               int
-	MaxPlayersInGame            int
-	MaxSpectatorsInGame         int
-	MaxGamesInTimeframeCount    int
-	MaxGamesInTimeframeDuration time.Duration
-	AvailableGameStyles         string
+	CreateGame                  bool          `yaml:"create_game"`
+	MaxOpenGames                int           `yaml:"max_open_games"`
+	MaxTotalGames               int           `yaml:"max_total_games"`
+	MaxPlayersInGame            int           `yaml:"max_players_in_game"`
+	MaxSpectatorsInGame         int           `yaml:"max_spectators_in_game"`
+	MaxGamesInTimeframeCount    int           `yaml:"max_games_in_timeframe_count"`
+	MaxGamesInTimeframeDuration time.Duration `yaml:"max_games_in_timeframe_duration"`
 
-	CanAudioChat bool
-	CanVideoChat bool
+	AvailableGameStyles string `yaml:"available_game_styles"`
+
+	CanAudioChat bool `yaml:"can_audio_chat"`
+	CanVideoChat bool `yaml:"can_video_chat"`
 }
 
 type UserPlan struct {

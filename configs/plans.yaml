@@ -1,0 +1,66 @@
+---
+cache_expiry: 3600
+plans:
+  - slug: "friends-and-family"
+    name: "Friends and Family"
+    description: "The free, unlimited plan handed out by us at Willow Patch Games!"
+    open: false
+    min_price_cents: 0
+    suggested_price_cents: 0
+    max_price_cents: 0
+    billed: 0
+    create_room: true
+    max_open_rooms: -1
+    max_total_rooms: -1
+    max_open_games_in_room: -1
+    max_total_games_in_room: -1
+    max_players_in_room: -1
+    max_players_in_game_in_room: -1
+    max_room_in_timeframe_count: -1
+    max_room_in_timeframe_duration: 315360000000000000
+    create_game: true
+    max_open_games: -1
+    max_total_games: -1
+    max_players_in_game: -1
+    max_spectators_in_game: -1
+    max_games_in_timeframe_count: -1
+    max_games_in_timeframe_duration: 315360000000000000
+    available_game_styles: "*"
+    can_audio_chat: true
+    can_video_chat: true
+  - slug: "free"
+    name: "Free Trial"
+    description: "The initial free trial for all users"
+    open: false
+    min_price: 0
+    suggested_price: 0
+    max_price: 0
+    billed: 0
+    create_room: false
+    max_open_rooms: 0
+    max_total_rooms: 0
+    max_open_games_in_room: 0
+    max_total_games_in_room: 0
+    max_players_in_room: 0
+    max_players_in_game_in_room: 0
+    max_room_in_timeframe_count: 0
+    max_room_in_timeframe_duration: 315360000000000000
+    create_game: true
+    max_open_games: 1
+    max_total_games: 3
+    max_players_in_game: 5
+    max_spectators_in_game: 5
+    max_games_in_timeframe_count: -1
+    max_games_in_timeframe_duration: 315360000000000000
+    available_game_styles: "*"
+    can_audio_chat: false
+    can_video_chat: false
+assignments:
+  "willowpatchgames@gmail.com":
+    - "friends-and-family"
+  "alexander.m.scheel@gmail.com":
+    - "friends-and-family"
+  "bookworm.as@gmail.com":
+    - "friends-and-family"
+  "*":
+    - "free"

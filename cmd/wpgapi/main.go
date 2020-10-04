@@ -59,6 +59,8 @@ func main() {
 	var proxy bool
 	var staticPath string
 
+	var planConfig string
+
 	flag.StringVar(&addr, "addr", "localhost:8042", "Address to listen for HTTP requests on")
 
 	// Database connection flags
@@ -74,6 +76,8 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
 	flag.BoolVar(&proxy, "proxy", false, "Enable proxy")
 	flag.StringVar(&staticPath, "static_path", "assets/static/public", "Path to web UI static assets")
+
+	flag.StringVar(&planConfig, "plan_config", "configs/plans.yaml", "Path to plan configuration file")
 	flag.Parse()
 
 	// Open Database connection first.
@@ -96,7 +100,7 @@ func main() {
 
 	// Add plan information
 	if err = database.InTransaction(func(tx *gorm.DB) error {
-		return business.AddPlans(tx)
+		return business.LoadPlanConfig(tx, planConfig)
 	}); err != nil {
 		panic(err)
 	}

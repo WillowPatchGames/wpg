@@ -1,10 +1,15 @@
 package business
 
 import (
+	"errors"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"gorm.io/gorm"
+
+	"gopkg.in/yaml.v2"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 )
@@ -18,54 +23,68 @@ type PlanCacheEntry struct {
 	Expires time.Time
 }
 
+type planConfig struct {
+	CacheExpiry time.Duration       `yaml:"cache_expiry"`
+	Plans       []database.Plan     `yaml:"plans"`
+	Assignments map[string][]string `yaml:"assignments"`
+}
+
 var PlanCache map[uint64]PlanCacheEntry = make(map[uint64]PlanCacheEntry)
+var PlanAssignments map[string][]uint64 = make(map[string][]uint64)
 
-func AddPlans(tx *gorm.DB) error {
-	// The only plan we'll add by default for now is the friends & family plan.
-	//
-	// XXX -- Make this configurable by a .ini file. Eventually the admin section
-	// will export that and we'll be able to add it into our repo for easy test
-	// deployments later.
-	var entry PlanCacheEntry
-	if err := tx.First(&entry.Plan, "slug = ?", "friends-and-family").Error; err != nil {
-		// If the plan doesn't exist, we've gotta create it.
-		entry.Plan.Slug = "friends-and-family"
-		entry.Plan.Name = "Friends and Family"
-		entry.Plan.Description = "The free, unlimited plan handed out by us at Willow Patch Games!"
-		entry.Plan.Open = false
-
-		entry.Plan.MinPriceCents = 0
-		entry.Plan.SuggestedPriceCents = 0
-		entry.Plan.Billed = 0
-
-		entry.Plan.CreateRoom = true
-		entry.Plan.MaxOpenRooms = -1
-		entry.Plan.MaxTotalRooms = -1
-		entry.Plan.MaxOpenGamesInRoom = -1
-		entry.Plan.MaxTotalGamesInRoom = -1
-		entry.Plan.MaxPlayersInRoom = -1
-		entry.Plan.MaxRoomsInTimeframeCount = -1
-		entry.Plan.MaxRoomsInTimeframeDuration = 10 * 365 * 24 * time.Hour
-
-		entry.Plan.CreateGame = true
-		entry.Plan.MaxOpenGames = -1
-		entry.Plan.MaxTotalGames = -1
-		entry.Plan.MaxPlayersInGame = -1
-		entry.Plan.MaxSpectatorsInGame = -1
-		entry.Plan.MaxGamesInTimeframeCount = -1
-		entry.Plan.MaxGamesInTimeframeDuration = 10 * 365 * 24 * time.Hour
-		entry.Plan.AvailableGameStyles = "*"
-
-		entry.Plan.CanAudioChat = true
-		entry.Plan.CanVideoChat = true
-
-		if err := tx.Create(&entry.Plan).Error; err != nil {
-			return err
-		}
+func LoadPlanConfig(tx *gorm.DB, path string) error {
+	plan_data, err := ioutil.ReadFile(filepath.Clean(path))
+	if err != nil {
+		return err
 	}
 
-	entry.Expires = time.Now().Add(10 * 365 * 24 * time.Hour)
-	PlanCache[entry.Plan.ID] = entry
+	var cfg planConfig
+	if err := yaml.Unmarshal(plan_data, &cfg); err != nil {
+		return err
+	}
+
+	for _, plan := range cfg.Plans {
+		var entry PlanCacheEntry
+		var save bool = false
+		var id uint64 = 0
+		if err := tx.First(&entry.Plan, "slug = ?", plan.Slug).Error; err != nil {
+			save = true
+			id = entry.Plan.ID
+		}
+
+		entry.Plan = plan
+		entry.Plan.ID = id
+		if save {
+			if err := tx.Save(&entry.Plan).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Create(&entry.Plan).Error; err != nil {
+				return err
+			}
+		}
+
+		entry.Expires = time.Now().Add(cfg.CacheExpiry * time.Second)
+		PlanCache[entry.Plan.ID] = entry
+	}
+
+	for email, plans := range cfg.Assignments {
+		for _, plan := range plans {
+			var id uint64
+			for entry_id, entry := range PlanCache {
+				if entry.Plan.Slug == plan {
+					id = entry_id
+					break
+				}
+			}
+
+			if id == 0 {
+				return errors.New("unable to assign to plan which doesn't exist: " + plan)
+			}
+
+			PlanAssignments[email] = append(PlanAssignments[email], id)
+		}
+	}
 
 	return nil
 }
