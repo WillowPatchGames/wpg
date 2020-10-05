@@ -85,6 +85,7 @@ tarball: build
 	tar -cf $(DIST) wpgapi assets/wordlist.txt
 	tar -rf $(DIST) -C assets/static build
 	tar -rf $(DIST) -C scripts units
+	tar -rf $(DIST) configs
 	xz $(DIST)
 
 beta-deploy: all dist

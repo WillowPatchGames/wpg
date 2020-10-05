@@ -6,7 +6,7 @@ After=network.target nginx.service
 Type=simple
 PIDFile=/run/wpg.pid
 ExecStartPre=/usr/bin/rm -f /run/wpg.pid
-ExecStart=/bin/bash -c "home/wpg/wpgapi -db_host=/var/run/postgresql -db_sslmode disable -db_user wpg -debug=false -static_path=/home/wpg/build"
+ExecStart=/bin/bash -c "home/wpg/wpgapi -db_host=/var/run/postgresql -db_sslmode disable -db_user wpg -debug=false -static_path=/home/wpg/build -plan_config=/home/wpg/configs/production-plans.yaml"
 Restart=always
 User=wpg
 Group=wpg
