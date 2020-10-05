@@ -11,7 +11,7 @@ import (
 )
 
 func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style string) error {
-	rows, err := tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_game = ?", true).Rows()
+	rows, err := tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_game = ?", true).Order("user_plans.price_cents ASC").Rows()
 	if err != nil {
 		return err
 	}
