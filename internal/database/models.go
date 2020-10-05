@@ -77,6 +77,11 @@ type Game struct {
 	State  sql.NullString
 }
 
+const (
+	PlanNotAllowed       int = 0
+	PlanUnlimitedAllowed int = -1
+)
+
 type Plan struct {
 	gorm.Model
 
