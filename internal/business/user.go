@@ -20,7 +20,7 @@ func AddDefaultPlans(tx *gorm.DB, user database.User) error {
 				db.PlanID = entry.Plan.ID
 				db.Active = true
 				db.PriceCents = 0
-				db.Billed = 0
+				db.BillingFrequency = 0
 				db.Expires = time.Now().Add(100 * 365 * 24 * time.Hour)
 
 				if err := tx.Create(&db).Error; err != nil {

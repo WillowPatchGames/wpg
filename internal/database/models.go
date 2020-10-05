@@ -94,7 +94,7 @@ type Plan struct {
 	MinPriceCents       uint          `yaml:"min_price_cents"`
 	SuggestedPriceCents uint          `yaml:"suggested_price_cents"`
 	MaxPriceCents       uint          `yaml:"max_price_cents"`
-	Billed              time.Duration `yaml:"billed"`
+	BillingFrequency    time.Duration `yaml:"billed"`
 
 	CreateRoom                  bool          `yaml:"create_room"`
 	MaxOpenRooms                int           `yaml:"max_open_rooms"`
@@ -122,6 +122,8 @@ type Plan struct {
 type UserPlan struct {
 	gorm.Model
 
+	ID uint64
+
 	UserID uint64
 	User   User
 
@@ -130,8 +132,21 @@ type UserPlan struct {
 
 	Active bool
 
-	PriceCents uint
-	Billed     time.Duration
+	PriceCents       uint
+	BillingFrequency time.Duration
 
 	Expires time.Time
+}
+
+type UserPlanAccounting struct {
+	gorm.Model
+
+	UserPlanID uint64
+	UserPlan   UserPlan
+
+	RoomID sql.NullInt64
+	Room   Room
+
+	GameID sql.NullInt64
+	Game   Game
 }

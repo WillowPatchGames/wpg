@@ -75,7 +75,9 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	var room database.Room
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		if err := business.CanCreateRoom(tx, *handle.user); err != nil {
+		var err error
+		var plan_id uint64
+		if plan_id, err = business.CanCreateRoom(tx, *handle.user); err != nil {
 			return err
 		}
 
@@ -94,11 +96,11 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			room.Config.String = string(config)
 		}
 
-		if err := tx.Create(&room).Error; err != nil {
+		if err = tx.Create(&room).Error; err != nil {
 			return err
 		}
 
-		return nil
+		return business.AccountToPlan(tx, plan_id, room.ID, 0)
 	}); err != nil {
 		return err
 	}

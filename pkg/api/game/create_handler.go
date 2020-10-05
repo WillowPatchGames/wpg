@@ -87,18 +87,20 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	var game database.Game
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
+		var err error
 		if handle.req.RoomID > 0 {
 			room = new(database.Room)
-			if err := tx.First(room, handle.req.RoomID).Error; err != nil {
+			if err = tx.First(room, handle.req.RoomID).Error; err != nil {
 				return err
 			}
 
-			if err := api.UserCanCreateGame(*handle.user, *room); err != nil {
+			if err = api.UserCanCreateGame(*handle.user, *room); err != nil {
 				return err
 			}
 		}
 
-		if err := business.CanCreateGame(tx, *handle.user, room, handle.req.Style); err != nil {
+		var plan_id uint64
+		if plan_id, err = business.CanCreateGame(tx, *handle.user, room, handle.req.Style); err != nil {
 			return err
 		}
 
@@ -121,7 +123,11 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			database.SetSQLFromString(&game.Config, string(data))
 		}
 
-		return tx.Create(&game).Error
+		if err = tx.Create(&game).Error; err != nil {
+			return err
+		}
+
+		return business.AccountToPlan(tx, plan_id, uint64(game.RoomID.Int64), game.ID)
 	}); err != nil {
 		log.Println("Got error from handler:", err)
 		return err

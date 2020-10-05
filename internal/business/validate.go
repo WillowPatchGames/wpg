@@ -10,10 +10,10 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 )
 
-func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style string) error {
+func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style string) (uint64, error) {
 	rows, err := tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_game = ?", true).Order("user_plans.price_cents ASC").Rows()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer rows.Close()
 
@@ -107,17 +107,16 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 			}
 		}
 
-		candidateError = nil
-		break
+		return plan.ID, nil
 	}
 
-	return candidateError
+	return 0, candidateError
 }
 
-func CanCreateRoom(tx *gorm.DB, user database.User) error {
+func CanCreateRoom(tx *gorm.DB, user database.User) (uint64, error) {
 	rows, err := tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_room = ?", true).Order("user_plans.price_cents ASC").Rows()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer rows.Close()
 
@@ -178,9 +177,8 @@ func CanCreateRoom(tx *gorm.DB, user database.User) error {
 			}
 		}
 
-		candidateError = nil
-		break
+		return plan.ID, nil
 	}
 
-	return candidateError
+	return 0, candidateError
 }

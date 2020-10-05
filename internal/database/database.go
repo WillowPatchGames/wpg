@@ -32,7 +32,7 @@ func OpenDatabase(format string, conn string, dry bool) error {
 	}
 
 	return db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &Game{},
-		&Plan{}, &UserPlan{})
+		&Plan{}, &UserPlan{}, &UserPlanAccounting{})
 }
 
 func InTransaction(handler func(tx *gorm.DB) error, opts ...*sql.TxOptions) error {
