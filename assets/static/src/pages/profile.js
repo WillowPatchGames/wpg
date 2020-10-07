@@ -7,6 +7,7 @@ import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/dialog/styles';
 import '@rmwc/grid/styles';
+import '@rmwc/list/styles';
 import '@rmwc/tabs/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/typography/styles';
@@ -16,6 +17,7 @@ import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
 import * as g from '@rmwc/grid';
+import * as l from '@rmwc/list';
 import * as t from '@rmwc/tabs';
 import { TextField } from '@rmwc/textfield';
 import { Typography } from '@rmwc/typography';
@@ -23,7 +25,7 @@ import { Typography } from '@rmwc/typography';
 import { LoadingPage } from './common.js';
 import { gravatarify } from '../utils/gravatar.js';
 
-class UserProfile extends React.Component {
+class UserProfileTab extends React.Component {
   constructor(props) {
     super(props);
 
@@ -107,7 +109,7 @@ class UserProfile extends React.Component {
   }
 }
 
-class UserSecurity extends React.Component {
+class UserSecurityTab extends React.Component {
   constructor(props) {
     super(props);
 
@@ -178,67 +180,48 @@ class UserSecurity extends React.Component {
   }
 }
 
-class UserPlans extends React.Component {
+class UserPlansTab extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      plans: null,
+      user_plans: null,
     };
   }
 
-  async handlePasswordSubmit(event) {
-    event.preventDefault();
+  async componentDidMount() {
+    var user_plans = await this.props.user.plans();
+    var plans = {};
 
-    var old_password = this.oldPassword.current.value;
-    var new_password = this.newPassword.current.value;
-    var confirm_password = this.confirmPassword.current.value;
-
-    if (new_password !== confirm_password) {
-      this.setPasswordError("New passwords do not match!");
-      return;
+    for (let plan of user_plans) {
+      plans[plan.plan_id] = await plan.plan();
     }
 
-    var data = {
-      'old_password': old_password,
-      'new_password': new_password
-    };
-
-    await this.props.user.save(data);
-
-    if (!this.props.user.error) {
-      this.oldPassword.current.value = "";
-      this.newPassword.current.value = "";
-      this.confirmPassword.current.value = "";
-    } else {
-      this.setPasswordError(this.props.user.error.message);
-    }
-  }
-
-  setPasswordError(message) {
-    this.setState(state => Object.assign({}, state, { passwordError: message }));
+    this.setState(state => Object.assign({}, state, { user_plans, plans }));
   }
 
   render() {
+    var rendered_plans = [];
+    if (this.state.user_plans !== null) {
+      for (let user_plan of this.state.user_plans) {
+        var plan = this.state.plans[user_plan.plan_id];
+        rendered_plans.push(
+          <>
+            <c.Card style={{ padding: '1rem 1rem 1rem 1rem' }}>
+              <Typography tag="h3">{ plan.name }</Typography>
+              <p className="text-left">{ plan.description }</p>
+              <l.ListDivider />
+              <p className="text-left">{ user_plan.rooms().length } rooms and { user_plan.games().length } games played under this plan.</p>
+            </c.Card>
+            <br /><br />
+          </>
+        );
+      }
+    }
+
     return (
       <div>
-        <c.Card>
-          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-            <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
-              <TextField fullwidth placeholder="old password" name="old" type="password" inputRef={ this.oldPassword } /><br />
-              <TextField fullwidth placeholder="new password" name="new" type="password" inputRef={ this.newPassword  } /><br />
-              <TextField fullwidth placeholder="confirm password" name="confirm" type="password" inputRef={ this.confirmPassword } /><br />
-              <Button label="Change Password" raised />
-            </form>
-            <d.Dialog open={ this.state.passwordError !== null } onClosed={() => this.setPasswordError(null) }>
-              <d.DialogTitle>Error!</d.DialogTitle>
-              <d.DialogContent>{ this.state.passwordError }</d.DialogContent>
-              <d.DialogActions>
-                <d.DialogButton action="close">OK</d.DialogButton>
-              </d.DialogActions>
-            </d.Dialog>
-          </div>
-        </c.Card>
+        { rendered_plans }
       </div>
     );
   }
@@ -259,10 +242,12 @@ class UserProfilePage extends React.Component {
 
   render() {
     var tab_content = null;
-    if (this.state.tab == '' || this.state.tab == 'profile') {
-      tab_content = <UserProfile {...this.props} />
-    } else if (this.state.tab == 'security') {
-      tab_content = <UserSecurity {...this.props} />
+    if (this.state.tab === '' || this.state.tab === 'profile') {
+      tab_content = <UserProfileTab {...this.props} />
+    } else if (this.state.tab === 'security') {
+      tab_content = <UserSecurityTab {...this.props} />
+    } else if (this.state.tab === 'plans') {
+      tab_content = <UserPlansTab {...this.props} />
     }
 
     return (
@@ -272,7 +257,10 @@ class UserProfilePage extends React.Component {
           <t.Tab icon="lock" label="Security" onClick={ () => this.setTab('security') } />
           <t.Tab icon="credit_card" label="Plans" onClick={ () => this.setTab('plans') } />
         </t.TabBar>
-        { tab_content }
+        <br />
+        <div style={{ width: "65%", margin: "0 auto" }}>
+          { tab_content }
+        </div>
       </div>
     );
   }
@@ -379,18 +367,13 @@ class ProfilePage extends React.Component {
     }
 
     return (
-      <div className="App-page">
-        <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={3} />
-          <g.GridCell align="middle" span={6}>
-            <article>
-              <Typography use="headline2">Account Preferences</Typography>
-              <div>
-                { React.createElement(component, this.props, this.props.children) }
-              </div>
-            </article>
-          </g.GridCell>
-        </g.Grid>
+      <div className="App-1000px" style={{ "padding-bottom": "5rem" }}>
+        <article>
+          <Typography use="headline2">Account Preferences</Typography>
+          <div>
+            { React.createElement(component, this.props, this.props.children) }
+          </div>
+        </article>
       </div>
     );
   }
