@@ -28,6 +28,8 @@ class UserModel {
     this.username = null;
     this.email = null;
     this.display = null;
+    this.guest = false;
+
     this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
 
     this.authed = false;
@@ -35,8 +37,6 @@ class UserModel {
     this.login_uri = this.api + '/auth';
     this.create_uri = this.api + '/users';
     this.error = null;
-
-    this.guest = false;
   }
 
   static FromJSON(serialization) {
@@ -245,6 +245,34 @@ class UserModel {
     return this;
   }
 
+  async plans() {
+    var plans_uri = this.api + '/user/' + this.id + '/plans';
+    const response = await fetch(plans_uri, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+    });
+
+    const data = await response.json();
+    if ('type' in data && data['type'] === 'error') {
+      console.log(data);
+      return data;
+    }
+
+    var result = [];
+    for (let plan_data of data) {
+      var plan = new UserPlanModel(this);
+      Object.assign(plan, plan_data);
+      result.push(plan);
+    }
+
+    return result;
+  }
+
   async login(password) {
     var request = {'password': password};
     if (nonempty(this.username)) {
@@ -284,6 +312,208 @@ class UserModel {
     this.token = null;
     this.authed = false;
     localStorage.clear();
+  }
+}
+
+class PlanModel {
+  constructor() {
+    this.id = 0;
+    this.slug = null;
+    this.name = null;
+    this.description = null;
+    this.open = false;
+    this.min_price_cents = null;
+    this.suggested_price_cents = null;
+    this.max_price_cents = null;
+    this.billed = null;
+    this.create_room = null;
+    this.max_open_rooms = null;
+    this.max_total_rooms = null;
+    this.max_open_games_in_room = null;
+    this.max_total_games_in_room = null;
+    this.max_players_in_room = null;
+    this.max_rooms_in_timeframe_count = null;
+    this.max_rooms_in_timeframe_duration = null;
+    this.create_game = null;
+    this.max_open_games = null;
+    this.max_total_games = null;
+    this.max_players_in_game = null;
+    this.max_spectators_in_game = null;
+    this.max_games_in_timeframe_count = null;
+    this.max_games_in_timeframe_duration = null;
+    this.available_game_styles = null;
+    this.can_audio_chat = null;
+    this.can_video_chat = null;
+
+    this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
+
+    this.token = null;
+    this.login_uri = this.api + '/auth';
+    this.create_uri = this.api + '/users';
+    this.error = null;
+  }
+
+  static FromJSON(serialization) {
+    var ret = new UserModel();
+    try {
+      var obj = JSON.parse(serialization);
+    } catch (e) {
+      return null;
+    }
+    Object.assign(ret, obj);
+    return ret;
+  }
+
+  ToJSON() {
+    return JSON.stringify(this);
+  }
+
+  static async FromId(id, token) {
+    var ret = new PlanModel();
+
+    var uri = ret.api + '/plan';
+    if (id !== null) {
+        uri = uri + '/' + id;
+    }
+
+    var headers = {
+      'Accept': 'application/json',
+    };
+
+    if (token) {
+      headers['X-Auth-Token'] = token;
+    } else if (this.token) {
+      headers['X-Auth-Token'] = this.token;
+    }
+
+    const response = await fetch(uri, {
+      method: 'GET',
+      headers: headers,
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+      ret.error = result;
+      return ret;
+    }
+
+    Object.assign(ret, result);
+    return ret;
+  }
+}
+
+class UserPlanModel {
+  constructor(user) {
+    this.plan_id = 0;
+    this.active = false;
+    this.price_cents = 0;
+    this.billing_frequency = 0;
+    this.expires = null;
+    this.events = [];
+
+    this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
+
+    this.user = user !== undefined ? user : null;
+    this.token = user !== null ? user.token : null;
+    this.error = null;
+  }
+
+  static FromJSON(serialization) {
+    var ret = new UserPlanModel();
+    try {
+      var obj = JSON.parse(serialization);
+    } catch (e) {
+      return null;
+    }
+    Object.assign(ret, obj);
+    return ret;
+  }
+
+  ToJSON() {
+    return JSON.stringify(this);
+  }
+
+  async plan() {
+    return await PlanModel.FromId(this.plan_id);
+  }
+
+  rooms() {
+    var rooms = [];
+
+    if (this.events !== null) {
+      for (let event of this.events) {
+        if (event.room_id !== undefined && event.room_id !== null) {
+          if (rooms.indexOf(event.room_id) === -1) {
+            rooms.push(event.room_id);
+          }
+        }
+      }
+    }
+
+    return rooms;
+  }
+
+  games_in_room(room_id) {
+    var games = [];
+
+    if (this.events !== null) {
+      for (let event of this.events) {
+        if (event.game_id !== undefined && event.game_id !== null) {
+          if (event.room_id !== undefined && event.room_id !== null) {
+            continue;
+          }
+
+          if (event.room_id != room_id) {
+            continue;
+          }
+
+          if (games.indexOf(event.game_id) === -1) {
+            games.push(event.game_id);
+          }
+        }
+      }
+    }
+
+    return games;
+  }
+
+  games() {
+    var games = [];
+
+    if (this.events !== null) {
+      for (let event of this.events) {
+        if (event.game_id !== undefined && event.game_id !== null) {
+          if (games.indexOf(event.game_id) === -1) {
+            games.push(event.game_id);
+          }
+        }
+      }
+    }
+
+    return games;
+  }
+
+  games_without_rooms() {
+    var games = [];
+
+    if (this.events !== null) {
+      for (let event of this.events) {
+        if (event.game_id !== undefined && event.game_id !== null) {
+          if (event.room_id !== undefined && event.room_id !== null) {
+            continue;
+          }
+
+          if (games.indexOf(event.game_id) === -1) {
+            games.push(event.game_id);
+          }
+        }
+      }
+    }
+
+    return games;
   }
 }
 
@@ -547,6 +777,8 @@ class GameModel {
 
 export {
   UserModel,
+  PlanModel,
+  UserPlanModel,
   RoomModel,
   GameModel,
   normalizeCode,
