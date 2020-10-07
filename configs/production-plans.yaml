@@ -30,7 +30,7 @@ plans:
     can_video_chat: true
   - slug: "free"
     name: "Free Trial"
-    description: "The initial free trial for all users"
+    description: "The initial free trial for all users."
     open: false
     min_price: 0
     suggested_price: 0
