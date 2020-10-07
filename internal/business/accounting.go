@@ -6,9 +6,9 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 )
 
-func AccountToPlan(tx *gorm.DB, user_plan uint64, room_id uint64, game_id uint64) error {
+func AccountToPlan(tx *gorm.DB, user_plan_id uint64, room_id uint64, game_id uint64) error {
 	var details database.UserPlanAccounting
-	details.UserPlanID = user_plan
+	details.UserPlanID = user_plan_id
 
 	if room_id != 0 {
 		details.RoomID.Valid = true

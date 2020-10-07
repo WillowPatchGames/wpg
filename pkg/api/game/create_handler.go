@@ -99,8 +99,8 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			}
 		}
 
-		var plan_id uint64
-		if plan_id, err = business.CanCreateGame(tx, *handle.user, room, handle.req.Style); err != nil {
+		var user_plan_id uint64
+		if user_plan_id, err = business.CanCreateGame(tx, *handle.user, room, handle.req.Style); err != nil {
 			return err
 		}
 
@@ -127,7 +127,7 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
-		return business.AccountToPlan(tx, plan_id, uint64(game.RoomID.Int64), game.ID)
+		return business.AccountToPlan(tx, user_plan_id, uint64(game.RoomID.Int64), game.ID)
 	}); err != nil {
 		log.Println("Got error from handler:", err)
 		return err

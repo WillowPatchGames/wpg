@@ -14,6 +14,12 @@ var db *gorm.DB
 func OpenDatabase(format string, conn string, dry bool) error {
 	var err error
 
+	// To enable verbose query logging, import:
+	//     "gorm.io/gorm/logger"
+	// and then add:
+	//     Logger:      logger.Default.LogMode(logger.Info),
+	// to the config struct below.
+
 	var config = gorm.Config{
 		PrepareStmt: true,
 		DryRun:      dry,
