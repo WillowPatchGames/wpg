@@ -25,6 +25,7 @@ import (
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/auth"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/game"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/plan"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/room"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/api/user"
 )
@@ -110,6 +111,7 @@ func main() {
 	// routes.
 	auth.BuildRouter(router, debug)
 	game.BuildRouter(router, debug)
+	plan.BuildRouter(router, debug)
 	room.BuildRouter(router, debug)
 	user.BuildRouter(router, debug)
 

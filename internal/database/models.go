@@ -85,38 +85,38 @@ const (
 type Plan struct {
 	gorm.Model
 
-	ID          uint64
-	Slug        string `gorm:"unique" yaml:"slug"`
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
-	Open        bool   `yaml:"open"`
+	ID          uint64 `json:"id"`
+	Slug        string `gorm:"unique" json:"slug" yaml:"slug"`
+	Name        string `json:"name" yaml:"name"`
+	Description string `json:"description" yaml:"description"`
+	Open        bool   `json:"open" yaml:"open"`
 
-	MinPriceCents       uint          `yaml:"min_price_cents"`
-	SuggestedPriceCents uint          `yaml:"suggested_price_cents"`
-	MaxPriceCents       uint          `yaml:"max_price_cents"`
-	BillingFrequency    time.Duration `yaml:"billed"`
+	MinPriceCents       uint          `json:"min_price_cents" yaml:"min_price_cents"`
+	SuggestedPriceCents uint          `json:"suggested_price_cents" yaml:"suggested_price_cents"`
+	MaxPriceCents       uint          `json:"max_price_cents" yaml:"max_price_cents"`
+	BillingFrequency    time.Duration `json:"billed" yaml:"billed"`
 
-	CreateRoom                  bool          `yaml:"create_room"`
-	MaxOpenRooms                int           `yaml:"max_open_rooms"`
-	MaxTotalRooms               int           `yaml:"max_total_rooms"`
-	MaxOpenGamesInRoom          int           `yaml:"max_open_games_in_room"`
-	MaxTotalGamesInRoom         int           `yaml:"max_total_games_in_room"`
-	MaxPlayersInRoom            int           `yaml:"max_players_in_room"`
-	MaxRoomsInTimeframeCount    int           `yaml:"max_rooms_in_timeframe_count"`
-	MaxRoomsInTimeframeDuration time.Duration `yaml:"max_rooms_in_timeframe_duration"`
+	CreateRoom                  bool          `json:"create_room" yaml:"create_room"`
+	MaxOpenRooms                int           `json:"max_open_rooms" yaml:"max_open_rooms"`
+	MaxTotalRooms               int           `json:"max_total_rooms" yaml:"max_total_rooms"`
+	MaxOpenGamesInRoom          int           `json:"max_open_games_in_room" yaml:"max_open_games_in_room"`
+	MaxTotalGamesInRoom         int           `json:"max_total_games_in_room" yaml:"max_total_games_in_room"`
+	MaxPlayersInRoom            int           `json:"max_players_in_room" yaml:"max_players_in_room"`
+	MaxRoomsInTimeframeCount    int           `json:"max_rooms_in_timeframe_count" yaml:"max_rooms_in_timeframe_count"`
+	MaxRoomsInTimeframeDuration time.Duration `json:"max_rooms_in_timeframe_duration" yaml:"max_rooms_in_timeframe_duration"`
 
-	CreateGame                  bool          `yaml:"create_game"`
-	MaxOpenGames                int           `yaml:"max_open_games"`
-	MaxTotalGames               int           `yaml:"max_total_games"`
-	MaxPlayersInGame            int           `yaml:"max_players_in_game"`
-	MaxSpectatorsInGame         int           `yaml:"max_spectators_in_game"`
-	MaxGamesInTimeframeCount    int           `yaml:"max_games_in_timeframe_count"`
-	MaxGamesInTimeframeDuration time.Duration `yaml:"max_games_in_timeframe_duration"`
+	CreateGame                  bool          `json:"create_game" yaml:"create_game"`
+	MaxOpenGames                int           `json:"max_open_games" yaml:"max_open_games"`
+	MaxTotalGames               int           `json:"max_total_games" yaml:"max_total_games"`
+	MaxPlayersInGame            int           `json:"max_players_in_game" yaml:"max_players_in_game"`
+	MaxSpectatorsInGame         int           `json:"max_spectators_in_game" yaml:"max_spectators_in_game"`
+	MaxGamesInTimeframeCount    int           `json:"max_games_in_timeframe_count" yaml:"max_games_in_timeframe_count"`
+	MaxGamesInTimeframeDuration time.Duration `json:"max_games_in_timeframe_duration" yaml:"max_games_in_timeframe_duration"`
 
-	AvailableGameStyles string `yaml:"available_game_styles"`
+	AvailableGameStyles string `json:"available_game_styles" yaml:"available_game_styles"`
 
-	CanAudioChat bool `yaml:"can_audio_chat"`
-	CanVideoChat bool `yaml:"can_video_chat"`
+	CanAudioChat bool `json:"can_audio_chat" yaml:"can_audio_chat"`
+	CanVideoChat bool `json:"can_video_chat" yaml:"can_video_chat"`
 }
 
 type UserPlan struct {

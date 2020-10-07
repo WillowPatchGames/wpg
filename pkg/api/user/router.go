@@ -25,6 +25,11 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(inner)
 	}
 
+	var planQueryFactory = func() parsel.Parseltongue {
+		inner := new(PlansHandler)
+		return auth.Require(inner)
+	}
+
 	var queryFactory = func() parsel.Parseltongue {
 		inner := new(QueryHandler)
 		return auth.Allow(inner)
@@ -43,8 +48,10 @@ func BuildRouter(router *mux.Router, debug bool) {
 
 	router.Handle("/api/v1/user/{UserID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/user/{UserID:[0-9]+}", parsel.Wrap(updateFactory, config)).Methods("PATCH")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/plans", parsel.Wrap(planQueryFactory, config)).Methods("GET")
 
 	router.Handle("/api/v1/user", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/user/plans", parsel.Wrap(planQueryFactory, config)).Methods("GET")
 
 	router.Handle("/api/v1/users", parsel.Wrap(registerFactory, config)).Methods("POST")
 }
