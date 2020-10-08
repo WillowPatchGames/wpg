@@ -55,6 +55,60 @@ plans:
     available_game_styles: "*"
     can_audio_chat: false
     can_video_chat: false
+  - slug: "apartment"
+    name: "Apartment Party"
+    description: "Best for a gathering of small number of people for a shorter period of time, the Apartment Party plan lets up to five people play 10 games."
+    open: true
+    min_price: 150
+    suggested_price: 500
+    max_price: 1500
+    billed: 0
+    create_room: true
+    max_open_rooms: 1
+    max_total_rooms: 1
+    max_open_games_in_room: 10
+    max_total_games_in_room: 10
+    max_players_in_room: 5
+    max_players_in_game_in_room: 5
+    max_room_in_timeframe_count: -1
+    max_room_in_timeframe_duration: 3153600000000000000
+    create_game: false
+    max_open_games: 0
+    max_total_games: 0
+    max_players_in_game: 0
+    max_spectators_in_game: 0
+    max_games_in_timeframe_count: 0
+    max_games_in_timeframe_duration: 3153600000000000000
+    available_game_styles: "*"
+    can_audio_chat: true
+    can_video_chat: true
+  - slug: "house"
+    name: "House Party"
+    description: "Best for a gathering of a larger number of people for a shorter period of time, the Apartment Party plan lets up to 10 people play 20 games."
+    open: true
+    min_price: 550
+    suggested_price: 750
+    max_price: 3000
+    billed: 0
+    create_room: false
+    max_open_rooms: 1
+    max_total_rooms: 1
+    max_open_games_in_room: 20
+    max_total_games_in_room: 20
+    max_players_in_room: 10
+    max_players_in_game_in_room: 10
+    max_room_in_timeframe_count: -1
+    max_room_in_timeframe_duration: 3153600000000000000
+    create_game: false
+    max_open_games: 0
+    max_total_games: 0
+    max_players_in_game: 0
+    max_spectators_in_game: 0
+    max_games_in_timeframe_count: -1
+    max_games_in_timeframe_duration: 3153600000000000000
+    available_game_styles: "*"
+    can_audio_chat: true
+    can_video_chat: true
 assignments:
   "willowpatchgames@gmail.com":
     - "friends-and-family"
