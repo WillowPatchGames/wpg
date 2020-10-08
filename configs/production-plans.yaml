@@ -5,6 +5,7 @@ plans:
     name: "Friends and Family"
     description: "The free, unlimited plan handed out by us at Willow Patch Games!"
     open: false
+    visible: false
     min_price_cents: 0
     suggested_price_cents: 0
     max_price_cents: 0
@@ -32,9 +33,10 @@ plans:
     name: "Free Trial"
     description: "The initial free trial for all users."
     open: false
-    min_price: 0
-    suggested_price: 0
-    max_price: 0
+    visible: true
+    min_price_cents: 0
+    suggested_price_cents: 0
+    max_price_cents: 0
     billed: 0
     create_room: false
     max_open_rooms: 0
@@ -59,9 +61,10 @@ plans:
     name: "Apartment Party"
     description: "Best for a gathering of small number of people for a shorter period of time, the Apartment Party plan lets up to five people play 10 games."
     open: true
-    min_price: 150
-    suggested_price: 500
-    max_price: 1500
+    visible: true
+    min_price_cents: 150
+    suggested_price_cents: 500
+    max_price_cents: 1500
     billed: 0
     create_room: true
     max_open_rooms: 1
@@ -86,11 +89,12 @@ plans:
     name: "House Party"
     description: "Best for a gathering of a larger number of people for a shorter period of time, the Apartment Party plan lets up to 10 people play 20 games."
     open: true
-    min_price: 550
-    suggested_price: 750
-    max_price: 3000
+    visible: true
+    min_price_cents: 550
+    suggested_price_cents: 750
+    max_price_cents: 3000
     billed: 0
-    create_room: false
+    create_room: true
     max_open_rooms: 1
     max_total_rooms: 1
     max_open_games_in_room: 20

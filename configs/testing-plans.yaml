@@ -5,6 +5,7 @@ plans:
     name: "Friends and Family"
     description: "The free, unlimited plan handed out by us at Willow Patch Games!"
     open: false
+    visible: false
     min_price_cents: 0
     suggested_price_cents: 0
     max_price_cents: 0
@@ -32,9 +33,10 @@ plans:
     name: "Free Trial"
     description: "The initial free trial for all users."
     open: false
-    min_price: 0
-    suggested_price: 0
-    max_price: 0
+    visible: true
+    min_price_cents: 0
+    suggested_price_cents: 0
+    max_price_cents: 0
     billed: 0
     create_room: false
     max_open_rooms: 0
