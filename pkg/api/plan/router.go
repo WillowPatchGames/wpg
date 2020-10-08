@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
@@ -21,4 +22,6 @@ func BuildRouter(router *mux.Router, debug bool) {
 
 	router.Handle("/api/v1/plan/{PlanID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/plan/{Slug:[a-zA-Z][a-zA-Z0-9-]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
+
+	router.Handle("/api/v1/plans", hwaterr.Wrap(new(AllHandler))).Methods("GET")
 }
