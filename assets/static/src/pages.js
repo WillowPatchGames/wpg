@@ -14,6 +14,7 @@ import { ProfilePage } from './pages/profile.js';
 import { RoomPage } from './pages/room.js';
 import { RushRulesPage } from './pages/rules.js';
 import { SignupPage } from './pages/signup.js';
+import { PricingPage } from './pages/pricing.js';
 
 class Page extends React.Component {
   render() {
@@ -39,6 +40,7 @@ class Page extends React.Component {
       case 'rush-rules': component = RushRulesPage; break;
       case 'docs': component = DocsPage; break;
       case 'room': component = this.props.room ? RoomPage : JoinGamePage ; break;
+      case 'pricing': component = PricingPage; break;
       default: component = ErrorPage;
     }
     return component;

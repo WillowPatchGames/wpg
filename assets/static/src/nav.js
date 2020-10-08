@@ -138,6 +138,10 @@ class Navigation extends React.Component {
                   <l.ListItemGraphic icon="notes" />
                   <l.ListItemText>Documentation</l.ListItemText>
                 </l.ListItem>
+                <l.ListItem onClick={ () => this.props.setPage('pricing') }>
+                  <l.ListItemGraphic icon="notes" />
+                  <l.ListItemText>Pricing</l.ListItemText>
+                </l.ListItem>
               </l.List>
             </d.DrawerContent>
           </d.Drawer>

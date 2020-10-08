@@ -183,6 +183,8 @@ class App extends React.Component {
             headline3: 'h3',
             headline4: 'h4',
             headline5: 'h5',
+            body: 'p',
+            body2: 'p',
           }}
         >
           <ThemeProvider

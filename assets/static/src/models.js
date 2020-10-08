@@ -322,6 +322,7 @@ class PlanModel {
     this.name = null;
     this.description = null;
     this.open = false;
+    this.visible = false;
     this.min_price_cents = null;
     this.suggested_price_cents = null;
     this.max_price_cents = null;
@@ -371,10 +372,7 @@ class PlanModel {
   static async FromId(id, token) {
     var ret = new PlanModel();
 
-    var uri = ret.api + '/plan';
-    if (id !== null) {
-        uri = uri + '/' + id;
-    }
+    var uri = ret.api + '/plan/' + id;
 
     var headers = {
       'Accept': 'application/json',
@@ -402,6 +400,30 @@ class PlanModel {
 
     Object.assign(ret, result);
     return ret;
+  }
+
+  static async active() {
+    var ret = new PlanModel();
+
+    var uri = ret.api + '/plans';
+    const response = await fetch(uri, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+
+    const data = await response.json();
+
+    if ('type' in data && data['type'] === 'error') {
+      console.log(data);
+      return data;
+    }
+
+    var result = [];
+    for (let plan_id of data) {
+      result.push(PlanModel.FromId(plan_id));
+    }
+
+    return await Promise.all(result);
   }
 }
 
@@ -466,7 +488,7 @@ class UserPlanModel {
             continue;
           }
 
-          if (event.room_id != room_id) {
+          if (event.room_id !== room_id) {
             continue;
           }
 
