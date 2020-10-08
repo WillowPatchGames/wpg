@@ -26,7 +26,7 @@ func (handle *AllHandler) GetObjectPointer() interface{} { return nil }
 
 func (handle *AllHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		return tx.Model(&database.Plan{}).Where("open = ?", true).Select("id").Find(&handle.resp).Error
+		return tx.Model(&database.Plan{}).Where("visible = ?", true).Select("id").Find(&handle.resp).Error
 	}); err != nil {
 		return err
 	}

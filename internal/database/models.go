@@ -90,6 +90,7 @@ type Plan struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description" yaml:"description"`
 	Open        bool   `json:"open" yaml:"open"`
+	Visible     bool   `json:"visible" yaml:"visible"`
 
 	MinPriceCents       uint          `json:"min_price_cents" yaml:"min_price_cents"`
 	SuggestedPriceCents uint          `json:"suggested_price_cents" yaml:"suggested_price_cents"`
