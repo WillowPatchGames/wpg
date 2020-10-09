@@ -110,7 +110,7 @@ class ActivePricingPage extends React.Component {
                 plan.open
                 ?
                   <c.CardActions>
-                    <c.CardActionButton>Buy</c.CardActionButton>
+                    <c.CardActionButton theme="secondary">Buy</c.CardActionButton>
                   </c.CardActions>
                 : null
               }

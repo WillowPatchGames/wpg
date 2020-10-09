@@ -97,12 +97,12 @@ class RoomPage extends React.Component {
                   Game #{ game.id }
                 </div>
                 <c.CardActions>
-                  <c.CardActionButton onClick={ () => this.joinGame(game) }>
+                  <c.CardActionButton theme="secondary" onClick={ () => this.joinGame(game) }>
                     Play
                   </c.CardActionButton>
                   {
                     this.props.user.id === this.props.room.owner ?
-                    <c.CardActionButton onClick={ () => this.deleteGame(game) }>
+                    <c.CardActionButton theme="secondary" onClick={ () => this.deleteGame(game) }>
                       Delete
                     </c.CardActionButton>
                     : <></>
