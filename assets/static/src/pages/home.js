@@ -17,10 +17,10 @@ class HomePage extends React.Component {
         <div className="App-1000px">
           <Theme use={ 'onPrimary' } >
             <g.GridRow>
-              <g.GridCell align="middle" span={3} tablet={8} phone={4}>
-                <img id="wpg-logo" src={ logo } style={{ "max-width": "100%", "max-height": "25rem" }} />
+              <g.GridCell align="middle" span={4} tablet={8} phone={4}>
+                <img className="App-Logo" src={ logo } />
               </g.GridCell>
-              <g.GridCell align="right" span={9}>
+              <g.GridCell align="right" span={8}>
                 <div className="styles.intro">
                   <div>
                     <Typography use="headline2">

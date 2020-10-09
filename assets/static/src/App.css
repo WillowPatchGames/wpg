@@ -33,8 +33,7 @@ p {
 
 .App-hero {
   background-color: var(--mdc-theme-primary);
-  padding-top: 50px;
-  padding-bottom: 50px;
+  padding: 0.75rem;
 }
 
 .App-page {
@@ -44,8 +43,8 @@ p {
 .App-footer {
   background-color: lightgray;
   color: gray;
-  padding-top: 25px;
-  padding-bottom: 25px;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }
 
 @keyframes fadeIn {
@@ -63,6 +62,11 @@ p {
   }
 }
 
+.App-Logo {
+  width: 90%;
+  margin: 1rem;
+}
+
 @media (max-width: 839px) {
   .mdc-top-app-bar:not(.mdc-top-app-bar--short-collapsed) .App-AuthedHeaderComponent button.mdc-top-app-bar__action-item {
     display: none;
@@ -74,6 +78,10 @@ p {
   .mdc-top-app-bar .App-AuthedHeaderComponent button:not(.mdc-top-app-bar__action-item) {
     visibility: hidden;
     display: none;
+  }
+  .App-Logo {
+    width: 45% !important;
+    margin: 0 !important;
   }
 }
 

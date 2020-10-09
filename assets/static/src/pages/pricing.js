@@ -83,7 +83,7 @@ class ActivePricingPage extends React.Component {
       for (let plan of this.state.plans) {
         active_plans.push(
           <div className="flexible" style={{ margin: "1rem" }}>
-            <c.Card style={{ 'width': '400px' }}>
+            <c.Card style={{ 'width': '300px' }}>
               <div style={{ padding: "1rem" }}>
                 <Typography use="headline5">{ plan.name }</Typography>
                 <Typography className="text-left" use="body">{ plan.description }</Typography>
