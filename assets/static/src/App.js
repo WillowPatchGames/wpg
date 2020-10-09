@@ -189,14 +189,15 @@ class App extends React.Component {
         >
           <ThemeProvider
             options={{
-              primary: '#1397BD',
-              onPrimary: 'white',
+              primary: '#d1deeb', // Blue
+              // primary: '#d1ebde', // Green
+              onPrimary: 'black',
               primaryBg: '#000',
               surface: 'white',
               onSurface: 'black',
               secondary: '#4CAF50',
               background: '#18353D',
-              onSecondary: 'white',
+              onSecondary: 'black',
               textPrimaryOnBackground: 'black',
               textHintOnBackground: 'black'
             }}

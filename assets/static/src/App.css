@@ -184,3 +184,7 @@ article.text p {
   overflow-x: auto;
   white-space: nowrap;
 }
+
+#wpg-logo {
+  text-align: center;
+}

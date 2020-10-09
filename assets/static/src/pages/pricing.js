@@ -131,7 +131,7 @@ class ActivePricingPage extends React.Component {
 class PricingPage extends React.Component {
   render() {
     return (
-      <div className="App-1000px">
+      <div className="App-page">
         <div>
           <Typography use="headline2">Pricing Information</Typography>
           <Typography use="body">

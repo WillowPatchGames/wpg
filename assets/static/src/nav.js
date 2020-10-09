@@ -109,7 +109,7 @@ class Navigation extends React.Component {
           <bar.TopAppBarRow>
             <bar.TopAppBarSection>
               <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />
-              <Button className="App-Title" onClick={() => this.props.setPage('home') } style={{ color: 'white' }}>Willow Patch Games</Button>
+              <Button className="App-Title" onClick={() => this.props.setPage('home') } style={{ color: 'black' }}>Willow Patch Games</Button>
             </bar.TopAppBarSection>
             <bar.TopAppBarSection alignEnd className="App-AuthedHeaderComponent">
               <AuthedHeaderComponent user={ this.props.user } immersive={ this.props.immersive } setPage={ this.props.setPage } setUser={ this.props.setUser } />
