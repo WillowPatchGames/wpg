@@ -42,10 +42,10 @@ type UserConfig struct {
 type Auth struct {
 	ID uint64 `gorm:"primaryKey"`
 
-	UserID   uint64 `gorm:"primaryKey"`
+	UserID   uint64
 	User     User
 	Category string
-	Key      string `gorm:"primaryKey"`
+	Key      string
 	Value    string
 
 	Expires time.Time
@@ -56,7 +56,7 @@ type Auth struct {
 }
 
 type Room struct {
-	ID      uint64
+	ID      uint64 `gorm:"primaryKey"`
 	OwnerID uint64
 
 	Style string
@@ -75,7 +75,7 @@ type Room struct {
 }
 
 type Game struct {
-	ID      uint64
+	ID      uint64 `gorm:"primaryKey"`
 	OwnerID uint64
 	RoomID  sql.NullInt64
 
@@ -99,7 +99,7 @@ const (
 )
 
 type Plan struct {
-	ID          uint64 `json:"id"`
+	ID          uint64 `gorm:"primaryKey" json:"id"`
 	Slug        string `gorm:"unique" json:"slug" yaml:"slug"`
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description" yaml:"description"`

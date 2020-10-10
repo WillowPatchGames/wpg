@@ -88,7 +88,7 @@ func (user *User) FromPassword(tx *gorm.DB, auth *Auth, password string) error {
 	auth.Key = utils.RandomToken()
 	auth.Value = "user"
 
-	return tx.Create(&auth).Error
+	return tx.Create(auth).Error
 }
 
 func (user *User) GuestToken(tx *gorm.DB, auth *Auth) error {
@@ -101,7 +101,7 @@ func (user *User) GuestToken(tx *gorm.DB, auth *Auth) error {
 	auth.Key = utils.RandomToken()
 	auth.Value = "guest"
 
-	return tx.Create(&auth).Error
+	return tx.Create(auth).Error
 }
 
 func (user *User) InvalidateGuestTokens(tx *gorm.DB) error {
@@ -110,4 +110,70 @@ func (user *User) InvalidateGuestTokens(tx *gorm.DB) error {
 	}
 
 	return tx.Table("auth as a").Where("user_id = ? AND value = ?", user.ID, "guest").Update("expires", time.Now()).Error
+}
+
+func (user *User) SetTOTPKey(tx *gorm.DB, device string, secret string, pending bool) error {
+	if user.ID == 0 {
+		panic("Unable to set TOTP key for NULL UserID")
+	}
+
+	var auth Auth
+
+	auth.UserID = user.ID
+	auth.Category = "totp-secret"
+	auth.Key = device + "-key"
+	if pending {
+		auth.Key += "-pending"
+	}
+	auth.Value = secret
+
+	return tx.Create(&auth).Error
+}
+
+func (user *User) GetTOTPKey(tx *gorm.DB, device string, pending bool) (string, error) {
+	if user.ID == 0 {
+		panic("Unable to get TOTP key for NULL UserID")
+	}
+
+	var auth Auth
+	var key = device + "-key"
+	if pending {
+		key += "-pending"
+	}
+
+	err := tx.First(&auth, "category = ? AND key = ? AND user_id = ?", "totp-secret", key, user.ID).Error
+	if err != nil {
+		return "", err
+	}
+
+	return auth.Value, nil
+}
+
+func (user *User) MarkTOTPVerified(tx *gorm.DB, device string, secret string) error {
+	if user.ID == 0 {
+		panic("Unable to get TOTP key for NULL UserID")
+	}
+
+	var auth Auth
+	var key = device + "-key-pending"
+
+	err := tx.First(&auth, "category = ? AND key = ? AND user_id = ?", "totp-secret", key, user.ID).Error
+	if err != nil {
+		return err
+	}
+
+	auth.Key = device + "-key"
+	auth.Value = secret
+
+	return tx.Save(&auth).Error
+}
+
+func (user *User) GetTOTPDevices(tx *gorm.DB) ([]string, error) {
+	var devices []string
+
+	if err := tx.Model(&Auth{}).Where("user_id = ? AND category = ?", user.ID, "totp-secret").Find(&devices).Error; err != nil {
+		return nil, err
+	}
+
+	return devices, nil
 }
