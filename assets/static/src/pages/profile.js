@@ -115,8 +115,14 @@ class UserSecurityTab extends React.Component {
     this.newPassword = React.createRef();
     this.confirmPassword = React.createRef();
 
+    this.device = React.createRef();
+    this.validation = React.createRef();
+
     this.state = {
       passwordError: null,
+      twofaError: null,
+      deviceInfo: null,
+      devices: null,
     };
   }
 
@@ -152,21 +158,77 @@ class UserSecurityTab extends React.Component {
     this.setState(state => Object.assign({}, state, { passwordError: message }));
   }
 
+  async handle2FASubmit(event) {
+    event.preventDefault();
+
+    var device = this.device.current.value;
+
+    var result = await this.props.user.enroll2FA(device);
+    if ('type' in result && result['type'] === 'error') {
+      this.set2FAError(result.message);
+    } else {
+      this.setState(state => Object.assign({}, state, { deviceInfo: result }));
+    }
+  }
+
+  set2FAError(message) {
+    this.setState(state => Object.assign({}, state, { twofaError: message }));
+  }
+
+  async handle2FAValidationSubmit(event) {
+    event.preventDefault();
+
+    var device = this.state.deviceInfo.device;
+    var validation = this.validation.current.value;
+
+    var result = await this.props.user.enrollConfirm2FA(device, validation);
+    if ('type' in result && result['type'] === 'error') {
+      this.set2FAError(result.message);
+    } else {
+      this.setState(state => Object.assign({}, state, { deviceInfo: null }));
+    }
+  }
+
   render() {
-    return (
+    var password = <div>
+      <c.Card>
+        <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+          <Typography tag="h3">Password</Typography>
+          <p className="text-left">To change your password, enter your old one and what you'd like to change it to.</p>
+          <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
+            <TextField fullwidth placeholder="old password" name="old" type="password" inputRef={ this.oldPassword } /><br />
+            <TextField fullwidth placeholder="new password" name="new" type="password" inputRef={ this.newPassword  } /><br />
+            <TextField fullwidth placeholder="confirm password" name="confirm" type="password" inputRef={ this.confirmPassword } /><br />
+            <Button label="Change Password" raised />
+          </form>
+          <d.Dialog open={ this.state.passwordError !== null } onClosed={() => this.setPasswordError(null) }>
+            <d.DialogTitle>Error!</d.DialogTitle>
+            <d.DialogContent>{ this.state.passwordError }</d.DialogContent>
+            <d.DialogActions>
+              <d.DialogButton action="close">OK</d.DialogButton>
+            </d.DialogActions>
+          </d.Dialog>
+        </div>
+      </c.Card>
+    </div>;
+
+    var twofa = <>
+      <br />
+      <br />
       <div>
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-            <p className="text-left">To change your password, enter your old one and what you'd like to change it to.</p>
-            <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
-              <TextField fullwidth placeholder="old password" name="old" type="password" inputRef={ this.oldPassword } /><br />
-              <TextField fullwidth placeholder="new password" name="new" type="password" inputRef={ this.newPassword  } /><br />
-              <TextField fullwidth placeholder="confirm password" name="confirm" type="password" inputRef={ this.confirmPassword } /><br />
-              <Button label="Change Password" raised />
+            <Typography tag="h3">Two-Factor Authentication (2FA)</Typography>
+            <p className="text-left">To enroll a new device in 2FA, enter a nickname for the device:</p>
+            <form onSubmit={ this.handle2FASubmit.bind(this) }>
+              <TextField fullwidth placeholder="primary" name="device" type="text" inputRef={ this.device } /><br />
+              <Button label="Enroll" raised />
             </form>
-            <d.Dialog open={ this.state.passwordError !== null } onClosed={() => this.setPasswordError(null) }>
+            <br /><br />
+            <p>The following devices are already enrolled:</p>
+            <d.Dialog open={ this.state.twofaError !== null } onClosed={() => this.set2FAError(null) }>
               <d.DialogTitle>Error!</d.DialogTitle>
-              <d.DialogContent>{ this.state.passwordError }</d.DialogContent>
+              <d.DialogContent>{ this.state.twofaError }</d.DialogContent>
               <d.DialogActions>
                 <d.DialogButton action="close">OK</d.DialogButton>
               </d.DialogActions>
@@ -174,6 +236,33 @@ class UserSecurityTab extends React.Component {
           </div>
         </c.Card>
       </div>
+    </>;
+    if (this.state.deviceInfo !== null) {
+      twofa = <>
+        <br />
+        <br />
+        <div>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <Typography tag="h3">Finish Enrollment</Typography>
+              <p className="text-left">To finish enrolling this device in 2FA, scan the QR code and enter the value from your app:</p>
+              <img src={ this.state.deviceInfo.image } alt={ this.state.deviceInfo.secret } />
+              <form onSubmit={ this.handle2FAValidationSubmit.bind(this) }>
+                <TextField fullwidth placeholder="123456" name="validation" type="text" inputRef={ this.validation } /><br />
+                <Button label="Enroll" raised />
+              </form>
+            </div>
+          </c.Card>
+        </div>
+        { twofa }
+      </>
+    }
+
+    return (
+      <>
+      { password }
+      { twofa }
+      </>
     );
   }
 }

@@ -273,6 +273,54 @@ class UserModel {
     return result;
   }
 
+  async enroll2FA(device) {
+    var request = {};
+    if (nonempty(device)) {
+      request['device'] = device;
+    }
+
+    var enroll_uri = this.api + '/user/' + this.id + '/totp';
+    const response = await fetch(enroll_uri, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    var result = await response.json();
+    if (!('type' in result && result['type'] === 'error')) {
+      result['image'] = this.api + '/user/' + this.id + '/totp/' + result['device'] + '/image?api_token=' + this.token;
+    }
+
+    return result;
+  }
+
+  async enrollConfirm2FA(device, token) {
+    var request = {};
+    if (nonempty(device)) {
+      request['device'] = device;
+      request['token'] = token;
+    }
+
+    var validate_uri = this.api + '/user/' + this.id + '/totp/validate';
+    const response = await fetch(validate_uri, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    return await response.json();
+  }
+
   async login(password) {
     var request = {'password': password};
     if (nonempty(this.username)) {
