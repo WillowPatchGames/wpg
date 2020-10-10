@@ -1,16 +1,82 @@
 import React from 'react';
 
 import '@rmwc/card/styles';
+import '@rmwc/dialog/styles';
 import '@rmwc/list/styles';
 import '@rmwc/slider/styles';
 import '@rmwc/typography/styles';
 
 import * as c from '@rmwc/card';
+import * as d from '@rmwc/dialog';
 import * as l from '@rmwc/list';
 import { Slider } from '@rmwc/slider';
 import { Typography } from '@rmwc/typography';
 
 import { PlanModel } from '../models.js';
+
+import { loadStripe } from '@stripe/stripe-js';
+
+function centsToDollar(value) {
+  var dollars = parseInt(value / 100);
+  var cents = "" + (value % 100) + "";
+  if (cents.length === 1) {
+    cents = cents + "0";
+  }
+  return '$' + dollars + "." + cents;
+}
+
+function isUnit(value_in_unit, name, max) {
+  if (max === undefined || max === null) {
+    max = 10;
+  }
+
+  if (1 <= value_in_unit && value_in_unit < max) {
+    if (parseInt(value_in_unit) <= 1) {
+      return "per " + name;
+    }
+
+    return "per " + parseInt(value_in_unit) + " " + name + "s";
+  }
+
+  return "";
+}
+
+function timeToUnit(value, is_party) {
+  var nanoseconds = value;
+  var microseconds = nanoseconds / 1000;
+  var miliseconds = microseconds / 1000;
+  var seconds = miliseconds / 1000;
+  var minutes = seconds / 60;
+  var hours = minutes / 60;
+  var days = hours / 24;
+  var weeks = days / 7;
+  var months = days / (365.4 / 12);
+  var years = days / 365.4;
+  var decades = years / 10;
+
+  if (parseInt(value) === 0 || decades > 10) {
+    if (!is_party) {
+      return "once";
+    } else {
+      return "per party";
+    }
+  }
+
+  var ret = "";
+  ret += isUnit(nanoseconds, "nanosecond");
+  ret += isUnit(microseconds, "microsecond");
+  ret += isUnit(miliseconds, "milisecond");
+  ret += isUnit(seconds, "second");
+  ret += isUnit(minutes, "minute");
+  ret += isUnit(hours, "hour");
+  ret += isUnit(days, "day");
+  ret += isUnit(weeks, "week", 4);
+  ret += isUnit(months, "month", 12);
+  ret += isUnit(years, "year");
+  ret += isUnit(decades, "decade");
+
+  return ret;
+}
 
 class PlanDetails extends React.Component {
   render() {
@@ -68,68 +134,6 @@ class ActivePricingPage extends React.Component {
     this.setState(state => Object.assign({}, state, { plans }));
   }
 
-  centsToDollar(value) {
-    var dollars = parseInt(value / 100);
-    var cents = "" + (value % 100) + "";
-    if (cents.length === 1) {
-      cents = cents + "0";
-    }
-    return '$' + dollars + "." + cents;
-  }
-
-  isUnit(value_in_unit, name, max) {
-    if (max === undefined || max === null) {
-      max = 10;
-    }
-
-    if (1 <= value_in_unit && value_in_unit < max) {
-      if (parseInt(value_in_unit) <= 1) {
-        return "per " + name;
-      }
-
-      return "per " + parseInt(value_in_unit) + " " + name + "s";
-    }
-
-    return "";
-  }
-
-  timeToUnit(value, is_party) {
-    var nanoseconds = value;
-    var microseconds = nanoseconds / 1000;
-    var miliseconds = microseconds / 1000;
-    var seconds = miliseconds / 1000;
-    var minutes = seconds / 60;
-    var hours = minutes / 60;
-    var days = hours / 24;
-    var weeks = days / 7;
-    var months = days / (365.4 / 12);
-    var years = days / 365.4;
-    var decades = years / 10;
-
-    if (parseInt(value) === 0 || decades > 10) {
-      if (!is_party) {
-        return "once";
-      } else {
-        return "per party";
-      }
-    }
-
-    var ret = "";
-    ret += this.isUnit(nanoseconds, "nanosecond");
-    ret += this.isUnit(microseconds, "microsecond");
-    ret += this.isUnit(miliseconds, "milisecond");
-    ret += this.isUnit(seconds, "second");
-    ret += this.isUnit(minutes, "minute");
-    ret += this.isUnit(hours, "hour");
-    ret += this.isUnit(days, "day");
-    ret += this.isUnit(weeks, "week", 4);
-    ret += this.isUnit(months, "month", 12);
-    ret += this.isUnit(years, "year");
-    ret += this.isUnit(decades, "decade");
-
-    return ret;
-  }
-
   render() {
     var active_plans = [];
     if (this.state.plans) {
@@ -138,7 +142,7 @@ class ActivePricingPage extends React.Component {
         var party = plan.name.indexOf("Party") !== -1;
         if (plan.open && plan.min_price_cents >= 0 && plan.max_price_cents >= 0) {
           price = <div className="text-left">
-            <i>Suggested</i> price: <b>{ this.centsToDollar(plan.suggested_price_cents) }</b> { this.timeToUnit(plan.billed, party) }
+            <i>Suggested</i> price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
             <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(plan, evt) } onInput={ (evt) => this.setPlanPrice(plan, evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
           </div>
         } else if (plan.slug === "free") {
@@ -166,10 +170,10 @@ class ActivePricingPage extends React.Component {
                 { price }
               </div>
               {
-                plan.open
+                this.props.user !== undefined && this.props.user !== null && this.props.user.authed && plan.open
                 ?
                   <c.CardActions>
-                    <c.CardActionButton theme="secondary">Buy</c.CardActionButton>
+                    <c.CardActionButton onClick={ () => this.props.setSelected(plan) } theme="secondary">Buy</c.CardActionButton>
                   </c.CardActions>
                 : null
               }
@@ -187,7 +191,100 @@ class ActivePricingPage extends React.Component {
   }
 }
 
+class PurchasePage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      price: this.props.plan.suggested_price_cents,
+      error: null,
+    }
+  }
+
+  setPlanPrice(event) {
+    this.props.plan.suggested_price_cents = parseInt(event.currentTarget.value * 100);
+    this.setState(state => Object.assign({}, state, { price: this.props.plan.suggested_price_cents }));
+  }
+
+  async checkout() {
+    this.props.plan.token = this.props.user.token;
+    var data = await this.props.plan.checkout(this.props.plan.suggested_price_cents, this.props.user.token);
+
+    if ('type' in data && data['type'] === 'error') {
+      this.setError(data.message);
+      return;
+    }
+
+    var stripe = await loadStripe(data.stripe_publishable_key);
+    stripe.redirectToCheckout({ sessionId: data.stripe_session_id });
+  }
+
+  setError(message) {
+    this.setState(state => Object.assign({}, state, { error: message }));
+  }
+
+  render() {
+    var plan = this.props.plan;
+    var party = plan.name.indexOf("Party") !== -1;
+    var price = null;
+
+    if (plan.open && plan.min_price_cents >= 0 && plan.max_price_cents >= 0) {
+      price = <div className="text-left">
+        <i>Suggested</i> price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
+        <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(evt) } onInput={ (evt) => this.setPlanPrice(evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
+      </div>
+    } else {
+      this.setSelected(null);
+    }
+
+    return (
+      <div className="flexible" style={{ margin: "1rem" }}>
+        <c.Card>
+          <div style={{ padding: "1rem" }}>
+            <Typography use="headline5">{ plan.name }</Typography>
+            <Typography className="text-left" use="body">{ plan.description }</Typography>
+
+            <l.List>
+              <l.CollapsibleList handle={
+                  <l.SimpleListItem text={ <b>Details</b> } metaIcon="chevron_right" />
+                }
+              >
+                <PlanDetails {...this.props} plan={ plan } />
+              </l.CollapsibleList>
+            </l.List>
+
+            { price }
+          </div>
+          <c.CardActions>
+            <c.CardActionButton onClick={ () => this.checkout() } theme="secondary">Purchase</c.CardActionButton>
+            <c.CardActionButton onClick={ () => this.props.setSelected(null) } theme="secondary">Cancel</c.CardActionButton>
+          </c.CardActions>
+        </c.Card>
+        <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+          <d.DialogTitle>Error!</d.DialogTitle>
+          <d.DialogContent>{ this.state.error }</d.DialogContent>
+          <d.DialogActions>
+            <d.DialogButton action="close">OK</d.DialogButton>
+          </d.DialogActions>
+        </d.Dialog>
+      </div>
+    );
+  }
+}
+
 class PricingPage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      selected: null,
+    };
+  }
+
+  setSelected(plan) {
+    this.setState(state => Object.assign({}, state, { selected: plan }));
+  }
+
   render() {
     return (
       <div className="App-page">
@@ -197,9 +294,20 @@ class PricingPage extends React.Component {
             We're looking to refine our pricing structure over time. Currently
             we've activated the following plans:
           </Typography>
+          {
+            this.props.user === undefined || this.props.user === null || !this.props.user.authed
+            ? <Typography use="body2">
+                Note: you must first log in to purchase a plan and add it to
+                your account.
+              </Typography>
+            : null
+          }
         </div>
         <div className="flexbox">
-          <ActivePricingPage {...this.props} />
+          { this.state.selected === null
+            ? <ActivePricingPage {...this.props} setSelected={ this.setSelected.bind(this) } />
+            : <PurchasePage {...this.props} setSelected={ this.setSelected.bind(this) } plan={ this.state.selected } />
+          }
         </div>
       </div>
     );

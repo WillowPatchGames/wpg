@@ -559,6 +559,32 @@ class PlanModel {
 
     return await Promise.all(result);
   }
+
+  async checkout(price_cents) {
+    var request = {
+      'price_cents': price_cents,
+    };
+
+    var uri = this.api + '/plan/' + this.id + '/checkout';
+    const response = await fetch(uri, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: {
+        'X-Auth-Token': this.token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    var data = await response.json();
+    if ('type' in data && data['type'] === 'error') {
+      console.log(data);
+      return data;
+    }
+
+    return data;
+  }
 }
 
 class UserPlanModel {
@@ -730,7 +756,7 @@ class RoomModel {
         'X-Auth-Token': this.user.token,
       },
       redirect: 'follow',
-      body: JSON.stringify(request)
+      body: JSON.stringify(request),
     });
 
     const result = await response.json();
