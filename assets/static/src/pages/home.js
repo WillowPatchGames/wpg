@@ -7,7 +7,7 @@ import '@rmwc/theme/styles';
 
 import * as g from '@rmwc/grid';
 import { Typography } from '@rmwc/typography';
-import { Theme, ThemeProvider } from '@rmwc/theme';
+import { Theme } from '@rmwc/theme';
 import logo from '../images/logo.png';
 
 class HomePage extends React.Component {
@@ -18,7 +18,7 @@ class HomePage extends React.Component {
           <Theme use={ 'onPrimary' } >
             <g.GridRow>
               <g.GridCell align="middle" span={4} tablet={8} phone={4}>
-                <img className="App-Logo" src={ logo } />
+                <img className="App-Logo" src={ logo } alt="" />
               </g.GridCell>
               <g.GridCell align="right" span={8}>
                 <div className="styles.intro">
