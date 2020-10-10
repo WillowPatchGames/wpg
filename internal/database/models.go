@@ -8,8 +8,8 @@ import (
 )
 
 type User struct {
-	gorm.Model
-	ID       uint64
+	ID uint64 `gorm:"primaryKey"`
+
 	Username sql.NullString `gorm:"unique"`
 	Display  string
 	Email    sql.NullString `gorm:"unique"`
@@ -21,18 +21,26 @@ type User struct {
 	AuthTokens []Auth
 	Rooms      []Room `gorm:"foreignKey:OwnerID"`
 	Games      []Game `gorm:"foreignKey:OwnerID"`
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type UserConfig struct {
-	gorm.Model
+	ID uint64 `gorm:"primaryKey"`
 
 	UserID uint64
 
 	GravatarHash sql.NullString
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type Auth struct {
-	gorm.Model
+	ID uint64 `gorm:"primaryKey"`
 
 	UserID   uint64 `gorm:"primaryKey"`
 	User     User
@@ -41,11 +49,13 @@ type Auth struct {
 	Value    string
 
 	Expires time.Time
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type Room struct {
-	gorm.Model
-
 	ID      uint64
 	OwnerID uint64
 
@@ -58,11 +68,13 @@ type Room struct {
 	Config sql.NullString
 
 	Games []Game `gorm:"foreignKey:RoomID"`
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type Game struct {
-	gorm.Model
-
 	ID      uint64
 	OwnerID uint64
 	RoomID  sql.NullInt64
@@ -75,6 +87,10 @@ type Game struct {
 
 	Config sql.NullString
 	State  sql.NullString
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 const (
@@ -83,8 +99,6 @@ const (
 )
 
 type Plan struct {
-	gorm.Model
-
 	ID          uint64 `json:"id"`
 	Slug        string `gorm:"unique" json:"slug" yaml:"slug"`
 	Name        string `json:"name" yaml:"name"`
@@ -118,12 +132,14 @@ type Plan struct {
 
 	CanAudioChat bool `json:"can_audio_chat" yaml:"can_audio_chat"`
 	CanVideoChat bool `json:"can_video_chat" yaml:"can_video_chat"`
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type UserPlan struct {
-	gorm.Model
-
-	ID uint64
+	ID uint64 `gorm:"primaryKey"`
 
 	UserID uint64
 	User   User
@@ -137,17 +153,25 @@ type UserPlan struct {
 	BillingFrequency time.Duration
 
 	Expires time.Time
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type UserPlanAccounting struct {
-	gorm.Model
+	ID uint64 `gorm:"primaryKey"`
 
 	UserPlanID uint64
 	UserPlan   UserPlan
 
 	RoomID sql.NullInt64
-	Room   Room
+	Room   Room `gorm:"foreignKey:RoomID"`
 
 	GameID sql.NullInt64
-	Game   Game
+	Game   Game `gorm:"foreignKey:GameID"`
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
