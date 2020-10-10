@@ -42,10 +42,10 @@ type UserConfig struct {
 type Auth struct {
 	ID uint64 `gorm:"primaryKey"`
 
-	UserID   uint64
+	UserID   uint64 `gorm:"unique_index:user_key_unique"`
 	User     User
 	Category string
-	Key      string
+	Key      string `gorm:"unique_index:user_key_unique"`
 	Value    string
 
 	Expires time.Time

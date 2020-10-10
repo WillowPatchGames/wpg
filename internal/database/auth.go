@@ -171,9 +171,30 @@ func (user *User) MarkTOTPVerified(tx *gorm.DB, device string, secret string) er
 func (user *User) GetTOTPDevices(tx *gorm.DB) ([]string, error) {
 	var devices []string
 
-	if err := tx.Model(&Auth{}).Where("user_id = ? AND category = ?", user.ID, "totp-secret").Find(&devices).Error; err != nil {
+	if err := tx.Model(&Auth{}).Where("user_id = ? AND category = ?", user.ID, "totp-secret").Select("key").Find(&devices).Error; err != nil {
 		return nil, err
 	}
 
 	return devices, nil
+}
+
+func (user *User) RemoveTOTP(tx *gorm.DB, device string) error {
+	if user.ID == 0 {
+		panic("Unable to get TOTP key for NULL UserID")
+	}
+
+	var auth Auth
+	var key = device + "-key"
+
+	err := tx.First(&auth, "category = ? AND key = ? AND user_id = ?", "totp-secret", key, user.ID).Error
+	if err != nil {
+		key += "-pending"
+		err = tx.First(&auth, "category = ? AND key = ? AND user_id = ?", "totp-secret", key, user.ID).Error
+	}
+
+	if err == nil {
+		err = tx.Delete(&auth).Error
+	}
+
+	return err
 }

@@ -1,8 +1,9 @@
 package user
 
 import (
+	"errors"
+	"log"
 	"net/http"
-	"strings"
 
 	"gorm.io/gorm"
 
@@ -15,45 +16,48 @@ import (
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
-type listTOTPHandlerData struct {
+type deleteTOTPHandlerData struct {
 	UserID   uint64 `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
 	Username string `json:"username,omitempty" query:"username,omitempty" route:"Username,omitempty"`
 	Email    string `json:"email,omitempty" query:"email,omitempty" route:"Email,omitempty"`
+	Device   string `json:"device,omitempty" query:"device,omitempty" route:"Device,omitempty"`
+	Token    string `json:"token,omitempty" query:"token,omitempty"`
+	Password string `json:"password"`
 	APIToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
-type listTOTPHandlerResponse struct {
-	Device    string `json:"device"`
-	Validated bool   `json:"validated"`
+type deleteTOTPHandlerResponse struct {
+	Device  string `json:"device"`
+	Removed bool   `json:"removed"`
 }
 
-type ListTOTPHandler struct {
+type DeleteTOTPHandler struct {
 	auth.Authed
 	hwaterr.ErrableHandler
 	utils.HTTPRequestHandler
 
-	req  listTOTPHandlerData
-	resp []listTOTPHandlerResponse
+	req  deleteTOTPHandlerData
+	resp deleteTOTPHandlerResponse
 	user *database.User
 }
 
-func (handle ListTOTPHandler) GetResponse() interface{} {
+func (handle DeleteTOTPHandler) GetResponse() interface{} {
 	return handle.resp
 }
 
-func (handle *ListTOTPHandler) GetObjectPointer() interface{} {
+func (handle *DeleteTOTPHandler) GetObjectPointer() interface{} {
 	return &handle.req
 }
 
-func (handle *ListTOTPHandler) GetToken() string {
+func (handle *DeleteTOTPHandler) GetToken() string {
 	return handle.req.APIToken
 }
 
-func (handle *ListTOTPHandler) SetUser(user *database.User) {
+func (handle *DeleteTOTPHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
-func (handle ListTOTPHandler) verifyRequest() error {
+func (handle DeleteTOTPHandler) verifyRequest() error {
 	var present int = 0
 
 	if handle.req.UserID != 0 {
@@ -88,10 +92,18 @@ func (handle ListTOTPHandler) verifyRequest() error {
 		return err
 	}
 
+	if handle.req.Device == "" {
+		return errors.New("device must be specified to delete 2FA tokens")
+	}
+
+	if handle.req.Password == "" {
+		return errors.New("password must be specified to delete 2FA tokens")
+	}
+
 	return nil
 }
 
-func (handle *ListTOTPHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
+func (handle *DeleteTOTPHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
 		return hwaterr.WrapError(err, http.StatusBadRequest)
@@ -110,22 +122,18 @@ func (handle *ListTOTPHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		devices, err := handle.user.GetTOTPDevices(tx)
-		if err != nil {
+		log.Println("Got password:", handle.req.Password)
+		if err := handle.user.ComparePassword(tx, handle.req.Password); err != nil {
 			return err
 		}
 
-		for _, device := range devices {
-			var entry listTOTPHandlerResponse
-			entry.Validated = !strings.HasSuffix(device, "-key-pending")
-			entry.Device = strings.TrimSuffix(strings.TrimSuffix(device, "-pending"), "-key")
-			handle.resp = append(handle.resp, entry)
-		}
-
-		return nil
+		return handle.user.RemoveTOTP(tx, handle.req.Device)
 	}); err != nil {
 		return err
 	}
+
+	handle.resp.Device = handle.req.Device
+	handle.resp.Removed = true
 
 	utils.SendResponse(w, r, handle)
 	return nil

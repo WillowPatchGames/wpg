@@ -83,7 +83,7 @@ func Wrap(factory func() Parseltongue, config ParselConfig) http.Handler {
 		ret.config.SchemaTag = "schema"
 	}
 
-	var methods []string = []string{"POST", "PUT", "PATCH"}
+	var methods []string = []string{"POST", "PUT", "PATCH", "DELETE"}
 	if ret.config.JSONMethods == nil {
 		ret.config.JSONMethods = methods
 	}
