@@ -186,3 +186,6 @@ build.tar.xz
 /static/css/*.css
 static/csw15.txt
 wpg.sqlite3
+
+# Ignore future changes to stripe configuration
+configs/stripe.yaml
