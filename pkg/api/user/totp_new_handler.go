@@ -127,7 +127,7 @@ func (handle *NewTOTPHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Re
 
 		var opts = totp.GenerateOpts{
 			Issuer:      "Willow Patch Games",
-			AccountName: strconv.FormatUint(handle.user.ID, 10) + "::" + name,
+			AccountName: strconv.FormatUint(handle.user.ID, 10) + "/" + handle.req.Device + "::" + name,
 		}
 
 		key, err := totp.Generate(opts)
