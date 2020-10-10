@@ -158,7 +158,9 @@ func (handle *PlansHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
-		for _, entry := range handle.resp {
+		for index := range handle.resp {
+			entry := &handle.resp[index]
+
 			game_rows, err := tx.Model(&database.UserPlanAccounting{}).Where("user_plan_id = ?", entry.id).Rows()
 			if err != nil {
 				log.Println("Got error loading UserPlanAccounting for user_plan_id:", entry.id, err)
