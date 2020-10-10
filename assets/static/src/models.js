@@ -391,10 +391,53 @@ class UserModel {
 
     Object.assign(this, result);
 
-    this.authed = true;
+    this.authed = !result.need2fa;
 
-    const other = await UserModel.FromId(this.id, this.token);
-    Object.assign(this, other);
+    if (this.authed) {
+      const other = await UserModel.FromId(this.id, this.token);
+      Object.assign(this, other);
+    }
+
+    return this;
+  }
+
+  async provide2FA(token) {
+    var request = {'token': token};
+    if (nonempty(this.username)) {
+      request['username'] = this.username;
+    } else if (nonempty(this.email)) {
+      request['email'] = this.email;
+    }
+
+    if (nonempty(this.token)) {
+      request['temporary'] = this.token;
+    }
+
+    const response = await fetch(this.login_uri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request)
+    });
+
+    const result = await response.json();
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+
+    this.authed = !result.need2fa;
+
+    if (this.authed) {
+      const other = await UserModel.FromId(this.id, this.token);
+      Object.assign(this, other);
+    }
 
     return this;
   }

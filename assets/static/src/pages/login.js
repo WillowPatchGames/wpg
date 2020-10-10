@@ -23,13 +23,16 @@ class LoginPage extends React.Component {
 
     this.identifier = React.createRef();
     this.password = React.createRef();
+    this.token = React.createRef();
 
     this.state = {
-      error: null
+      error: null,
+      show2fa: false,
+      user: null,
     }
   }
 
-  async handleSubmit(event) {
+  async handlePasswordSubmit(event) {
     event.preventDefault();
 
     var user = new UserModel();
@@ -42,13 +45,46 @@ class LoginPage extends React.Component {
 
     await user.login(this.password.current.value);
 
-    if (!user.error) {
+    if (user.error) {
+      this.setError(user.error.message);
+      return;
+    }
+
+    if (user.authed) {
       this.props.setUser(user);
       if (!this.props.page || this.props.page === 'login') {
         this.props.setPage('join');
       }
-    } else {
+      return;
+    }
+
+    this.identifier.current.value = '';
+    this.password.current.value = '';
+    this.setState(state => Object.assign({}, state, { show2fa: true, user: user }));
+  }
+
+  async handle2FASubmit(event) {
+    event.preventDefault();
+
+    var user = this.state.user;
+    await user.provide2FA(this.token.current.value);
+
+    if (user.error) {
       this.setError(user.error.message);
+      return;
+    }
+
+    if (user.authed) {
+      this.props.setUser(user);
+      if (!this.props.page || this.props.page === 'login') {
+        this.props.setPage('join');
+      }
+      return;
+    }
+
+    if (!user.authed) {
+      this.setError("An unknown error occurred while trying to authenticate. Please try again.");
+      this.setState(state => Object.assign({}, state, { show2fa: false, user: null }));
     }
   }
 
@@ -57,6 +93,19 @@ class LoginPage extends React.Component {
   }
 
   render() {
+    var form = <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
+      <TextField fullwidth placeholder="identifier" name="identifier" inputRef={ this.identifier } /><br />
+      <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
+      <Button label="Login" raised />
+    </form>;
+
+    if (this.state.show2fa) {
+      form = <form onSubmit={ this.handle2FASubmit.bind(this) }>
+        <p>This account is protected with 2FA authentication. Please enter the code from one of your devices to log in.</p>
+        <TextField fullwidth placeholder="123456" name="token" inputRef={ this.token } /><br />
+        <Button label="Submit" raised />
+      </form>
+    }
 
     return (
       <div className="App-page">
@@ -72,11 +121,7 @@ class LoginPage extends React.Component {
           <g.GridCell align="middle" span={6}>
             <c.Card>
               <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                <form onSubmit={ this.handleSubmit.bind(this) }>
-                  <TextField fullwidth placeholder="identifier" name="identifier" inputRef={ this.identifier } /><br />
-                  <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
-                  <Button label="Login" raised />
-                </form>
+                { form }
                 <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
                   <d.DialogTitle>Error!</d.DialogTitle>
                   <d.DialogContent>{ this.state.error }</d.DialogContent>
