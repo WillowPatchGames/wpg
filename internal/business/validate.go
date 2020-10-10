@@ -1,7 +1,6 @@
 package business
 
 import (
-	"database/sql"
 	"errors"
 	"log"
 	"time"
@@ -12,36 +11,33 @@ import (
 )
 
 func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style string) (uint64, error) {
-	var rows *sql.Rows
 	var err error
+
+	var active_plans []uint64
+
 	if room == nil {
-		rows, err = tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_game = ?", true).Order("user_plans.price_cents ASC").Distinct().Rows()
+		err = tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_game = ?", true).Order("user_plans.price_cents ASC").Distinct().Select("user_plans.id").Find(&active_plans).Error
 		if err != nil {
 			return 0, err
 		}
 	} else {
-		rows, err = tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ?", user.ID).Joins("LEFT JOIN user_plan_accountings ON user_plans.id = user_plan_accountings.user_plan_id").Where("user_plan_accountings.room_id = ?", room.ID).Order("user_plans.price_cents ASC").Distinct().Rows()
+		err = tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ?", user.ID).Joins("LEFT JOIN user_plan_accountings ON user_plans.id = user_plan_accountings.user_plan_id").Where("user_plan_accountings.room_id = ?", room.ID).Order("user_plans.price_cents ASC").Distinct().Select("user_plans.id").Find(&active_plans).Error
 		if err != nil {
 			log.Println("Error from room query")
 			return 0, err
 		}
 		log.Println("no error from room query")
 	}
-	defer rows.Close()
 
 	var candidateError error = errors.New("no plan associated with this account")
 
-	for rows.Next() {
-		if room != nil {
-			log.Println("HERE! -- got a row!")
-		}
-
+	for _, user_plan_id := range active_plans {
 		var user_plan database.UserPlan
 		var plan *database.Plan
 
-		if err := tx.ScanRows(rows, &user_plan); err != nil {
+		if err := tx.First(&user_plan, user_plan_id).Error; err != nil {
 			candidateError = err
-			log.Println("Error loading row!", err)
+			log.Println("Error loading row!", err, user_plan_id)
 			continue
 		}
 
@@ -131,21 +127,21 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 }
 
 func CanCreateRoom(tx *gorm.DB, user database.User) (uint64, error) {
-	rows, err := tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_room = ?", true).Order("user_plans.price_cents ASC").Rows()
+	var active_plans []uint64
+	err := tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_room = ?", true).Order("user_plans.price_cents ASC").Distinct().Select("user_plans.id").Find(&active_plans).Error
 	if err != nil {
 		return 0, err
 	}
-	defer rows.Close()
 
 	var candidateError error = errors.New("no plan associated with this account")
 
-	for rows.Next() {
+	for _, user_plan_id := range active_plans {
 		var user_plan database.UserPlan
 		var plan database.Plan
 
-		if err := tx.ScanRows(rows, &user_plan); err != nil {
+		if err := tx.First(&user_plan, user_plan_id).Error; err != nil {
 			candidateError = err
-			log.Println("Error loading row!", err)
+			log.Println("Error loading row!", err, user_plan_id)
 			continue
 		}
 

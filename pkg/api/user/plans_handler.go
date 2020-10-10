@@ -154,7 +154,9 @@ func (handle *PlansHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 			handle.resp = append(handle.resp, entry)
 		}
-		rows.Close()
+		if err = rows.Close(); err != nil {
+			return err
+		}
 
 		for _, entry := range handle.resp {
 			game_rows, err := tx.Model(&database.UserPlanAccounting{}).Where("user_plan_id = ?", entry.id).Rows()
