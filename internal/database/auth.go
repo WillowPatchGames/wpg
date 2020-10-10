@@ -1,10 +1,14 @@
 package database
 
 import (
+	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
+
+	"github.com/pquerna/otp/totp"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/password"
@@ -83,12 +87,69 @@ func (user *User) FromPassword(tx *gorm.DB, auth *Auth, password string) error {
 		return err
 	}
 
+	var have_2fa = true
+	var auth2fa Auth
+	if err := tx.Model(&Auth{}).Where("user_id = ? AND category = ? AND key LIKE ?", user.ID, "totp-secret", "%-key").First(&auth2fa).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		have_2fa = false
+	}
+
 	auth.UserID = user.ID
-	auth.Category = "api-token"
+	if have_2fa {
+		auth.Category = "temporary-api-token-need-2fa"
+	} else {
+		auth.Category = "api-token"
+	}
 	auth.Key = utils.RandomToken()
 	auth.Value = "user"
 
 	return tx.Create(auth).Error
+}
+
+func (user *User) FinishAuth(tx *gorm.DB, auth *Auth, token string, code string) error {
+	if user.ID == 0 {
+		panic("Unable to set password for NULL UserID")
+	}
+
+	if err := tx.First(auth, "user_id = ? AND category = ? AND key = ?", user.ID, "temporary-api-token-need-2fa", token).Error; err != nil {
+		return err
+	}
+
+	devices, err := user.GetTOTPDevices(tx)
+	if err != nil {
+		return err
+	}
+
+	var candidateError error = nil
+	for _, device := range devices {
+		// Skip 2FA tokens pending validation.
+		if !strings.HasSuffix(device, "-key") {
+			continue
+		}
+
+		secret, err := user.GetTOTPKey(tx, strings.TrimSuffix(device, "-key"), false)
+		if err != nil {
+			candidateError = err
+			continue
+		}
+
+		if totp.Validate(code, secret) {
+			candidateError = nil
+			break
+		}
+
+		candidateError = errors.New("wrong 2FA code; make sure your time is synchronized and try again")
+	}
+
+	if candidateError != nil {
+		return candidateError
+	}
+
+	auth.Category = "api-token"
+	return tx.Save(auth).Error
 }
 
 func (user *User) GuestToken(tx *gorm.DB, auth *Auth) error {

@@ -24,10 +24,12 @@ import (
 // POST, only allow JSON request data; don't load it from headers or query
 // parameters.
 type authHandlerData struct {
-	UserID   uint64 `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	UserID    uint64 `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	Token2FA  string `json:"token"`
+	Temporary string `json:"temporary"`
 }
 
 // Response data.
@@ -36,6 +38,7 @@ type authHandlerResponse struct {
 	Username string `json:"username,omitempty"`
 	Email    string `json:"email,omitempty"`
 	APIToken string `json:"token,omitempty"`
+	Needs2FA bool   `json:"need2fa"`
 }
 
 type AuthHandler struct {
@@ -77,8 +80,13 @@ func (handle AuthHandler) verifyRequest() error {
 		return api_errors.ErrTooManySpecifiers
 	}
 
-	// Gotta have a way of authenticating the user.
-	if handle.req.Password == "" {
+	// Gotta have a way of authenticating the user when this is pre-auth.
+	if handle.req.Password == "" && handle.req.Temporary == "" {
+		return api_errors.ErrMissingPassword
+	}
+
+	// Gotta have a way of validating 2FA when this is post-auth.
+	if handle.req.Token2FA == "" && handle.req.Temporary != "" {
 		return api_errors.ErrMissingPassword
 	}
 
@@ -99,6 +107,40 @@ func (handle AuthHandler) verifyRequest() error {
 	return nil
 }
 
+func (handle AuthHandler) DoPreAuth(tx *gorm.DB, user *database.User, auth *database.Auth) error {
+	var err error = nil
+	if handle.req.UserID != 0 {
+		err = tx.First(user, handle.req.UserID).Error
+	} else if handle.req.Username != "" {
+		err = tx.First(user, "username = ?", handle.req.Username).Error
+	} else if handle.req.Email != "" {
+		err = tx.First(user, "email = ?", handle.req.Email).Error
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return user.FromPassword(tx, auth, handle.req.Password)
+}
+
+func (handle AuthHandler) DoPostAuth(tx *gorm.DB, user *database.User, auth *database.Auth) error {
+	var err error = nil
+	if handle.req.UserID != 0 {
+		err = tx.First(user, handle.req.UserID).Error
+	} else if handle.req.Username != "" {
+		err = tx.First(user, "username = ?", handle.req.Username).Error
+	} else if handle.req.Email != "" {
+		err = tx.First(user, "email = ?", handle.req.Email).Error
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return user.FinishAuth(tx, auth, handle.req.Temporary, handle.req.Token2FA)
+}
+
 // Respond to the POST request, returning an error on failure.
 func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	// Validate the request data before continuing.
@@ -112,29 +154,24 @@ func (handle AuthHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Reques
 	var auth database.Auth
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		var err error = nil
-		if handle.req.UserID != 0 {
-			err = tx.First(&user, handle.req.UserID).Error
-		} else if handle.req.Username != "" {
-			err = tx.First(&user, "username = ?", handle.req.Username).Error
-		} else if handle.req.Email != "" {
-			err = tx.First(&user, "email = ?", handle.req.Email).Error
+		if handle.req.Temporary == "" {
+			return handle.DoPreAuth(tx, &user, &auth)
 		}
 
-		if err != nil {
-			return err
-		}
-
-		return user.FromPassword(tx, &auth, handle.req.Password)
+		return handle.DoPostAuth(tx, &user, &auth)
 	}); err != nil {
 		return err
 	}
 
 	// Populate response data and send it.
 	handle.resp.UserID = user.ID
-	database.SetStringFromSQL(&handle.resp.Username, user.Username)
-	database.SetStringFromSQL(&handle.resp.Email, user.Email)
 	handle.resp.APIToken = auth.Key
+	handle.resp.Needs2FA = auth.Category != "api-token"
+
+	if !handle.resp.Needs2FA {
+		database.SetStringFromSQL(&handle.resp.Username, user.Username)
+		database.SetStringFromSQL(&handle.resp.Email, user.Email)
+	}
 
 	utils.SendResponse(w, r, handle)
 	return nil
