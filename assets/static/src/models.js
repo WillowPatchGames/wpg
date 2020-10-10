@@ -293,10 +293,14 @@ class UserModel {
 
     var result = await response.json();
     if (!('type' in result && result['type'] === 'error')) {
-      result['image'] = this.api + '/user/' + this.id + '/totp/' + result['device'] + '/image?api_token=' + this.token;
+      result['image'] = this.totpImage(result['device'])
     }
 
     return result;
+  }
+
+  totpImage(device) {
+    return this.api + '/user/' + this.id + '/totp/' + device + '/image?api_token=' + this.token;
   }
 
   async enrollConfirm2FA(device, token) {
@@ -316,6 +320,45 @@ class UserModel {
       },
       redirect: 'follow',
       body: JSON.stringify(request)
+    });
+
+    return await response.json();
+  }
+
+  async list2FA() {
+    var list_uri = this.api + '/user/' + this.id + '/totp';
+    const response = await fetch(list_uri, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  }
+
+  async remove2FA(device, password) {
+    var request = {};
+    if (nonempty(device)) {
+      request['device'] = device;
+    }
+    if (nonempty(password)) {
+      request['password'] = password;
+    }
+
+    var unenroll_uri = this.api + '/user/' + this.id + '/totp';
+    const response = await fetch(unenroll_uri, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request),
     });
 
     return await response.json();

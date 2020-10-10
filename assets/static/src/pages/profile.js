@@ -118,12 +118,23 @@ class UserSecurityTab extends React.Component {
     this.device = React.createRef();
     this.validation = React.createRef();
 
+    this.prompter = d.createDialogQueue();
+
     this.state = {
       passwordError: null,
       twofaError: null,
       deviceInfo: null,
       devices: null,
     };
+  }
+
+  componentDidMount() {
+    this.reloadDevices();
+  }
+
+  async reloadDevices() {
+    var devices = await this.props.user.list2FA();
+    this.setState(state => Object.assign({}, state, { devices }));
   }
 
   async handlePasswordSubmit(event) {
@@ -169,6 +180,8 @@ class UserSecurityTab extends React.Component {
     } else {
       this.setState(state => Object.assign({}, state, { deviceInfo: result }));
     }
+
+    this.reloadDevices();
   }
 
   set2FAError(message) {
@@ -187,6 +200,44 @@ class UserSecurityTab extends React.Component {
     } else {
       this.setState(state => Object.assign({}, state, { deviceInfo: null }));
     }
+
+    this.reloadDevices();
+  }
+
+  continueEnrollment(event, device) {
+    event.preventDefault();
+
+    var device_info = {
+      device: device.device,
+      image: this.props.user.totpImage(device.device),
+      secret: "",
+    };
+
+    this.setState(state => Object.assign({}, state, { deviceInfo: device_info }));
+  }
+
+  async removeDevice(event, device) {
+    this.prompter.prompt({
+      title: 'Are you sure you want to delete ' + device.device + '?',
+      body: 'Enter your password to confirm deletion.',
+      acceptLabel: 'Confirm Deletion',
+      cancelLabel: 'Cancel',
+      inputProps: {
+        outlined: true,
+        type: 'password',
+        theme: "secondary",
+      },
+      theme: "secondary",
+    }).then(async (res) => {
+      var result = await this.props.user.remove2FA(device.device, res);
+      if ('type' in result && result['type'] === 'error') {
+        this.set2FAError(result.message);
+      }
+
+      this.reloadDevices();
+    }).catch(() => {
+      this.reloadDevices();
+    });
   }
 
   render() {
@@ -212,6 +263,32 @@ class UserSecurityTab extends React.Component {
       </c.Card>
     </div>;
 
+    var twofa_devices = [];
+    if (this.state.devices) {
+      for (let device of this.state.devices) {
+        twofa_devices.push(<l.ListItem>
+          <l.ListItemText>
+            <l.ListItemPrimaryText className="text-left">
+              { device.device }
+            </l.ListItemPrimaryText>
+            <l.ListItemSecondaryText>
+              <Button onClick={ (event) => this.removeDevice(event, device) } theme="secondary">Delete</Button>
+              {
+                device.validated
+                ? null
+                : <Button onClick={ (event) => this.continueEnrollment(event, device) } theme="secondary">Enroll</Button>
+              }
+            </l.ListItemSecondaryText>
+          </l.ListItemText>
+          {
+            device.validated
+            ? <l.ListItemMeta icon="mobile_friendly" />
+            : <l.ListItemMeta icon="mobile_off" />
+          }
+        </l.ListItem>);
+      }
+    }
+
     var twofa = <>
       <br />
       <br />
@@ -219,13 +296,24 @@ class UserSecurityTab extends React.Component {
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
             <Typography tag="h3">Two-Factor Authentication (2FA)</Typography>
+            { twofa_devices.length > 0
+              ? <>
+                  <Typography tag="h4">Manage Devices</Typography>
+                  <p>The following devices are already enrolled or pending enrollment:</p>
+                  <l.List twoLine>
+                    { twofa_devices }
+                  </l.List>
+                  <d.DialogQueue dialogs={this.prompter.dialogs} theme="secondary" />
+                </>
+              : null
+            }
+            <Typography tag="h4">Enroll Device</Typography>
             <p className="text-left">To enroll a new device in 2FA, enter a nickname for the device:</p>
             <form onSubmit={ this.handle2FASubmit.bind(this) }>
               <TextField fullwidth placeholder="primary" name="device" type="text" inputRef={ this.device } /><br />
               <Button label="Enroll" raised />
             </form>
             <br /><br />
-            <p>The following devices are already enrolled:</p>
             <d.Dialog open={ this.state.twofaError !== null } onClosed={() => this.set2FAError(null) }>
               <d.DialogTitle>Error!</d.DialogTitle>
               <d.DialogContent>{ this.state.twofaError }</d.DialogContent>
@@ -246,7 +334,7 @@ class UserSecurityTab extends React.Component {
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <Typography tag="h3">Finish Enrollment</Typography>
               <p className="text-left">To finish enrolling this device in 2FA, scan the QR code and enter the value from your app:</p>
-              <img src={ this.state.deviceInfo.image } alt={ this.state.deviceInfo.secret } />
+              <img src={ this.state.deviceInfo.image } alt={ this.state.deviceInfo.secret } width="200" />
               <form onSubmit={ this.handle2FAValidationSubmit.bind(this) }>
                 <TextField fullwidth placeholder="123456" name="validation" type="text" inputRef={ this.validation } /><br />
                 <Button label="Enroll" raised />
