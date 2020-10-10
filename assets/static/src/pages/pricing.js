@@ -77,10 +77,76 @@ class ActivePricingPage extends React.Component {
     return '$' + dollars + "." + cents;
   }
 
+  isUnit(value_in_unit, name, max) {
+    if (max === undefined || max === null) {
+      max = 10;
+    }
+
+    if (1 <= value_in_unit && value_in_unit < max) {
+      if (parseInt(value_in_unit) <= 1) {
+        return "per " + name;
+      }
+
+      return "per " + parseInt(value_in_unit) + " " + name + "s";
+    }
+
+    return "";
+  }
+
+  timeToUnit(value, is_party) {
+    var nanoseconds = value;
+    var microseconds = nanoseconds / 1000;
+    var miliseconds = microseconds / 1000;
+    var seconds = miliseconds / 1000;
+    var minutes = seconds / 60;
+    var hours = minutes / 60;
+    var days = hours / 24;
+    var weeks = days / 7;
+    var months = days / (365.4 / 12);
+    var years = days / 365.4;
+    var decades = years / 10;
+
+    if (parseInt(value) === 0 || decades > 10) {
+      if (!is_party) {
+        return "once";
+      } else {
+        return "per party";
+      }
+    }
+
+    var ret = "";
+    ret += this.isUnit(nanoseconds, "nanosecond");
+    ret += this.isUnit(microseconds, "microsecond");
+    ret += this.isUnit(miliseconds, "milisecond");
+    ret += this.isUnit(seconds, "second");
+    ret += this.isUnit(minutes, "minute");
+    ret += this.isUnit(hours, "hour");
+    ret += this.isUnit(days, "day");
+    ret += this.isUnit(weeks, "week", 4);
+    ret += this.isUnit(months, "month", 12);
+    ret += this.isUnit(years, "year");
+    ret += this.isUnit(decades, "decade");
+
+    return ret;
+  }
+
   render() {
     var active_plans = [];
     if (this.state.plans) {
       for (let plan of this.state.plans) {
+        var price = null;
+        var party = plan.name.indexOf("Party") !== -1;
+        if (plan.open && plan.min_price_cents >= 0 && plan.max_price_cents >= 0) {
+          price = <div className="text-left">
+            <i>Suggested</i> price: <b>{ this.centsToDollar(plan.suggested_price_cents) }</b> { this.timeToUnit(plan.billed, party) }
+            <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(plan, evt) } onInput={ (evt) => this.setPlanPrice(plan, evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
+          </div>
+        } else if (plan.slug === "free") {
+          price = <i>Freely given to all users; limit one.</i>
+        } else {
+          price = <i>Unavailable</i>
+        }
+
         active_plans.push(
           <div className="flexible" style={{ margin: "1rem" }}>
             <c.Card style={{ 'width': '300px' }}>
@@ -97,17 +163,7 @@ class ActivePricingPage extends React.Component {
                   </l.CollapsibleList>
                 </l.List>
 
-                {
-                  plan.open && plan.min_price_cents >= 0 && plan.max_price_cents >= 0
-                  ? <div className="text-left">
-                      { plan.billed == 0
-                        ? <i>Suggested price</i>: <b>{ this.centsToDollar(plan.suggested_price_cents) } per plan</b>
-                        : <i>Suggested price</i>: <b>{ this.centsToDollar(plan.suggested_price_cents) } per { this.timeToUnit(plan.billed) }</b>
-                      }
-                      <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(plan, evt) } onInput={ (evt) => this.setPlanPrice(plan, evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
-                    </div>
-                  : null
-                }
+                { price }
               </div>
               {
                 plan.open

@@ -196,8 +196,10 @@ class App extends React.Component {
               surface: 'white',
               onSurface: 'black',
               secondary: '#006515',
+              secondaryBg: '#006515',
               onSecondary: 'white',
               background: '#18353D',
+              onBackground: 'white',
               textPrimaryOnBackground: 'black',
               textHintOnBackground: 'black'
             }}
