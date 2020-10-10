@@ -100,7 +100,10 @@ class ActivePricingPage extends React.Component {
                 {
                   plan.open && plan.min_price_cents >= 0 && plan.max_price_cents >= 0
                   ? <div className="text-left">
-                      <i>Suggested price:</i>: <b>{ this.centsToDollar(plan.suggested_price_cents) }</b>
+                      { plan.billed == 0
+                        ? <i>Suggested price</i>: <b>{ this.centsToDollar(plan.suggested_price_cents) } per plan</b>
+                        : <i>Suggested price</i>: <b>{ this.centsToDollar(plan.suggested_price_cents) } per { this.timeToUnit(plan.billed) }</b>
+                      }
                       <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(plan, evt) } onInput={ (evt) => this.setPlanPrice(plan, evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
                     </div>
                   : null
