@@ -30,6 +30,7 @@ type plansGameInfoResponse struct {
 }
 
 type plansHandlerResponse struct {
+	id               uint64
 	PlanID           uint64        `json:"plan_id"`
 	Active           bool          `json:"active"`
 	PriceCents       uint          `json:"price_cents"`
@@ -144,18 +145,25 @@ func (handle *PlansHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			}
 
 			var entry plansHandlerResponse
+			entry.id = user_plan.ID
 			entry.PlanID = user_plan.PlanID
 			entry.Active = user_plan.Active
 			entry.PriceCents = user_plan.PriceCents
 			entry.BillingFrequency = user_plan.BillingFrequency
 			entry.Expires = user_plan.Expires
 
-			game_rows, err := tx.Model(&database.UserPlanAccounting{}).Where("user_plan_id = ?", user_plan.ID).Rows()
+			handle.resp = append(handle.resp, entry)
+		}
+		rows.Close()
+
+		for _, entry := range handle.resp {
+			game_rows, err := tx.Model(&database.UserPlanAccounting{}).Where("user_plan_id = ?", entry.id).Rows()
 			if err != nil {
-				log.Println("Got error loading UserPlanAccounting for user_plan_id:", user_plan.ID, err)
+				log.Println("Got error loading UserPlanAccounting for user_plan_id:", entry.id, err)
 				candidateError = err
 				continue
 			}
+			defer game_rows.Close()
 
 			for game_rows.Next() {
 				var accounted database.UserPlanAccounting
@@ -171,8 +179,6 @@ func (handle *PlansHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 				entry.Events = append(entry.Events, game_entry)
 			}
-
-			handle.resp = append(handle.resp, entry)
 		}
 
 		if len(handle.resp) == 0 {
