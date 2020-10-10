@@ -20,8 +20,15 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Allow(inner)
 	}
 
+	var checkoutFactory = func() parsel.Parseltongue {
+		inner := new(CheckoutHandler)
+		return auth.Require(inner)
+	}
+
 	router.Handle("/api/v1/plan/{PlanID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/plan/{Slug:[a-zA-Z][a-zA-Z0-9-]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
+
+	router.Handle("/api/v1/plan/{PlanID:[0-9]+}/checkout", parsel.Wrap(checkoutFactory, config)).Methods("POST")
 
 	router.Handle("/api/v1/plans", hwaterr.Wrap(new(AllHandler))).Methods("GET")
 }

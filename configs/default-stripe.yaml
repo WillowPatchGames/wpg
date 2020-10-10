@@ -1,2 +1,4 @@
 publishable: ""
 secret: ""
+new_enrollments: false
+base_url: willowpatchgames.com

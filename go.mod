@@ -11,6 +11,7 @@ require (
 	github.com/lib/pq v1.8.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.4 // indirect
 	github.com/pquerna/otp v1.2.0
+	github.com/stripe/stripe-go/v72 v72.12.1
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/yaml.v2 v2.3.0

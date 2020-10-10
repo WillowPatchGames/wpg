@@ -60,7 +60,8 @@ func main() {
 	var proxy bool
 	var staticPath string
 
-	var planConfig string
+	var planConfig string = "configs/plans.yaml"
+	var stripeConfig string = "configs/stripe.yaml"
 
 	flag.StringVar(&addr, "addr", "localhost:8042", "Address to listen for HTTP requests on")
 
@@ -79,6 +80,7 @@ func main() {
 	flag.StringVar(&staticPath, "static_path", "assets/static/public", "Path to web UI static assets")
 
 	flag.StringVar(&planConfig, "plan_config", "configs/plans.yaml", "Path to plan configuration file")
+	flag.StringVar(&stripeConfig, "stripe_config", "configs/stripe.yaml", "Path to Stripe configuration file")
 	flag.Parse()
 
 	// Open Database connection first.
@@ -103,6 +105,11 @@ func main() {
 	if err = database.InTransaction(func(tx *gorm.DB) error {
 		return business.LoadPlanConfig(tx, planConfig)
 	}); err != nil {
+		panic(err)
+	}
+
+	// Load Stripe configuration
+	if err = business.LoadStripeConfig(stripeConfig); err != nil {
 		panic(err)
 	}
 
