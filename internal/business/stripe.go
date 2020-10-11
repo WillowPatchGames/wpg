@@ -49,6 +49,10 @@ func LoadStripeConfig(path string) error {
 }
 
 func ExecuteStripePayment(tx *gorm.DB, user *database.User, plan_id uint64, price_cents uint) (string, error) {
+	if !stripeConfig.NewEnrollments {
+		return "", errors.New("this instance of WPG isn't accepting new plan enrollments right now")
+	}
+
 	plan := GetPlan(tx, plan_id)
 	if plan == nil {
 		return "", errors.New("unable to find plan by that identifier")
