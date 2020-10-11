@@ -65,7 +65,7 @@ func (handle *DeleteHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 			return hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusUnauthorized)
 		}
 
-		return tx.Model(&game).Update("lifecycle", "finished").Error
+		return tx.Model(&game).Update("lifecycle", "deleted").Error
 	}); err != nil {
 		return err
 	}
