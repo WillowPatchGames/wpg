@@ -59,7 +59,7 @@ plans:
     can_video_chat: false
   - slug: "apartment"
     name: "Apartment Party"
-    description: "Best for a gathering of small number of people for a shorter period of time, the Apartment Party plan lets up to five people play 15 games."
+    description: "Best for a gathering of a small number of people for a shorter period of time, the Apartment Party plan lets up to 5 people play 15 games."
     open: true
     visible: true
     min_price_cents: 150
@@ -87,7 +87,7 @@ plans:
     can_video_chat: true
   - slug: "house"
     name: "House Party"
-    description: "Best for a gathering of a larger number of people for a shorter period of time, the Apartment Party plan lets up to 10 people play 50 games."
+    description: "Best for a gathering of a larger number of people for a shorter period of time, the House Party plan lets up to 10 people play 50 games."
     open: true
     visible: true
     min_price_cents: 350
@@ -98,7 +98,7 @@ plans:
     max_open_rooms: 1
     max_total_rooms: 1
     max_open_games_in_room: 1
-    max_total_games_in_room: 50
+    max_total_games_in_room: 30
     max_players_in_room: 10
     max_players_in_game_in_room: 10
     max_room_in_timeframe_count: -1
@@ -115,9 +115,9 @@ plans:
     can_video_chat: true
   - slug: "block"
     name: "Block Party"
-    description: "Best for a gathering of a huge number of people for a short period of time, the Apartment Party plan lets up to 20 people play 100 games. Plus, play many different games at once."
-    open: true
-    visible: true
+    description: "Best for a gathering of a huge number of people for a short period of time, the Block Party plan lets up to 20 people play 100 games. Plus, play many different games at once."
+    open: false
+    visible: false
     min_price_cents: 550
     suggested_price_cents: 1050
     max_price_cents: 1500
@@ -126,7 +126,7 @@ plans:
     max_open_rooms: 1
     max_total_rooms: 1
     max_open_games_in_room: 20
-    max_total_games_in_room: 100
+    max_total_games_in_room: 75
     max_players_in_room: 20
     max_players_in_game_in_room: 20
     max_room_in_timeframe_count: -1

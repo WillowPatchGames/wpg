@@ -59,12 +59,12 @@ plans:
     can_video_chat: false
   - slug: "apartment"
     name: "Apartment Party"
-    description: "Best for a gathering of small number of people for a shorter period of time, the Apartment Party plan lets up to five people play 10 games."
+    description: "Best for a gathering of a small number of people for a shorter period of time, the Apartment Party plan lets up to 5 people play 10 games."
     open: true
     visible: true
     min_price_cents: 150
     suggested_price_cents: 500
-    max_price_cents: 1500
+    max_price_cents: 2000
     billed: 0
     create_room: true
     max_open_rooms: 1
@@ -87,12 +87,12 @@ plans:
     can_video_chat: true
   - slug: "house"
     name: "House Party"
-    description: "Best for a gathering of a larger number of people for a shorter period of time, the Apartment Party plan lets up to 10 people play 20 games."
+    description: "Best for a gathering of a larger number of people for a shorter period of time, the House Party plan lets up to 10 people play 20 games."
     open: true
     visible: true
     min_price_cents: 550
     suggested_price_cents: 750
-    max_price_cents: 3000
+    max_price_cents: 2000
     billed: 0
     create_room: true
     max_open_rooms: 1

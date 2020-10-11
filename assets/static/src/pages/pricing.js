@@ -120,8 +120,27 @@ class ActivePricingPage extends React.Component {
   }
 
   async componentDidMount() {
-    var plans = await PlanModel.active();
-    this.setState(state => Object.assign({}, state, { plans }));
+    var all_plans = await PlanModel.active();
+    var by_price = [];
+    for (let index in all_plans) {
+      var plan = await all_plans[index];
+      var target_index = null;
+      for (let by_price_index in by_price) {
+        var sorted_plan = by_price[by_price_index];
+        if (+sorted_plan.min_price_cents >= +plan.min_price_cents) {
+          target_index = by_price_index;
+          break;
+        }
+      }
+
+      if (target_index === null) {
+          target_index = by_price.length;
+      }
+
+      by_price.splice(target_index, 0, plan);
+    }
+
+    this.setState(state => Object.assign({}, state, { plans: by_price }));
   }
 
   setPlanPrice(plan, event) {
