@@ -1164,7 +1164,7 @@ class JoinGamePage extends React.Component {
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
             <div>
-              <Typography use="headline2">Join a Game</Typography>
+              <Typography use="headline2">Join an existing Room or Game</Typography>
               <p>
                 Good luck, and may the odds be ever in your favor!<br /><br />
                 Need a refresher on <a href="#rush-rules">the rules</a> or want
@@ -1197,7 +1197,7 @@ class JoinGamePage extends React.Component {
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <div>
-                <Typography use="headline2">Make a Room</Typography>
+                <Typography use="headline2">Host a Room</Typography>
                 <p>
                   <a href="#create-room">Looking to make a new room? Create one here!</a>.<br />
                   A room lets you play multiple games without having to share a new link every time!
@@ -1210,9 +1210,9 @@ class JoinGamePage extends React.Component {
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <div>
-                <Typography use="headline2">Play a Single Game</Typography>
+                <Typography use="headline2">Host a Single Game</Typography>
                 <p>
-                  <a href="#create-game">Looking to play a single game? Make one here!</a>
+                  <a href="#create-game">Looking to play a single game with some friends? Make one here!</a>
                 </p>
               </div>
             </div>
