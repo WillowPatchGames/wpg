@@ -81,6 +81,10 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize:  sendBufferSize,
 }
 
+func (c *Client) String() string {
+	return "user:" + strconv.FormatUint(uint64(c.userID), 10) + "@game:" + strconv.FormatUint(uint64(c.gameID), 10)
+}
+
 func (c *Client) isActive() bool {
 	// Validate that our client connection is still good.
 	game_conns, ok := c.hub.connections[c.gameID]
@@ -123,7 +127,7 @@ func (c *Client) readPump() {
 
 	for {
 		if !c.isActive() {
-			log.Println("Closing stale readPump()")
+			log.Println("Closing stale readPump() for", c.String())
 			return
 		}
 
@@ -132,15 +136,15 @@ func (c *Client) readPump() {
 
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Println("Got an error during reading?", err)
+			log.Println("Got an error during reading?", err, c.String())
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Println("Got unepected close error:", err)
+				log.Println("Got unepected close error:", err, c.String())
 			}
 			return
 		}
 
 		if messageType != websocket.TextMessage {
-			log.Println("Unexpected message type: " + strconv.Itoa(messageType) + " -- proceeding anyways")
+			log.Println("Unexpected message type: " + strconv.Itoa(messageType) + " -- proceeding anyways", c.Sring())
 		}
 
 		c.hub.process[c.gameID] <- ClientMessage{c, message}
@@ -186,7 +190,7 @@ func (c *Client) writePump() {
 		}
 
 		if !c.isActive() {
-			log.Println("Closing stale writePump()")
+			log.Println("Closing stale writePump() for", c.String())
 			return
 		}
 
@@ -195,7 +199,7 @@ func (c *Client) writePump() {
 		case message, ok := <-c_send:
 			if !c.isActive() {
 				c_send <- message
-				log.Println("Closing stale readPump()")
+				log.Println("Closing stale writePump() after message read for", c.String())
 				return
 			}
 
@@ -209,7 +213,7 @@ func (c *Client) writePump() {
 
 			message_data, err := json.Marshal(message)
 			if err != nil {
-				log.Println("Got error trying to marshal to peer:", err)
+				log.Println("Got error trying to marshal to peer:", err, c.String())
 
 				// We need to continue with the read/write pump in case we get future
 				// messages. We shouldn't treat this as fatal, unlike when the actual
@@ -224,6 +228,7 @@ func (c *Client) writePump() {
 				// reconnect. We're returning here too so we'll deregister and some
 				// other client will take our place.
 				c_send <- message
+				log.Println("Got error writing message to client:", c.String())
 				return
 			}
 
@@ -238,6 +243,7 @@ func (c *Client) writePump() {
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Println("Got error writing ping message to client:", c.String())
 				return
 			}
 		}
@@ -324,6 +330,7 @@ func (hub *Hub) ensureGameExists(gameid uint64) error {
 	// comes into play. It takes requests from clients and turns them into
 	// dispatches to the controller.
 	hub.process[GameID(gameid)] = make(chan ClientMessage, messageChannelSize)
+
 	log.Println("Spawning ProcessPlayerMessages for ", gameid)
 	go hub.ProcessPlayerMessages(GameID(gameid))
 
@@ -469,8 +476,10 @@ func (hub *Hub) Run() {
 	for {
 		select {
 		case new_client := <-hub.register:
+			log.Println("registerClient:", new_client.String())
 			hub.registerClient(new_client)
 		case existing_client := <-hub.unregister:
+			log.Println("deleteClient:", existing_client.String())
 			hub.deleteClient(existing_client)
 		}
 	}
@@ -516,12 +525,12 @@ func (hub *Hub) PersistGames() {
 func (hub *Hub) processMessage(client *Client, message []byte) error {
 	if !hub.controller.GameExists(uint64(client.gameID)) {
 		hub.unregister <- client
-		return errors.New("unable to process message for non-existent game")
+		return errors.New("unable to process message for non-existent game:", client.String())
 	}
 
 	if !hub.controller.PlayerExists(uint64(client.gameID), uint64(client.userID)) {
 		hub.unregister <- client
-		return errors.New("unable to process message from non-existent client")
+		return errors.New("unable to process message from non-existent client:", client.String())
 	}
 
 	err := hub.controller.Dispatch(message)
