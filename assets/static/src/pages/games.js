@@ -1164,7 +1164,7 @@ class JoinGamePage extends React.Component {
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
             <div>
-              <Typography use="headline2">Join an existing Room or Game</Typography>
+              <Typography use="headline2">Join an Existing Room or Game</Typography>
               <p>
                 Good luck, and may the odds be ever in your favor!<br /><br />
                 Need a refresher on <a href="#rush-rules">the rules</a> or want
