@@ -72,6 +72,9 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			return err
 		}
 
+		game.Countdown = 0
+		game.CountdownTimer = nil
+
 		return c.handleCountdown(game)
 	case "join":
 		if state.Started && !state.Finished {
