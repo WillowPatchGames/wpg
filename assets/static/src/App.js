@@ -205,8 +205,8 @@ class App extends React.Component {
             }}
           >
             <Navigation user={ this.state.user } immersive={ this.state.immersive } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
-            <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } room={ this.state.room } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setRoom={ this.setRoom.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
             <SnackbarQueue messages={ this.snackbar.messages } />
+            <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } room={ this.state.room } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setRoom={ this.setRoom.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
             <Footer page={ this.state.page } />
           </ThemeProvider>
         </RMWCProvider>

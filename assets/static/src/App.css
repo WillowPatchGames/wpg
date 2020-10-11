@@ -196,3 +196,8 @@ article.text p {
 #wpg-logo {
   text-align: center;
 }
+
+.mdc-snackbar {
+  bottom: unset;
+  top: 0px;
+}
