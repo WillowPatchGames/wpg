@@ -49,15 +49,15 @@ type RushConfig struct {
 }
 
 func (cfg RushConfig) Validate() error {
-	if cfg.NumPlayers <= 1 || cfg.NumPlayers > 25 {
-		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 25"}
+	if cfg.NumPlayers <= 1 || cfg.NumPlayers > 50 {
+		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 50"}
 	}
 
 	if cfg.StartSize <= 4 || cfg.StartSize > 25 {
 		return GameConfigError{"starting tiles count", strconv.Itoa(cfg.StartSize), "between 5 and 25"}
 	}
 
-	if cfg.DrawSize == 0 || cfg.NumPlayers > 10 {
+	if cfg.DrawSize == 0 || cfg.DrawSize > 10 {
 		return GameConfigError{"draw size", strconv.Itoa(cfg.DrawSize), "between 1 and 10"}
 	}
 
