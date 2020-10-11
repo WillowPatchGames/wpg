@@ -149,8 +149,11 @@ type UserPlan struct {
 
 	Active bool
 
+	StripePending    bool
 	PriceCents       uint
 	BillingFrequency time.Duration
+	StripeSessionID  string
+	LastBilled       time.Time
 
 	Expires time.Time
 

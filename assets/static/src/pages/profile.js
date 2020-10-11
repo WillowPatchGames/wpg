@@ -401,7 +401,14 @@ class UserPlansTab extends React.Component {
         rendered_plans.push(
           <>
             <c.Card style={{ padding: '1rem 1rem 1rem 1rem' }}>
-              <Typography tag="h3">{ plan.name }</Typography>
+              <Typography tag="h3">
+                { plan.name }
+                {
+                  user_plan.active
+                  ? null
+                  : <i> Pending</i>
+                }
+              </Typography>
               <p className="text-left">{ plan.description }</p>
               <l.ListDivider />
               <p className="text-left">{ user_plan.rooms().length } rooms and { user_plan.games().length } games played under this plan.</p>

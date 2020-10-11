@@ -1,7 +1,6 @@
 package plan
 
 import (
-	"log"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -17,7 +16,7 @@ import (
 
 type checkoutHandlerData struct {
 	PlanID     uint64 `json:"id,omitempty" query:"id,omitempty" route:"PlanID,omitempty"`
-	PriceCents uint   `json:"price_cents,omitempty"`
+	PriceCents uint   `json:"price_cents,omitempty" query:"price_cents,omitempty"`
 	APIToken   string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
@@ -58,8 +57,6 @@ func (handle *CheckoutHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.R
 	if handle.user == nil || handle.user.ID == 0 {
 		return hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusUnauthorized)
 	}
-
-	log.Println("Got authenticated checkout request:", handle.req)
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		session_id, err := business.ExecuteStripePayment(tx, handle.user, handle.req.PlanID, handle.req.PriceCents)

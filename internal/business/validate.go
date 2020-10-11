@@ -12,8 +12,11 @@ import (
 
 func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style string) (uint64, error) {
 	var err error
-
 	var active_plans []uint64
+
+	if err := UpdateUsersPlans(tx, user); err != nil {
+		log.Println("Unable to update user's plans:", user.ID, err)
+	}
 
 	if room == nil {
 		err = tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_game = ?", true).Order("user_plans.price_cents ASC").Select("user_plans.id").Find(&active_plans).Error
@@ -30,7 +33,6 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 	}
 
 	var candidateError error = errors.New("no plan associated with this account")
-
 	for index, user_plan_id := range active_plans {
 		if index > 0 && user_plan_id == active_plans[index-1] {
 			continue
@@ -132,6 +134,10 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 
 func CanCreateRoom(tx *gorm.DB, user database.User) (uint64, error) {
 	var active_plans []uint64
+
+	if err := UpdateUsersPlans(tx, user); err != nil {
+		log.Println("Unable to update user's plans:", user.ID, err)
+	}
 
 	err := tx.Model(&database.UserPlan{}).Where("user_plans.user_id = ? AND user_plans.active = ? AND user_plans.expires > ?", user.ID, true, time.Now()).Joins("LEFT JOIN plans ON user_plans.plan_id = plans.id").Where("plans.create_room = ?", true).Order("user_plans.price_cents ASC").Select("user_plans.id").Find(&active_plans).Error
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/business"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -128,6 +129,10 @@ func (handle *PlansHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		var query string = not_expired
 		if handle.req.Expired {
 			query = expired
+		}
+
+		if err := business.UpdateUsersPlans(tx, *handle.user); err != nil {
+			return err
 		}
 
 		rows, err := tx.Model(&database.UserPlan{}).Where(query, handle.user.ID, time.Now()).Rows()
