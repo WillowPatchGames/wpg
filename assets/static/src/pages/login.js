@@ -126,7 +126,7 @@ class LoginPage extends React.Component {
                   <d.DialogTitle>Error!</d.DialogTitle>
                   <d.DialogContent>{ this.state.error }</d.DialogContent>
                   <d.DialogActions>
-                    <d.DialogButton action="close">OK</d.DialogButton>
+                    <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
                   </d.DialogActions>
                 </d.Dialog>
               </div>

@@ -97,7 +97,7 @@ class UserProfileTab extends React.Component {
               <d.DialogTitle>Error!</d.DialogTitle>
               <d.DialogContent>{ this.state.nameError }</d.DialogContent>
               <d.DialogActions>
-                <d.DialogButton action="close">OK</d.DialogButton>
+                <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
               </d.DialogActions>
             </d.Dialog>
           </div>
@@ -117,14 +117,15 @@ class UserSecurityTab extends React.Component {
 
     this.device = React.createRef();
     this.validation = React.createRef();
-
-    this.prompter = d.createDialogQueue();
+    this.password = React.createRef();
 
     this.state = {
       passwordError: null,
       twofaError: null,
       deviceInfo: null,
       devices: null,
+      openDeleteDialog: false,
+      deleteDevice: null,
     };
   }
 
@@ -135,6 +136,14 @@ class UserSecurityTab extends React.Component {
   async reloadDevices() {
     var devices = await this.props.user.list2FA();
     this.setState(state => Object.assign({}, state, { devices }));
+  }
+
+  openDeleteDialog(openState) {
+    this.setState(state => Object.assign({}, state, { openDeleteDialog: openState }));
+    if (!openState) {
+      this.setState(state => Object.assign({}, state, { deleteDevice: null }));
+      this.reloadDevices();
+    }
   }
 
   async handlePasswordSubmit(event) {
@@ -216,28 +225,25 @@ class UserSecurityTab extends React.Component {
     this.setState(state => Object.assign({}, state, { deviceInfo: device_info }));
   }
 
-  async removeDevice(event, device) {
-    this.prompter.prompt({
-      title: 'Are you sure you want to delete ' + device.device + '?',
-      body: 'Enter your password to confirm deletion.',
-      acceptLabel: 'Confirm Deletion',
-      cancelLabel: 'Cancel',
-      inputProps: {
-        outlined: true,
-        type: 'password',
-        theme: "secondary",
-      },
-      theme: "secondary",
-    }).then(async (res) => {
-      var result = await this.props.user.remove2FA(device.device, res);
-      if ('type' in result && result['type'] === 'error') {
-        this.set2FAError(result.message);
-      }
+  startRemoveDevice(event, device) {
+    event.preventDefault();
 
-      this.reloadDevices();
-    }).catch(() => {
-      this.reloadDevices();
-    });
+    this.openDeleteDialog(true);
+    this.setState(state => Object.assign({}, state, { deleteDevice: device }));
+  }
+
+  async removeDevice(event) {
+    event.preventDefault();
+
+    var device = this.state.deleteDevice;
+    var result = await this.props.user.remove2FA(device.device, this.password.current.value);
+    this.openDeleteDialog(false);
+
+    if ('type' in result && result['type'] === 'error') {
+      this.set2FAError(result.message);
+    }
+
+    this.reloadDevices();
   }
 
   render() {
@@ -256,7 +262,7 @@ class UserSecurityTab extends React.Component {
             <d.DialogTitle>Error!</d.DialogTitle>
             <d.DialogContent>{ this.state.passwordError }</d.DialogContent>
             <d.DialogActions>
-              <d.DialogButton action="close">OK</d.DialogButton>
+              <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
             </d.DialogActions>
           </d.Dialog>
         </div>
@@ -272,7 +278,7 @@ class UserSecurityTab extends React.Component {
               { device.device }
             </l.ListItemPrimaryText>
             <l.ListItemSecondaryText>
-              <Button onClick={ (event) => this.removeDevice(event, device) } theme="secondary">Delete</Button>
+              <Button onClick={ (event) => this.startRemoveDevice(event, device) } theme="secondary">Delete</Button>
               {
                 device.validated
                 ? null
@@ -303,7 +309,19 @@ class UserSecurityTab extends React.Component {
                   <l.List twoLine>
                     { twofa_devices }
                   </l.List>
-                  <d.DialogQueue dialogs={this.prompter.dialogs} theme="secondary" />
+                  <d.Dialog open={ this.state.openDeleteDialog === true } onClosed={() => this.openDeleteDialog(false) }>
+                    <d.DialogTitle>Confirm Device Deletion</d.DialogTitle>
+                    <d.DialogContent>
+                      <p>To confirm deletion of the device, enter your password.</p>
+                      <form onSubmit={ (event) => this.removeDevice(event) }>
+                        <TextField fullwidth placeholder="pasword..." name="password" type="password" inputRef={ this.password } /><br />
+                      </form>
+                    </d.DialogContent>
+                    <d.DialogActions>
+                      <d.DialogButton onClick={ (event) => this.removeDevice(event) } theme="secondary">Confirm</d.DialogButton>
+                      <d.DialogButton action="close" theme="secondary">Cancel</d.DialogButton>
+                    </d.DialogActions>
+                  </d.Dialog>
                 </>
               : null
             }
@@ -318,7 +336,7 @@ class UserSecurityTab extends React.Component {
               <d.DialogTitle>Error!</d.DialogTitle>
               <d.DialogContent>{ this.state.twofaError }</d.DialogContent>
               <d.DialogActions>
-                <d.DialogButton action="close">OK</d.DialogButton>
+                <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
               </d.DialogActions>
             </d.Dialog>
           </div>
@@ -518,7 +536,7 @@ class GuestProfilePage extends React.Component {
                 <d.DialogTitle>Error upgrading your Account!</d.DialogTitle>
                 <d.DialogContent>{ this.state.upgradeError }</d.DialogContent>
                 <d.DialogActions>
-                  <d.DialogButton action="close">OK</d.DialogButton>
+                  <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
                 </d.DialogActions>
               </d.Dialog>
             </div>
