@@ -144,7 +144,7 @@ func (c *Client) readPump() {
 		}
 
 		if messageType != websocket.TextMessage {
-			log.Println("Unexpected message type: " + strconv.Itoa(messageType) + " -- proceeding anyways", c.Sring())
+			log.Println("Unexpected message type: " + strconv.Itoa(messageType) + " -- proceeding anyways", c.String())
 		}
 
 		c.hub.process[c.gameID] <- ClientMessage{c, message}
@@ -525,12 +525,12 @@ func (hub *Hub) PersistGames() {
 func (hub *Hub) processMessage(client *Client, message []byte) error {
 	if !hub.controller.GameExists(uint64(client.gameID)) {
 		hub.unregister <- client
-		return errors.New("unable to process message for non-existent game:", client.String())
+		return errors.New("unable to process message for non-existent game:" + client.String())
 	}
 
 	if !hub.controller.PlayerExists(uint64(client.gameID), uint64(client.userID)) {
 		hub.unregister <- client
-		return errors.New("unable to process message from non-existent client:", client.String())
+		return errors.New("unable to process message from non-existent client:" + client.String())
 	}
 
 	err := hub.controller.Dispatch(message)
