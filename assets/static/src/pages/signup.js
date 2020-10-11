@@ -61,7 +61,7 @@ class SignupPage extends React.Component {
           <p>
             We&apos;re happy you&apos;re joining Willow Patch Games!<br /><br />
             We only need a username or an email (or both, if you&apos;d like account recovery or notifications) and a password.<br /><br />
-            If you&apos;re not happy with your display name being your username, feel free to set one.
+            If you&apos;re not happy with your display name being your username (or your desired username is taken), feel free to set a different one. This need not be unique.
           </p>
         </div>
         <g.Grid fixedColumnWidth={ true }>
