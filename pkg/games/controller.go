@@ -234,23 +234,22 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 
 func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 	c.lock.Lock()
-	defer c.lock.Unlock()
 
 	if !c.GameExists(gamedb.ID) {
+		c.lock.Unlock()
 		return errors.New("game with specified id (" + strconv.FormatUint(gamedb.ID, 10) + ") doesn't exist in controller")
 	}
 
 	var game *GameData = c.ToGame[gamedb.ID]
+	var encoded []byte
+	var err error
 	if game.State != nil {
 		var state *RushState = game.State.(*RushState)
 		var config = state.Config
 
-		encoded, err := json.Marshal(config)
+		encoded, err = json.Marshal(config)
 		if err != nil {
-			return err
-		}
-
-		if err := tx.Model(gamedb).Update("Config", string(encoded)).Error; err != nil {
+			c.lock.Unlock()
 			return err
 		}
 
@@ -267,6 +266,14 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 
 	encoded_state, err := json.Marshal(game)
 	if err != nil {
+		c.lock.Unlock()
+		return err
+	}
+
+	// Don't hold the lock while we are writing the transaction.
+	c.lock.Unlock()
+
+	if err := tx.Model(gamedb).Update("Config", string(encoded)).Error; err != nil {
 		return err
 	}
 
