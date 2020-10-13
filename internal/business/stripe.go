@@ -67,7 +67,7 @@ func ExecuteStripePayment(tx *gorm.DB, user *database.User, plan_id uint64, pric
 	}
 
 	params := &stripe.CheckoutSessionParams{
-		SuccessURL: stripe.String(stripeConfig.BaseURL + "/?plan_id=" + strconv.FormatUint(plan_id, 10) + "#success"),
+		SuccessURL: stripe.String(stripeConfig.BaseURL + "/#profile"),
 		CancelURL:  stripe.String(stripeConfig.BaseURL + "/#pricing"),
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
