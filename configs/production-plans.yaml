@@ -62,14 +62,14 @@ plans:
     description: "Best for a gathering of a small number of people for a shorter period of time, the Apartment Party plan lets up to 5 people play 10 games."
     open: true
     visible: true
-    min_price_cents: 150
+    min_price_cents: 200
     suggested_price_cents: 500
     max_price_cents: 2000
     billed: 0
     create_room: true
     max_open_rooms: 1
     max_total_rooms: 1
-    max_open_games_in_room: 10
+    max_open_games_in_room: 1
     max_total_games_in_room: 10
     max_players_in_room: 5
     max_players_in_game_in_room: 5
@@ -90,14 +90,14 @@ plans:
     description: "Best for a gathering of a larger number of people for a shorter period of time, the House Party plan lets up to 10 people play 20 games."
     open: true
     visible: true
-    min_price_cents: 550
-    suggested_price_cents: 750
+    min_price_cents: 400
+    suggested_price_cents: 1000
     max_price_cents: 2000
     billed: 0
     create_room: true
     max_open_rooms: 1
     max_total_rooms: 1
-    max_open_games_in_room: 20
+    max_open_games_in_room: 1
     max_total_games_in_room: 20
     max_players_in_room: 10
     max_players_in_game_in_room: 10
