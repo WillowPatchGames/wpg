@@ -110,6 +110,11 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return err
 		}
 
+		// Only care about non-spectators
+		if !player.Playing {
+			return nil
+		}
+
 		if data.Value == game.Countdown {
 			player.Countback = data.Value
 		}
