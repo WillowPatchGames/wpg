@@ -24,8 +24,9 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(inner)
 	}
 
+	router.Handle("/api/v1/room", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/room/find", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/room/{RoomID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
-	router.Handle("/api/v1/room", parsel.Wrap(queryFactory, config)).Methods("GET")
+
 	router.Handle("/api/v1/rooms", parsel.Wrap(createFactory, config)).Methods("POST")
 }

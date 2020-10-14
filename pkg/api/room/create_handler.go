@@ -84,7 +84,10 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		room.OwnerID = handle.user.ID
 		room.Style = handle.req.Style
 		room.Open = handle.req.Open
-		room.JoinCode = utils.RandomWords()
+		if room.Open {
+			room.JoinCode.Valid = true
+			room.JoinCode.String = "rc-" + utils.JoinCode()
+		}
 
 		if handle.req.Config != nil {
 			config, err := json.Marshal(handle.req.Config)
@@ -100,7 +103,21 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
-		return business.AccountToPlan(tx, user_plan_id, room.ID, 0)
+		if err = business.AccountToPlan(tx, user_plan_id, room.ID, 0); err != nil {
+			return err
+		}
+
+		// Add the room creator to this room as a player.
+		var room_player database.RoomPlayer
+		room_player.UserID.Valid = true
+		room_player.UserID.Int64 = int64(room.OwnerID)
+		room_player.RoomID = room.ID
+		if !room.Open {
+			room_player.JoinCode.Valid = true
+			room_player.JoinCode.String = "rp-" + utils.JoinCode()
+		}
+		room_player.Admitted = true
+		return tx.Create(&room_player).Error
 	}); err != nil {
 		return err
 	}
@@ -109,7 +126,7 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	handle.resp.Owner = room.OwnerID
 	handle.resp.Style = room.Style
 	handle.resp.Open = room.Open
-	handle.resp.Code = room.JoinCode
+	handle.resp.Code = room.JoinCode.String
 
 	utils.SendResponse(w, r, &handle)
 	return nil

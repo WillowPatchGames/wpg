@@ -62,12 +62,27 @@ type Room struct {
 	Style string
 	Open  bool
 
-	JoinCode  string `gorm:"unique"`
-	Lifecycle string
+	JoinCode sql.NullString `gorm:"unique"`
 
 	Config sql.NullString
 
 	Games []Game `gorm:"foreignKey:RoomID"`
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+type RoomPlayer struct {
+	UserID sql.NullInt64 `gorm:"unique_index:user_game_unique"`
+	User   User
+
+	RoomID uint64 `gorm:"unique_index:user_room_unique"`
+	Room   Room
+
+	Admitted bool
+	JoinCode sql.NullString `gorm:"unique"`
+	Banned   bool
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -82,11 +97,27 @@ type Game struct {
 	Style string
 	Open  bool
 
-	JoinCode  string `gorm:"unique"`
+	JoinCode  sql.NullString `gorm:"unique"`
 	Lifecycle string
 
 	Config sql.NullString
 	State  sql.NullString
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+type GamePlayer struct {
+	UserID sql.NullInt64 `gorm:"unique_index:user_game_unique"`
+	User   User
+
+	GameID uint64 `gorm:"unique_index:user_game_unique"`
+	Game   Game
+
+	Admitted bool
+	JoinCode sql.NullString `gorm:"unique"`
+	Banned   bool
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
