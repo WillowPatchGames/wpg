@@ -17,7 +17,7 @@ class DocsPage extends React.Component {
               <Typography use="headline2">Documentation</Typography>
               <p>
                 Hope it helps! Let us know if there's anything we can improve!<br /><br />
-                Looking for rules? <a href="rush-rules">Check here instead!</a>
+                Looking for rules? <a href="#rush-rules">Check here instead!</a>
               </p>
               <Typography use="headline3">Game Mechanics</Typography>
               <Typography use="headline4">Playing Tiles</Typography>
