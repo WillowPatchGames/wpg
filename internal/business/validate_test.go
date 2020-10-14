@@ -9,7 +9,7 @@ import (
 )
 
 func TestCanCreateGame(t *testing.T) {
-	if err := database.OpenDatabase("sqlite", "file::memory:?cache=shared", false); err != nil {
+	if err := database.OpenDatabase("sqlite", "file::memory:?cache=shared", false, "info"); err != nil {
 		t.Fatal(err)
 	}
 

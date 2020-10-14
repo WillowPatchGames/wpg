@@ -40,6 +40,7 @@ var dbPassword string
 var dbName string
 var dbSslmode string
 var dbDry bool
+var dbLogLevel string = "error"
 
 // In debug mode, we use this function to walk the set of routes we've added,
 // showing them in the logs.
@@ -74,6 +75,7 @@ func main() {
 	flag.StringVar(&dbName, "db_name", "wpgdb", "Database to connect to with")
 	flag.StringVar(&dbSslmode, "db_sslmode", "require", "SSL Validation mode (require, verify-full, verify-ca, or disable)")
 	flag.BoolVar(&dbDry, "db_dry", false, "Whether or not we we're doing a dry run")
+	flag.StringVar(&dbLogLevel, "db_level", "error", "What logging level to use (silent, error, warn, or info)")
 
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
 	flag.BoolVar(&proxy, "proxy", false, "Enable proxy")
@@ -96,7 +98,7 @@ func main() {
 		log.Println("Database connection string", dbconn)
 	}
 
-	err = database.OpenDatabase(dbType, dbconn, dbDry)
+	err = database.OpenDatabase(dbType, dbconn, dbDry, dbLogLevel)
 	if err != nil {
 		panic(err)
 	}

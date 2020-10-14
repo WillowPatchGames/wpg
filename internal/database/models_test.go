@@ -7,7 +7,7 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	if err := OpenDatabase("sqlite", "file::memory:?cache=shared", false); err != nil {
+	if err := OpenDatabase("sqlite", "file::memory:?cache=shared", false, "info"); err != nil {
 		t.Fatal(err)
 	}
 
