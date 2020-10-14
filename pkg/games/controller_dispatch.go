@@ -116,7 +116,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		}
 
 		if data.Value == game.Countdown {
-			player.Countback = data.Value
+			player.Countback = game.Countdown
 		}
 
 		return c.handleCountdown(game)
@@ -139,7 +139,7 @@ func (c *Controller) handleCountdown(game *GameData) error {
 		}
 	}
 
-	if !sendNext {
+	if !sendNext || game.Countdown < 0 {
 		return nil
 	}
 
