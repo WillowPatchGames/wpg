@@ -23,6 +23,18 @@ func TestRandomFloat64(t *testing.T) {
 	}
 }
 
+func TestRandomString(t *testing.T) {
+	var string = RandomString(4, 5)
+	if len(string) != 24 {
+		panic("String wasn't expected length (24): " + string)
+	}
+
+	var string2 = RandomString(4, 5)
+	if string == string2 {
+		panic("Expected to get a different string but didn't!")
+	}
+}
+
 func BenchmarkWords(b *testing.B) {
 	_ = RandomWords()
 	b.ResetTimer()

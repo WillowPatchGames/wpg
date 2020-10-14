@@ -150,3 +150,23 @@ func RandomWords() string {
 
 	return strings.Join(result, "-")
 }
+
+func RandomString(length int, sets int) string {
+	var result []string
+	var charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+	for i := 0; i < sets; i++ {
+		var word = ""
+		for j := 0; j < length; j++ {
+			var charIndex = SecureRand.Intn(len(charset))
+			word += string(charset[charIndex])
+		}
+		result = append(result, word)
+	}
+
+	return strings.Join(result, "-")
+}
+
+func JoinCode() string {
+	return RandomString(5, 5)
+}
