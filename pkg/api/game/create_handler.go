@@ -110,9 +110,12 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			game.RoomID.Int64 = int64(room.ID)
 		}
 		game.Style = handle.req.Style
-		game.Open = handle.req.Open
 		game.Lifecycle = "pending"
-		game.JoinCode = utils.RandomWords()
+		game.Open = handle.req.Open
+		if game.Open {
+			game.JoinCode.Valid = true
+			game.JoinCode.String = "gc-" + utils.JoinCode()
+		}
 
 		if handle.req.Config != nil {
 			data, err := json.Marshal(handle.req.Config)
@@ -127,7 +130,20 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
-		return business.AccountToPlan(tx, user_plan_id, uint64(game.RoomID.Int64), game.ID)
+		if err = business.AccountToPlan(tx, user_plan_id, uint64(game.RoomID.Int64), game.ID); err != nil {
+			return err
+		}
+
+		var game_player database.GamePlayer
+		game_player.UserID.Valid = true
+		game_player.UserID.Int64 = int64(game.OwnerID)
+		game_player.GameID = game.ID
+		if !game.Open {
+			game_player.JoinCode.Valid = true
+			game_player.JoinCode.String = "gp-" + utils.JoinCode()
+		}
+		game_player.Admitted = true
+		return tx.Create(&game_player).Error
 	}); err != nil {
 		log.Println("Got error from handler:", err)
 		return err
@@ -140,7 +156,7 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open
-	handle.resp.Code = game.JoinCode
+	handle.resp.Code = game.JoinCode.String
 	handle.resp.Lifecycle = game.Lifecycle
 
 	utils.SendResponse(w, r, &handle)

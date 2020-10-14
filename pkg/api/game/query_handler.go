@@ -2,7 +2,9 @@ package game
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -26,7 +28,7 @@ type queryHandlerResponse struct {
 	Room      uint64      `json:"room"`
 	Style     string      `json:"style"`
 	Open      bool        `json:"open"`
-	JoinCode  string      `json:"code"`
+	JoinCode  string      `json:"code,omitempty"`
 	Lifecycle string      `json:"lifecycle"`
 	Config    interface{} `json:"config"`
 }
@@ -57,12 +59,32 @@ func (handle *QueryHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
-func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
+func (handle *QueryHandler) Validate() error {
 	if handle.req.GameID == 0 && handle.req.JoinCode == "" {
-		return hwaterr.WrapError(api_errors.ErrMissingRequest, http.StatusBadRequest)
+		return api_errors.ErrMissingRequest
+	}
+
+	if handle.req.GameID != 0 && handle.req.JoinCode != "" {
+		return api_errors.ErrTooManySpecifiers
+	}
+
+	if handle.req.JoinCode != "" {
+		if !strings.HasPrefix(handle.req.JoinCode, "gc-") && !strings.HasPrefix(handle.req.JoinCode, "gp-") {
+			return errors.New("invalid join code identifier format")
+		}
+	}
+
+	return nil
+}
+
+func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
+	err := handle.Validate()
+	if err != nil {
+		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
 	var game database.Game
+	var game_player database.GamePlayer
 	var gameConfig map[string]interface{}
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
@@ -70,10 +92,54 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			if err := tx.First(&game, handle.req.GameID).Error; err != nil {
 				return err
 			}
-		} else {
+
+			// Looking up a game by integer identifier isn't sufficient to join any
+			// game. Return an error in this case.
+			if err := tx.First(&game_player, "user_id = ? AND game_id = ?", handle.user.ID, game.ID).Error; err != nil {
+				return err
+			}
+		} else if strings.HasPrefix(handle.req.JoinCode, "gc-") {
 			if err := tx.First(&game, "join_code = ?", handle.req.JoinCode).Error; err != nil {
 				return err
 			}
+
+			if err := tx.First(&game_player, "user_id = ? AND game_id = ?", handle.user.ID, game.ID).Error; err != nil {
+				if !game.Open {
+					return errors.New("unable to join closed game by game-level join code identifier")
+				}
+
+				game_player.UserID.Valid = true
+				game_player.UserID.Int64 = int64(handle.user.ID)
+				game_player.GameID = game.ID
+				game_player.Admitted = false
+				if err := tx.Create(&game_player).Error; err != nil {
+					return err
+				}
+			}
+		} else if strings.HasPrefix(handle.req.JoinCode, "gp-") {
+			if err := tx.First(&game_player, "join_code = ?", handle.req.JoinCode).Error; err != nil {
+				return err
+			}
+
+			if game_player.UserID.Valid && game_player.UserID.Int64 != int64(handle.user.ID) {
+				err = errors.New("unable to join with another users' join code")
+				return hwaterr.WrapError(err, http.StatusForbidden)
+			}
+
+			if !game_player.UserID.Valid {
+				game_player.UserID.Valid = true
+				game_player.UserID.Int64 = int64(handle.user.ID)
+
+				if err := tx.Save(&game_player).Error; err != nil {
+					return err
+				}
+			}
+
+			if err := tx.First(&game, "id = ?", game_player.GameID).Error; err != nil {
+				return err
+			}
+		} else {
+			panic("Error case")
 		}
 
 		if game.Config.Valid {
@@ -94,7 +160,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	}
 	handle.resp.Style = game.Style
 	handle.resp.Open = game.Open
-	handle.resp.JoinCode = game.JoinCode
+	handle.resp.JoinCode = game.JoinCode.String
 	handle.resp.Lifecycle = game.Lifecycle
 	handle.resp.Config = gameConfig
 

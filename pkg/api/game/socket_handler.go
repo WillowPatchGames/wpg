@@ -54,11 +54,22 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify game
+	// Verify game and make sure this user has any game_player record. Otherwise,
+	// if they don't, they've incorrectly tried to access just the websocket
+	// without first querying the game.
 	var gamedb database.Game
+	var game_player database.GamePlayer
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		return tx.First(&gamedb, handle.req.GameID).Error
+		if err := tx.First(&gamedb, handle.req.GameID).Error; err != nil {
+			return err
+		}
+
+		if err := tx.First(&game_player, "user_id = ? AND game_id = ?", handle.user.ID, handle.req.GameID).Error; err != nil {
+			return hwaterr.WrapError(err, http.StatusForbidden)
+		}
+
+		return nil
 	}); err != nil {
 		hwaterr.WriteError(w, r, err)
 		return
