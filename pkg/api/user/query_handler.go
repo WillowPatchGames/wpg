@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/business"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -24,12 +25,14 @@ type queryHandlerData struct {
 }
 
 type queryHandlerResponse struct {
-	UserID   uint64          `json:"id"`
-	Username string          `json:"username,omitempty"`
-	Display  string          `json:"display"`
-	Email    string          `json:"email,omitempty"`
-	Guest    bool            `json:"guest"`
-	Config   *JSONUserConfig `json:"config,omitempty"`
+	UserID     uint64          `json:"id"`
+	Username   string          `json:"username,omitempty"`
+	Display    string          `json:"display"`
+	Email      string          `json:"email,omitempty"`
+	Guest      bool            `json:"guest"`
+	Config     *JSONUserConfig `json:"config,omitempty"`
+	CreateRoom bool            `json:"can_create_room"`
+	CreateGame bool            `json:"can_create_game"`
 }
 
 type QueryHandler struct {
@@ -126,6 +129,16 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 		if user.ID == 0 {
 			return hwaterr.WrapError(errors.New("unable to find specified user account"), http.StatusNotFound)
+		}
+
+		if handle.user.ID == user.ID {
+			if _, err := business.CanCreateRoom(tx, user); err == nil {
+				handle.resp.CreateRoom = true
+			}
+
+			if _, err := business.CanCreateGame(tx, user, nil, "*"); err == nil {
+				handle.resp.CreateGame = true
+			}
 		}
 
 		return nil

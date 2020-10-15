@@ -17,7 +17,7 @@ import { Typography } from '@rmwc/typography';
 
 import { UserModel } from '../models.js';
 
-class LoginPage extends React.Component {
+class LoginForm extends React.Component {
   constructor(props) {
     super(props);
 
@@ -108,29 +108,38 @@ class LoginPage extends React.Component {
     }
 
     return (
-      <div className="App-page">
-        <div>
-          <Typography use="headline2">Login</Typography>
-          <p>
+      <c.Card>
+        <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+          <Typography use="headline3">Login</Typography>
+          <p className="text-left">
             Enter your username or email and password to log into Willow Patch Games.<br/><br/>
+          </p>
+          <p>
             <a href="#signup">New user? Sign up instead!</a>
           </p>
+
+          { form }
+          <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
+            <d.DialogTitle>Error!</d.DialogTitle>
+            <d.DialogContent>{ this.state.error }</d.DialogContent>
+            <d.DialogActions>
+              <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
+            </d.DialogActions>
+          </d.Dialog>
         </div>
+      </c.Card>
+    );
+  }
+}
+
+class LoginPage extends React.Component {
+  render() {
+    return (
+      <div className="App-page">
         <g.Grid fixedColumnWidth={ true }>
           <g.GridCell align="left" span={3} />
           <g.GridCell align="middle" span={6}>
-            <c.Card>
-              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                { form }
-                <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
-                  <d.DialogTitle>Error!</d.DialogTitle>
-                  <d.DialogContent>{ this.state.error }</d.DialogContent>
-                  <d.DialogActions>
-                    <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
-                  </d.DialogActions>
-                </d.Dialog>
-              </div>
-            </c.Card>
+            <LoginForm {...this.props} />
           </g.GridCell>
         </g.Grid>
       </div>
@@ -138,4 +147,4 @@ class LoginPage extends React.Component {
   }
 }
 
-export { LoginPage };
+export { LoginForm, LoginPage };

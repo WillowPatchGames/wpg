@@ -29,6 +29,7 @@ import { TextField } from '@rmwc/textfield';
 // Application imports
 import '../App.css';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
+import { LoginForm } from './login.js';
 import { Game } from '../component.js';
 import { RushGame, RushData } from '../games/rush.js';
 import { UserCache } from '../utils/cache.js';
@@ -1159,6 +1160,81 @@ class JoinGamePage extends React.Component {
   }
 
   render() {
+    let right_column = null;
+
+    if (!this.props.user || !this.props.user.authed) {
+      right_column = <>
+        <LoginForm {...this.props} />
+      </>
+  } else if (!this.props.user.guest) {
+      right_column = [];
+      if (this.props.user.can_create_room) {
+        right_column.push(
+          <div style={{ padding: '1rem 0px 1rem 0px' }}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                <div>
+                  <Typography use="headline3">Host a Room</Typography>
+                  <p>
+                    <a href="#create-room">Looking to make a new room? Create one here!</a>.<br />
+                    A room lets you play multiple games without having to share a new link every time!
+                  </p>
+                </div>
+              </div>
+            </c.Card>
+          </div>
+        );
+      }
+
+      if (this.props.user.can_create_game) {
+        right_column.push(
+          <div style={{ padding: '1rem 0px 1rem 0px' }}>
+            <c.Card>
+              <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                <div>
+                  <Typography use="headline3">Host a Single Game</Typography>
+                  <p>
+                    <a href="#create-game">Looking to play a single game with some friends? Make one here!</a>
+                  </p>
+                </div>
+              </div>
+            </c.Card>
+          </div>
+        );
+      }
+
+      if (!this.props.user.can_create_room && !this.props.user.can_create_game) {
+        right_column = <div style={{ padding: '1rem 0px 1rem 0px' }}>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <div>
+                <Typography use="headline3">Trying to create a room or a game?</Typography>
+                <p>
+                  In order to create rooms and games, <a href="#pricing">purchase
+                  a plan</a> first.
+                </p>
+              </div>
+            </div>
+          </c.Card>
+        </div>
+      }
+    } else {
+      right_column = <div style={{ padding: '1rem 0px 1rem 0px' }}>
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <div>
+              <Typography use="headline3">Upgrade Your Account</Typography>
+              <p>
+                You are currently playing as a guest. In order to create your
+                own games, <a href="#profile">upgrade your account</a> to a
+                full account.
+              </p>
+            </div>
+          </div>
+        </c.Card>
+      </div>;
+    }
+
     let inner = <g.GridRow>
       <g.GridCell align="left" span={6}>
         <c.Card>
@@ -1193,31 +1269,7 @@ class JoinGamePage extends React.Component {
         </c.Card>
       </g.GridCell>
       <g.GridCell align="right" span={6}>
-        <div style={{ padding: '1rem 0px 1rem 0px' }}>
-          <c.Card>
-            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-              <div>
-                <Typography use="headline3">Host a Room</Typography>
-                <p>
-                  <a href="#create-room">Looking to make a new room? Create one here!</a>.<br />
-                  A room lets you play multiple games without having to share a new link every time!
-                </p>
-              </div>
-            </div>
-          </c.Card>
-        </div>
-        <div style={{ padding: '1rem 0px 1rem 0px' }}>
-          <c.Card>
-            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-              <div>
-                <Typography use="headline3">Host a Single Game</Typography>
-                <p>
-                  <a href="#create-game">Looking to play a single game with some friends? Make one here!</a>
-                </p>
-              </div>
-            </div>
-          </c.Card>
-        </div>
+        { right_column }
       </g.GridCell>
     </g.GridRow>;
 

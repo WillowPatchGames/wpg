@@ -14,6 +14,10 @@ type planConfig struct {
 }
 
 func Matcher(available string, given string) bool {
+	if given == "*" && available != "" {
+		return true
+	}
+
 	var parts []string = strings.Split(available, ",")
 	for _, part := range parts {
 		if part == "*" {
