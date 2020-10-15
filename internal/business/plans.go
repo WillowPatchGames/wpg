@@ -45,8 +45,11 @@ func LoadPlanConfig(tx *gorm.DB, path string) error {
 		return err
 	}
 
-	cacheExpiry = cfg.CacheExpiry
+	// Since we loaded the config from YAML, deactivate all existing plans. This
+	// ensures that any plans removed from the config will disappear.
+	tx.Model(&database.Plan{}).Update("visible", false)
 
+	cacheExpiry = cfg.CacheExpiry
 	for _, plan := range cfg.Plans {
 		var entry *planCacheEntry = new(planCacheEntry)
 		var save bool = false
