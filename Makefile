@@ -12,16 +12,16 @@ dist: distui tarball
 check: vet gosec staticcheck crypt utils games database business api-tests
 
 deps:
-	go get -u $(NAMESPACE)/...
+	$(GO) get -u $(NAMESPACE)/...
 	cd assets/static && npm install
 	./scripts/words.sh
 
 deps-update: deps
-	go mod tidy
+	$(GO) mod tidy
 	cd assets/static && npm audit fix
 
 fuzz:
-	go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
+	$(GO) get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
 	cd pkg/password && go-fuzz-build && go-fuzz
 
 format:
@@ -39,19 +39,19 @@ staticcheck:
 	$(HOME)/go/bin/staticcheck $(NAMESPACE)/...
 
 crypt: pkg/password/*.go
-	go test $(NAMESPACE)/pkg/password
+	$(GO) test $(NAMESPACE)/pkg/password
 
 utils: internal/utils/*.go
-	go test $(NAMESPACE)/internal/utils
+	$(GO) test $(NAMESPACE)/internal/utils
 
 games: pkg/games/*.go
-	go test $(NAMESPACE)/pkg/games
+	$(GO) test $(NAMESPACE)/pkg/games
 
 database: internal/database/*.go
-	go test $(NAMESPACE)/internal/database
+	$(GO) test $(NAMESPACE)/internal/database
 
 business: internal/business/*.go
-	go test $(NAMESPACE)/internal/business
+	$(GO) test $(NAMESPACE)/internal/business
 
 api-tests:
 	bash ./scripts/api-tests.sh $(PYTHON)
