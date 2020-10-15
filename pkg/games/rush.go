@@ -4,6 +4,8 @@ import (
 	"errors"
 	"log"
 	"strconv"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 )
 
 const RushYouWon string = "game is over; you won"
@@ -430,7 +432,16 @@ func (rs *RushState) Discard(player int, tileID int) error {
 		return err
 	}
 
+	// Only put the tile back after we discard, so we don't get it back
+	// accidentally.
 	rs.Tiles = append(rs.Tiles, tile)
+
+	// After putting the tile back in the pool, shuffle it so that another player
+	// has a shot at drawing this tile. Otherwise, just putting it at the end
+	// isn't a good idea as nobody might get it again.
+	utils.SecureRand.Shuffle(len(rs.Tiles), func(i, j int) {
+		rs.Tiles[i], rs.Tiles[j] = rs.Tiles[j], rs.Tiles[i]
+	})
 
 	return nil
 }
