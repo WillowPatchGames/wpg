@@ -80,10 +80,7 @@ class App extends React.Component {
       return null;
     }
 
-    if (verified_user.display !== user.display || verified_user.username !== user.username || verified_user.email !== user.email) {
-      this.setUser(verified_user);
-    }
-
+    this.setUser(verified_user);
     return verified_user;
   }
 
