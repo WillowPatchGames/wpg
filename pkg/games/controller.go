@@ -310,7 +310,7 @@ func (c *Controller) PlayerExists(gid uint64, uid uint64) bool {
 
 // Add a player to this game. Returns true iff the player was already
 // present.
-func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
+func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -330,7 +330,7 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64) (bool, error) {
 	game.ToPlayer[uid] = &PlayerData{
 		UID:             uid,
 		Index:           -1,
-		Admitted:        owner,
+		Admitted:        admitted || owner,
 		InboundMsgs:     make(map[int]interface{}),
 		OutboundID:      1,
 		OutboundMsgs:    make(map[int]interface{}),
@@ -509,12 +509,12 @@ func (c *Controller) Dispatch(message []byte) error {
 		return errors.New("unable to find game by id (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
 
+	gameData.lock.Lock()
+	defer gameData.lock.Unlock()
+
 	// Because we're not going to be accessing the controller any more,
 	// and only referencing the game, release this lock.
 	c.lock.Unlock()
-
-	gameData.lock.Lock()
-	defer gameData.lock.Unlock()
 
 	if gameData.Mode.String() != header.Mode {
 		return errors.New("game modes don't match internal expectations")

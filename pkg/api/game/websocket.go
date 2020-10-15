@@ -360,15 +360,24 @@ func (hub *Hub) connectPlayer(client *Client) error {
 		return nil
 	}
 
-	// Create a new game if doesn't exist
+	// Create a new game if doesn't exist.
 	err := hub.ensureGameExists(uint64(client.gameID))
 	if err != nil {
 		return err
 	}
 
+	// Load the player from the database to see whether or not they've been
+	// admitted already.
+	var game_player database.GamePlayer
+	if err = database.InTransaction(func(tx *gorm.DB) error {
+		return tx.First(&game_player, "user_id = ? AND game_id = ?", client.userID, client.gameID).Error
+	}); err != nil {
+		return err
+	}
+
 	// The controller handles creating or resuming all of the player state
 	// information.
-	_, err = hub.controller.AddPlayer(uint64(client.gameID), uint64(client.userID))
+	_, err = hub.controller.AddPlayer(uint64(client.gameID), uint64(client.userID), game_player.Admitted)
 	if err != nil {
 		return err
 	}

@@ -300,26 +300,35 @@ func (c *Controller) doRushStart(game *GameData, state *RushState) error {
 		return err
 	}
 
-	// Then assign indices to players who are playing and send out their
-	// initial state data. Also notify all players that the game has started.
+	// Assign indices to players before sending notifications.
 	var player_index int = 0
 	for _, indexed_player := range game.ToPlayer {
+		if indexed_player.Admitted && indexed_player.Playing {
+			indexed_player.Index = player_index
+			player_index++
+		}
+	}
+
+	// Then assign indices to players who are playing and send out their
+	// initial state data. Also notify all players that the game has started.
+	for _, indexed_player := range game.ToPlayer {
+		if !indexed_player.Admitted {
+			continue
+		}
+
 		// Tell everyone interested that the game has started.
 		var started ControllerNotifyStarted
 		started.LoadFromController(game, indexed_player)
 		c.undispatch(game, indexed_player, started.MessageID, started.ReplyTo, started)
 
-		// Only assign indices to people who were marked as players by the game
-		// admin.
+		// Only send state to players who are playing initially. Everyone else
+		// (namely, admitted spectators) should send a peek event before they can
+		// view the grid.
 		if indexed_player.Playing {
-			indexed_player.Index = player_index
-
 			var response RushStateNotification
-			response.LoadFromGame(state, player_index)
+			response.LoadFromGame(state, indexed_player.Index)
 			response.LoadFromController(game, indexed_player)
 			c.undispatch(game, indexed_player, response.MessageID, 0, response)
-
-			player_index++
 		}
 
 		// Give everyone the initial synopsis.
