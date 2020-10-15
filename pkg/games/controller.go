@@ -82,26 +82,26 @@ type GameData struct {
 	lock sync.Mutex
 
 	// Identifier of the game in the internal database.
-	GID uint64
+	GID uint64 `json:"game_id"`
 
 	// What type of game this is.
-	Mode GameMode
+	Mode GameMode `json:"mode"`
 
 	// Who the owner of this game is.
-	Owner uint64
+	Owner uint64 `json:"owner"`
 
 	// The internal game state.
-	State interface{}
+	State interface{} `json:"state"`
 
 	// Mapping from database user id to player information.
-	ToPlayer map[uint64]*PlayerData
+	ToPlayer map[uint64]*PlayerData `json:"players"`
 
 	// When starting the game and using a countdown, the current value of the
 	// countdown.
-	Countdown int
+	Countdown int `json:"countdown"`
 
 	// Timer to ensure we delay between countdown events.
-	CountdownTimer *time.Timer
+	CountdownTimer *time.Timer `json:"-"`
 }
 
 // Controller wraps game data and handles the parsing of messages from the

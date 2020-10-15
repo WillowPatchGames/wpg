@@ -18,6 +18,15 @@ func TestRoundtripStructs(t *testing.T) {
 		panic(err)
 	}
 
+	var gd *GameData = &GameData{}
+	data, err = json.Marshal(gd)
+	if err != nil {
+		panic(err)
+	}
+	if err = json.Unmarshal(data, gd); err != nil {
+		panic(err)
+	}
+
 	var mh MessageHeader
 	data, err = json.Marshal(mh)
 	if err != nil {
