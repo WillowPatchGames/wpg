@@ -380,9 +380,12 @@ class RushGame {
 
   async discard(tile) {
     this.data.discard(tile);
+
     var ret = await this.controller.discard(tile);
     if (ret.message_type && ret.message_type === "state" && ret.added && ret.added.hand) {
       this.data.draw(...ret.added.hand);
+    } else {
+      this.data.draw(tile);
     }
 
     return ret;
