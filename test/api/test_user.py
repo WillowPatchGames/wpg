@@ -3,9 +3,8 @@ import requests
 from common import *
 
 def test_create_user():
-    return
     # Sending the first request should be fine
-    req = {'username': 'test_user_test_create_user', 'email': 'test_user_test_create_user@alpha.net', 'password': 'letmein'}
+    req = {'username': 'cipherboy', 'email': 'alexander.m.scheel@gmail.com', 'password': 'letmein'}
     resp = requests.post(URL + "/users", json=req)
 
     assert resp.status_code == 200
@@ -17,13 +16,14 @@ def test_create_user():
     assert 'display' in resp_data
     assert 'email' in resp_data
 
+    assert resp_data['username'] == req['username']
+    assert resp_data['email'] == req['email']
+
     # But going again should result in an error
     resp = requests.post(URL + "/users", json=req)
-
     assert resp.status_code != 200
 
 def test_create_get():
-    return
     # Sending the first request should be fine
     create_user_data, token = auth_user("test_user_test_create_get")
 
@@ -33,22 +33,25 @@ def test_create_get():
     assert resp.status_code == 200
     get_user_data = resp.json()
     for key in create_user_data:
-        assert create_user_data[key] == get_user_data[key]
+        if key in get_user_data:
+            assert create_user_data[key] == get_user_data[key]
 
     resp = requests.get(f"{URL}/user/{create_user_data['id']}", headers=headers)
     assert resp.status_code == 200
     get_user_data = resp.json()
     for key in create_user_data:
-        assert create_user_data[key] == get_user_data[key]
+        if key in get_user_data:
+            assert create_user_data[key] == get_user_data[key]
 
     resp = requests.get(f"{URL}/user?username={create_user_data['username']}", headers=headers)
     assert resp.status_code == 200
     get_user_data = resp.json()
     for key in create_user_data:
-        assert create_user_data[key] == get_user_data[key]
+        if key in get_user_data:
+            assert create_user_data[key] == get_user_data[key]
 
     resp = requests.get(f"{URL}/user?username={create_user_data['username']}zzzzz", headers=headers)
-    assert resp.status_code == 400
+    assert resp.status_code == 404
 
 def test_update():
     # Sending the first request should be fine
