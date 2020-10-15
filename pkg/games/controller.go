@@ -270,6 +270,17 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 		return err
 	}
 
+	type DatabasePlayer struct {
+		UID      uint64
+		GID      uint64
+		Admitted bool
+	}
+
+	var persist_players []DatabasePlayer
+	for _, indexed_player := range game.ToPlayer {
+		persist_players = append(persist_players, DatabasePlayer{indexed_player.UID, game.GID, indexed_player.Admitted})
+	}
+
 	// Don't hold the lock while we are writing the transaction.
 	c.lock.Unlock()
 
@@ -281,7 +292,24 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 		return err
 	}
 
-	return nil
+	var candidateError error = nil
+	for _, player := range persist_players {
+		var game_player database.GamePlayer
+		if err := tx.First(&game_player, "user_id = ? AND game_id = ?", player.UID, player.GID).Error; err != nil {
+			log.Println("Unable to find game_player in database:", player.UID, "in", player.GID, err)
+			candidateError = err
+			continue
+		}
+
+		game_player.Admitted = player.Admitted
+		if err := tx.Save(&game_player).Error; err != nil {
+			log.Println("Unable to save game_player in database:", player.UID, "in", player.GID, err)
+			candidateError = err
+			continue
+		}
+	}
+
+	return candidateError
 }
 
 // Remove a given game once it is no longer needed.

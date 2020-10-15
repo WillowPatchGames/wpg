@@ -130,6 +130,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 		return nil
 	}); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return hwaterr.WrapError(err, http.StatusNotFound)
+		}
+
 		return err
 	}
 

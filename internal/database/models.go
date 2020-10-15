@@ -74,10 +74,10 @@ type Room struct {
 }
 
 type RoomPlayer struct {
-	UserID sql.NullInt64 `gorm:"unique_index:user_room_unique"`
+	UserID sql.NullInt64 `gorm:"primaryKey;autoIncrement:false;unique_index:user_room_unique"`
 	User   User
 
-	RoomID uint64 `gorm:"unique_index:user_room_unique"`
+	RoomID uint64 `gorm:"primaryKey;autoIncrement:false;unique_index:user_room_unique"`
 	Room   Room
 
 	Admitted bool
@@ -109,10 +109,12 @@ type Game struct {
 }
 
 type GamePlayer struct {
-	UserID sql.NullInt64 `gorm:"unique_index:user_game_unique"`
+	ID uint64 `gorm:"primaryKey"`
+
+	UserID sql.NullInt64 `gorm:"primaryKey;autoIncrement:false;unique_index:user_game_unique"`
 	User   User
 
-	GameID uint64 `gorm:"unique_index:user_game_unique"`
+	GameID uint64 `gorm:"primaryKey;autoIncrement:false;unique_index:user_game_unique"`
 	Game   Game
 
 	Admitted bool
