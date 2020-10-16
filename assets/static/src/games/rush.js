@@ -122,6 +122,10 @@ class RushController {
   onMessage(type, handler) {
     return this.wsController.onMessage(type, handler);
   }
+
+  close() {
+    this.wsController.close();
+  }
 }
 
 class RushData {
@@ -415,6 +419,10 @@ class RushGame {
     var ret = this.data.play(tile, pos);
     this.controller.play(tile, tile_pos);
     return ret;
+  }
+
+  close() {
+    this.controller.close();
   }
 }
 

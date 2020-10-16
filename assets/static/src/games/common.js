@@ -286,6 +286,12 @@ class WebSocketController {
     this.addEventListener("message", event_handler);
     return () => this.removeEventListener("message", event_handler);
   }
+
+  close() {
+    if (this.game.ws) {
+      this.game.ws.close();
+    }
+  }
 }
 
 export {

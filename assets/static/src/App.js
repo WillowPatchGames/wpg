@@ -93,20 +93,29 @@ class App extends React.Component {
 
     code = normalizeCode(code);
 
-    var game = await GameModel.FromCode(this.state.user, code);
-    if (game.error !== null) {
-      // Try loading it as a room instead.
+    var try_game = code[0] === "g" && (code[1] === "c" || code[1] === "p") && code[2] === '-';
+    var try_room = code[0] === "r" && (code[1] === "c" || code[1] === "p") && code[2] === '-';
+
+    if (!try_game && !try_room) {
+      try_game = true;
+      try_room = true;
+    }
+
+    if (try_game) {
+      var game = await GameModel.FromCode(this.state.user, code);
+      if (game.error === undefined || game.error === null) {
+        this.setGame(game);
+        this.setPage('play');
+        return;
+      }
+    }
+
+    if (try_room) {
+      // Try loading it as a room instead, before displaying the game error page.
       var room = await RoomModel.FromCode(this.state.user, code);
-      if (room.error === null || room.error === undefined) {
-        this.setCode(code);
+      if (room.error === undefined || room.error === null) {
         this.setRoom(room);
         this.setPage('room');
-      }
-    } else {
-      this.setCode(code);
-      this.setGame(game);
-      if (this.state.page === '') {
-        this.setPage('play');
       }
     }
   }

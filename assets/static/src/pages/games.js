@@ -32,7 +32,7 @@ import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { LoginForm } from './login.js';
 import { Game } from '../component.js';
 import { RushGame, RushData } from '../games/rush.js';
-import { UserCache } from '../utils/cache.js';
+import { UserCache, GameCache } from '../utils/cache.js';
 import { gravatarify } from '../utils/gravatar.js';
 
 function loadGame(game) {
@@ -277,6 +277,8 @@ class AfterPartyPage extends React.Component {
       message: "Loading results...",
       timeout: killable(() => { this.refreshData() }, 5000),
     };
+
+    GameCache.Invalidate(this.props.game.id);
 
     this.unmount = addEv(this.game, {
       "game-state": async (data) => {
@@ -790,6 +792,10 @@ class CreateGameForm extends React.Component {
         this.props.setPage('play');
         this.props.setCode(game.code);
       }
+
+      if (this.props.callback !== undefined && this.props.callback !== null) {
+        this.props.callback();
+      }
     }
   }
 
@@ -1091,31 +1097,43 @@ class JoinGamePage extends React.Component {
       return;
     }
 
-    var game = await GameModel.FromCode(this.props.user, this.state.code);
+    var try_game = this.state.code[0] === "g" && (this.state.code[1] === "c" || this.state.code[1] === "p") && this.state.code[2] === '-';
+    var try_room = this.state.code[0] === "r" && (this.state.code[1] === "c" || this.state.code[1] === "p") && this.state.code[2] === '-';
 
-    if (game.error !== null) {
-      // Try loading it as a room instead, before displaying the game error page.
-      var room = await RoomModel.FromCode(this.props.user, this.state.code);
+    if (!try_game && !try_room) {
+      try_game = true;
+      try_room = true;
+    }
 
-      if (room.error !== null) {
-        console.error(room.error);
+    if (try_game) {
+      var game = await GameModel.FromCode(this.props.user, this.state.code);
+      if (game.error === undefined || game.error === null) {
+        this.props.setCode(game.code);
+        this.props.setGame(game);
+        this.props.setPage('play');
+        return;
+      }
+
+      if (game.error !== null && !try_room) {
         console.error(game.error);
         this.setError(game.error.message);
-      } else {
-        if (room.games) {
-          game = await GameModel.FromId(this.props.user, room.games[room.games.length - 1]);
-          if (game.error !== null) {
-            this.props.setGame(game);
-          }
-        }
+        return;
+      }
+    }
+
+    if (try_room) {
+      // Try loading it as a room instead, before displaying the game error page.
+      var room = await RoomModel.FromCode(this.props.user, this.state.code);
+      if (room.error === undefined || room.error === null) {
         this.props.setCode(room.code);
         this.props.setRoom(room);
         this.props.setPage('room');
       }
-    } else {
-      this.props.setCode(game.code);
-      this.props.setGame(game);
-      this.props.setPage('play');
+
+      if (room.error !== null) {
+        console.error(room.error);
+        this.setError(room.error.message);
+      }
     }
   }
 

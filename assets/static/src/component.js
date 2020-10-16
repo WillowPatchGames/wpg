@@ -802,7 +802,7 @@ class Game extends React.Component {
             e(Button, {
               raised: true,
               key: "check",
-              theme: ['secondaryBg', 'onSecondary'],
+              theme: 'secondary',
               onClick: this.doCheck.bind(this),
               onTouchEnd: this.doCheck.bind(this),
             }, "Check"),
@@ -817,6 +817,7 @@ class Game extends React.Component {
             e(Button, {
               outlined: true,
               key: "recall",
+              theme: 'secondary',
               unelevated: shallowEqual(this.state.presentation.selected, ["recall"]) || shallowEqual(this.state.presentation.selected, ["bank",""]),
               ref: this.droppable(["recall"]),
               onClick: this.handler(["recall"]),
