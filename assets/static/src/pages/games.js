@@ -383,6 +383,12 @@ class AfterPartyPage extends React.Component {
     this.game.interface.controller.wsController.send({"message_type": "peek"});
   }
   returnToRoom() {
+    if (this.props.game.interface) {
+      this.props.game.interface.close();
+    }
+
+    this.props.game.interface = null;
+
     this.props.setGame(null);
     this.props.setPage("room");
   }
