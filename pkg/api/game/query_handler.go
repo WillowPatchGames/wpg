@@ -160,8 +160,9 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		handle.resp.Room = uint64(game.RoomID.Int64)
 	}
 	handle.resp.Admitted = game_player.Admitted
+	handle.resp.Style = game.Style
+
 	if game_player.Admitted && !game_player.Banned {
-		handle.resp.Style = game.Style
 		handle.resp.Open = game.Open
 		handle.resp.JoinCode = game.JoinCode.String
 		handle.resp.Lifecycle = game.Lifecycle
