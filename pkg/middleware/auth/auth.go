@@ -64,7 +64,7 @@ func (a *authMW) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error 
 	if token != "" {
 		if err := database.InTransaction(func(tx *gorm.DB) error {
 			if err := tx.First(&auth, "category = ? AND key = ?", "api-token", token).Error; err != nil {
-				log.Println("Unable to find user with token", token)
+				log.Println("Unable to find user with token")
 				return err
 			}
 
