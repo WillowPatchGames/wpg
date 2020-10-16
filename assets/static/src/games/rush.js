@@ -354,6 +354,16 @@ class RushGame {
           this.data.draw(...message.added.hand);
         }
       }
+
+      // Now go through the hand and board and make sure every tile that the
+      // server thinks is in the hand is at least present somewhere.
+      if (message.hand) {
+        for (let tile of message.hand) {
+          if (this.data.positionOf(tile) === null) {
+            this.data.draw(tile);
+          }
+        }
+      }
     }
 
     // After the first state message, consider ourselves started and let the
