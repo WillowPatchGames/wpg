@@ -14,7 +14,7 @@ import '@rmwc/switch/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 
-import { Avatar } from '@rmwc/avatar';
+import { Avatar, AvatarCount, AvatarGroup } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
@@ -160,12 +160,20 @@ class RushGameSynopsis extends React.Component {
         );
       }
 
+      var representative = null;
+      var spectators = 0;
       for (let player_id of Object.keys(this.state.players).sort()) {
         if (+player_id === this.props.user.id) {
           continue;
         }
 
         let them = this.state.players[player_id];
+        if (!them.playing) {
+          spectators += 1;
+          representative = them;
+          continue;
+        }
+
         player_view.push(
           <div className="playerSummary">
             <Avatar src={ gravatarify(them.user) } name={ them.user.display } size="xlarge" />
@@ -178,6 +186,25 @@ class RushGameSynopsis extends React.Component {
               :
                 <span className="playerSummaryInfo">Spectator</span>
             }
+          </div>
+        );
+      }
+
+      if (spectators == 1) {
+        player_view.push(
+          <div className="playerSummary">
+            <Avatar src={ gravatarify(representative.user) } name={ representative.user.display } size="xlarge" />
+            <span className="playerSummaryInfo">Spectator</span>
+          </div>
+        );
+      } else if (spectators > 1) {
+        player_view.push(
+          <div className="playerSummary">
+            <AvatarGroup dense>
+              <Avatar src={ gravatarify(representative.user) } name={ representative.user.display } size="xlarge" />
+              <AvatarCount size="xlarge" overflow value={ spectators - 1 } />
+            </AvatarGroup>
+            <span className="playerSummaryInfo">Spectators</span>
           </div>
         );
       }

@@ -291,6 +291,12 @@ class WebSocketController {
     if (this.game.ws) {
       this.game.ws.close();
     }
+
+    for (let type in this.listeners) {
+      for (let handler of this.listeners[type]) {
+        this.removeEventListener(type, handler);
+      }
+    }
   }
 }
 
