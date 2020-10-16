@@ -2,12 +2,14 @@ import React from 'react';
 
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
+import '@rmwc/checkbox/styles';
 import '@rmwc/grid/styles';
 import '@rmwc/list/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 
 import { Button } from '@rmwc/button';
+import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
 import * as g from '@rmwc/grid';
 import * as l from '@rmwc/list';
@@ -24,6 +26,8 @@ class RoomPage extends React.Component {
     this.state = {
       game_choices: null,
       timeout: killable(() => { this.checkForGames() }, 5000),
+      dummy: null,
+      members: this.props.room.members,
     };
 
     this.code_ref = React.createRef();
@@ -41,6 +45,8 @@ class RoomPage extends React.Component {
   }
 
   async checkForGames() {
+    // XXX: Convert to WebSocket
+    this.props.room.games = null;
     await this.props.room.update();
 
     if (this.props.room.games) {
@@ -60,6 +66,8 @@ class RoomPage extends React.Component {
     } else {
       this.setState(state => Object.assign({}, state, { game_choices: null }));
     }
+
+    this.setState(state => Object.assign({}, state, { members: this.props.room.members }));
   }
 
   async joinGame(game) {
@@ -73,6 +81,9 @@ class RoomPage extends React.Component {
 
   async deleteGame(game) {
     await game.delete();
+    this.props.setGame(null);
+    this.setState(state => Object.assign({}, state, { game_choices: null }));
+
     if (game.error !== null) {
       console.log(game);
     } else {
@@ -80,7 +91,92 @@ class RoomPage extends React.Component {
     }
   }
 
+  async toggleAdmitted(member) {
+    if (this.props.user.id !== this.props.room.owner || member.user_id === this.props.room.owner) {
+      return;
+    }
+
+    member.admitted = !member.admitted;
+    this.setState(state => Object.assign({}, state));
+    await this.props.room.admitPlayer(member.user_id, member.admitted, member.banned);
+    this.setState(state => Object.assign({}, state, { members: this.props.room.members }));
+  }
+
   render() {
+    let left_panel = [];
+    if (this.props.user.id === this.props.room.owner) {
+      left_panel.push(
+        <article className="text">
+          <Typography use="headline3">Joining</Typography>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <l.List twoLine>
+                <l.ListGroup>
+                  <l.ListItem disabled>
+                    <p>Share this code to let users join:</p>
+                  </l.ListItem>
+                  <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+                    <l.ListItemText className="App-game-code">
+                      <TextField fullwidth readOnly value={ this.props.room.code } inputRef={ this.code_ref } />
+                    </l.ListItemText>
+                    <l.ListItemMeta icon="content_copy" />
+                  </l.ListItem>
+                  <l.ListItem disabled>
+                    <p>Or have them visit this link:</p>
+                  </l.ListItem>
+                  <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
+                    <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.props.room.code + "#room" }>{ window.location.origin + "/?code=" + this.props.room.code + "#room" }</a></p>
+                  </l.ListItem>
+                </l.ListGroup>
+              </l.List>
+            </div>
+          </c.Card>
+          <br />
+          <br />
+        </article>
+      );
+    }
+
+    if (!this.props.room.admitted) {
+      left_panel.push(
+        <article className="text">
+          <Typography use="headline3">Joining</Typography>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <p>Please wait to be admitted to this room by the moderator.</p>
+            </div>
+          </c.Card>
+        </article>
+      );
+    } else if (this.state.members !== undefined && this.state.members !== null && this.state.members.length > 0) {
+      left_panel.push(
+        <article className="text">
+          <Typography use="headline3">Members</Typography>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <l.List twoLine>
+                <l.ListGroup>
+                  <l.ListItem disabled>
+                    <b>Users</b>
+                  </l.ListItem>
+                  { this.state.members.map((member, i) =>
+                      member.user
+                        ? <l.ListItem key={member.user.display} disabled>
+                          <span className="unselectable">{+i + 1}.&nbsp;</span> {member.user.display}
+                          <l.ListItemMeta>
+                            <Checkbox checked={member.admitted} label="Admitted" onChange={ () => this.toggleAdmitted(member) } disabled={ this.props.user.id !== this.props.room.owner } />
+                          </l.ListItemMeta>
+                        </l.ListItem>
+                        : null
+                  )}
+                </l.ListGroup>
+              </l.List>
+            </div>
+          </c.Card>
+        </article>
+      );
+    }
+
     let right_panel = null;
     if (this.props.game === null) {
       if (this.props.user.id === this.props.room.owner && this.state.game_choices === null) {
@@ -130,32 +226,7 @@ class RoomPage extends React.Component {
         <Typography use="headline2">Room</Typography>
         <g.Grid fixedColumnWidth={ true }>
           <g.GridCell align="left" span={6}>
-            <article className="text">
-              <Typography use="headline3">Joining</Typography>
-              <c.Card>
-                <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-                  <l.List twoLine>
-                    <l.ListGroup>
-                      <l.ListItem disabled>
-                        <p>Share this code to let users join:</p>
-                      </l.ListItem>
-                      <l.ListItem onClick={() => { this.code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
-                        <l.ListItemText className="App-game-code">
-                          <TextField fullwidth readOnly value={ this.props.room.code } inputRef={ this.code_ref } />
-                        </l.ListItemText>
-                        <l.ListItemMeta icon="content_copy" />
-                      </l.ListItem>
-                      <l.ListItem disabled>
-                        <p>Or have them visit this link:</p>
-                      </l.ListItem>
-                      <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-                        <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.props.room.code + "#room" }>{ window.location.origin + "/?code=" + this.props.room.code + "#room" }</a></p>
-                      </l.ListItem>
-                    </l.ListGroup>
-                  </l.List>
-                </div>
-              </c.Card>
-            </article>
+            { left_panel }
           </g.GridCell>
           <g.GridCell align="right" span={6}>
             <Typography use="headline3">Playing</Typography>

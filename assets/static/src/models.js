@@ -1,3 +1,5 @@
+import { UserCache } from './utils/cache.js';
+
 function nonempty(str) {
   return str !== undefined && str !== null && str !== "";
 }
@@ -775,7 +777,6 @@ class RoomModel {
 
   async update() {
     var uri = this.api + '/room/' + this.id;
-
     const response = await fetch(uri, {
       method: 'GET',
       headers: {
@@ -796,7 +797,41 @@ class RoomModel {
     Object.assign(this, result);
     this.error = null;
     this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+
+    if (this.members !== undefined && this.members !== null && this.members.length > 0) {
+      for (let member of this.members) {
+        member.user = await UserCache.FromId(member.user_id);
+      }
+    }
+
     return this;
+  }
+
+  async admitPlayer(user_id, admitted, banned) {
+    var request = {
+      'user_id': user_id,
+      'admitted': admitted,
+      'banned': banned,
+    }
+
+    var uri = this.api + '/room/' + this.id + '/admit';
+    const result = await fetch(uri, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request),
+    });
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+      return result;
+    }
+
+    return await this.update();
   }
 }
 

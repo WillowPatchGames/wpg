@@ -16,13 +16,13 @@ import '@rmwc/textfield/styles';
 
 import { Avatar } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
+import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
 import * as g from '@rmwc/grid';
 import * as l from '@rmwc/list';
 import { Select } from '@rmwc/select';
 import { Switch } from '@rmwc/switch';
-import { Checkbox } from '@rmwc/checkbox';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
