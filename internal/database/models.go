@@ -73,7 +73,7 @@ type Room struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-type RoomPlayer struct {
+type RoomMember struct {
 	UserID sql.NullInt64 `gorm:"primaryKey;autoIncrement:false;unique_index:user_room_unique"`
 	User   User
 
@@ -109,8 +109,6 @@ type Game struct {
 }
 
 type GamePlayer struct {
-	ID uint64 `gorm:"primaryKey"`
-
 	UserID sql.NullInt64 `gorm:"primaryKey;autoIncrement:false;unique_index:user_game_unique"`
 	User   User
 

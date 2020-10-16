@@ -50,7 +50,7 @@ func OpenDatabase(format string, conn string, dry bool, logLevel string) error {
 		return err
 	}
 
-	return db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &RoomPlayer{}, &Game{}, &GamePlayer{},
+	return db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &RoomMember{}, &Game{}, &GamePlayer{},
 		&Plan{}, &UserPlan{}, &UserPlanAccounting{})
 }
 

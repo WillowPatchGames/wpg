@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -102,7 +101,6 @@ func (handle QueryHandler) verifyRequest() error {
 func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		log.Println("Here")
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 

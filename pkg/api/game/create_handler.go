@@ -134,16 +134,47 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
-		var game_player database.GamePlayer
-		game_player.UserID.Valid = true
-		game_player.UserID.Int64 = int64(game.OwnerID)
-		game_player.GameID = game.ID
-		if !game.Open {
-			game_player.JoinCode.Valid = true
-			game_player.JoinCode.String = "gp-" + utils.JoinCode()
+		if !game.RoomID.Valid {
+			// When we're outside of a room, only admit ourselves by default.
+			var game_player database.GamePlayer
+			game_player.UserID.Valid = true
+			game_player.UserID.Int64 = int64(game.OwnerID)
+			game_player.GameID = game.ID
+			if !game.Open {
+				game_player.JoinCode.Valid = true
+				game_player.JoinCode.String = "gp-" + utils.JoinCode()
+			}
+			game_player.Admitted = true
+			return tx.Create(&game_player).Error
+		} else {
+			var members []database.RoomMember
+			if err := tx.Model(&database.RoomMember{}).Where("room_id = ?", room.ID).Find(&members).Error; err != nil {
+				return err
+			}
+
+			var candidateError error = nil
+			for _, member := range members {
+				if !member.Admitted || member.Banned || !member.UserID.Valid {
+					continue
+				}
+
+				var game_player database.GamePlayer
+				game_player.UserID = member.UserID
+				game_player.GameID = game.ID
+				if !game.Open {
+					game_player.JoinCode.Valid = true
+					game_player.JoinCode.String = "gp-" + utils.JoinCode()
+				}
+				game_player.Admitted = true
+				if err := tx.Create(&game_player).Error; err != nil {
+					log.Println("Unable to create game_player from room member:", game_player, member, err)
+					candidateError = err
+					continue
+				}
+			}
+
+			return candidateError
 		}
-		game_player.Admitted = true
-		return tx.Create(&game_player).Error
 	}); err != nil {
 		log.Println("Got error from handler:", err)
 		return err

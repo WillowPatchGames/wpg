@@ -108,16 +108,16 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		}
 
 		// Add the room creator to this room as a player.
-		var room_player database.RoomPlayer
-		room_player.UserID.Valid = true
-		room_player.UserID.Int64 = int64(room.OwnerID)
-		room_player.RoomID = room.ID
+		var room_member database.RoomMember
+		room_member.UserID.Valid = true
+		room_member.UserID.Int64 = int64(room.OwnerID)
+		room_member.RoomID = room.ID
 		if !room.Open {
-			room_player.JoinCode.Valid = true
-			room_player.JoinCode.String = "rp-" + utils.JoinCode()
+			room_member.JoinCode.Valid = true
+			room_member.JoinCode.String = "rp-" + utils.JoinCode()
 		}
-		room_player.Admitted = true
-		return tx.Create(&room_player).Error
+		room_member.Admitted = true
+		return tx.Create(&room_member).Error
 	}); err != nil {
 		return err
 	}
