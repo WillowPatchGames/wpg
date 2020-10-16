@@ -109,7 +109,7 @@ func (handle *AdmitHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			var candidateError error = nil
 			for _, game := range games {
 				var game_player database.GamePlayer
-				if err := tx.First(&game_player, "user_id = ? AND game_id = ?", room_member.UserID, game.ID).Error; err != nil {
+				if err := tx.First(&game_player, "user_id = ? AND game_id = ?", room_member.UserID, game.ID).Error; err == nil {
 					// If this game player already exists, leave it as-is; this way game
 					// state doesn't get messed up.
 					continue

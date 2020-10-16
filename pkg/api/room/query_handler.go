@@ -29,13 +29,17 @@ type membersInfo struct {
 }
 
 type queryHandlerResponse struct {
-	RoomID       uint64        `json:"id"`
-	Owner        uint64        `json:"owner"`
-	Style        string        `json:"style,omitempty"`
-	Open         bool          `json:"open"`
-	CurrentGames []uint64      `json:"games,omitempty"`
-	Admitted     bool          `json:"admitted"`
-	Members      []membersInfo `json:"members,omitempty"`
+	RoomID uint64 `json:"id"`
+	Owner  uint64 `json:"owner"`
+	Style  string `json:"style,omitempty"`
+	Open   bool   `json:"open,omitempty"`
+	Games  struct {
+		Pending  []uint64 `json:"pending,omitempty"`
+		Playing  []uint64 `json:"playing,omitempty"`
+		Finished []uint64 `json:"finished,omitempty"`
+	} `json:"games"`
+	Admitted bool          `json:"admitted"`
+	Members  []membersInfo `json:"members,omitempty"`
 }
 
 type QueryHandler struct {
@@ -93,7 +97,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		if handle.req.RoomID > 0 {
-			if err := tx.Preload("Games", "lifecycle = ?", "pending").First(&room, handle.req.RoomID).Error; err != nil {
+			if err := tx.First(&room, handle.req.RoomID).Error; err != nil {
 				return err
 			}
 
@@ -103,7 +107,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				return err
 			}
 		} else if strings.HasPrefix(handle.req.JoinCode, "rc-") {
-			if err := tx.Preload("Games", "lifecycle = ?", "pending").First(&room, "join_code = ?", handle.req.JoinCode).Error; err != nil {
+			if err := tx.First(&room, "join_code = ?", handle.req.JoinCode).Error; err != nil {
 				return err
 			}
 
@@ -138,7 +142,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				}
 			}
 
-			if err := tx.Preload("Games", "lifecycle = ?", "pending").First(&room, "id = ?", room_member.RoomID).Error; err != nil {
+			if err := tx.First(&room, "id = ?", room_member.RoomID).Error; err != nil {
 				return err
 			}
 		}
@@ -163,6 +167,18 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 				handle.resp.Members = append(handle.resp.Members, person)
 			}
+
+			if err := tx.Model(&database.Game{}).Where("room_id = ? AND lifecycle = ?", room.ID, "pending").Select("id").Find(&handle.resp.Games.Pending).Error; err != nil {
+				return err
+			}
+
+			if err := tx.Model(&database.Game{}).Where("room_id = ? AND lifecycle = ?", room.ID, "playing").Select("id").Find(&handle.resp.Games.Playing).Error; err != nil {
+				return err
+			}
+
+			if err := tx.Model(&database.Game{}).Where("room_id = ? AND lifecycle = ?", room.ID, "finished").Select("id").Find(&handle.resp.Games.Finished).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -172,18 +188,11 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 	handle.resp.RoomID = room.ID
 	handle.resp.Owner = room.OwnerID
-	handle.resp.Open = room.Open
 	handle.resp.Admitted = room_member.Admitted && !room_member.Banned
 
-	if room_member.Admitted || !room_member.Banned {
+	if room_member.Admitted && !room_member.Banned {
+		handle.resp.Open = room.Open
 		handle.resp.Style = room.Style
-
-		if len(room.Games) > 0 {
-			handle.resp.CurrentGames = make([]uint64, len(room.Games))
-			for index, game := range room.Games {
-				handle.resp.CurrentGames[index] = game.ID
-			}
-		}
 	}
 
 	utils.SendResponse(w, r, handle)
