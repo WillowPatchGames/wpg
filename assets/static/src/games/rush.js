@@ -359,8 +359,9 @@ class RushGame {
       // server thinks is in the hand is at least present somewhere.
       if (message.hand) {
         for (let tile of message.hand) {
-          if (this.data.positionOf(tile) === null) {
-            this.data.draw(tile);
+          var l_tile = LetterTile.deserialize(tile);
+          if (this.data.positionOf(l_tile) === null) {
+            this.data.draw(l_tile);
           }
         }
       }
