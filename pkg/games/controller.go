@@ -504,21 +504,27 @@ func (c *Controller) Undispatch(gid uint64, uid uint64) (chan interface{}, error
 	return player.Notifications, nil
 }
 
-func parseMessageHeader(message []byte) (MessageHeader, error) {
+func parseMessageHeader(message []byte) (MessageHeader, interface{}, error) {
 	var obj MessageHeader
+	var full interface{}
 
 	if err := json.Unmarshal(message, &obj); err != nil {
-		return obj, err
+		return obj, full, err
 	}
 
-	return obj, nil
+	if err := json.Unmarshal(message, &full); err != nil {
+		return obj, full, nil
+	}
+
+	return obj, full, nil
 }
 
 func (c *Controller) Dispatch(message []byte) error {
 	var header MessageHeader
+	var full interface{}
 	var err error
 
-	header, err = parseMessageHeader(message)
+	header, full, err = parseMessageHeader(message)
 	if err != nil {
 		return err
 	}
@@ -552,6 +558,9 @@ func (c *Controller) Dispatch(message []byte) error {
 	if !ok {
 		return errors.New("user (" + strconv.FormatUint(header.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
+
+	playerData.InboundMsgs[playerData.InboundID] = full
+	playerData.InboundID++
 
 	err = c.dispatch(message, header, gameData, playerData)
 	if err != nil {
