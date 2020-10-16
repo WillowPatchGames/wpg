@@ -151,10 +151,6 @@ article.text p, article.text ul {
   text-align: left;
 }
 
-article.text p {
-  text-indent: 20px;
-}
-
 .flexbox {
   display: flex;
   flex-wrap: wrap;

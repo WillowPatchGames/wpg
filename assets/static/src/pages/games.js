@@ -190,7 +190,7 @@ class RushGameSynopsis extends React.Component {
         );
       }
 
-      if (spectators == 1) {
+      if (spectators === 1) {
         player_view.push(
           <div className="playerSummary">
             <Avatar src={ gravatarify(representative.user) } name={ representative.user.display } size="xlarge" />
