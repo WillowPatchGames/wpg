@@ -96,4 +96,5 @@ beta-deploy: all dist
 prod-deploy: all dist
 	mv $(DIST).xz ../ansible/files/$(DIST).xz
 	cd ../nginx-configs && tar -cJf ../ansible/files/nginx.tar.xz *
+	cd ../ansible && bash ./backup.sh
 	cd ../ansible && ansible-playbook -i hosts prod.yml
