@@ -406,20 +406,16 @@ func (hub *Hub) registerClient(client *Client) {
 func (hub *Hub) deleteGame(gameID GameID) {
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
-		if model, ok := hub.dbgames[gameID]; !ok || model == nil {
-			var gamedb database.Game
-			if err := tx.First(&gamedb, uint64(gameID)).Error; err != nil {
-				return err
-			}
-
-			hub.dbgames[gameID] = &gamedb
-		}
-
-		if err := hub.controller.PersistGame(hub.dbgames[gameID], tx); err != nil {
+		var gamedb database.Game
+		if err := tx.First(&gamedb, uint64(gameID)).Error; err != nil {
 			return err
 		}
 
-		return tx.Save(hub.dbgames[gameID]).Error
+		if err := hub.controller.PersistGame(&gamedb, tx); err != nil {
+			return err
+		}
+
+		return tx.Save(&gamedb).Error
 	}); err != nil {
 		log.Println("Unable to persist game (", gameID, "):", err)
 		return
@@ -471,6 +467,10 @@ func (hub *Hub) deleteClient(client *Client) {
 		// client connection while it is being removed elsewhere.
 		return
 	}
+
+	// Notify the game controller that the player left, so we quit trying to
+	// process messages for them.
+	hub.controller.PlayerLeft(uint64(client.gameID), uint64(client.userID))
 
 	if deleteGame {
 		hub.deleteGame(client.gameID)
@@ -542,7 +542,7 @@ func (hub *Hub) processMessage(client *Client, message []byte) error {
 		return errors.New("unable to process message from non-existent client:" + client.String())
 	}
 
-	err := hub.controller.Dispatch(message)
+	err := hub.controller.Dispatch(message, uint64(client.gameID), uint64(client.userID))
 	if err != nil {
 		log.Println("Got error processing message:", err, string(message))
 	}

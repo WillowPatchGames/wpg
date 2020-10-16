@@ -16,6 +16,9 @@ import (
 const (
 	// Time between countdown events
 	countdownDelay = 2 * time.Second
+
+	// Size of the notification queue for a player, number of messages.
+	notificationQueueLength = 1024
 )
 
 type PlayerData struct {
@@ -174,7 +177,7 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		// then add it to the controller.
 		data.CountdownTimer = nil
 		for _, indexed_player := range data.ToPlayer {
-			indexed_player.Notifications = make(chan interface{}, 64)
+			indexed_player.Notifications = make(chan interface{}, notificationQueueLength)
 		}
 
 		c.ToGame[gamedb.ID] = &data
@@ -261,6 +264,9 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 			} else {
 				gamedb.Lifecycle = "finished"
 			}
+		} else {
+			state.Started = false
+			state.Finished = false
 		}
 	}
 
@@ -350,6 +356,10 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 
 	_, present := game.ToPlayer[uid]
 	if present {
+		if game.ToPlayer[uid].Notifications == nil {
+			game.ToPlayer[uid].Notifications = make(chan interface{}, notificationQueueLength)
+		}
+
 		return present, nil
 	}
 
@@ -364,7 +374,7 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 		OutboundMsgs:    make(map[int]interface{}),
 		InboundReplies:  make(map[int]int),
 		OutboundReplies: make(map[int]int),
-		Notifications:   make(chan interface{}, 64),
+		Notifications:   make(chan interface{}, notificationQueueLength),
 	}
 
 	return false, c.notifyAdmin(game, uid)
@@ -461,6 +471,27 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, playing
 	return nil
 }
 
+func (c *Controller) PlayerLeft(gid uint64, uid uint64) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if !c.GameExists(gid) {
+		log.Println("game with specified id (" + strconv.FormatUint(gid, 10) + ") doesn't exist in controller; ignoring leave notificaiton")
+		return
+	}
+
+	if !c.PlayerExists(gid, uid) {
+		log.Println("player with specified id (" + strconv.FormatUint(uid, 10) + ") does not exists in controller (" + strconv.FormatUint(gid, 10) + "); ignoring leave notificaiton")
+		return
+	}
+
+	log.Println("Removing notification socket for leaving player:", uid, "in", gid)
+
+	game := c.ToGame[gid]
+	player := game.ToPlayer[uid]
+	player.Notifications = nil
+}
+
 // Remove a given game once it is no longer needed.
 //
 // XXX: Decide if we actually want this or not. Usually it probably isn't a
@@ -519,7 +550,7 @@ func parseMessageHeader(message []byte) (MessageHeader, interface{}, error) {
 	return obj, full, nil
 }
 
-func (c *Controller) Dispatch(message []byte) error {
+func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 	var header MessageHeader
 	var full interface{}
 	var err error
@@ -531,6 +562,14 @@ func (c *Controller) Dispatch(message []byte) error {
 
 	if header.Mode != "rush" {
 		return errors.New("unknown type of message")
+	}
+
+	if header.ID != gid {
+		return errors.New("phantom message: message came over wrong websocket for different game: " + strconv.FormatUint(uid, 10) + " in " + strconv.FormatUint(gid, 10) + " :: " + string(message))
+	}
+
+	if header.Player != uid {
+		return errors.New("phantom message: message came over wrong websocket for different player: " + strconv.FormatUint(uid, 10) + " in " + strconv.FormatUint(gid, 10) + " :: " + string(message))
 	}
 
 	// We're going to release this lock right away, so don't bother with
@@ -580,6 +619,11 @@ func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id i
 
 	if reply_to > 0 {
 		player.InboundReplies[reply_to] = message_id
+	}
+
+	if player.Notifications == nil {
+		log.Println("Player disconnected; refusing to send message to peer.", player.UID)
+		return
 	}
 
 	_, err := json.Marshal(obj)
