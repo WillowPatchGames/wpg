@@ -50,8 +50,9 @@ func OpenDatabase(format string, conn string, dry bool, logLevel string) error {
 		return err
 	}
 
-	return db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &RoomMember{}, &Game{}, &GamePlayer{},
-		&Plan{}, &UserPlan{}, &UserPlanAccounting{})
+	return db.AutoMigrate(&User{}, &UserConfig{}, &Auth{}, &Room{}, &RoomMember{},
+		&Game{}, &GamePlayer{}, &GameMessage{}, &Plan{}, &UserPlan{},
+		&UserPlanAccounting{})
 }
 
 func InTransaction(handler func(tx *gorm.DB) error, opts ...*sql.TxOptions) error {

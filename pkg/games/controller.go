@@ -39,35 +39,14 @@ type PlayerData struct {
 	// Whether or not the player is ready for the game to begin.
 	Ready bool `json:"ready"`
 
-	// Highest (last seen) incoming message identifier from this player.
-	InboundID int `json:"last_inbound_id"`
-
-	// Last processed message identifier from this player. This should be the
-	// last consecutive identifier we've seen and successfully processed.
-	InboundProcessed int `json:"last_inbound_processed"`
-
-	// All previously seen incoming messages from this player. By using a map,
-	// we can keep track of missing messages in case the connection dropped
-	// and ask for them again if it is the same connection.
-	InboundMsgs map[int]interface{} `json:"inbound"`
+	// All previously seen incoming messages from this player to the server.
+	InboundMsgs []*database.GameMessage `json:"-"`
 
 	// Highest (last issued) outbound message identifier to this player.
 	OutboundID int `json:"outbound_id"`
 
-	// Map of outbound messages to send to the player in case they ask for any
-	// to be repeated.
-	OutboundMsgs map[int]interface{} `json:"outbound"`
-
-	// InboundReplies maps identifiers in InboundMsgs to identifiers in
-	// OutboundMsgs to keep track of replies to individual messages. This is
-	// only for messages on the client which need to be confirmed by the
-	// server.
-	InboundReplies map[int]int `json:"inbound_replies"`
-
-	// OutboundReplies maps identifiers in OutboundMsgs to identifiers in
-	// InboundMsgs to keep track of replies to individual messages. This is
-	// only for messages sent to the client that we expect a response to.
-	OutboundReplies map[int]int `json:"outbound_replies"`
+	// All previously sent messages from the server to this player.
+	OutboundMsgs []*database.GameMessage `json:"-"`
 
 	// When the game is starting, we do a full round-trip for countdown events.
 	// This ensures that everyone listening is actively participating and that
@@ -283,8 +262,29 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 	}
 
 	var persist_players []DatabasePlayer
+	var persist_messages []*database.GameMessage
 	for _, indexed_player := range game.ToPlayer {
 		persist_players = append(persist_players, DatabasePlayer{indexed_player.UID, game.GID, indexed_player.Admitted})
+
+		// Only keep messages which haven't yet been saved. Everything else we can
+		// remove from this queue so it gets garbage collected.
+		var unsaved []*database.GameMessage
+		for _, message := range indexed_player.InboundMsgs {
+			if message.ID == 0 {
+				unsaved = append(unsaved, message)
+			}
+		}
+		indexed_player.InboundMsgs = unsaved
+		persist_messages = append(persist_messages, unsaved...)
+
+		unsaved = nil
+		for _, message := range indexed_player.OutboundMsgs {
+			if message.ID == 0 {
+				unsaved = append(unsaved, message)
+			}
+		}
+		indexed_player.OutboundMsgs = unsaved
+		persist_messages = append(persist_messages, unsaved...)
 	}
 
 	// Don't hold the lock while we are writing the transaction.
@@ -310,6 +310,18 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 		game_player.Admitted = player.Admitted
 		if err := tx.Save(&game_player).Error; err != nil {
 			log.Println("Unable to save game_player in database:", player.UID, "in", player.GID, err)
+			candidateError = err
+			continue
+		}
+	}
+
+	if candidateError != nil {
+		return candidateError
+	}
+
+	for _, message := range persist_messages {
+		if err := tx.Create(message).Error; err != nil {
+			log.Println("Unable to save game message in database:", err)
 			candidateError = err
 			continue
 		}
@@ -366,15 +378,13 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 	// By default, the owner of the game is already admitted into the game.
 	var owner bool = uid == game.Owner
 	game.ToPlayer[uid] = &PlayerData{
-		UID:             uid,
-		Index:           -1,
-		Admitted:        admitted || owner,
-		InboundMsgs:     make(map[int]interface{}),
-		OutboundID:      1,
-		OutboundMsgs:    make(map[int]interface{}),
-		InboundReplies:  make(map[int]int),
-		OutboundReplies: make(map[int]int),
-		Notifications:   make(chan interface{}, notificationQueueLength),
+		UID:           uid,
+		Index:         -1,
+		Admitted:      admitted || owner,
+		InboundMsgs:   nil,
+		OutboundID:    1,
+		OutboundMsgs:  nil,
+		Notifications: make(chan interface{}, notificationQueueLength),
 	}
 
 	return false, c.notifyAdmin(game, uid)
@@ -535,27 +545,21 @@ func (c *Controller) Undispatch(gid uint64, uid uint64) (chan interface{}, error
 	return player.Notifications, nil
 }
 
-func parseMessageHeader(message []byte) (MessageHeader, interface{}, error) {
+func parseMessageHeader(message []byte) (MessageHeader, error) {
 	var obj MessageHeader
-	var full interface{}
 
 	if err := json.Unmarshal(message, &obj); err != nil {
-		return obj, full, err
+		return obj, err
 	}
 
-	if err := json.Unmarshal(message, &full); err != nil {
-		return obj, full, nil
-	}
-
-	return obj, full, nil
+	return obj, nil
 }
 
 func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 	var header MessageHeader
-	var full interface{}
 	var err error
 
-	header, full, err = parseMessageHeader(message)
+	header, err = parseMessageHeader(message)
 	if err != nil {
 		return err
 	}
@@ -598,8 +602,13 @@ func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 		return errors.New("user (" + strconv.FormatUint(header.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
 
-	playerData.InboundMsgs[playerData.InboundID] = full
-	playerData.InboundID++
+	var db_msg = database.GameMessage{
+		UserID:    header.Player,
+		GameID:    header.ID,
+		Timestamp: time.Now(),
+		Message:   string(message),
+	}
+	playerData.InboundMsgs = append(playerData.InboundMsgs, &db_msg)
 
 	err = c.dispatch(message, header, gameData, playerData)
 	if err != nil {
@@ -615,22 +624,24 @@ func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 }
 
 func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id int, reply_to int, obj interface{}) {
-	player.OutboundMsgs[message_id] = obj
-
-	if reply_to > 0 {
-		player.InboundReplies[reply_to] = message_id
-	}
-
 	if player.Notifications == nil {
 		log.Println("Player disconnected; refusing to send message to peer.", player.UID)
 		return
 	}
 
-	_, err := json.Marshal(obj)
+	message, err := json.Marshal(obj)
 	if err != nil {
-		log.Println("Unable to marshal data to send to peer:", player.UID, err, obj)
-		panic("Panicing due to unrecoverable error in game program: attempt to send an unmarshable object to peer")
-	} else {
-		player.Notifications <- obj
+		log.Println("Unable to marshal data to send to peer:", data.GID, player.UID, err, obj)
+		return
 	}
+
+	player.Notifications <- obj
+
+	var db_msg = database.GameMessage{
+		UserID:    player.UID,
+		GameID:    data.GID,
+		Timestamp: time.Now(),
+		Message:   string(message),
+	}
+	player.OutboundMsgs = append(player.OutboundMsgs, &db_msg)
 }

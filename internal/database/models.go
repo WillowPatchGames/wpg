@@ -124,6 +124,19 @@ type GamePlayer struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+type GameMessage struct {
+	ID uint64 `gorm:"primaryKey"`
+
+	UserID    uint64
+	GameID    uint64
+	Timestamp time.Time
+	Message   string
+
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
 const (
 	PlanNotAllowed       int = 0
 	PlanUnlimitedAllowed int = -1
