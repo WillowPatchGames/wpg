@@ -1343,7 +1343,8 @@ class JoinGamePage extends React.Component {
                   <p>
                     Since you're not <a href="#login">logged in</a>, how about
                     playing as a guest for now? You can always upgrade your
-                    account later.
+                    account later. Note that you'll need to create a full
+                    account to start your own games.
                   </p>
                   <form onSubmit={ this.handleGuestSubmit.bind(this) }>
                     <TextField fullwidth placeholder="name" name="guest" inputRef={ this.guest } required /><br />
