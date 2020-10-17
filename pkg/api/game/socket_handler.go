@@ -86,13 +86,12 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println("ServeHTTP - ", handle.Hub)
 
 	// Create Client, Player
-	client := &Client{
-		hub:    handle.Hub,
-		conn:   conn,
-		send:   nil,
-		gameID: GameID(gamedb.ID),
-		userID: UserID(handle.user.ID),
-	}
+	client := new(Client)
+	client.hub = handle.Hub
+	client.conn = conn
+	client.send = nil
+	client.gameID = GameID(gamedb.ID)
+	client.userID = UserID(handle.user.ID)
 
 	// Connect Player to ActiveGame, Client to Hub
 	handle.Hub.register <- client

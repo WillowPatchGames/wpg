@@ -200,16 +200,17 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 		return err
 	}
 
-	c.ToGame[gid] = &GameData{
-		sync.Mutex{},
-		gid,
-		mode,
-		owner,
-		state,
-		make(map[uint64]*PlayerData),
-		0,
-		nil,
-	}
+	game := new(GameData)
+	game.lock = sync.Mutex{}
+	game.GID = gid
+	game.Mode = mode
+	game.Owner = owner
+	game.State = state
+	game.ToPlayer = make(map[uint64]*PlayerData)
+	game.Countdown = 0
+	game.CountdownTimer = nil
+
+	c.ToGame[gid] = game
 
 	return nil
 }
@@ -377,15 +378,15 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 
 	// By default, the owner of the game is already admitted into the game.
 	var owner bool = uid == game.Owner
-	game.ToPlayer[uid] = &PlayerData{
-		UID:           uid,
-		Index:         -1,
-		Admitted:      admitted || owner,
-		InboundMsgs:   nil,
-		OutboundID:    1,
-		OutboundMsgs:  nil,
-		Notifications: make(chan interface{}, notificationQueueLength),
-	}
+	player := new(PlayerData)
+	player.UID = uid
+	player.Index = -1
+	player.Admitted = admitted || owner
+	player.InboundMsgs = nil
+	player.OutboundID = 1
+	player.OutboundMsgs = nil
+	player.Notifications = make(chan interface{}, notificationQueueLength)
+	game.ToPlayer[uid] = player
 
 	return false, c.notifyAdmin(game, uid)
 }

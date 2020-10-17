@@ -36,11 +36,11 @@ const (
 
 	// ReadBufferSize must be limited in order to prevent the client from
 	// starving resources from other players.
-	readBufferSize = 256 * 1024 // 256KB
+	readBufferSize = 16 * 1024 // 16KB
 
 	// SendBufferSize must be limited because players could send messages which
 	// result in large response messages, starving resources from other players.
-	sendBufferSize = 256 * 1024 // 256KB
+	sendBufferSize = 16 * 1024 // 16KB
 
 	// Register and unregister channel buffer size
 	registerChannelSize = 32
@@ -288,13 +288,12 @@ type Hub struct {
 // NewHub creates a new hub.
 func NewHub() *Hub {
 	// Note that inner maps and channels must be created per-game.
-	var ret = &Hub{
-		connections: make(map[GameID]map[UserID]*Client),
-		dbgames:     make(map[GameID]*database.Game),
-		register:    make(chan *Client, registerChannelSize),
-		unregister:  make(chan *Client, registerChannelSize),
-		process:     make(map[GameID]chan ClientMessage),
-	}
+	var ret = new(Hub)
+	ret.connections = make(map[GameID]map[UserID]*Client)
+	ret.dbgames = make(map[GameID]*database.Game)
+	ret.register = make(chan *Client, registerChannelSize)
+	ret.unregister = make(chan *Client, registerChannelSize)
+	ret.process = make(map[GameID]chan ClientMessage)
 
 	ret.controller.Init()
 
