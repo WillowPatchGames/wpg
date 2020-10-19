@@ -113,6 +113,34 @@ plans:
     available_game_styles: "*"
     can_audio_chat: true
     can_video_chat: true
+  - slug: "bug-reporter"
+    name: "I found a bug in Willow Patch Games!"
+    description: "Awarded to those who report bugs, this plan is good for a couple free rooms and games."
+    open: false
+    visible: false
+    min_price_cents: 0
+    suggested_price_cents: 0
+    max_price_cents: 0
+    billed: 0
+    create_room: true
+    max_open_rooms: 1
+    max_total_rooms: 5
+    max_open_games_in_room: 3
+    max_total_games_in_room: 15
+    max_players_in_room: 10
+    max_players_in_game_in_room: 10
+    max_room_in_timeframe_count: -1
+    max_room_in_timeframe_duration: 3153600000000000000
+    create_game: true
+    max_open_games: 1
+    max_total_games: 10
+    max_players_in_game: 10
+    max_spectators_in_game: 10
+    max_games_in_timeframe_count: -1
+    max_games_in_timeframe_duration: 3153600000000000000
+    available_game_styles: "*"
+    can_audio_chat: true
+    can_video_chat: true
 assignments:
   "willowpatchgames@gmail.com":
     - "friends-and-family"
