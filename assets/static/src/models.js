@@ -204,7 +204,7 @@ class UserModel {
     localStorage.removeItem('guest');
 
     Object.assign(this, result);
-    return this.login(password);
+    return await this.login(password);
   }
 
   async save(fields) {
@@ -260,16 +260,18 @@ class UserModel {
     });
 
     const data = await response.json();
-    if ('type' in data && data['type'] === 'error') {
+    if (data !== null && 'type' in data && data['type'] === 'error') {
       console.log(data);
       return data;
     }
 
     var result = [];
-    for (let plan_data of data) {
-      var plan = new UserPlanModel(this);
-      Object.assign(plan, plan_data);
-      result.push(plan);
+    if (data !== null) {
+      for (let plan_data of data) {
+        var plan = new UserPlanModel(this);
+        Object.assign(plan, plan_data);
+        result.push(plan);
+      }
     }
 
     return result;

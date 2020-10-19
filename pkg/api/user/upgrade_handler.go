@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"git.cipherboy.com/WillowPatchGames/wpg/internal/business"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
 
@@ -122,6 +123,10 @@ func (handle UpgradeHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 		}
 
 		if err := tx.Save(handle.user).Error; err != nil {
+			return err
+		}
+
+		if err := business.AddDefaultPlans(tx, *handle.user); err != nil {
 			return err
 		}
 

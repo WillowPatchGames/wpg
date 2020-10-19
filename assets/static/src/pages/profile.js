@@ -512,9 +512,9 @@ class GuestProfilePage extends React.Component {
     if (this.props.user.error) {
       this.setUpgradeError(this.props.user.error.message);
       return;
-    } else {
-      this.props.setPage('profile');
     }
+
+    window.location.reload();
   }
 
   setUpgradeError(message) {

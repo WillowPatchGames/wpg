@@ -170,7 +170,7 @@ func (user *User) InvalidateGuestTokens(tx *gorm.DB) error {
 		panic("Unable to set password for NULL UserID")
 	}
 
-	return tx.Table("auth as a").Where("user_id = ? AND value = ?", user.ID, "guest").Update("expires", time.Now()).Error
+	return tx.Model(&Auth{}).Where("user_id = ? AND value = ?", user.ID, "guest").Update("expires", time.Now()).Error
 }
 
 func (user *User) SetTOTPKey(tx *gorm.DB, device string, secret string, pending bool) error {
