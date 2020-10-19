@@ -11,7 +11,7 @@ class Footer extends React.Component {
             <a href="#about">About Us</a> | <a href="#privacy">Privacy Policy</a> | <a href="#rush-rules">Rush! Rules</a> | <a href="#docs">Documentation</a> | <a href="#pricing">Pricing</a>
           </p>
           <p style={{ fontSize: '0.85em' }} >
-            Questions or comments? <a href="mailto:willowpatchgames@gmail.com">Email us!</a>
+            Questions or comments? <a href="mailto:willowpatchgames@gmail.com">Email us</a> or <a href="https://twitter.com/willowpatchgame">tweet us</a>.
           </p>
           <p style={{ fontSize: '0.85em' }} >
             Copyright (C) Willow Patch Games<br />
