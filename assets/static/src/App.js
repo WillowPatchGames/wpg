@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  withRouter
+} from "react-router-dom";
+
 import '@rmwc/top-app-bar/styles';
 import '@rmwc/icon/styles';
 import '@rmwc/button/styles';
@@ -41,8 +45,6 @@ class App extends React.Component {
     this.snackbar = createSnackbarQueue();
 
     window.App = this;
-
-    window.onhashchange = () => this.setPage(window.location.hash.substring(1));
   }
 
   async componentDidMount() {
@@ -127,7 +129,7 @@ class App extends React.Component {
 
     if (user === null && this.state.user !== null) {
       this.state.user.logout();
-      this.setPage('home');
+      this.setPage('');
       window.location = '/';
     }
 
@@ -135,19 +137,12 @@ class App extends React.Component {
   }
 
   setPage(page) {
-    if (page !== "" && page !== null) {
-      window.location.hash = '#' + page;
-    }
-
-    if (this.state.page === page) {
+    if (page === null) {
       return;
     }
 
-    if (page === "" || page === null) {
-      return;
-    }
-
-    this.setState(state => Object.assign({}, state, { page }));
+    this.props.history.push('/' + page);
+    this.setState(state => Object.assign({}, state));
   }
 
   setRoom(room) {
@@ -212,7 +207,25 @@ class App extends React.Component {
           >
             <Navigation user={ this.state.user } immersive={ this.state.immersive } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
             <SnackbarQueue messages={ this.snackbar.messages } />
-            <Page snackbar={ this.snackbar } user={ this.state.user } page={ this.state.page } room={ this.state.room } game={ this.state.game } setUser={ this.setUser.bind(this) } setPage={ this.setPage.bind(this) } setRoom={ this.setRoom.bind(this) } setGame={ this.setGame.bind(this) } setCode={ this.setCode.bind(this) } setImmersive={ this.setImmersive.bind(this) } />
+            <Page
+              snackbar={ this.snackbar }
+
+              user={ this.state.user }
+              page={ this.state.page }
+              room={ this.state.room }
+              game={ this.state.game }
+
+              setUser={ this.setUser.bind(this) }
+              setPage={ this.setPage.bind(this) }
+              setRoom={ this.setRoom.bind(this) }
+              setGame={ this.setGame.bind(this) }
+              setCode={ this.setCode.bind(this) }
+              setImmersive={ this.setImmersive.bind(this) }
+
+              match={ this.props.match }
+              location={ this.props.location }
+              history={ this.props.history }
+            />
             <Footer page={ this.state.page } />
           </ThemeProvider>
         </RMWCProvider>
@@ -221,4 +234,4 @@ class App extends React.Component {
   }
 }
 
-export default App;
+export default withRouter(App);

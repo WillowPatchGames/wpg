@@ -25,7 +25,7 @@ class AuthedHeaderComponent extends React.Component {
     if (this.props.user !== null && this.props.user.authed) {
       return (
         <div>
-          <Button label={ this.props.user.display } icon="person" unelevated  onClick={ () => this.props.setPage('profile') } />
+          <Button label={ this.props.user.display } icon="person" unelevated onClick={ () => this.props.setPage('profile') } />
           <Button label="Logout" icon="logout" unelevated onClick={() => this.props.setUser(null) } />
           <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('playing')} />
           { this.props.immersive ? <></> :
@@ -109,7 +109,7 @@ class Navigation extends React.Component {
           <bar.TopAppBarRow>
             <bar.TopAppBarSection>
               <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />
-              <Button className="App-Title" onClick={() => this.props.setPage('home') } style={{ color: 'black' }}>Willow Patch Games</Button>
+              <Button className="App-Title" onClick={() => this.props.setPage('') } style={{ color: 'black' }}>Willow Patch Games</Button>
             </bar.TopAppBarSection>
             <bar.TopAppBarSection alignEnd className="App-AuthedHeaderComponent">
               <AuthedHeaderComponent user={ this.props.user } immersive={ this.props.immersive } setPage={ this.props.setPage } setUser={ this.props.setUser } />
@@ -121,7 +121,7 @@ class Navigation extends React.Component {
           <d.Drawer modal open={ this.state.navVisible } onClose={ () => this.setOpen(false) } >
             <d.DrawerContent>
               <l.List onClick={ () => this.setOpen(false) }>
-                <l.ListItem onClick={ () => this.props.setPage('home') }>
+                <l.ListItem onClick={ () => this.props.setPage('') }>
                   <l.ListItemGraphic icon="home" />
                   <l.ListItemText>Home</l.ListItemText>
                 </l.ListItem>
@@ -130,7 +130,7 @@ class Navigation extends React.Component {
                   <l.ListItemGraphic icon="notes" />
                   <l.ListItemText>About</l.ListItemText>
                 </l.ListItem>
-                <l.ListItem onClick={ () => this.props.setPage('rush-rules') }>
+                <l.ListItem onClick={ () => this.props.setPage('rules/rush') }>
                   <l.ListItemGraphic icon="notes" />
                   <l.ListItemText>Rules - Rush!</l.ListItemText>
                 </l.ListItem>

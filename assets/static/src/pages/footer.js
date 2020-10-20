@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Link } from "react-router-dom";
+
 import '../App.css';
 
 class Footer extends React.Component {
@@ -8,7 +10,7 @@ class Footer extends React.Component {
       return (
         <div className="App-footer">
           <p style={{ fontSize: '0.85em' }} >
-            <a href="#about">About Us</a> | <a href="#privacy">Privacy Policy</a> | <a href="#rush-rules">Rush! Rules</a> | <a href="#docs">Documentation</a> | <a href="#pricing">Pricing</a>
+            <Link to="/about">About Us</Link> | <Link to="/privacy">Privacy Policy</Link> | <Link to="/rules/rush">Rush! Rules</Link> | <Link to="/docs">Documentation</Link> | <Link to="/pricing">Pricing</Link>
           </p>
           <p style={{ fontSize: '0.85em' }} >
             Questions or comments? <a href="mailto:willowpatchgames@gmail.com">Email us</a> or <a href="https://twitter.com/willowpatchgame">tweet us</a>.

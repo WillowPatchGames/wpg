@@ -1,6 +1,10 @@
 // Library imports
 import React from 'react';
 
+import {
+  Link,
+} from "react-router-dom";
+
 import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
@@ -694,7 +698,7 @@ class PreGameAdminPage extends React.Component {
           <p>Or have them visit this link:</p>
         </l.ListItem>
         <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-          <p><a ref={ this.link_ref } href={ window.location.origin + "/?code=" + this.game.code + "#play" } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</a></p>
+          <p><Link ref={ this.link_ref } to={ window.location.origin + "/play?code=" + this.game.code } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</Link></p>
         </l.ListItem>
       </l.ListGroup>;
     }
@@ -1227,7 +1231,7 @@ class JoinGamePage extends React.Component {
                 <div>
                   <Typography use="headline3">Host a Room</Typography>
                   <p>
-                    <a href="#create-room">Looking to make a new room? Create one here!</a>.<br />
+                    <Link to="/create/room">Looking to make a new room? Create one here!</Link>.<br />
                     A room lets you play multiple games without having to share a new link every time!
                   </p>
                 </div>
@@ -1245,7 +1249,7 @@ class JoinGamePage extends React.Component {
                 <div>
                   <Typography use="headline3">Host a Single Game</Typography>
                   <p>
-                    <a href="#create-game">Looking to play a single game with some friends? Make one here!</a>
+                    <Link to="/create/game">Looking to play a single game with some friends? Make one here!</Link>
                   </p>
                 </div>
               </div>
@@ -1261,8 +1265,8 @@ class JoinGamePage extends React.Component {
               <div>
                 <Typography use="headline3">Trying to create a room or a game?</Typography>
                 <p>
-                  In order to create rooms and games, <a href="#pricing">purchase
-                  a plan</a> first.
+                  In order to create rooms and games, <Link to="/pricing">purchase
+                  a plan</Link> first.
                 </p>
               </div>
             </div>
@@ -1277,7 +1281,7 @@ class JoinGamePage extends React.Component {
               <Typography use="headline3">Upgrade Your Account</Typography>
               <p>
                 You are currently playing as a guest. In order to create your
-                own games, <a href="#profile">upgrade your account</a> to a
+                own games, <Link to="/profile">upgrade your account</Link> to a
                 full account.
               </p>
             </div>
@@ -1294,8 +1298,8 @@ class JoinGamePage extends React.Component {
               <Typography use="headline3">Join an Existing Room or Game</Typography>
               <p>
                 Good luck, and may the odds be ever in your favor!<br /><br />
-                Need a refresher on <a href="#rush-rules">the rules</a> or want
-                to check out <a href="#docs">the documentation</a>?
+              Need a refresher on <Link to="/rush/rules">the rules</Link> or want
+                to check out <Link to="/docs">the documentation</Link>?
               </p>
             </div>
 
@@ -1341,7 +1345,7 @@ class JoinGamePage extends React.Component {
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
                   <Typography use="headline3">Join as Guest</Typography>
                   <p>
-                    Since you're not <a href="#login">logged in</a>, how about
+                    Since you're not <Link to="/login">logged in</Link>, how about
                     playing as a guest for now? You can always upgrade your
                     account later. Note that you'll need to create a full
                     account to start your own games.

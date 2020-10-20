@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  Link,
+} from "react-router-dom";
+
 import '../App.css';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
@@ -115,7 +119,7 @@ class LoginForm extends React.Component {
             Enter your username or email and password to log into Willow Patch Games.<br/><br/>
           </p>
           <p>
-            <a href="#signup">New user? Sign up instead!</a>
+            <Link to="/signup">New user? Sign up instead!</Link>
           </p>
 
           { form }
