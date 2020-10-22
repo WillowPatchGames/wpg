@@ -698,7 +698,7 @@ class PreGameAdminPage extends React.Component {
           <p>Or have them visit this link:</p>
         </l.ListItem>
         <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-          <p><Link ref={ this.link_ref } to={ window.location.origin + "/play?code=" + this.game.code } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/?code=" + this.game.code + "#play" }</Link></p>
+          <p><Link ref={ this.link_ref } to={ window.location.origin + "/play?code=" + this.game.code } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/play?code=" + this.game.code }</Link></p>
         </l.ListItem>
       </l.ListGroup>;
     }
