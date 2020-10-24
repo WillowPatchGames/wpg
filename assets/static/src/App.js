@@ -100,9 +100,8 @@ class App extends React.Component {
 
     if (try_game) {
       var game = await GameModel.FromCode(this.state.user, code);
-      if (game.error === undefined || game.error === null) {
+      if ((game.error === undefined || game.error === null) && game.lifecycle !== 'deleted' && game.lifecycle !== 'finished') {
         this.setGame(game);
-        this.setPage('play');
         return;
       }
     }
@@ -112,7 +111,6 @@ class App extends React.Component {
       var room = await RoomModel.FromCode(this.state.user, code);
       if (room.error === undefined || room.error === null) {
         this.setRoom(room);
-        this.setPage('room');
       }
     }
   }
@@ -124,20 +122,28 @@ class App extends React.Component {
 
     if (user === null && this.state.user !== null) {
       this.state.user.logout();
-      this.setPage('');
+      this.setPage('/');
       window.location = '/';
     }
 
     this.setState(state => Object.assign({}, state, { user }));
   }
 
-  setPage(page) {
+  setPage(page, search) {
     if (page === null) {
       return;
     }
 
-    if (page[0] !== "/") {
+    if (page.length === 0 || page[0] !== "/") {
       page = "/" + page;
+    }
+
+    if (search !== undefined && search !== null && search !== "") {
+      if (search[0] !== "?") {
+        search= "?" + search;
+      }
+
+      page = page + search;
     }
 
     this.props.history.push(page);
@@ -150,13 +156,6 @@ class App extends React.Component {
 
   setGame(game) {
     this.setState(state => Object.assign({}, state, { game }));
-  }
-
-  setCode(code) {
-    code = normalizeCode(code);
-    var params = new URLSearchParams(window.location.search);
-    params.set("code", code);
-    window.history.pushState(null, '', window.location.pathname + '?' + params.toString());
   }
 
   setImmersive(immersive) {
@@ -217,7 +216,6 @@ class App extends React.Component {
               setPage={ this.setPage.bind(this) }
               setRoom={ this.setRoom.bind(this) }
               setGame={ this.setGame.bind(this) }
-              setCode={ this.setCode.bind(this) }
               setImmersive={ this.setImmersive.bind(this) }
 
               match={ this.props.match }

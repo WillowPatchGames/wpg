@@ -581,6 +581,7 @@ class PreGameAdminPage extends React.Component {
     super(props);
     this.state = {
       waitlist: [Object.assign(this.props.user, { admitted: true, playing: false })],
+      started: false
     };
 
     this.game = this.props.game || {};
@@ -669,9 +670,12 @@ class PreGameAdminPage extends React.Component {
     }
   }
   async start() {
+    this.setState(state => Object.assign({}, state, { started: true }));
+
     var ret = await this.game.interface.controller.startGame();
     if (ret && ret.message_type && ret.message_type === "error") {
       notify(this.props.snackbar, ret.error, "error");
+      this.setState(state => Object.assign({}, state, { started: false }));
       return;
     }
 
@@ -698,7 +702,7 @@ class PreGameAdminPage extends React.Component {
           <p>Or have them visit this link:</p>
         </l.ListItem>
         <l.ListItem onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Game invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-          <p><Link ref={ this.link_ref } to={ window.location.origin + "/play?code=" + this.game.code } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/play?code=" + this.game.code }</Link></p>
+          <p><Link ref={ this.link_ref } to={ "/play?code=" + this.game.code } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/play?code=" + this.game.code }</Link></p>
         </l.ListItem>
       </l.ListGroup>;
     }
@@ -733,7 +737,7 @@ class PreGameAdminPage extends React.Component {
             )}
           </l.ListGroup>
         </l.List>
-        <Button onClick={ () => this.start() } label="Start" raised />
+        <Button onClick={ () => this.start() } label="Start" raised disabled={ this.state.started } />
       </div>
     </c.Card>;
 
@@ -768,8 +772,6 @@ class CreateGameForm extends React.Component {
     var game = have_game ? this.props.game : undefined;
     var config = have_game ? game.config : undefined;
     var editable = this.props.editable === undefined || this.props.editable;
-
-    console.log(have_game, game, config);
 
     this.state = {
       editable: editable,
@@ -826,8 +828,7 @@ class CreateGameForm extends React.Component {
       this.props.setGame(game);
 
       if (this.props.room === null) {
-        this.props.setPage('play');
-        this.props.setCode(game.code);
+        this.props.setPage('play', '?code=' + game.code);
       }
 
       if (this.props.callback !== undefined && this.props.callback !== null) {
@@ -1145,9 +1146,8 @@ class JoinGamePage extends React.Component {
     if (try_game) {
       var game = await GameModel.FromCode(this.props.user, this.state.code);
       if (game.error === undefined || game.error === null) {
-        this.props.setCode(game.code);
         this.props.setGame(game);
-        this.props.setPage('play');
+        this.props.setPage('play', '?code=' + game.code);
         return;
       }
 
@@ -1162,9 +1162,7 @@ class JoinGamePage extends React.Component {
       // Try loading it as a room instead, before displaying the game error page.
       var room = await RoomModel.FromCode(this.props.user, this.state.code);
       if (room.error === undefined || room.error === null) {
-        this.props.setCode(room.code);
-        this.props.setRoom(room);
-        this.props.setPage('room');
+        this.props.setPage('room', '?code=' + room.code);
       }
 
       if (room.error !== null) {

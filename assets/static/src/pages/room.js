@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  Link,
+} from "react-router-dom";
+
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/checkbox/styles';
@@ -164,7 +168,7 @@ class RoomPage extends React.Component {
                     <p>Or have them visit this link:</p>
                   </l.ListItem>
                   <l.ListItem key="join-code-link" onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-                    <p><a ref={ this.link_ref } href={ window.location.origin + "/room?code=" + this.props.room.code }>{ window.location.origin + "/room?code=" + this.props.room.code }</a></p>
+                    <p><Link ref={ this.link_ref } to={ "/room?code=" + this.props.room.code }>{ window.location.origin + "/room?code=" + this.props.room.code }</Link></p>
                   </l.ListItem>
                 </l.ListGroup>
               </l.List>
