@@ -60,8 +60,8 @@ plans:
   - slug: "apartment"
     name: "Apartment Party"
     description: "Best for a gathering of a small number of people for a shorter period of time, the Apartment Party plan lets up to 5 people play 10 games."
-    open: true
-    visible: true
+    open: false
+    visible: false
     min_price_cents: 200
     suggested_price_cents: 500
     max_price_cents: 2000
@@ -88,8 +88,8 @@ plans:
   - slug: "house"
     name: "House Party"
     description: "Best for a gathering of a larger number of people for a shorter period of time, the House Party plan lets up to 10 people play 20 games."
-    open: true
-    visible: true
+    open: false
+    visible: false
     min_price_cents: 400
     suggested_price_cents: 1000
     max_price_cents: 2000
@@ -103,6 +103,62 @@ plans:
     max_players_in_game_in_room: 10
     max_room_in_timeframe_count: -1
     max_room_in_timeframe_duration: 3153600000000000000
+    create_game: false
+    max_open_games: 0
+    max_total_games: 0
+    max_players_in_game: 0
+    max_spectators_in_game: 0
+    max_games_in_timeframe_count: -1
+    max_games_in_timeframe_duration: 3153600000000000000
+    available_game_styles: "*"
+    can_audio_chat: true
+    can_video_chat: true
+  - slug: "party"
+    name: "Party"
+    description: "Best for a gathering of a larger number of people in a short period of time, the Party plan lets you host up to 50 people in 100 games."
+    open: true
+    visible: true
+    min_price_cents: 500
+    suggested_price_cents: 500
+    max_price_cents: 2500
+    billed: 0
+    create_room: true
+    max_open_rooms: 1
+    max_total_rooms: 1
+    max_open_games_in_room: 50
+    max_total_games_in_room: 100
+    max_players_in_room: 50
+    max_players_in_game_in_room: 50
+    max_room_in_timeframe_count: -1
+    max_room_in_timeframe_duration: 3153600000000000000
+    create_game: false
+    max_open_games: 0
+    max_total_games: 0
+    max_players_in_game: 0
+    max_spectators_in_game: 0
+    max_games_in_timeframe_count: -1
+    max_games_in_timeframe_duration: 3153600000000000000
+    available_game_styles: "*"
+    can_audio_chat: true
+    can_video_chat: true
+  - slug: "rush-yearly"
+    name: "A Year of Rush"
+    description: "Best for consistent players, this lets you host an unlimited number of rooms all year. Room size limited to 25 games with 10 people."
+    open: true
+    visible: true
+    min_price_cents: 2500
+    suggested_price_cents: 2500
+    max_price_cents: 2500
+    billed: 31536000000000000
+    create_room: true
+    max_open_rooms: 2
+    max_total_rooms: -1
+    max_open_games_in_room: 5
+    max_total_games_in_room: 25
+    max_players_in_room: 10
+    max_players_in_game_in_room: 10
+    max_room_in_timeframe_count: -1
+    max_room_in_timeframe_duration: 31536000000000000
     create_game: false
     max_open_games: 0
     max_total_games: 0
