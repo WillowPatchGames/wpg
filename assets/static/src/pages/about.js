@@ -26,18 +26,19 @@ class AboutPage extends React.Component {
               <article className="text" style={{ padding: '1rem 1rem 1rem 1rem' }}>
                 <p>
                   This company was started one fun week in Ann Arbor, Michigan. Two
-                  brothers, Nick and Alex, got together and put together the core of
-                  the game. That weekend, we all got together and play-tested it for
-                  the first time. With a bit of polish, we decided to launch and share
-                  our game with anyone who'd like to play.
+                  brothers, Nick and Alex, got together and built the core game engine
+                  for Willow Patch Games. That weekend (and many cans of pop later), we
+                  play-tested it for the first time. With a bit of polish, we decided
+                  to launch and share our game with anyone who'd like to play.
                 </p>
                 <p>
-                  Our goal is to create a sustainable company. We think playing games
-                  with friends is a fun social activity. However, in these recent times,
-                  we've not been able to get together with ours as much as we'd like.
-                  We're hoping that this will fill a void with your own family and friends,
-                  and that you'd help us grow and expand to new games. Please have fun
-                  sharing it with your friends and family!
+                  Our goal is to create a sustainable company not reliant on selling
+                  advertisements or customer data. We think playing games with friends
+                  is a fun social activity and in these recent times, we've not been
+                  able to visit ours as much as we'd like. We're hoping that this will
+                  fill a void with your own family and friends, and that you'd help
+                  us grow and expand to new games. Please have fun sharing it with
+                  your friends and family!
                 </p>
               </article>
             </c.Card>
