@@ -367,10 +367,16 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 
 	game := c.ToGame[gid]
 
-	_, present := game.ToPlayer[uid]
+	present_player, present := game.ToPlayer[uid]
 	if present {
 		if game.ToPlayer[uid].Notifications == nil {
 			game.ToPlayer[uid].Notifications = make(chan interface{}, notificationQueueLength)
+		}
+
+		if present_player.Admitted {
+			var notification ControllerNotifyAdmitted
+			notification.LoadFromController(game, present_player)
+			c.undispatch(game, present_player, notification.MessageID, 0, notification)
 		}
 
 		return present, nil
@@ -387,6 +393,10 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 	player.OutboundMsgs = nil
 	player.Notifications = make(chan interface{}, notificationQueueLength)
 	game.ToPlayer[uid] = player
+
+	if owner {
+		log.Println("Adding owner to game ", game)
+	}
 
 	return false, c.notifyAdmin(game, uid)
 }

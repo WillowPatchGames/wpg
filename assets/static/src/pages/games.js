@@ -588,24 +588,42 @@ class PreGameAdminPage extends React.Component {
     this.props.setGame(loadGame(this.game));
 
     let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
-    this.unmount = addEv(this.game, {
-      "notify-join": data => {
-        var userPromise = UserCache.FromId(data.joined);
-        userPromise.then((user) => {
-          var missing = true;
-          for (let player of this.state.waitlist) {
-            if (player.id === data.joined) {
-              Object.assign(player, user);
-              missing = false;
+    let userNotification = data => {
+      var this_id = data.joined;
+      if (this_id === undefined) {
+        this_id = data.user;
+      }
+
+      var userPromise = UserCache.FromId(this_id);
+      userPromise.then((user) => {
+        var missing = true;
+        for (let player of this.state.waitlist) {
+          if (player.id === this_id) {
+            Object.assign(player, user);
+            if (data.admitted !== undefined && data.admitted !== null) {
+              Object.assign(player, { admitted: data.admitted });
             }
+            if (data.playing !== undefined && data.playing !== null) {
+              Object.assign(player, { playing: data.playing });
+            }
+            missing = false;
           }
+        }
 
-          if (missing) {
-            this.state.waitlist.push(Object.assign(user, { admitted: data.admitted, playing: data.playing }));
-          }
+        if (missing) {
+          this.state.waitlist.push(Object.assign(user, { admitted: data.admitted, playing: data.playing }));
+        }
 
-          this.setState(state => state);
-        });
+        this.setState(state => state);
+      });
+    }
+
+    this.unmount = addEv(this.game, {
+      "notify-join": data => userNotification(data),
+      "notify-users": data => {
+        for (let player of data.players) {
+          userNotification(player)
+        }
       },
       "started": data => {
         data.message = "Let the games begin!";
