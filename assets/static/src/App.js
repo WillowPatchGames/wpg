@@ -32,10 +32,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
 
-    const hash = window.location.hash.substring(1);
-
     this.state = {
-      page: hash !== "" ? hash : 'home',
       user: null,
       game: null,
       room: null,
@@ -43,8 +40,6 @@ class App extends React.Component {
     };
 
     this.snackbar = createSnackbarQueue();
-
-    window.App = this;
   }
 
   async componentDidMount() {
@@ -141,7 +136,11 @@ class App extends React.Component {
       return;
     }
 
-    this.props.history.push('/' + page);
+    if (page[0] !== "/") {
+      page = "/" + page;
+    }
+
+    this.props.history.push(page);
     this.setState(state => Object.assign({}, state));
   }
 
@@ -211,7 +210,6 @@ class App extends React.Component {
               snackbar={ this.snackbar }
 
               user={ this.state.user }
-              page={ this.state.page }
               room={ this.state.room }
               game={ this.state.game }
 
@@ -226,7 +224,7 @@ class App extends React.Component {
               location={ this.props.location }
               history={ this.props.history }
             />
-            <Footer page={ this.state.page } />
+            <Footer />
           </ThemeProvider>
         </RMWCProvider>
       </div>

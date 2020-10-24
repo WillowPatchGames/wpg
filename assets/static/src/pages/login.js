@@ -56,7 +56,7 @@ class LoginForm extends React.Component {
 
     if (user.authed) {
       this.props.setUser(user);
-      if (!this.props.page || this.props.page === 'login') {
+      if (this.props.history.location.pathname === '/login') {
         this.props.setPage('join');
       }
       return;
@@ -80,7 +80,7 @@ class LoginForm extends React.Component {
 
     if (user.authed) {
       this.props.setUser(user);
-      if (!this.props.page || this.props.page === 'login') {
+      if (this.props.history.location.pathname === '/login') {
         this.props.setPage('join');
       }
       return;
