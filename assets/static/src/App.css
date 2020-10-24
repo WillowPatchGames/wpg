@@ -197,3 +197,7 @@ article.text p, article.text ul {
   bottom: unset;
   top: 0px;
 }
+
+nav a {
+  text-decoration: none;
+}
