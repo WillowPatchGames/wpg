@@ -446,7 +446,8 @@ class PreGameUserPage extends React.Component {
 
     let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     this.unmount = addEv(this.game, {
-      "admitted": data => {
+      "admitted": async (data) => {
+        await this.game.update();
         if (data.admitted) {
           this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
         } else {
