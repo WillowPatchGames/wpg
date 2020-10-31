@@ -72,6 +72,9 @@ wpgapi: cmd/wpgapi/main.go pkg/*/*.go internal/*/*.go
 clean:
 	rm -f wpgapi wpg.sqlite3
 
+distclean: clean
+	rm -rf assets/static/node_modules assets/static/package-lock.json
+
 submod:
 	git submodule init && git submodule update
 
