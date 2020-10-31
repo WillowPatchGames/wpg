@@ -38,7 +38,7 @@
     "react-lazy-load-image-component": "^1.5.0",
     "react-merge-props": "^0.1.4",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "^3.4.3",
+    "react-scripts": "^3.4.4",
     "seamless-scroll-polyfill": "^1.1.0",
     "shallow-eq": "^1.0.6"
   },
