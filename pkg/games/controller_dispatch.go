@@ -111,7 +111,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		}
 
 		// Only care about non-spectators
-		if !player.Playing {
+		if !player.Admitted || !player.Playing {
 			return nil
 		}
 

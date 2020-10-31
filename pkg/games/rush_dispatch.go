@@ -52,10 +52,6 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 
 	switch header.MessageType {
 	case "start":
-		if state.Started {
-			return errors.New("unable to start game that is already in progress")
-		}
-
 		if player.UID != game.Owner {
 			return errors.New("unable to start game that you're not the owner of")
 		}
@@ -63,6 +59,10 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		var players int = 0
 		for _, player := range game.ToPlayer {
 			if player.Playing {
+				// When we click the start button again, say, after a user has come
+				// back to being active, Countback will be higher than 0, because we've
+				// already attempted to set this. 
+				player.Countback = 0
 				players += 1
 			}
 		}
