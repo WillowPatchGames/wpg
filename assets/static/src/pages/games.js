@@ -24,6 +24,7 @@ import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
 import * as g from '@rmwc/grid';
+import { Icon } from '@rmwc/icon';
 import * as l from '@rmwc/list';
 import { Select } from '@rmwc/select';
 import { Switch } from '@rmwc/switch';
@@ -584,7 +585,7 @@ class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      waitlist: [Object.assign(this.props.user, { admitted: true, playing: false })],
+      waitlist: [Object.assign(this.props.user, { admitted: true, playing: false, connected: false })],
       started: false
     };
 
@@ -610,12 +611,18 @@ class PreGameAdminPage extends React.Component {
             if (data.playing !== undefined && data.playing !== null) {
               Object.assign(player, { playing: data.playing });
             }
+            if (data.connected !== undefined && data.connected !== null) {
+              Object.assign(player, { connected: data.connected });
+            }
             missing = false;
           }
         }
 
         if (missing) {
-          this.state.waitlist.push(Object.assign(user, { admitted: data.admitted, playing: data.playing }));
+          var admitted = data.admitted ? true : false;
+          var playing = data.playing ? true : false;
+          var connected = data.connected ? true : false;
+          this.state.waitlist.push(Object.assign(user, { admitted, playing, connected }));
         }
 
         this.setState(state => state);
@@ -624,6 +631,7 @@ class PreGameAdminPage extends React.Component {
 
     this.unmount = addEv(this.game, {
       "notify-join": data => userNotification(data),
+      "notify-countback": data => userNotification(data),
       "notify-users": data => {
         for (let player of data.players) {
           userNotification(player)
@@ -745,21 +753,26 @@ class PreGameAdminPage extends React.Component {
             </l.ListItem>
             { this.state.waitlist.map((user, i) =>
                 <l.ListItem key={user.display} disabled>
-                <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}
-                <l.ListItemMeta>
-                  <Checkbox checked={user.admitted} label="Admitted" onChange={ () => this.toggleAdmitted(user) } />
-                  {
-                    user.admitted ?
-                      <span className="leftpad"><Switch checked={ user.playing } label={ user.playing ? "Player" : "Spectator" } onChange={ () => this.toggleSpectator(user) } /></span>
-                      :
-                      <></>
-                  }
-                </l.ListItemMeta>
+                  <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}
+                  <l.ListItemMeta>
+                    <Checkbox checked={user.admitted} label="Admitted" onChange={ () => this.toggleAdmitted(user) } />
+                    {
+                      user.admitted ?
+                        <span className="leftpad"><Switch checked={ user.playing } label={ user.playing ? "Player" : "Spectator" } onChange={ () => this.toggleSpectator(user) } /></span>
+                        :
+                        <></>
+                    }
+                    {
+                      this.state.started
+                      ? <Icon icon={ user.connected ? 'check' : 'hourglass_empty' } style={{ 'verticalAlign': 'middle' }} />
+                      : null
+                    }
+                  </l.ListItemMeta>
                 </l.ListItem>
             )}
           </l.ListGroup>
         </l.List>
-        <Button onClick={ () => this.start() } label="Start" raised disabled={ this.state.started } />
+        <Button onClick={ () => this.start() } label={ this.state.started ? "Restart" : "Start" } raised />
       </div>
     </c.Card>;
 
