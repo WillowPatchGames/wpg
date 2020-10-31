@@ -1,6 +1,7 @@
 NAMESPACE?=git.cipherboy.com/WillowPatchGames/wpg
 GO?=go
 GOROOT?=/usr/local/go
+NPM?=npm
 PYTHON?=python3
 DIST?=build.tar
 
@@ -14,12 +15,12 @@ check: vet gosec staticcheck crypt utils games database business api-tests
 
 deps:
 	GOROOT="$(GOROOT)" $(GO) get -u $(NAMESPACE)/...
-	cd assets/static && npm install
+	cd assets/static && $(NPM) install
 	./scripts/words.sh
 
 deps-update: deps
 	GOROOT="$(GOROOT)" $(GO) mod tidy
-	cd assets/static && npm audit fix
+	cd assets/static && $(NPM) audit fix
 
 fuzz:
 	GOROOT="$(GOROOT)" $(GO) get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
@@ -75,10 +76,10 @@ submod:
 	git submodule init && git submodule update
 
 webui:
-	cd assets/static && REACT_EDITOR=none BROWSER=none npm start
+	cd assets/static && REACT_EDITOR=none BROWSER=none $(NPM) start
 
 distui:
-	cd assets/static && REACT_EDITOR=none BROWSER=none npm run build
+	cd assets/static && REACT_EDITOR=none BROWSER=none $(NPM) run build
 	cp assets/static/public/csw15.txt assets/static/build/csw15.txt
 
 tarball: build
