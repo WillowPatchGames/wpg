@@ -46,7 +46,7 @@ class SignupPage extends React.Component {
 
     if (user.authed) {
       this.props.setUser(user);
-      this.props.setPage('home');
+      this.props.setPage('/');
     } else {
       this.setError(user.error.message);
     }

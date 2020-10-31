@@ -117,6 +117,9 @@ class Page extends React.Component {
         <Route path="/signup">
           <SignupPage {...this_props} />
         </Route>
+        <Route path="/home">
+          <HomePage {...this_props} />
+        </Route>
         <Route exact path="/">
           <HomePage {...this_props} />
         </Route>
