@@ -536,20 +536,24 @@ class PreGameUserPage extends React.Component {
           { message }
         </b>
 
-        <l.List>
-          <l.CollapsibleList handle={
-              <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-            }
-          >
-            <CreateGameForm {...this.props} editable={ false } />
-          </l.CollapsibleList>
-          <l.ListGroup>
-            <l.ListItem disabled>
-              <b>Users</b>
-            </l.ListItem>
-            { users }
-          </l.ListGroup>
-        </l.List>
+        {
+          this.state.status !== "pending"
+          ? <l.List>
+              <l.CollapsibleList handle={
+                  <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+                }
+              >
+                <CreateGameForm {...this.props} editable={ false } />
+              </l.CollapsibleList>
+              <l.ListGroup>
+                <l.ListItem disabled>
+                  <b>Users</b>
+                </l.ListItem>
+                { users }
+              </l.ListGroup>
+            </l.List>
+          : null
+        }
       </div>
     </c.Card>;
 
