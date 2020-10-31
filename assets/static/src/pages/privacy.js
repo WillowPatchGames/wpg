@@ -13,12 +13,14 @@ class PrivacyPage extends React.Component {
         <g.Grid fixedColumnWidth={ true }>
           <g.GridCell align="left" span={3} />
           <g.GridCell align="middle" span={6}>
-            <article className="text">
-              <Typography use="headline2">Willow Patch Games Privacy Policy</Typography>
-              <p>
-                <i>Last updated on: October 16, 2020</i>
+            <section className="text">
+              <Typography use="headline2">
+                Willow Patch Games Privacy Policy
+              </Typography>
+              <p class="text-left">
+                <i>Last updated on: October 31, 2020</i>
               </p>
-              <p>
+              <p class="text-left">
                 <i>Willow Patch Games (WPG)</i> is an on-line, family-centric
                   game experience that is solely funded out of your licenses.
                   We do not sell nor display advertisements. We do not sell
@@ -26,9 +28,9 @@ class PrivacyPage extends React.Component {
                   collected is based solely on presenting the best experience
                   to the members of the community.
               </p>
-              <p>
-                <b>What information does WPG collect?</b>
-              </p>
+              <Typography use="headline6">
+                What information does WPG collect?
+              </Typography>
               <p class="text-left">
                 Like most communities, WPG provides the ability to create an
                 account. In this process, you may provide personal information
@@ -61,9 +63,9 @@ class PrivacyPage extends React.Component {
                 game play information and statistics. This information is used
                 to improve the service for yourself and others.
               </p>
-              <p>
-                <b>What information does WPG not collect?</b>
-              </p>
+              <Typography use="headline6">
+                What information does WPG not collect?
+              </Typography>
               <p class="text-left">
                 WPG does not collect nor require you to provide your real name;
                 any identifiers you share with us are at your own discretion.
@@ -71,25 +73,25 @@ class PrivacyPage extends React.Component {
                 sex, race, ethnicity, nationality, religious or other beliefs,
                 or marital status.
               </p>
-              <p>
-                <b>How does WPG use your information?</b>
-              </p>
+              <Typography use="headline6">
+                How does WPG use your information?
+              </Typography>
               <p class="text-left">
                 We use information you share with us to communicate about
                 upcoming changes to our service, and various transactional
                 communications, including but not limited to: password reset,
                 account confirmation, and any support requests you make.
               </p>
-              <p>
-                <b>How does WPG share your information?</b>
-              </p>
+              <Typography use="headline6">
+                How does WPG share your information?
+              </Typography>
               <p class="text-left">
                 WPG will not share your identifying information outside of our
                 organization.
               </p>
-              <p>
-                <b>How does WPG use cookies and tracking?</b>
-              </p>
+              <Typography use="headline6">
+                How does WPG use cookies and tracking?
+              </Typography>
               <p class="text-left">
                 WPG does not use cookies and does not track individual
                 movements around our site. Third parties we use to provide our
@@ -97,16 +99,20 @@ class PrivacyPage extends React.Component {
                 tracking techniques. For more information, see their privacy
                 policies above.
               </p>
-              <p>
-                <b>How does WPG secure your information?</b>
-              </p>
-              <p>
+              <Typography use="headline6">
+                How does WPG secure your information?
+              </Typography>
+              <p class="text-left">
                 We limit access to sensitive information (such as email
                   address) to only yourself and WPG. Only your display name
-                  will be shared with other users. We allow only selected
-                  administrators to access the production servers. This limits
-                  the spread of data within our organization. We use industry
-                  standard practices to store and secure any password you
+                  will be shared with other users.
+              </p>
+              <p class="text-left">
+                We allow only selected administrators to access the production 
+                  servers. This limits the spread of data within our organization.
+              </p>
+              <p class="text-left">
+                We use industry standard practices to store and secure any password you
                   create. We strongly recommend you create a unique and
                   memorable password for use with your account here.
               </p>
@@ -115,23 +121,23 @@ class PrivacyPage extends React.Component {
                 notify customers of the scope and date of incidence, via our
                 website and directly via email when provided to us.
               </p>
-              <p>
-                <b>How does WPG inform users of changes in the Privacy Policy?</b>
-              </p>
+              <Typography use="headline6">
+                How does WPG inform users of changes in the Privacy Policy?
+              </Typography>
               <p class="text-left">
                 We will notify existing users of our site via an on-site
                 notification, as well as sending emails to users who have
                 provided theirs.
               </p>
-              <p>
-                <b>How can I contact WPG to discuss the Privacy Policy?</b>
-              </p>
+              <Typography use="headline6">
+                How can I contact WPG to discuss the Privacy Policy?
+              </Typography>
               <p class="text-left">
                 Feel free to reach out to us via email
-                at <a href="mailto:willowpatchgames@gmail.com">willowpatchgames.com</a>
-                with any questions or concerns.
+                at <a href="mailto:willowpatchgames@gmail.com">willowpatchgames.com</a> with 
+                any questions or concerns.
               </p>
-            </article>
+            </section>
           </g.GridCell>
         </g.Grid>
       </div>
