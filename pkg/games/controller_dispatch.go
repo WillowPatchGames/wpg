@@ -119,6 +119,15 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			player.Countback = game.Countdown
 		}
 
+		var admin *PlayerData = game.ToPlayer[game.Owner]
+		if admin == nil {
+			return errors.New("unable to join game without a connected admin")
+		}
+
+		var message ControllerNotifyAdminCountback
+		message.LoadFromController(game, admin, player)
+		c.undispatch(game, admin, message.MessageID, 0, message)
+
 		return c.handleCountdown(game)
 	}
 

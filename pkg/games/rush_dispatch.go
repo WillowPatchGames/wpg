@@ -61,7 +61,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 			if player.Playing {
 				// When we click the start button again, say, after a user has come
 				// back to being active, Countback will be higher than 0, because we've
-				// already attempted to set this. 
+				// already attempted to set this.
 				player.Countback = 0
 				players += 1
 			}

@@ -40,6 +40,20 @@ func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player
 	cnaj.Playing = joined.Playing
 }
 
+type ControllerNotifyAdminCountback struct {
+	MessageHeader
+	Joined    uint64 `json:"joined"`
+	Connected bool   `json:"connected"`
+}
+
+func (cnac *ControllerNotifyAdminCountback) LoadFromController(data *GameData, player *PlayerData, joined *PlayerData) {
+	cnac.LoadHeader(data, player)
+	cnac.MessageType = "notify-countback"
+
+	cnac.Joined = joined.UID
+	cnac.Connected = true
+}
+
 type ControllerNotifyAdmitted struct {
 	MessageHeader
 
