@@ -78,7 +78,7 @@ class SignupPage extends React.Component {
                 <form onSubmit={ this.handleSubmit.bind(this) }>
                   <TextField fullwidth placeholder="username" name="username" inputRef={ this.username } /><br />
                   <TextField fullwidth placeholder="email" name="email" type="email" inputRef={ this.email } /><br />
-                  <TextField fullwidth placeholder="display" name="display" inputRef={ this.display } /><br />
+                  <TextField fullwidth placeholder="display name" name="display" inputRef={ this.display } /><br />
                   <TextField fullwidth placeholder="password" name="password" type="password" inputRef={ this.password } /><br />
                   <Button label="Sign up" raised />
                 </form>
