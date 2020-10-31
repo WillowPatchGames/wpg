@@ -1,6 +1,6 @@
 NAMESPACE?=git.cipherboy.com/WillowPatchGames/wpg
 GO?=go
-GOROOT?=/usr/local/go
+GOROOT?=
 NPM?=npm
 PYTHON?=python3
 DIST?=build.tar
