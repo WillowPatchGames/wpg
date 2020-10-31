@@ -474,6 +474,19 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, playing
 		player.Playing = playing
 	}
 
+	if err := database.InTransaction(func(tx *gorm.DB) error {
+		var game_player database.GamePlayer
+		if err := tx.First(&game_player, "user_id = ? AND game_id = ?", uid, gid).Error; err != nil {
+			return err
+		}
+
+		game_player.Admitted = admitted
+
+		return tx.Save(&game_player).Error
+	}); err != nil {
+		log.Println("error changing admitted state of player (", uid, ") in game (", gid, "):", err)
+	}
+
 	var notification ControllerNotifyAdmitted
 	notification.LoadFromController(game, player)
 	c.undispatch(game, player, notification.MessageID, 0, notification)
