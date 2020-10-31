@@ -1,5 +1,6 @@
 NAMESPACE?=git.cipherboy.com/WillowPatchGames/wpg
 GO?=go
+GOROOT?=/usr/local/go
 PYTHON?=python3
 DIST?=build.tar
 
@@ -12,23 +13,23 @@ dist: distui tarball
 check: vet gosec staticcheck crypt utils games database business api-tests
 
 deps:
-	$(GO) get -u $(NAMESPACE)/...
+	GOROOT="$(GOROOT)" $(GO) get -u $(NAMESPACE)/...
 	cd assets/static && npm install
 	./scripts/words.sh
 
 deps-update: deps
-	$(GO) mod tidy
+	GOROOT="$(GOROOT)" $(GO) mod tidy
 	cd assets/static && npm audit fix
 
 fuzz:
-	$(GO) get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
+	GOROOT="$(GOROOT)" $(GO) get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
 	cd pkg/password && go-fuzz-build && go-fuzz
 
 format:
-	$(GO) fmt $(NAMESPACE)/...
+	GOROOT="$(GOROOT)" $(GO) fmt $(NAMESPACE)/...
 
 vet:
-	$(GO) vet $(NAMESPACE)/...
+	GOROOT="$(GOROOT)" $(GO) vet $(NAMESPACE)/...
 
 gosec:
 	test -e ~/go/bin/gosec || ( echo "Must install gosec: https://github.com/securego/gosec" && exit 1 )
@@ -39,19 +40,19 @@ staticcheck:
 	$(HOME)/go/bin/staticcheck $(NAMESPACE)/...
 
 crypt: pkg/password/*.go
-	$(GO) test $(NAMESPACE)/pkg/password
+	GOROOT="$(GOROOT)" $(GO) test $(NAMESPACE)/pkg/password
 
 utils: internal/utils/*.go
-	$(GO) test $(NAMESPACE)/internal/utils
+	GOROOT="$(GOROOT)" $(GO) test $(NAMESPACE)/internal/utils
 
 games: pkg/games/*.go
-	$(GO) test $(NAMESPACE)/pkg/games
+	GOROOT="$(GOROOT)" $(GO) test $(NAMESPACE)/pkg/games
 
 database: internal/database/*.go
-	$(GO) test $(NAMESPACE)/internal/database
+	GOROOT="$(GOROOT)" $(GO) test $(NAMESPACE)/internal/database
 
 business: internal/business/*.go
-	$(GO) test $(NAMESPACE)/internal/business
+	GOROOT="$(GOROOT)" $(GO) test $(NAMESPACE)/internal/business
 
 api-tests:
 	bash ./scripts/api-tests.sh $(PYTHON)
@@ -65,7 +66,7 @@ build: cmds
 cmds: wpgapi
 
 wpgapi: cmd/wpgapi/main.go pkg/*/*.go internal/*/*.go
-	$(GO) build $(NAMESPACE)/cmd/wpgapi
+	GOROOT="$(GOROOT)" $(GO) build $(NAMESPACE)/cmd/wpgapi
 
 clean:
 	rm -f wpgapi wpg.sqlite3
