@@ -271,8 +271,12 @@ class RushGamePage extends React.Component {
       });
     }
   }
+  componentDidMount() {
+    this.props.setImmersive(true);
+  }
   componentWillUnmount() {
     if (this.unmount) this.unmount();
+    this.props.setImmersive(false);
   }
   render() {
     return (
@@ -283,7 +287,6 @@ class RushGamePage extends React.Component {
     );
   }
 }
-RushGamePage.immersive = true;
 
 class PreGamePage extends React.Component {
   constructor(props) {
