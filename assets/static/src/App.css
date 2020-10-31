@@ -20,6 +20,18 @@ p {
   pointer-events: none;
 }
 
+.App-screenshots {
+  max-height: 50vh;
+  max-width: 95%;
+  pointer-events: none;
+}
+
+.App-gifs {
+  max-height: 50vh;
+  max-width: 95%;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;

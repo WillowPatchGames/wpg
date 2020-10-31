@@ -189,3 +189,6 @@ wpg.sqlite3
 
 # Ignore future changes to stripe configuration
 configs/stripe.yaml
+
+# Mac Users
+.DS_Store

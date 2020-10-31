@@ -10,6 +10,7 @@ import '@rmwc/typography/styles';
 import * as g from '@rmwc/grid';
 import { Typography } from '@rmwc/typography';
 
+
 class DocsPage extends React.Component {
   render() {
     return (
@@ -18,10 +19,54 @@ class DocsPage extends React.Component {
           <g.GridCell align="left" span={3} tablet={8} />
           <g.GridCell align="middle" span={6} tablet={8}>
             <article className="text">
-              <Typography use="headline2">Documentation</Typography>
+              <Typography use="headline2">Game Play Details</Typography>
               <p>
-                Hope it helps! Let us know if there's anything we can improve!<br /><br />
-              Looking for rules? <Link to="/rules/rush">Check here instead!</Link>
+                Hope it helps! Let us know if there's anything we can improve!<br />
+                <br /> Looking for quick rules? <Link to="/rules/rush">Check here
+                instead!</Link>
+              </p>
+
+              <p> You can play Rush! in a game or a room.  The host decides if
+              the party will be playing one game or a series of games in a room.
+              </p>
+
+              <Typography use="headline4">How to get started playing Rush! as
+              a <a href="#player">player</a> or a <a href ="#host">host.</a></Typography>
+              <br />
+              <br />
+              <Typography use="headline3" id="player">How to Play a Rush! Game</Typography>
+              <p> You can play as a guest or as a signed in player.  For a guest player just enter your screen name and click play as guest button.
+              </p>
+              <p> To login, follow the screen prompts to login in and play.
+              </p>
+
+              <p>
+                If you don't have an account, you can click the signup button
+                at the top of the page.
+              </p>
+
+              <p>
+                Next, place your secret passcode given to you by the host in
+                the Join an Existing Room or Game box. Click the blue "Join"
+                button.
+              </p>
+
+              <p>
+                You are now admitted to the game or room.  If you're playing
+                a in a room you will see your name along with other guests.
+                Note: Your host can admit you as a player or
+                as a spectator.  A spectator doesn't play but watches what's
+                happening in the room.
+              </p>
+
+              <p>
+                Get ready!  The countdown will begin once all players have been
+                admitted to the room. All players will see a board and letter
+                tiles pop-up on the screen.  Start placing tiles to form words.
+                <b> Follow instructions in Playing Tiles on how to do that on
+                your device. </b>
+              </p>
+              <p>
               </p>
               <Typography use="headline3">Game Mechanics</Typography>
               <Typography use="headline4">Playing Tiles</Typography>
@@ -119,6 +164,9 @@ class DocsPage extends React.Component {
                 can press the draw button to give a new tile. When not enough
                 tiles are left, the first person to draw is the winner!
               </p>
+
+              <Typography use="headline3" id="host">How to Host a Rush! Game</Typography>
+
             </article>
           </g.GridCell>
         </g.Grid>
