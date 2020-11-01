@@ -194,6 +194,7 @@ class App extends React.Component {
               primaryBg: 'white',
               surface: 'white',
               onSurface: 'black',
+              // When secondary changes, update in src/pages/profile.js
               secondary: '#006515',
               secondaryBg: '#006515',
               onSecondary: 'white',

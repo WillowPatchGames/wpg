@@ -9,6 +9,7 @@ import '@rmwc/dialog/styles';
 import '@rmwc/list/styles';
 import '@rmwc/tabs/styles';
 import '@rmwc/textfield/styles';
+import '@rmwc/theme/styles';
 import '@rmwc/typography/styles';
 
 import { Avatar } from '@rmwc/avatar';
@@ -18,6 +19,7 @@ import * as d from '@rmwc/dialog';
 import * as l from '@rmwc/list';
 import * as t from '@rmwc/tabs';
 import { TextField } from '@rmwc/textfield';
+import { ThemeProvider } from '@rmwc/theme';
 import { Typography } from '@rmwc/typography';
 
 import { LoadingPage } from './common.js';
@@ -452,11 +454,19 @@ class UserProfilePage extends React.Component {
 
     return (
       <div>
-        <t.TabBar>
-          <t.Tab icon="account_box" label="Profile" onClick={ () => this.setTab('profile') } />
-          <t.Tab icon="lock" label="Security" onClick={ () => this.setTab('security') } />
-          <t.Tab icon="credit_card" label="Plans" onClick={ () => this.setTab('plans') } />
-        </t.TabBar>
+        <ThemeProvider
+          options={{
+            primary: '#006515', // Dark Green -- Theme's secondary
+            onPrimary: 'black',
+            primaryBg: 'white',
+          }}
+        >
+          <t.TabBar>
+            <t.Tab icon="account_box" label="Profile" onClick={ () => this.setTab('profile') } />
+            <t.Tab icon="lock" label="Security" onClick={ () => this.setTab('security') } />
+            <t.Tab icon="credit_card" label="Plans" onClick={ () => this.setTab('plans') } />
+          </t.TabBar>
+        </ThemeProvider>
         <br />
         <div style={{ width: "65%", margin: "0 auto" }}>
           { tab_content }
