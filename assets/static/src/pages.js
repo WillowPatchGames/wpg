@@ -22,17 +22,9 @@ import { PricingPage } from './pages/pricing.js';
 import { PrivacyPage } from './pages/privacy.js';
 
 class RouteWithAuth extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      authed: this.props.user && this.props.user.authed,
-    };
-  }
-
   render() {
     var child = this.props.children[1];
-    if (this.state.authed) {
+    if (this.props.user && this.props.user.authed) {
       child = this.props.children[0];
     }
 
@@ -43,17 +35,9 @@ class RouteWithAuth extends React.Component {
 }
 
 class RouteWithGame extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      has_game: this.props.game,
-    };
-  }
-
   render() {
     var child = this.props.children[1];
-    if (this.state.has_game) {
+    if (this.props.game) {
       child = this.props.children[0];
     }
 
@@ -64,17 +48,9 @@ class RouteWithGame extends React.Component {
 }
 
 class RouteWithRoom extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      has_room: this.props.room,
-    };
-  }
-
   render() {
     var child = this.props.children[1];
-    if (this.state.has_room) {
+    if (this.props.room) {
       child = this.props.children[0];
     }
 
