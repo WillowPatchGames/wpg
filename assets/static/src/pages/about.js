@@ -20,7 +20,7 @@ class AboutPage extends React.Component {
     return (
       <div className="App-page">
         <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={6}>
+          <g.GridCell align="left" span={6} tablet={8}>
             <Typography use="headline2">About Willow Patch Games!</Typography>
             <c.Card>
               <article className="text" style={{ padding: '1rem 1rem 1rem 1rem' }}>
@@ -43,7 +43,7 @@ class AboutPage extends React.Component {
               </article>
             </c.Card>
           </g.GridCell>
-          <g.GridCell align="right" span={6}>
+          <g.GridCell align="right" span={6} tablet={8}>
             <c.Card>
               <c.CardMedia sixteenByNine style={{ backgroundImage: 'url(' + willows + ')' }} />
               <article className="text" style={{ padding: '0 1rem 1rem 1rem' }}>

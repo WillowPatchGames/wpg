@@ -306,10 +306,10 @@ class RoomPage extends React.Component {
       <div className="App-page">
         <Typography use="headline2">Room</Typography>
         <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={6}>
+          <g.GridCell align="left" span={6} tablet={8}>
             { left_panel }
           </g.GridCell>
-          <g.GridCell align="right" span={6}>
+          <g.GridCell align="right" span={6} tablet={8}>
             <Typography use="headline3">Playing</Typography>
             <Button label="Refresh Games" raised onClick={() => { this.setCreateGameForm(false) ; this.clearGame() ; this.state.timeout.exec() } } />
             {

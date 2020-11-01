@@ -23,7 +23,7 @@ class HomePage extends React.Component {
               <g.GridCell align="middle" span={4} tablet={8} phone={4}>
                 <LazyLoadImage className="App-Logo" src={ logo } alt="" />
               </g.GridCell>
-              <g.GridCell align="right" span={8}>
+              <g.GridCell align="right" span={8} tablet={8}>
                 <div className="styles.intro">
                   <div>
                     <Typography use="headline2">

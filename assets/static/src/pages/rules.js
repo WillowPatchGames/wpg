@@ -11,8 +11,8 @@ class RushRulesPage extends React.Component {
     return (
       <div className="App-page">
         <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={3} />
-          <g.GridCell align="middle" span={6}>
+          <g.GridCell align="left" span={3} tablet={8} />
+          <g.GridCell align="middle" span={6} tablet={8}>
             <article className="text">
               <Typography use="headline2">Rules - Rush!</Typography>
               <p>

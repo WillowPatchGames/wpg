@@ -70,8 +70,8 @@ class SignupPage extends React.Component {
           </p>
         </div>
         <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={3} />
-          <g.GridCell align="middle" span={6}>
+          <g.GridCell align="left" span={3} tablet={8} />
+          <g.GridCell align="middle" span={6} tablet={8}>
             <c.Card>
               <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
 

@@ -567,8 +567,8 @@ class PreGameUserPage extends React.Component {
         <div>
           <h1>Game #{ this.props.game.id }</h1>
           <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} />
-            <g.GridCell align="right" span={6}>
+            <g.GridCell align="left" span={3} tablet={8} />
+            <g.GridCell align="right" span={6} tablet={8}>
               { content }
             </g.GridCell>
           </g.Grid>
@@ -785,8 +785,8 @@ class PreGameAdminPage extends React.Component {
         <div>
           <h1>Game #{ this.props.game.id }</h1>
           <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} />
-            <g.GridCell align="right" span={6}>
+            <g.GridCell align="left" span={3} tablet={8} />
+            <g.GridCell align="right" span={6} tablet={8}>
               { content }
             </g.GridCell>
           </g.Grid>
@@ -1018,8 +1018,8 @@ class CreateGamePage extends React.Component {
           </p>
         </div>
         <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={3} />
-          <g.GridCell align="middle" span={6}>
+          <g.GridCell align="left" span={3} tablet={8} />
+          <g.GridCell align="middle" span={6} tablet={8}>
             <CreateGameForm {...this.props} />
           </g.GridCell>
         </g.Grid>
@@ -1144,8 +1144,8 @@ class CreateRoomPage extends React.Component {
           re-share a link.
         </p>
         <g.Grid fixedColumnWidth={ true }>
-          <g.GridCell align="left" span={3} />
-          <g.GridCell align="middle" span={6}>
+          <g.GridCell align="left" span={3} tablet={8} />
+          <g.GridCell align="middle" span={6} tablet={8}>
             <CreateRoomForm {...this.props} />
           </g.GridCell>
         </g.Grid>
@@ -1328,7 +1328,7 @@ class JoinGamePage extends React.Component {
     }
 
     let inner = <g.GridRow>
-      <g.GridCell align="left" span={6}>
+      <g.GridCell align="left" span={6} tablet={8}>
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
             <div>
@@ -1360,7 +1360,7 @@ class JoinGamePage extends React.Component {
           </div>
         </c.Card>
       </g.GridCell>
-      <g.GridCell align="right" span={6}>
+      <g.GridCell align="right" span={6} tablet={8}>
         { right_column }
       </g.GridCell>
     </g.GridRow>;
@@ -1376,8 +1376,8 @@ class JoinGamePage extends React.Component {
         </div>
         {
           !this.props.user ? <g.Grid fixedColumnWidth={ true }><g.GridRow>
-            <g.GridCell align="left" span={3} />
-            <g.GridCell align="middle" span={6}>
+            <g.GridCell align="left" span={3} tablet={8} />
+            <g.GridCell align="middle" span={6} tablet={8}>
               <c.Card>
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
                   <Typography use="headline3">Join as Guest</Typography>
