@@ -201,3 +201,35 @@ article.text p, article.text ul {
 nav a {
   text-decoration: none;
 }
+
+.countdown-overlay {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+
+  position: fixed;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+
+  z-index: 1000;
+}
+
+.countdown-circle {
+  display: block;
+  width: 45vmin;
+  height: 45vmin;
+
+  position: relative;
+  margin: auto auto;
+  top: calc(50vh - 22.5vmin);
+
+  border-radius: 50%;
+
+  line-height: 45vmin;
+  font-size: 40vmin;
+
+  background-color: #006515;
+  opacity: 85%;
+}

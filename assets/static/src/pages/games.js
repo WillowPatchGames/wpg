@@ -231,7 +231,9 @@ class RushGameSynopsis extends React.Component {
 class RushGamePage extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      countdown: null,
+    };
 
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
@@ -250,8 +252,10 @@ class RushGamePage extends React.Component {
         },
         "countdown": data => {
           data.message = "Game starting in " + data.value;
-          notify(this.props.snackbar, data.message, data.type);
+          this.setState(state => Object.assign({}, state, { countdown: data.value }));
+          setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
           this.state.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
+
         },
         "draw": async (data) => {
           data.message = await personalize(data.drawer) + " drew!";
@@ -279,8 +283,18 @@ class RushGamePage extends React.Component {
     this.props.setImmersive(false);
   }
   render() {
+    var countdown = null;
+    if (this.state.countdown !== null && this.state.countdown !== 0) {
+      countdown = <div class="countdown-overlay">
+        <div class="countdown-circle">
+          { this.state.countdown }
+        </div>
+      </div>
+    }
+
     return (
       <div>
+        { countdown }
         <RushGameSynopsis {...this.props} />
         <Game interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
@@ -442,6 +456,7 @@ class PreGameUserPage extends React.Component {
     this.state = {
       status: "pending",
       players: null,
+      countdown: null,
     }
 
     this.game = this.props.game || {};
@@ -468,7 +483,8 @@ class PreGameUserPage extends React.Component {
       },
       "countdown": data => {
         data.message = "Game starting in " + data.value;
-        notify(this.props.snackbar, data.message, data.type);
+        this.setState(state => Object.assign({}, state, { countdown: data.value }));
+        setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
         this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
       },
       "notify-users": async (data) => {
@@ -562,9 +578,19 @@ class PreGameUserPage extends React.Component {
       </div>
     </c.Card>;
 
+    var countdown = null;
+    if (this.state.countdown !== null && this.state.countdown !== 0) {
+      countdown = <div class="countdown-overlay">
+        <div class="countdown-circle">
+          { this.state.countdown }
+        </div>
+      </div>
+    }
+
     if (this.props.room === null) {
       return (
         <div>
+          { countdown }
           <h1>Game #{ this.props.game.id }</h1>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} tablet={8} />
@@ -578,6 +604,7 @@ class PreGameUserPage extends React.Component {
 
     return (
       <div>
+        { countdown }
         <h1>Game #{ this.props.game.id }</h1>
         { content }
       </div>
@@ -590,7 +617,8 @@ class PreGameAdminPage extends React.Component {
     super(props);
     this.state = {
       waitlist: [Object.assign(this.props.user, { admitted: true, playing: false, connected: false })],
-      started: false
+      started: false,
+      countdown: null,
     };
 
     this.game = this.props.game || {};
@@ -652,7 +680,8 @@ class PreGameAdminPage extends React.Component {
       },
       "countdown": data => {
         data.message = "Game starting in " + data.value;
-        notify(this.props.snackbar, data.message, data.type);
+        this.setState(state => Object.assign({}, state, { countdown: data.value }));
+        setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
         this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
       },
       "finished": async (data) => {
@@ -780,9 +809,19 @@ class PreGameAdminPage extends React.Component {
       </div>
     </c.Card>;
 
+    var countdown = null;
+    if (this.state.countdown !== null && this.state.countdown !== 0) {
+      countdown = <div class="countdown-overlay">
+        <div class="countdown-circle">
+          { this.state.countdown }
+        </div>
+      </div>
+    }
+
     if (this.props.room === null) {
       return (
         <div>
+          { countdown }
           <h1>Game #{ this.props.game.id }</h1>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} tablet={8} />
@@ -796,6 +835,7 @@ class PreGameAdminPage extends React.Component {
 
     return (
       <div>
+        { countdown }
         <h1>Game #{ this.props.game.id }</h1>
         { content }
       </div>
