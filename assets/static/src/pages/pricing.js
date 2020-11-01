@@ -50,8 +50,8 @@ function timeToUnit(value, is_party) {
   var hours = minutes / 60;
   var days = hours / 24;
   var weeks = days / 7;
-  var months = days / (365.4 / 12);
-  var years = days / 365.4;
+  var months = days / (365 / 12);
+  var years = days / 365;
   var decades = years / 10;
 
   if (parseInt(value) === 0 || decades > 10) {
@@ -160,10 +160,16 @@ class ActivePricingPage extends React.Component {
         var price = null;
         var party = plan.name.indexOf("Party") !== -1;
         if (plan.open && plan.min_price_cents >= 0 && plan.max_price_cents >= 0) {
-          price = <div className="text-left">
-            <i>Suggested</i> price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
-            <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(plan, evt) } onInput={ (evt) => this.setPlanPrice(plan, evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
-          </div>
+          if (plan.min_price_cents !== plan.max_price_cents) {
+            price = <div className="text-left">
+              <i>Suggested</i> price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
+              <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(evt) } onInput={ (evt) => this.setPlanPrice(evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
+            </div>
+          } else {
+            price = <div className="text-left">
+              Price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
+            </div>
+          }
         } else if (plan.slug === "free") {
           price = <i>Freely given to all users; limit one.</i>
         } else {
@@ -248,10 +254,16 @@ class PurchasePage extends React.Component {
     var price = null;
 
     if (plan.open && plan.min_price_cents >= 0 && plan.max_price_cents >= 0) {
-      price = <div className="text-left">
-        <i>Suggested</i> price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
-        <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(evt) } onInput={ (evt) => this.setPlanPrice(evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
-      </div>
+      if (plan.min_price_cents !== plan.max_price_cents) {
+        price = <div className="text-left">
+          <i>Suggested</i> price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
+          <Slider value={ plan.suggested_price_cents / 100 } onChange={ (evt) => this.setPlanPrice(evt) } onInput={ (evt) => this.setPlanPrice(evt) } discrete step={0.50} min={ plan.min_price_cents / 100 } max={ plan.max_price_cents / 100}  />
+        </div>
+      } else {
+        price = <div className="text-left">
+          Price: <b>{ centsToDollar(plan.suggested_price_cents) }</b> { timeToUnit(plan.billed, party) }
+        </div>
+      }
     } else {
       this.setSelected(null);
     }
