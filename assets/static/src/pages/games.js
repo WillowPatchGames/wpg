@@ -616,7 +616,7 @@ class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      waitlist: [Object.assign(this.props.user, { admitted: true, playing: false, connected: false })],
+      waitlist: [Object.assign({}, this.props.user, { admitted: true, playing: false, connected: false })],
       started: false,
       countdown: null,
     };
