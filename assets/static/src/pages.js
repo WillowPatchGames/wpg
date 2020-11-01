@@ -22,40 +22,64 @@ import { PricingPage } from './pages/pricing.js';
 import { PrivacyPage } from './pages/privacy.js';
 
 class RouteWithAuth extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      authed: this.props.user && this.props.user.authed,
+    };
+  }
+
   render() {
+    var child = this.props.children[1];
+    if (this.state.authed) {
+      child = this.props.children[0];
+    }
+
     return (
-      <Route path={ this.props.path } render={
-        () =>
-          this.props.user && this.props.user.authed
-          ? this.props.children[0]
-          : this.props.children[1]
-      } />
+      <Route path={ this.props.path } render={ () => child } />
     )
   }
 }
 
 class RouteWithGame extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      has_game: this.props.game,
+    };
+  }
+
   render() {
+    var child = this.props.children[1];
+    if (this.state.has_game) {
+      child = this.props.children[0];
+    }
+
     return (
-      <Route path={ this.props.path } render={
-        () =>
-          this.props.game
-          ? this.props.children[0]
-          : this.props.children[1]
-      } />
+      <Route path={ this.props.path } render={ () => child } />
     )
   }
 }
 
 class RouteWithRoom extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      has_room: this.props.room,
+    };
+  }
+
   render() {
+    var child = this.props.children[1];
+    if (this.state.has_room) {
+      child = this.props.children[0];
+    }
+
     return (
-      <Route path={ this.props.path } render={
-        () =>
-          this.props.room
-          ? this.props.children[0]
-          : this.props.children[1]
-      } />
+      <Route path={ this.props.path } render={ () => child } />
     )
   }
 }
