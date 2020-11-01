@@ -10,8 +10,8 @@ class LoadingPage extends React.Component {
   render() {
     return (
       <p>
-        Please wait while this page loads. If this page doesn't load,
-        <Link to="/">click here</Link> to go back to the home page.
+        Please wait while this page loads. If this page doesn't
+        load, <Link to="/">click here</Link> to go back to the home page.
       </p>
     );
   }

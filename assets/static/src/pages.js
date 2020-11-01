@@ -128,9 +128,10 @@ class Page extends React.Component {
         <Route path="/privacy">
           <PrivacyPage {...this_props} />
         </Route>
-        <Route path="/profile">
+        <RouteWithAuth path="/profile" user={ this.props.user }>
           <ProfilePage {...this_props} />
-        </Route>
+          <LoginPage {...this_props} />
+        </RouteWithAuth>
         <RouteWithRoom path="/room" room={ this.props.room }>
           <RoomPage {...this_props} />
           <JoinGamePage {...this_props} />
