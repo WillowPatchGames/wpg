@@ -10,10 +10,10 @@ class UserCacheSingleton {
     this.access_threshhold = 100;
   }
 
-  async FromId(id) {
+  async FromId(id, token) {
     if (!loaded(this.cache[id]) || this.cache[id].access === this.access_threshhold) {
       this.cache[id] = await {
-        model: await UserModel.FromId(id),
+        model: await UserModel.FromId(id, token),
         access: 0,
       };
     }

@@ -30,7 +30,7 @@ class RouteWithAuth extends React.Component {
 
     return (
       <Route path={ this.props.path } render={ () => child } />
-    )
+    );
   }
 }
 
@@ -43,7 +43,7 @@ class RouteWithGame extends React.Component {
 
     return (
       <Route path={ this.props.path } render={ () => child } />
-    )
+    );
   }
 }
 
@@ -56,7 +56,7 @@ class RouteWithRoom extends React.Component {
 
     return (
       <Route path={ this.props.path } render={ () => child } />
-    )
+    );
   }
 }
 
