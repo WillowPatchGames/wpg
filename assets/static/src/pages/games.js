@@ -1268,7 +1268,7 @@ class JoinGamePage extends React.Component {
                 <div>
                   <Typography use="headline3">Host a Room</Typography>
                   <p>
-                    <Link to="/create/room">Looking to make a new room? Create one here!</Link>.<br />
+                    <Link to="/create/room">Looking to make a new room? Create one here!</Link><br /><br />
                     A room lets you play multiple games without having to share a new link every time!
                   </p>
                 </div>
