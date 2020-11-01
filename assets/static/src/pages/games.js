@@ -147,8 +147,8 @@ class RushGameSynopsis extends React.Component {
     }
 
     if (this.state.players) {
-      if (this.state.players[+this.props.user.id]) {
-        var us = this.state.players[+this.props.user.id];
+      if (this.state.players[this.props.user.id]) {
+        var us = this.state.players[this.props.user.id];
         player_view.push(
           <div className="playerSummary">
             <Avatar src={ gravatarify(us.user) } name="You" size="xlarge" />
@@ -306,7 +306,7 @@ class PreGamePage extends React.Component {
   constructor(props) {
     super(props);
     this.state = null;
-    this.admin = this.props.user?.id === this.props.game?.owner;
+    this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
   }
@@ -616,7 +616,7 @@ class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      waitlist: [Object.assign({}, this.props.user, { admitted: true, playing: false, connected: false })],
+      waitlist: [Object.assign(this.props.user, { admitted: true, playing: false, connected: false })],
       started: false,
       countdown: null,
     };

@@ -60,7 +60,7 @@ class App extends React.Component {
     }
 
     var user = UserModel.FromJSON(serialization);
-    if (!user || !user.token || !user.authed) {
+    if (!user || user.token == null) {
       return;
     }
 
@@ -70,7 +70,7 @@ class App extends React.Component {
     var token = user.token;
     var verified_user = await UserModel.FromId(null, token);
 
-    if (verified_user.error || !verified_user.authed || verified_user.authed === false || +user_id !== +verified_user.id) {
+    if (verified_user.error || verified_user.authed === false || +user_id !== +verified_user.id) {
       localStorage.removeItem('user');
       localStorage.removeItem('guest');
       this.setUser(null);
@@ -120,7 +120,7 @@ class App extends React.Component {
       localStorage.setItem('user', user.ToJSON());
     }
 
-    if ((user === null || !user.authed) && this.state.user !== null) {
+    if (user === null && this.state.user !== null) {
       this.state.user.logout();
       this.setPage('/');
       window.location = '/';
