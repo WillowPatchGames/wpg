@@ -580,7 +580,7 @@ class ProfilePage extends React.Component {
     }
 
     return (
-      <div className="App-1000px" style={{ "padding-bottom": "5rem" }}>
+      <div className="App-1000px" style={{ "paddingBottom": "5rem" }}>
         <article>
           <Typography use="headline2">Account Preferences</Typography>
           <div>
