@@ -1375,7 +1375,7 @@ class JoinGamePage extends React.Component {
               <Typography use="headline3">Join an Existing Room or Game</Typography>
               <p>
                 Good luck, and may the odds be ever in your favor!<br /><br />
-              Need a refresher on <Link to="/rush/rules">the rules</Link> or want
+              Need a refresher on <Link to="/rules/rush">the rules</Link> or want
                 to check out <Link to="/docs">the documentation</Link>?
               </p>
             </div>
