@@ -2,6 +2,11 @@ import React from 'react';
 
 import '../App.css';
 
+import {
+  Route,
+  Switch,
+} from "react-router-dom";
+
 import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
@@ -430,26 +435,11 @@ class UserPlansTab extends React.Component {
 }
 
 class UserProfilePage extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      tab: 'profile'
-    }
-  }
-
-  setTab(tab) {
-    this.setState(state => Object.assign({}, state, { tab }));
-  }
-
   render() {
-    var tab_content = null;
-    if (this.state.tab === '' || this.state.tab === 'profile') {
-      tab_content = <UserProfileTab {...this.props} />
-    } else if (this.state.tab === 'security') {
-      tab_content = <UserSecurityTab {...this.props} />
-    } else if (this.state.tab === 'plans') {
-      tab_content = <UserPlansTab {...this.props} />
+    var paths = ['/profile/overview', '/profile/security', '/profile/plans'];
+    var tab_index = paths.indexOf(window.location.pathname);
+    if (tab_index === -1) {
+      tab_index = 0;
     }
 
     return (
@@ -461,15 +451,28 @@ class UserProfilePage extends React.Component {
             primaryBg: 'white',
           }}
         >
-          <t.TabBar>
-            <t.Tab icon="account_box" label="Profile" onClick={ () => this.setTab('profile') } />
-            <t.Tab icon="lock" label="Security" onClick={ () => this.setTab('security') } />
-            <t.Tab icon="credit_card" label="Plans" onClick={ () => this.setTab('plans') } />
+          <t.TabBar activeTabIndex={ tab_index }>
+            <t.Tab icon="account_box" label="Profile" onClick={ () => this.props.setPage('/profile/overview') } />
+            <t.Tab icon="lock" label="Security" onClick={ () => this.props.setPage('/profile/security') } />
+            <t.Tab icon="credit_card" label="Plans" onClick={ () => this.props.setPage('/profile/plans') } />
           </t.TabBar>
         </ThemeProvider>
         <br />
         <div style={{ width: "65%", margin: "0 auto" }}>
-          { tab_content }
+          <Switch>
+            <Route exact path="/profile">
+              <UserProfileTab {...this.props} />
+            </Route>
+            <Route path="/profile/overview">
+              <UserProfileTab {...this.props} />
+            </Route>
+            <Route path="/profile/security">
+              <UserSecurityTab {...this.props} />
+            </Route>
+            <Route path="/profile/plans">
+              <UserPlansTab {...this.props} />
+            </Route>
+          </Switch>
         </div>
       </div>
     );

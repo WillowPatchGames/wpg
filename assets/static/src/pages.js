@@ -1,7 +1,6 @@
 import React from 'react';
 
 import './App.css';
-import '@rmwc/icon/styles';
 
 import {
   Route,
