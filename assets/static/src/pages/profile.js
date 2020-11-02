@@ -279,7 +279,7 @@ class UserSecurityTab extends React.Component {
     var twofa_devices = [];
     if (this.state.devices) {
       for (let device of this.state.devices) {
-        twofa_devices.push(<l.ListItem>
+        twofa_devices.push(<l.ListItem key={ device.device }>
           <l.ListItemText>
             <l.ListItemPrimaryText className="text-left">
               { device.device }
@@ -417,7 +417,7 @@ class UserPlansTab extends React.Component {
                 }
               </Typography>
               <p className="text-left">{ plan.description }</p>
-              <l.ListDivider />
+              <hr />
               <p className="text-left">{ user_plan.rooms().length } rooms and { user_plan.games().length } games played under this plan.</p>
             </c.Card>
             <br /><br />

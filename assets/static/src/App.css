@@ -233,3 +233,12 @@ nav a {
   background-color: #006515;
   opacity: 0.85;
 }
+
+hr {
+  width: 100%;
+  color: rgba(0, 0, 0, 0.12);
+  background-color: rgba(0, 0, 0, 0.12);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
