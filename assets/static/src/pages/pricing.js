@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Link } from "react-router-dom";
+
 import '@rmwc/card/styles';
 import '@rmwc/dialog/styles';
 import '@rmwc/list/styles';
@@ -83,11 +85,54 @@ class PlanDetails extends React.Component {
     var plan = this.props.plan;
 
     var room_details = null;
-    if (plan.create_room) {
-      if (plan.max_open_rooms) {
-        room_details = <> {room_details} <p>Can create and play in up to { plan.max_open_rooms } rooms at a time.</p> </>
+    // Game settings
+    if (plan.max_total_games) {
+      if (plan.max_total_games !== -1) {
+        room_details = <> {room_details} <b>Games:</b> { plan.max_total_games } total <br /> </>
+      } else {
+        room_details = <> {room_details} <b>Games:</b> Unlimited <br /> </>
+      }
+    } else if (plan.max_total_games_in_room) {
+      if (plan.max_total_games_in_room !== -1) {
+        room_details = <> {room_details} <b>Games:</b> { plan.max_total_games_in_room } per room <br /> </>
+      } else {
+        room_details = <> {room_details} <b>Games:</b> Unlimited <br /> </>
       }
     }
+    // Player settings
+    if (plan.max_players_in_game) {
+      if (plan.max_players_in_game !== -1) {
+        room_details = <> {room_details} <b>Players:</b> { plan.max_players_in_game } total <br /> </>
+      } else {
+        room_details = <> {room_details} <b>Players:</b> Unlimited <br /> </>
+      }
+    } else if (plan.max_players_in_room && plan.max_players_in_game_in_room &&
+                plan.max_players_in_room !== -1 && plan.max_players_in_game_in_room !== -1) {
+      room_details = <> {room_details} <b>Players:</b> { plan.max_players_in_room } per room, { plan.max_players_in_game_in_room } per game per room <br /> </>
+    } else if (plan.max_players_in_room && plan.max_players_in_room !== -1) {
+      room_details = <> {room_details} <b>Players:</b> { plan.max_players_in_room } per room <br /> </>
+    } else if (plan.max_players_in_game_in_room && plan.max_players_in_game_in_room !== -1) {
+      room_details = <> {room_details} <b>Players:</b> { plan.max_players_in_game_in_room } per game per room <br /> </>
+    } else {
+      // Unlimited
+      room_details = <> {room_details} <b>Players:</b> Unlimited <br /> </>
+    }
+    // Room settings
+    if (plan.create_room) {
+      if (plan.max_total_rooms) {
+        if (plan.max_total_rooms !== -1) {
+          room_details = <> {room_details} <b>Rooms:</b> { plan.max_total_rooms } total <br /> </>
+        } else {
+          room_details = <> {room_details} <b>Rooms:</b> Unlimited <br /> </>
+        }
+      } else {
+        room_details = <> {room_details} <b>Rooms:</b> None <br /> </>
+      }
+    } else {
+      room_details = <> {room_details} <b>Rooms:</b> None <br /> </>
+    }
+    // NOTE: This statement needs to be the last assignment for room_details
+    room_details = <> <p> {room_details} </p> </>
 
     var game_details = null;
     var av_details = null;
@@ -115,7 +160,10 @@ class ActivePricingPage extends React.Component {
     super(props);
 
     this.state = {
-      plans: null
+      plans: null,
+      plan_map: null,
+      user_plans: null,
+      user_plan_map: null
     }
   }
 
@@ -126,9 +174,23 @@ class ActivePricingPage extends React.Component {
       return;
     }
 
+    // Retrieve user plan data (like profile.js)
+    if (this.props.user) {
+      var user_plans = await this.props.user.plans();
+      var user_plan_map = {};
+
+      for (let plan of user_plans) {
+        user_plan_map[plan.plan_id] = plan;
+      }
+
+      this.setState(state => Object.assign({}, state, { user_plans, user_plan_map }));
+    }
+
     var by_price = [];
+    var plan_map = {};
     for (let index in all_plans) {
       var plan = await all_plans[index];
+      plan_map[plan.id] = plan;
       var target_index = null;
       for (let by_price_index in by_price) {
         var sorted_plan = by_price[by_price_index];
@@ -145,7 +207,7 @@ class ActivePricingPage extends React.Component {
       by_price.splice(target_index, 0, plan);
     }
 
-    this.setState(state => Object.assign({}, state, { plans: by_price }));
+    this.setState(state => Object.assign({}, state, { plans: by_price, plan_map }));
   }
 
   setPlanPrice(plan, event) {
@@ -182,7 +244,7 @@ class ActivePricingPage extends React.Component {
         }
 
         active_plans.push(
-          <div className="flexible" style={{ margin: "1rem" }}>
+          <div className="flexible" style={{ margin: "1rem" }} key={ plan.name }>
             <c.Card style={{ 'width': '300px' }}>
               <div style={{ padding: "1rem" }}>
                 <Typography use="headline5">{ plan.name }</Typography>
@@ -200,12 +262,18 @@ class ActivePricingPage extends React.Component {
                 { price }
               </div>
               {
-                this.props.user !== undefined && this.props.user !== null && this.props.user.authed && plan.open
+                (this.state.user_plans && this.state.user_plan_map[plan.id] &&
+                  this.state.plan_map[plan.id].max_total_games > this.state.user_plan_map[plan.id].games().length
                 ?
                   <c.CardActions>
-                    <c.CardActionButton onClick={ () => this.props.setSelected(plan) } theme="secondary">Buy</c.CardActionButton>
+                    <c.CardActionButton onClick={ () => this.props.setPage('profile/plans') } theme="secondary">Active</c.CardActionButton>
                   </c.CardActions>
-                : null
+                : ((this.props.user !== undefined && this.props.user !== null && this.props.user.authed && plan.open) ?
+                    <c.CardActions>
+                      <c.CardActionButton onClick={ () => this.props.setSelected(plan) } theme="secondary">Select</c.CardActionButton>
+                    </c.CardActions>
+                  :
+                    null))
               }
             </c.Card>
           </div>
@@ -327,8 +395,8 @@ class PricingPage extends React.Component {
         <div>
           <Typography use="headline2">Pricing Information</Typography>
           <Typography use="body">
-            We're looking to refine our pricing structure over time. Currently
-            we've activated the following plans:
+            We&#39;re looking to refine our pricing structure over time. Currently
+            we&#39;ve activated the following plans:
           </Typography>
           {
             this.props.user === undefined || this.props.user === null || !this.props.user.authed
@@ -344,6 +412,11 @@ class PricingPage extends React.Component {
             ? <ActivePricingPage {...this.props} setSelected={ this.setSelected.bind(this) } />
             : <PurchasePage {...this.props} setSelected={ this.setSelected.bind(this) } plan={ this.state.selected } />
           }
+        </div>
+        <div>
+          <Typography use="body">
+            For more information on the plans you have purchased, visit your <Link to="/profile/plans" target="_blank" >Plans</Link> in <Link to="/profile" target="_blank" >Account Preferences</Link>.
+          </Typography>
         </div>
       </div>
     );

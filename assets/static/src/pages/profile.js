@@ -258,7 +258,7 @@ class UserSecurityTab extends React.Component {
       <c.Card>
         <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
           <Typography tag="h3">Password</Typography>
-          <p className="text-left">To change your password, enter your old one and what you'd like to change it to.</p>
+          <p className="text-left">To change your password, enter your old one and what you#39;d like to change it to.</p>
           <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
             <TextField fullwidth placeholder="old password" name="old" type="password" inputRef={ this.oldPassword } /><br />
             <TextField fullwidth placeholder="new password" name="new" type="password" inputRef={ this.newPassword  } /><br />
@@ -385,7 +385,7 @@ class UserPlansTab extends React.Component {
     super(props);
 
     this.state = {
-      user_plans: null,
+      user_plans: null
     };
   }
 
@@ -405,6 +405,10 @@ class UserPlansTab extends React.Component {
     if (this.state.user_plans !== null) {
       for (let user_plan of this.state.user_plans) {
         var plan = this.state.plans[user_plan.plan_id];
+        var num_games = String(user_plan.games().length);
+        var total_games = plan.max_total_games !== -1 ? String(plan.max_total_games) : "Unlimited";
+        var num_rooms = String( user_plan.rooms().length);
+        var total_rooms = plan.max_total_rooms !== -1 ? String(plan.max_total_rooms) : "Unlimited";
         rendered_plans.push(
           <>
             <c.Card style={{ padding: '1rem 1rem 1rem 1rem' }}>
@@ -418,7 +422,13 @@ class UserPlansTab extends React.Component {
               </Typography>
               <p className="text-left">{ plan.description }</p>
               <hr />
-              <p className="text-left">{ user_plan.rooms().length } rooms and { user_plan.games().length } games played under this plan.</p>
+              {
+                (plan.max_total_rooms ?
+                  <p className="text-left">You have played { num_games } of { total_games } games and used { num_rooms } of { total_rooms } rooms under this plan.</p>
+                :
+                  <p className="text-left">You have played { num_games } of { total_games } games under this plan.</p>
+                )
+              }
             </c.Card>
             <br /><br />
           </>
@@ -542,7 +552,7 @@ class GuestProfilePage extends React.Component {
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <Typography use="headline3">Upgrade your Account</Typography>
               <p>
-                In order to do too much more with your account, you'll
+                In order to do too much more with your account, you#39;ll
                 need to upgrade it to a full account.
               </p>
               <form onSubmit={ this.handleUpgradeSubmit.bind(this) }>

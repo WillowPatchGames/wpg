@@ -31,7 +31,7 @@ plans:
     can_video_chat: true
   - slug: "free"
     name: "Free Trial"
-    description: "The initial free trial for all users."
+    description: "The initial, free trial for all users. Grab your friends and play!"
     open: false
     visible: true
     min_price_cents: 0
@@ -113,13 +113,41 @@ plans:
     available_game_styles: "*"
     can_audio_chat: true
     can_video_chat: true
-  - slug: "party"
-    name: "Party"
-    description: "Best for a gathering of a larger number of people in a short period of time, the Party plan lets you host up to 50 people in 100 games."
+  - slug: "entry"
+    name: "Support Us"
+    description: "A starter pack to show your appreciation for our work."
     open: true
     visible: true
     min_price_cents: 500
     suggested_price_cents: 500
+    max_price_cents: 1000
+    billed: 0
+    create_room: true
+    max_open_rooms: 1
+    max_total_rooms: 1
+    max_open_games_in_room: 10
+    max_total_games_in_room: 10
+    max_players_in_room: 10
+    max_players_in_game_in_room: 10
+    max_room_in_timeframe_count: -1
+    max_room_in_timeframe_duration: 3153600000000000000
+    create_game: false
+    max_open_games: 0
+    max_total_games: 0
+    max_players_in_game: 0
+    max_spectators_in_game: 0
+    max_games_in_timeframe_count: -1
+    max_games_in_timeframe_duration: 3153600000000000000
+    available_game_styles: "*"
+    can_audio_chat: true
+    can_video_chat: true
+  - slug: "party"
+    name: "Rush Party"
+    description: "Game-based pricing. Ideal for a party with all your friends."
+    open: false
+    visible: false
+    min_price_cents: 1000
+    suggested_price_cents: 1000
     max_price_cents: 2500
     billed: 0
     create_room: true
@@ -143,9 +171,9 @@ plans:
     can_video_chat: true
   - slug: "rush-yearly"
     name: "A Year of Rush"
-    description: "Best for consistent players, this lets you host an unlimited number of rooms all year. Room size limited to 25 games with 10 people."
-    open: true
-    visible: true
+    description: "Time-based pricing. Make Fridays your family game night."
+    open: false
+    visible: false
     min_price_cents: 2500
     suggested_price_cents: 2500
     max_price_cents: 2500
