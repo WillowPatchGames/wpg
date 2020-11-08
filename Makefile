@@ -84,6 +84,7 @@ webui:
 distui:
 	cd assets/static && REACT_EDITOR=none BROWSER=none $(NPM) run build
 	cp assets/static/public/csw15.txt assets/static/build/csw15.txt
+	bash ./scripts/build-gzip.sh
 
 tarball: build
 	rm -f $(DIST) $(DIST).xz
