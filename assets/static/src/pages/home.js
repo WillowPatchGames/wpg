@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { LazyLoadImage } from 'react-lazy-load-image-component';
+import { LazyLoadComponent, LazyLoadImage } from 'react-lazy-load-image-component';
 
 import '../App.css';
 import '@rmwc/grid/styles';
@@ -12,7 +12,9 @@ import { Typography } from '@rmwc/typography';
 import { Theme } from '@rmwc/theme';
 
 import logo from '../images/logo.png';
-import Winnergif from '../images/Home-Page-large.gif';
+import WinnerGif from '../images/Home-Page-small.gif';
+import WinnerWebM from '../images/Home-Page-large.webm';
+import WinnerMP4 from '../images/Home-Page-large.mp4';
 
 class HomePage extends React.Component {
   render() {
@@ -52,7 +54,13 @@ class HomePage extends React.Component {
               </g.GridCell>
               <g.GridCell align="right" span={8}>
                 <div>
-                  <LazyLoadImage className= "App-gifs" src={Winnergif}  alt="Animated screenshot of game play" />
+                  <LazyLoadComponent>
+                    <video className="App-gifs" autoPlay={ true } loop={ true } muted={ true } playsInline={ true }>
+                      <source src={ WinnerWebM } type="video/webm" />
+                      <source src={ WinnerMP4 } type="video/mp4" />
+                      <LazyLoadImage src={ WinnerGif } alt="Animated screenshot of game play" />
+                    </video>
+                  </LazyLoadComponent>
 
                   <p style={{ textAlign: 'left' }}>
                     Hey there! We're a small game company kick-started by two brothers
