@@ -16,7 +16,7 @@ import { Typography } from '@rmwc/typography';
 
 import { PlanModel } from '../models.js';
 
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js/pure';
 
 function centsToDollar(value) {
   var dollars = parseInt(value / 100);
