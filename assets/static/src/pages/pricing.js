@@ -168,7 +168,13 @@ class ActivePricingPage extends React.Component {
   }
 
   async componentDidMount() {
-    var all_plans = await PlanModel.active();
+    var all_plans = await PlanModel.active().catch(error => {
+      return {
+        'type': 'error',
+        'error': error,
+      };
+    });
+
     if ('type' in all_plans && all_plans.error !== null) {
       console.log(all_plans.error);
       return;
