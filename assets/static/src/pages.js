@@ -66,62 +66,62 @@ class Page extends React.Component {
     return (
       <Switch>
         <Route exact path="/about">
-          <AboutPage {...this_props} />
+          <AboutPage {...this_props} key="path-about" />
         </Route>
         <RouteWithGame path="/afterparty" game={ this.props.game }>
-          <AfterPartyPage {...this_props} />
-          <JoinGamePage {...this_props} />
+          <AfterPartyPage {...this_props} key="path-afterparty" />
+          <JoinGamePage {...this_props} key="path-afterparty-missing" />
         </RouteWithGame>
         <RouteWithAuth path="/create/game" user={ this.props.user }>
-          <CreateGamePage {...this_props} />
-          <LoginPage {...this_props} />
+          <CreateGamePage {...this_props} key="path-create-game" />
+          <LoginPage {...this_props} key="path-create-game-unauthed" />
         </RouteWithAuth>
         <RouteWithAuth path="/create/room" user={ this.props.user }>
-          <CreateRoomPage {...this_props} />
-          <LoginPage {...this_props} />
+          <CreateRoomPage {...this_props} key="path-create-room" />
+          <LoginPage {...this_props} key="path-create-room-unauthed" />
         </RouteWithAuth>
         <Route path="/docs">
-          <DocsPage {...this_props} />
+          <DocsPage {...this_props} key="path-docs" />
         </Route>
         <Route path="/join">
-          <JoinGamePage {...this_props} />
+          <JoinGamePage {...this_props} key="path-join" />
         </Route>
         <Route path="/login">
-          <LoginPage {...this_props} />
+          <LoginPage {...this_props} key="path-login" />
         </Route>
         <RouteWithGame path="/play" game={ this.props.game }>
-          <PreGamePage {...this_props} />
-          <JoinGamePage {...this_props} />
+          <PreGamePage {...this_props} key="path-play" />
+          <JoinGamePage {...this_props} key="path-play-missing" />
         </RouteWithGame>
         <RouteWithGame path="/playing" game={ this.props.game }>
-          <RushGamePage {...this_props} />
-          <JoinGamePage {...this_props} />
+          <RushGamePage {...this_props} key="path-playing" />
+          <JoinGamePage {...this_props} key="path-playing-missing" />
         </RouteWithGame>
         <Route path="/pricing">
-          <PricingPage {...this_props} />
+          <PricingPage {...this_props} key="path-pricing" />
         </Route>
         <Route path="/privacy">
-          <PrivacyPage {...this_props} />
+          <PrivacyPage {...this_props} key="path-privacy" />
         </Route>
         <RouteWithAuth path="/profile" user={ this.props.user }>
-          <ProfilePage {...this_props} />
-          <LoginPage {...this_props} />
+          <ProfilePage {...this_props} key="path-profile" />
+          <LoginPage {...this_props} key="path-profile-unauthed" />
         </RouteWithAuth>
         <RouteWithRoom path="/room" room={ this.props.room }>
-          <RoomPage {...this_props} />
-          <JoinGamePage {...this_props} />
+          <RoomPage {...this_props} key="path-room" />
+          <JoinGamePage {...this_props} key="path-room-missing" />
         </RouteWithRoom>
         <Route path="/rules/rush">
-          <RushRulesPage {...this_props} />
+          <RushRulesPage {...this_props} key="path-rules-rush" />
         </Route>
         <Route path="/signup">
-          <SignupPage {...this_props} />
+          <SignupPage {...this_props} key="path-signup" />
         </Route>
         <Route path="/home">
-          <HomePage {...this_props} />
+          <HomePage {...this_props} key="path-home" />
         </Route>
         <Route exact path="/">
-          <HomePage {...this_props} />
+          <HomePage {...this_props} key="home" />
         </Route>
       </Switch>
     );
