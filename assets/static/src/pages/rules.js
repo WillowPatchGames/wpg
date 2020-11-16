@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  Link,
+} from "react-router-dom";
+
 import '@rmwc/grid/styles';
 import '@rmwc/typography/styles';
 
@@ -24,8 +28,8 @@ class RushRulesPage extends React.Component {
                 The host creates a room and selects desired customizations.
                 Customization options include changing the total number of
                 tiles, how many tiles players start with, the number of tiles
-                to draw, and the discard penalty. For details go to <b> create link
-                for details on hosting </b>.
+                to draw, and the discard penalty. For information on hosting,
+                go <Link to="/docs#host">here</Link>.
               </p>
               <p>
                 Game play starts with everyone receiving the number of initial
