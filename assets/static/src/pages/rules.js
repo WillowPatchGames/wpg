@@ -41,7 +41,7 @@ class RushRulesPage extends React.Component {
 
               <p>
                 When a player uses up all the tiles in their bank, they click
-                the draw button.Then every player automatically draws and is
+                the draw button. Then every player automatically draws and is
                 given additional number of tiles specified by the game
                 configuration, from the pile. The first person to place all
                 their tiles on the board (when there are no more in the pile!)

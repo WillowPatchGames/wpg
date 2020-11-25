@@ -10,6 +10,17 @@ import '@rmwc/typography/styles';
 import * as g from '@rmwc/grid';
 import { Typography } from '@rmwc/typography';
 
+/* change name GameStartsScreen */
+import ShareSecretCode from '../images/Screenshots/ShareSecretCode.png';
+import JoinasGuest from '../images/Screenshots/JoinasGuest.png';
+import JoinExisting from '../images/Screenshots/JoinExisting.png';
+import CreateGames from '../images/Screenshots/CreateGames.png';
+import CreateGamePlayer from '../images/Screenshots/CreateGamePlayer.png';
+import CreateGameGameOptions from '../images/Screenshots/CreateGameGameOptions.png';
+import CreateGameTiles from '../images/Screenshots/CreateGameTiles.png';
+import AdmitPlayer from '../images/Screenshots/AdmitPlayer.png';
+import Winnergif from '../images/Home-Page-small.gif';
+
 
 class DocsPage extends React.Component {
   render() {
@@ -30,13 +41,21 @@ class DocsPage extends React.Component {
               the party will be playing one game or a series of games in a room.
               </p>
 
-              <Typography use="headline4">How to get started playing Rush! as
-              a <a href="#player">player</a> or a <a href ="#host">host.</a></Typography>
+              <Typography use="headline5">Need to know how to &nbsp;
+
+              <a href ="#host">host</a> ?</Typography>
               <br />
               <br />
-              <Typography use="headline3" id="player">How to Play a Rush! Game</Typography>
-              <p> You can play as a guest or as a signed in player.  For a guest player just enter your screen name and click play as guest button.
+              <Typography use="headline3" id="player">How to Play Rush!</Typography>
+              <p> You can play as a guest or as a signed in player.
+
               </p>
+              <p>
+               For a guest player just enter your screen name and click play as guest button.
+               <br />
+               <br />
+               </p>
+               <img className= "App-screenshots" src={JoinasGuest} sizes= "180x180" alt="Join As Guest" />
               <p> To login, follow the screen prompts to login in and play.
               </p>
 
@@ -49,8 +68,10 @@ class DocsPage extends React.Component {
                 Next, place your secret passcode given to you by the host in
                 the Join an Existing Room or Game box. Click the blue "Join"
                 button.
-              </p>
-
+                <br />
+                <br />
+                </p>
+                <img className= "App-screenshots" src={JoinExisting} sizes= "180x180" alt="Join Existing Game" />
               <p>
                 You are now admitted to the game or room.  If you're playing
                 a in a room you will see your name along with other guests.
@@ -65,7 +86,10 @@ class DocsPage extends React.Component {
                 tiles pop-up on the screen.  Start placing tiles to form words.
                 <b> Follow instructions in Playing Tiles on how to do that on
                 your device. </b>
-              </p>
+                <br />
+                <br />
+                </p>
+                <img className= "App-screenshots" src={Winnergif} sizes= "180x180" alt="Games Starts" />
               <p>
               </p>
               <Typography use="headline3">Game Mechanics</Typography>
@@ -164,9 +188,78 @@ class DocsPage extends React.Component {
                 can press the draw button to give a new tile. When not enough
                 tiles are left, the first person to draw is the winner!
               </p>
-
-              <Typography use="headline3" id="host">How to Host a Rush! Game</Typography>
-
+              <Typography use="headline3" id="host">How to Host a Rush!</Typography>
+              <p> To Host a Rush! Game,  first signup for an account or login if you
+               already have an account.
+              </p>
+              <p> The following screen is displayed to make selections for the game.
+              </p>
+              <img className= "App-screenshots" src={CreateGames} sizes= "180x180"
+              alt="Join Existing Game" />
+              <p> Player Options:
+              <ul>
+                <li>Open for anyone to join or those invited (default is open)
+                </li>
+                <li>Allow Spectators - players can watch the boards instead of
+                playing. (default is allow)
+                </li>
+                <li>Set the number of players.
+                </li>
+              </ul>
+              </p>
+              <img className= "App-screenshots" src={CreateGamePlayer} sizes= "180x180"
+              alt="Game Player Options" />
+              <p>Game Options:
+              <ul>
+                <li> Game Mode is set to Rush! (Fast Paced Game)
+                </li>
+                <li> Set the number of tiles (default is 75)
+                </li>
+                <li> Decide if the number of tiles is for each player or for the
+                game.
+                </li>
+              </ul>
+              </p>
+              <img className= "App-screenshots" src={CreateGameGameOptions} sizes= "180x180" alt="Game Options" />
+              <p>Tile options:
+              <ul>
+                <li> Tile Frequency options are:
+                </li>
+                  <ul>
+                    <li> Standard US English Letter Frequencies
+                    </li>
+                    <li> Bananagrams Tile Frequency
+                    </li>
+                    <li>Scrabble Tile Frequency
+                    </li>
+                  </ul>
+                <li> Player Tile Start Size - number of tiles to start the game.
+                </li>
+                <li> Player Tile Draw Size - number of tiles to draw.
+                </li>
+                <li> Player Tile Discard Penalty - number of tiles drawn when 1
+                tile is discarded.
+                </li>
+              </ul>
+              </p>
+              <img className= "App-screenshots" src={CreateGameTiles} sizes= "180x180"
+              alt="Game Tile Options" />
+              <p> Share this secret code with your players.  Tip:  The rectangle
+              on the left copies the secret code to the clipboard.
+              <br />
+              </p>
+              <img className= "App-screenshots" src={ShareSecretCode} sizes= "180x180"
+              alt="Share secret code" />
+              <p>
+              </p>
+              <p> Once the players have their secret code and have entered it,
+              your screen will automatically show players who have
+              joined the game. Select the box to admit the player. Toggle
+              to spectator if they are not playing. Finally, press the Start key and
+              wait for the countdown to begin!   <b>Have Fun and Good Luck!</b>
+              </p>
+              <img className= "App-screenshots" src={AdmitPlayer} sizes= "180x180"
+              alt="Admit Player" />
             </article>
           </g.GridCell>
         </g.Grid>
