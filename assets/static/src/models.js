@@ -1001,4 +1001,5 @@ export {
   RoomModel,
   GameModel,
   normalizeCode,
+  ws,
 };

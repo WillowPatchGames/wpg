@@ -127,6 +127,7 @@ p {
 /* TODO: upstream??? */
 .mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust {
   padding-top: 56px;
+  background-color: var(--mdc-theme-primary, #6200ee);
 }
 
 .mdc-snackbar__action:not(:disabled) {
