@@ -6,11 +6,12 @@ import (
 )
 
 // GameMode describes which mode (type? style?) a given game is. This is a
-// proxy for using string identifiers and strongly typed instead.
+// proxy for using string identifiers and is strongly typed instead.
 type GameMode int
 
 const (
-	RushGame GameMode = iota
+	RushGame   GameMode = iota
+	SpadesGame GameMode = iota
 )
 
 func (gm GameMode) String() string {

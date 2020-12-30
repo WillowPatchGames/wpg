@@ -28,21 +28,18 @@ func (rp *RushPlayer) Init() {
 }
 
 func (rp *RushPlayer) FindTile(tileID int) (int, bool) {
-	var tileIndex int = -1
-
 	for index, tile := range rp.Hand {
 		if tile.ID == tileID {
-			tileIndex = index
-			break
+			return index, true
 		}
 	}
 
-	return tileIndex, tileIndex != -1
+	return -1, false
 }
 
 type RushConfig struct {
-	NumPlayers     int       `json:"num_players"` // 2 <= n <= 25
-	NumTiles       int       `json:"num_tiles"`   // Between 1 and 75 rounds worth
+	NumPlayers     int       `json:"num_players"` // 2 <= n <= 50
+	NumTiles       int       `json:"num_tiles"`   // Between 1 and 100 rounds worth
 	TilesPerPlayer bool      `json:"tiles_per_player"`
 	StartSize      int       `json:"start_size"`      // 5 <= n <= 25
 	DrawSize       int       `json:"draw_size"`       // 1 <= n <= 10
@@ -80,7 +77,7 @@ func (cfg RushConfig) Validate() error {
 	var oneDraw int = cfg.DrawSize * cfg.NumPlayers
 	var numRounds = (totalTiles - initialTiles) / oneDraw
 
-	if totalTiles < (initialTiles+oneDraw) || numRounds > 75 {
+	if totalTiles < (initialTiles+oneDraw) || numRounds > 100 {
 		var tilesRepr string = strconv.Itoa(cfg.NumTiles)
 		if cfg.TilesPerPlayer {
 			tilesRepr += " per player"
@@ -88,7 +85,7 @@ func (cfg RushConfig) Validate() error {
 			tilesRepr += " total"
 		}
 
-		return GameConfigError{"number of tiles", tilesRepr, "must be enough for 1 to 75 rounds of drawing"}
+		return GameConfigError{"number of tiles", tilesRepr, "must be enough for 1 to 100 rounds of drawing"}
 	}
 
 	return nil
