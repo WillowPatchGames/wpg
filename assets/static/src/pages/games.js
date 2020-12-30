@@ -140,7 +140,7 @@ class RushGameSynopsis extends React.Component {
     var player_view = [];
     if (this.state.remaining !== null) {
       player_view.push(
-        <div className="playerSummary">
+        <div key="tiles-pool" className="playerSummary">
           <span className="playerSummaryInHand" title="Tiles in Pool">{ this.state.remaining }&nbsp;in&nbsp;pool</span>
         </div>
       );
@@ -150,7 +150,7 @@ class RushGameSynopsis extends React.Component {
       if (this.state.players[this.props.user.id]) {
         var us = this.state.players[this.props.user.id];
         player_view.push(
-          <div className="playerSummary">
+          <div key="you-player" className="playerSummary">
             <Avatar src={ gravatarify(us.user) } name="You" size="xlarge" />
             {
               us.playing
@@ -180,7 +180,7 @@ class RushGameSynopsis extends React.Component {
         }
 
         player_view.push(
-          <div className="playerSummary">
+          <div key={ "player"+player_id } className="playerSummary">
             <Avatar src={ gravatarify(them.user) } name={ them.user.display } size="xlarge" />
             {
               them.playing
@@ -197,14 +197,14 @@ class RushGameSynopsis extends React.Component {
 
       if (spectators === 1) {
         player_view.push(
-          <div className="playerSummary">
+          <div key="spectator" className="playerSummary">
             <Avatar src={ gravatarify(representative.user) } name={ representative.user.display } size="xlarge" />
             <span className="playerSummaryInfo">Spectator</span>
           </div>
         );
       } else if (spectators > 1) {
         player_view.push(
-          <div className="playerSummary">
+          <div key="spectators" className="playerSummary">
             <AvatarGroup dense>
               <Avatar src={ gravatarify(representative.user) } name={ representative.user.display } size="xlarge" />
               <AvatarCount size="xlarge" overflow value={ spectators - 1 } />
@@ -285,8 +285,8 @@ class RushGamePage extends React.Component {
   render() {
     var countdown = null;
     if (this.state.countdown !== null && this.state.countdown !== 0) {
-      countdown = <div class="countdown-overlay">
-        <div class="countdown-circle">
+      countdown = <div className="countdown-overlay">
+        <div className="countdown-circle">
           { this.state.countdown }
         </div>
       </div>
@@ -580,8 +580,8 @@ class PreGameUserPage extends React.Component {
 
     var countdown = null;
     if (this.state.countdown !== null && this.state.countdown !== 0) {
-      countdown = <div class="countdown-overlay">
-        <div class="countdown-circle">
+      countdown = <div className="countdown-overlay">
+        <div className="countdown-circle">
           { this.state.countdown }
         </div>
       </div>
@@ -811,8 +811,8 @@ class PreGameAdminPage extends React.Component {
 
     var countdown = null;
     if (this.state.countdown !== null && this.state.countdown !== 0) {
-      countdown = <div class="countdown-overlay">
-        <div class="countdown-circle">
+      countdown = <div className="countdown-overlay">
+        <div className="countdown-circle">
           { this.state.countdown }
         </div>
       </div>
@@ -1302,7 +1302,7 @@ class JoinGamePage extends React.Component {
       right_column = [];
       if (this.props.user.can_create_room) {
         right_column.push(
-          <div style={{ padding: '1rem 0px 1rem 0px' }}>
+          <div key="host-room" style={{ padding: '1rem 0px 1rem 0px' }}>
             <c.Card>
               <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
                 <div>
@@ -1320,7 +1320,7 @@ class JoinGamePage extends React.Component {
 
       if (this.props.user.can_create_game) {
         right_column.push(
-          <div style={{ padding: '1rem 0px 1rem 0px' }}>
+          <div key="host-game" style={{ padding: '1rem 0px 1rem 0px' }}>
             <c.Card>
               <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
                 <div>
