@@ -29,6 +29,22 @@ type GameCountback struct {
 }
 
 func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+	// Get some common started/finished information first. Because we store
+	// this in the game state, accessing it requires knowing the game mode.
+	var started = false
+	// var finished = false
+	if game.Mode == RushGame {
+		var state *RushState = game.State.(*RushState)
+		started = state.Started
+		// finished = state.Finished
+	} else if game.Mode == SpadesGame {
+		var state *SpadesState = game.State.(*SpadesState)
+		started = state.Started
+		// finished = state.Finished
+	} else {
+		panic("Unknown game mode: " + game.Mode.String())
+	}
+
 	// First try and handle some common message types. Note that since c.Dispatch
 	// doesn't hold a lock, we can safely call back into c.MarkAdmitted(...) and
 	// c.MarkReady(...).
@@ -77,9 +93,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return errors.New("player not authorized to admit other players")
 		}
 
-		// XXX -- fix once more game types are supported
-		var state *RushState = game.State.(*RushState)
-		if state.Started {
+		if started {
 			return errors.New("can't admit player into game that has already started")
 		}
 
@@ -90,8 +104,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return err
 		}
 
-		var state *RushState = game.State.(*RushState)
-		if state.Started {
+		if started {
 			return errors.New("can't change ready status in game that has already started")
 		}
 
@@ -131,11 +144,13 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		return c.handleCountdown(game)
 	}
 
-	if game.Mode != RushGame {
+	if game.Mode == RushGame {
+		return c.dispatchRush(message, header, game, player)
+	} else if game.Mode == SpadesGame {
+		return c.dispatchSpades(message, header, game, player)
+	} else {
 		panic("Valid but unsupported game mode: " + game.Mode.String())
 	}
-
-	return c.dispatchRush(message, header, game, player)
 }
 
 func (c *Controller) handleCountdown(game *GameData) error {
@@ -158,15 +173,19 @@ func (c *Controller) handleCountdown(game *GameData) error {
 		// Fall through -- this decrements the above countdown by one and sends out
 		// the countdown messages.
 	} else if game.Countdown == 0 {
-		// XXX: Update when adding more modes
-		if game.Mode != RushGame {
+		if game.Mode == RushGame {
+			var state *RushState = game.State.(*RushState)
+			if !state.Started {
+				return c.doRushStart(game, state)
+				// Must return!
+			}
+		} else if game.Mode == SpadesGame {
+			var state *SpadesState = game.State.(*SpadesState)
+			if !state.Started {
+				return c.doSpadesStart(game, state)
+			}
+		} else {
 			panic("Unknown game mode: " + game.Mode.String())
-		}
-
-		var state *RushState = game.State.(*RushState)
-		if !state.Started {
-			return c.doRushStart(game, state)
-			// Must return!
 		}
 	}
 

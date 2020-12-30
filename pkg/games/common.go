@@ -15,7 +15,7 @@ const (
 )
 
 func (gm GameMode) String() string {
-	return []string{"rush"}[gm]
+	return []string{"rush", "spades"}[gm]
 }
 
 // Convert the representation of a GameMode to a string.
@@ -23,13 +23,15 @@ func GameModeFromString(repr string) GameMode {
 	switch strings.ToLower(repr) {
 	case "rush":
 		return RushGame
+	case "spades":
+		return SpadesGame
 	default:
 		return -1
 	}
 }
 
 func (gm GameMode) IsValid() bool {
-	return gm == RushGame
+	return gm == RushGame || gm == SpadesGame
 }
 
 // GameConfigError is a type of error specific for errors in the

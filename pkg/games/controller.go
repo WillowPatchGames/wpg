@@ -86,6 +86,17 @@ type GameData struct {
 	CountdownTimer *time.Timer `json:"-"`
 }
 
+// Map a player identifier to Index.
+func (data *GameData) ToUserID(index int) (bool, uint64) {
+	for _, player := range data.ToPlayer {
+		if player.Index == index {
+			return true, player.UID
+		}
+	}
+
+	return false, 0
+}
+
 // Controller wraps game data and handles the parsing of messages from the
 // websocket or other connection. dispatch.go handles the actual dispatch
 // into game specific commands understood by a game implementation. We lock
@@ -126,7 +137,15 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 	defer c.lock.Unlock()
 
 	var data GameData
-	data.State = new(RushState)
+	var mode GameMode = GameModeFromString(gamedb.Style)
+
+	if mode == RushGame {
+		data.State = new(RushState)
+	} else if mode == SpadesGame {
+		data.State = new(SpadesState)
+	} else {
+		panic("Valid but unsupported game mode: " + gamedb.Style)
+	}
 
 	if gamedb.State.Valid {
 		if err := json.Unmarshal([]byte(gamedb.State.String), &data); err != nil {
@@ -137,18 +156,30 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 	if data.GID != gamedb.ID {
 		// Assume this game hasn't yet been initialized. Create a new game and then
 		// persist it back to the database.
-		var config RushConfig
+		var config interface{}
 
 		if !gamedb.Config.Valid {
 			return errors.New("got unexpectedly empty game configuration")
 		}
 
-		if err := json.Unmarshal([]byte(gamedb.Config.String), &config); err != nil {
-			return err
+		if mode == RushGame {
+			var rush_config RushConfig
+			if err := json.Unmarshal([]byte(gamedb.Config.String), &config); err != nil {
+				return err
+			}
+			config = &rush_config
+		} else if mode == SpadesGame {
+			var spades_config SpadesConfig
+			if err := json.Unmarshal([]byte(gamedb.Config.String), &config); err != nil {
+				return err
+			}
+			config = &spades_config
+		} else {
+			panic("Valid but unsupported game mode: " + gamedb.Style)
 		}
 
 		// Add and initialize a new game object.
-		if err := c.addGame(gamedb.Style, gamedb.ID, gamedb.OwnerID, &config); err != nil {
+		if err := c.addGame(gamedb.Style, gamedb.ID, gamedb.OwnerID, config); err != nil {
 			return err
 		}
 	} else {
@@ -162,11 +193,22 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		c.ToGame[gamedb.ID] = &data
 	}
 
-	var state *RushState = c.ToGame[gamedb.ID].State.(*RushState)
-	if state != nil {
-		if err := state.ReInit(); err != nil {
-			return err
+	if mode == RushGame {
+		var state *RushState = c.ToGame[gamedb.ID].State.(*RushState)
+		if state != nil {
+			if err := state.ReInit(); err != nil {
+				return err
+			}
 		}
+	} else if mode == SpadesGame {
+		var state *SpadesState = c.ToGame[gamedb.ID].State.(*SpadesState)
+		if state != nil {
+			if err := state.ReInit(); err != nil {
+				return err
+			}
+		}
+	} else {
+		panic("Valid but unsupported game mode: " + gamedb.Style)
 	}
 
 	return nil
@@ -187,25 +229,36 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 		return errors.New("unknown game mode: " + modeRepr)
 	}
 
-	if mode != RushGame {
-		// XXX: Remove me once more game modes are supported.
+	game := new(GameData)
+	game.lock = sync.Mutex{}
+
+	// Type assert to grab the configuration.
+	if mode == RushGame {
+		var rushConfig *RushConfig = config.(*RushConfig)
+		var state *RushState = new(RushState)
+
+		if err := state.Init(*rushConfig); err != nil {
+			return err
+		}
+
+		game.State = state
+	} else if mode == SpadesGame {
+		var spadesConfig *SpadesConfig = config.(*SpadesConfig)
+		var state *SpadesState = new(SpadesState)
+
+		if err := state.Init(*spadesConfig); err != nil {
+			return err
+		}
+
+		game.State = state
+	} else {
 		panic("Valid but unsupported game mode: " + modeRepr)
 	}
 
-	// Type assert to grab the configuration.
-	var rushConfig *RushConfig = config.(*RushConfig)
-	var state *RushState = new(RushState)
-
-	if err := state.Init(*rushConfig); err != nil {
-		return err
-	}
-
-	game := new(GameData)
-	game.lock = sync.Mutex{}
 	game.GID = gid
 	game.Mode = mode
 	game.Owner = owner
-	game.State = state
+	// game.State set above.
 	game.ToPlayer = make(map[uint64]*PlayerData)
 	game.Countdown = 0
 	game.CountdownTimer = nil
@@ -227,26 +280,57 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 	var encoded []byte
 	var err error
 	if game.State != nil {
-		var state *RushState = game.State.(*RushState)
-		var config = state.Config
+		var started = false
+		var finished = false
 
-		encoded, err = json.Marshal(config)
-		if err != nil {
-			c.lock.Unlock()
-			return err
+		if game.Mode == RushGame {
+			var state *RushState = game.State.(*RushState)
+			var config = state.Config
+
+			encoded, err = json.Marshal(config)
+			if err != nil {
+				c.lock.Unlock()
+				return err
+			}
+
+			started = state.Started
+			finished = state.Finished
+		} else if game.Mode == SpadesGame {
+			var state *SpadesState = game.State.(*SpadesState)
+			var config = state.Config
+
+			encoded, err = json.Marshal(config)
+			if err != nil {
+				c.lock.Unlock()
+				return err
+			}
+
+			started = state.Started
+			finished = state.Finished
+		} else {
+			panic("Unknown game mode: " + game.Mode.String())
 		}
 
 		if gamedb.Lifecycle != "deleted" {
-			if !state.Started {
+			if !started {
 				gamedb.Lifecycle = "pending"
-			} else if state.Started && !state.Finished {
+			} else if started && !finished {
 				gamedb.Lifecycle = "playing"
 			} else {
 				gamedb.Lifecycle = "finished"
 			}
 		} else {
-			state.Started = false
-			state.Finished = false
+			if game.Mode == RushGame {
+				var state *RushState = game.State.(*RushState)
+				state.Started = false
+				state.Finished = false
+			} else if game.Mode == SpadesGame {
+				var state *SpadesState = game.State.(*SpadesState)
+				state.Started = false
+				state.Finished = false
+			} else {
+				panic("Unknown game mode: " + game.Mode.String())
+			}
 		}
 	}
 

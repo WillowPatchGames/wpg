@@ -14,28 +14,29 @@ const SpadesNextRound string = "begin next round"
 type SpadesBid int
 
 const (
-	NotBidSpades       SpadesBid = iota
-	OneBidSpades       SpadesBid = iota
-	TwoBidSpades       SpadesBid = iota
-	ThreeBidSpades     SpadesBid = iota
-	FourBidSpades      SpadesBid = iota
-	FiveBidSpades      SpadesBid = iota
-	SixBidSpades       SpadesBid = iota
-	SevenBidSpades     SpadesBid = iota
-	EightBidSpades     SpadesBid = iota
-	NineBidSpades      SpadesBid = iota
-	TenBidSpades       SpadesBid = iota
-	ElevenBidSpades    SpadesBid = iota
-	TwelveBidSpades    SpadesBid = iota
-	ThirteenBidSpades  SpadesBid = iota
-	FourteenBidSpades  SpadesBid = iota
-	FifteenBidSpades   SpadesBid = iota
-	SixteenBidSpades   SpadesBid = iota
-	SeventeenBidSpades SpadesBid = iota
-	EighteenBidSpades  SpadesBid = iota
-	NilBidSpades       SpadesBid = iota
-	BlindNilBidSpades  SpadesBid = iota
-	TripleNilBidSpades SpadesBid = iota
+	NotBidSpades         SpadesBid = iota
+	OneBidSpades         SpadesBid = iota
+	TwoBidSpades         SpadesBid = iota
+	ThreeBidSpades       SpadesBid = iota
+	FourBidSpades        SpadesBid = iota
+	FiveBidSpades        SpadesBid = iota
+	SixBidSpades         SpadesBid = iota
+	SevenBidSpades       SpadesBid = iota
+	EightBidSpades       SpadesBid = iota
+	NineBidSpades        SpadesBid = iota
+	TenBidSpades         SpadesBid = iota
+	ElevenBidSpades      SpadesBid = iota
+	TwelveBidSpades      SpadesBid = iota
+	ThirteenBidSpades    SpadesBid = iota
+	FourteenBidSpades    SpadesBid = iota
+	FifteenBidSpades     SpadesBid = iota
+	SixteenBidSpades     SpadesBid = iota
+	SeventeenBidSpades   SpadesBid = iota
+	EighteenBidSpades    SpadesBid = iota
+	NilBidSpades         SpadesBid = iota
+	BlindNilBidSpades    SpadesBid = iota
+	TripleNilBidSpades   SpadesBid = iota
+	OutOfBoundsBidSpades SpadesBid = iota
 )
 
 type SpadesPlayer struct {
@@ -135,6 +136,12 @@ func (ss *SpadesState) Init(cfg SpadesConfig) error {
 	ss.Finished = false
 	ss.Winner = -1
 
+	return nil
+}
+
+func (ss *SpadesState) ReInit() error {
+	// No-op for now. Nothing needs to be re-initialized after reloading
+	// from JSON serialization.
 	return nil
 }
 
@@ -601,6 +608,7 @@ func (ss *SpadesState) tabulateRoundScore() error {
 		}
 	}
 
+	// XXX: correctly handle end of round.
 	ss.Dealer = (ss.Dealer + 1) % ss.Config.NumPlayers
 	return errors.New(SpadesNextRound)
 }
