@@ -258,7 +258,7 @@ class UserSecurityTab extends React.Component {
       <c.Card>
         <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
           <Typography tag="h3">Password</Typography>
-          <p className="text-left">To change your password, enter your old one and what you#39;d like to change it to.</p>
+          <p className="text-left">To change your password, enter your old one and what you&#39;d like to change it to.</p>
           <form onSubmit={ this.handlePasswordSubmit.bind(this) }>
             <TextField fullwidth placeholder="old password" name="old" type="password" inputRef={ this.oldPassword } /><br />
             <TextField fullwidth placeholder="new password" name="new" type="password" inputRef={ this.newPassword  } /><br />
@@ -552,7 +552,7 @@ class GuestProfilePage extends React.Component {
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <Typography use="headline3">Upgrade your Account</Typography>
               <p>
-                In order to do too much more with your account, you#39;ll
+                In order to do too much more with your account, you&#39;ll
                 need to upgrade it to a full account.
               </p>
               <form onSubmit={ this.handleUpgradeSubmit.bind(this) }>

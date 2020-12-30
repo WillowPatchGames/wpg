@@ -262,5 +262,7 @@ assignments:
     - "friends-and-family"
   "*@testing.willowpatchgames.com":
     - "friends-and-family"
+  "monoidmusician@gmail.com":
+    - "friends-and-family"
   "*":
     - "free"
