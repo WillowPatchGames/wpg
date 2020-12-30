@@ -672,8 +672,8 @@ func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 		return err
 	}
 
-	if header.Mode != "rush" {
-		return errors.New("unknown type of message")
+	if !GameModeFromString(header.Mode).IsValid() {
+		return errors.New("unknown game mode")
 	}
 
 	if header.ID != gid {
