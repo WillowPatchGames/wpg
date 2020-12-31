@@ -94,6 +94,7 @@ class TestGamePage extends React.Component {
     super(props);
     this.state = {status:"",messages:[],mode:'spades',compose:"",state:{},synopsis:{}};
     this.schema = MakeSchemas();
+    this.msgRef = React.createRef();
   }
   render() {
     var open = this.state.wsController;
@@ -165,7 +166,7 @@ class TestGamePage extends React.Component {
         value={ this.state.mode }
         onChange={ e => {var v = e.target.value; this.setState(state => {state.mode = v; return state}) }} />
       <div key="body" style={{ display: "flex", justifyContent: "space-between" }}>
-        <ol key="messages" style={{ margin: "0", flexGrow: 1, maxHeight: "70vh", overflow: "auto" }}>
+        <ol key="messages" ref={ this.msgRef } style={{ margin: "0", flexGrow: 1, maxHeight: "70vh", overflow: "auto" }}>
           {this.state.messages.map((v,k) => <li key={k}><div style={{
             backgroundColor: "lightblue",
             borderRadius: "10px",
@@ -249,6 +250,7 @@ class TestGamePage extends React.Component {
     });
   }
   receive(e) {
+    var data = JSON.parse(e.data);
     var resp = undefined;
     if (data.message_type === "countdown") {
       var resp = {
@@ -257,8 +259,8 @@ class TestGamePage extends React.Component {
       };
     }
     if (resp) this.state.wsController.send(resp);
+    this.msgRef.current.scrollTo({top:this.msgRef.current.scrollHeight, behavior: 'smooth'});
     this.setState(state => {
-      var data = JSON.parse(e.data);
       state.messages.push({ sent: false, data: data, timestamp: e.timeStamp });
       if (data.message_type === "state") {
         state.state = data;
