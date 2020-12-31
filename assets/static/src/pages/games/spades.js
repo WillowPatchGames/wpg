@@ -4,13 +4,83 @@ import mergeProps from 'react-merge-props';
 
 import '../../main.scss';
 
+import { gravatarify } from '../../utils/gravatar.js';
+
+import { Avatar } from '@rmwc/avatar';
+import '@rmwc/avatar/styles';
 import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import { Select } from '@rmwc/select';
 import '@rmwc/select/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
 
 import { CardImage, CardHand } from '../../games/card.js';
+
+
+class Lazy extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+    var resolved;
+    props.data.then(data => {
+      resolved = data;
+      if (!this.state.loading) return;
+      this.setState(state => Object.assign(state, { data, loading: false }));
+    });
+    if (resolved) {
+      this.state.data = resolved;
+    } else {
+      this.state.loading = true;
+    }
+  }
+  render() {
+    if (this.state.loading) return <CircularProgress size="xlarge"/>;
+    return this.props.render(this.state.data);
+  }
+}
+
+var synopsis_columns = {
+  "user":{
+    name: "User",
+    printer: user => <Lazy data={ user } render={ user => <Avatar src={ gravatarify(user) } name={ user.display } size="xlarge" /> }/>,
+  },
+  "is_turn":{
+    name: "Turn",
+    printer: a => a ? "•" : "",
+  },
+  "is_leader":{
+    name: "Leading",
+    printer: a => a ? "•" : "",
+  },
+  "is_dealer":{
+    name: "Dealing",
+    printer: a => a ? "•" : "",
+  },
+  "bid":"Bid",
+  "tricks":"Tricks taken",
+  "score":"Score",
+  "overtakes":"Overtakes",
+}
+
+var tabulate = columns => data => {
+  if (!data) return <></>;
+  var rows = [[]];
+  for (let k in columns) {
+    var name = columns[k];
+    if (typeof name === "object") name = name.name;
+    rows[0].push(<th key={ k }>{ name }</th>);
+  }
+  for (let dat of data) {
+    rows.push([]);
+    for (let k in columns) {
+      var printer = a => a;
+      if (typeof columns[k] === "object") var printer = columns[k].printer;
+      rows[rows.length-1].push(<td key={ k }>{ printer(dat[k]) }</td>)
+    }
+  }
+  return <table><tbody>{rows.map((row,i) => <tr key={ i }>{row}</tr>)}</tbody></table>;
+};
 
 class SpadesGameComponent extends React.Component {
   constructor(props) {
@@ -40,7 +110,7 @@ class SpadesGameComponent extends React.Component {
   }
   render() {
     var status = a => a;
-    var player_info = JSON.stringify(this.state.game.interface.synopsis.players);
+    var player_info = tabulate(synopsis_columns)(this.state.game.interface.synopsis.players);
     if (!this.state.game.interface.started) {
       return status("Waiting for game to start …");
     } else if (this.state.game.interface.finished) {

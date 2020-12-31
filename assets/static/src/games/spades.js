@@ -3,6 +3,10 @@ import {
 } from './common.js';
 
 import {
+  UserCache
+} from '../utils/cache.js';
+
+import {
   CardHand,
   Card,
 } from './card.js';
@@ -161,6 +165,11 @@ class SpadesGame {
   handleNewSynopsis(message) {
     // Spades is a simpler game than Rush. We can always take the hand from the
     // server as this is a turn-based game. We won't get out of sync like Rush.
+    if (message.players) {
+      for (let player of message.players) {
+        player.user = UserCache.FromId(player.user);
+      }
+    }
     Object.assign(this.synopsis, message);
 
     this.onChange(this);
