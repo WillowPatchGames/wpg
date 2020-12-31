@@ -243,7 +243,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		if !player.Admitted {
-			return errors.New("not authorized to peak at this game")
+			return errors.New("not authorized to peek at this game")
 		}
 
 		if !state.Finished && (player.Index >= 0 || player.Playing) {
