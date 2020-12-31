@@ -79,7 +79,11 @@ class SpadesGameComponent extends React.Component {
             onChange={ e => {let bid = e.currentTarget.value; this.setState(state => Object.assign(state, {bid}))}
           }/>
           <Button label="Place bid" unelevated ripple={false} onClick={() => this.state.game.interface.bid(this.state.bid)} />
-          { this.state.game.interface.data.hand?.toImage() }
+          {
+            this.state.game.interface.data.peeked
+            ? this.state.game.interface.data.hand?.toImage()
+            : <Button label="Peek at cards" unelevated ripple={false} onClick={() => this.state.game.interface.peek()} />
+          }
         </div>;
       } else {
         return <div>

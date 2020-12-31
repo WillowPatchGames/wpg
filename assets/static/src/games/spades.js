@@ -154,6 +154,16 @@ class SpadesGame {
   }
 
   valid_bids() {
+    // Handle blind bidding. When we've not yet peeked, we have to bid blind.
+    if (this.data.hand === null && !this.data.peeked) {
+      return [
+        {
+          "label": "blind nil",
+          "value": 20,
+        }
+      ];
+    }
+
     var result = [
       {
         "label": "one",
@@ -237,15 +247,6 @@ class SpadesGame {
         {
           "label": "nil",
           "value": 19,
-        }
-      );
-    }
-
-    if (this.data.config.with_double_nil) {
-      result.push(
-        {
-          "label": "blind nil",
-          "value": 20,
         }
       );
     }

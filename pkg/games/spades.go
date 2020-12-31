@@ -631,6 +631,9 @@ func (ss *SpadesState) PlaceBid(player int, bid SpadesBid) error {
 	// Record the bid.
 	ss.Players[player].Bid = bid
 
+	// Also, allow players to look at their cards now.
+	ss.Players[player].Peeked = true
+
 	// By this point, two-player spades has synced back up with the remaining
 	// variants so we can safely go from dealer -> left of dealer.
 

@@ -1224,7 +1224,7 @@ class CreateGameForm extends React.Component {
           : null
         }
         <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("must_break_spades") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.must_break_spades ? "Can Play Spades at Any Time" : "Must Wait for Spades to be Sluffed Before leading Spades" } name="must_break_spades" checked={ this.state.must_break_spades } onChange={ () => this.toggle("must_break_spades", true) } disabled={ !this.state.editable } />
+          <Switch label={ this.state.must_break_spades ? "Must Wait for Spades to be Sluffed Before Leading Spades" : "Can Play Spades at Any Time" } name="must_break_spades" checked={ this.state.must_break_spades } onChange={ () => this.toggle("must_break_spades", true) } disabled={ !this.state.editable } />
         </l.ListItem>
         <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("add_jokers") } disabled={ !this.state.editable }>
           <Switch label={ this.state.add_jokers ? "Add Jokers for Three or Six Players" : "Leave Jokers Out" } name="add_jokers" checked={ this.state.add_jokers } onChange={ () => this.toggle("add_jokers", true) } disabled={ !this.state.editable } />
