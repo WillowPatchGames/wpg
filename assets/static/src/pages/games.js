@@ -957,9 +957,7 @@ class CreateGameForm extends React.Component {
       spectators: have_game && game.spectator !== undefined ? game.spectator : true,
     }
 
-    this.createGameConfig();
-
-    console.log(this.state);
+    Object.assign(this.state, this.createGameConfig());
   }
 
   createGameConfig(new_style) {
@@ -1017,7 +1015,10 @@ class CreateGameForm extends React.Component {
 
     if (additional_state !== null) {
       this.setState(state => Object.assign({}, state, additional_state));
+      return additional_state;
     }
+
+    return {};
   }
 
   toObject() {
