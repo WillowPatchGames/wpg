@@ -46,18 +46,30 @@ var StringSchema = {
 var NumberSchema = {
   "type": "number",
 };
+var BooleanSchema = {
+  "type": "checkbox",
+  "component": Checkbox,
+};
 
 var schemas = {
   "rush": {
-    "message": {
-      "message": StringSchema,
-    },
     "play": {
       "tile_id": NumberSchema,
       "x": NumberSchema,
       "y": NumberSchema,
     },
   },
+  "spades": {
+    "play": {
+      "card_id": NumberSchema,
+    },
+    "bid": {
+      "bid": NumberSchema,
+    },
+    "decide": {
+      "keep": BooleanSchema,
+    },
+  }
 };
 
 function MakeSchemas(mode) {
@@ -69,11 +81,13 @@ function MakeSchemas(mode) {
   var getter = type => () => {
     var r = {};
     for (let prop in schema[type]) {
-      r[prop] = refs[type][prop].current.value;
+      var el = refs[type][prop].current;
+      r[prop] = el.value;
       if (r[prop] === "") delete r[prop];
-      console.log(refs[type][prop].current);
-      if (refs[type][prop].current.type === 'number' && r[prop] !== undefined) {
+      if (el.type === 'number' && r[prop] !== undefined) {
         r[prop] = +r[prop];
+      } else if (el.type === 'checkbox') {
+        r[prop] = el.checked;
       }
     }
     return r;
@@ -84,12 +98,13 @@ function MakeSchemas(mode) {
     gets[type] = getter(type);
     for (let prop in schema[type]) {
       var ref = refs[type][prop] = React.createRef();
-      renders[type].push(((type,prop,ref) =>
-        <TextField key={ prop } label={ prop }
+      renders[type].push(((type,prop,ref) => {
+        var Comp = schema[type][prop].component || TextField;
+        return <Comp key={ prop } label={ prop }
           inputRef={ ref }
           {... schema[type][prop] }
         />
-      )(type,prop,ref));
+      })(type,prop,ref));
     }
   }
   return {
@@ -102,7 +117,7 @@ function MakeSchemas(mode) {
 class TestGamePage extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {status:"",messages:[],mode:'rush',compose:"",state:{}};
+    this.state = {status:"",messages:[],mode:'spades',compose:"",state:{}};
     this.schema = MakeSchemas();
   }
   render() {
