@@ -31,7 +31,7 @@ class CardSuit {
     '5': null,
   };
 
-  static SPECIAL = 5;
+  static FANCY = 5;
 
   constructor(value) {
     this.value = value;
@@ -91,6 +91,7 @@ class CardRank {
     '14': "joker",
   };
 
+  static ACE = 1;
   static JOKER = 14;
 
   constructor(value) {
@@ -153,9 +154,61 @@ class Card {
     }
   }
 
+  compareTo(other, ace_high) {
+    if (this.suit.value === other.suit.value && this.rank.value === other.rank.value) {
+      return 0;
+    }
+
+    // Jokers are equal and high.
+    if (this.rank.value === CardRank.JOKER && other.rank.value === CardRank.JOKER) {
+      return 0;
+    }
+    if (this.rank.value === CardRank.JOKER) {
+      return 1;
+    }
+    if (other.rank.value === CardRank.JOKER) {
+      return -1;
+    }
+
+    // Otherwise, traditional sorting will work well.
+    if (this.suit.value < other.suit.value) {
+      return -1;
+    }
+
+    if (this.suit.value > other.suit.value) {
+      return 1;
+    }
+
+    if (ace_high) {
+      // Aces likewise are equal and high. We already know we have equal suits
+      // here.
+      if (this.rank.value === CardRank.ACE && other.rank.value === CardRank.ACE) {
+        return 0;
+      }
+
+      if (this.rank.value === CardRank.ACE) {
+        return 1;
+      }
+
+      if (other.rank.value === CardRank.ACE) {
+        return -1;
+      }
+    }
+
+    if (this.rank.value < other.rank.value) {
+      return -1;
+    }
+
+    if (this.rank.value > other.rank.value) {
+      return 1;
+    }
+
+    return 0;
+  }
+
   toString() {
     if (this.rank.value === CardRank.JOKER) {
-      if (this.suit.value === CardSuit.SPECIAL) {
+      if (this.suit.value === CardSuit.FANCY) {
         return "special joker";
       } else {
         return "joker";
@@ -311,6 +364,24 @@ class CardHand {
         })
       )}
     </div>);
+  }
+
+  sort(ace_high) {
+    let sorted = [];
+
+    // Insertion sort
+    for (let card of this.cards) {
+      var index = 0;
+      while (index < sorted.length && card.compareTo(sorted[index], ace_high) <= 0) {
+        index++
+      }
+
+      console.log(sorted, index, card);
+      sorted.splice(index, 0, card);
+      console.log(sorted);
+    }
+
+    this.cards = sorted;
   }
 
   serialize() {
