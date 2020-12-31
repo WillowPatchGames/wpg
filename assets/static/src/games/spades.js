@@ -3,7 +3,8 @@ import {
 } from './common.js';
 
 import {
-  CardHand
+  CardHand,
+  Card,
 } from './card.js';
 
 class SpadesController {
@@ -36,13 +37,13 @@ class SpadesController {
   }
 
   async deal() {
-    return await this.wsContrller.sendAndWait({
+    return await this.wsController.sendAndWait({
       'message_type': 'deal',
     });
   }
 
   async decide(keep) {
-    return await this.wsContrller.send({
+    return await this.wsController.send({
       'message_type': 'decide',
       'keep': keep,
     });
@@ -55,14 +56,14 @@ class SpadesController {
   }
 
   async bid(amount) {
-    return await this.wsContrller.send({
+    return await this.wsController.send({
       'message_type': 'bid',
       'bid': +amount,
     });
   }
 
   async play(card) {
-    return await this.wsContrller.send({
+    return await this.wsController.send({
       'message_type': 'play',
       'card_id': +card,
     });
@@ -136,7 +137,7 @@ class SpadesGame {
 
     // Then update the main data object.
     this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
-    this.data.drawn = message?.drawn;
+    this.data.drawn = message?.drawn ? Card.deserialize(message.drawn) : null;
     this.data.peeked = message?.peeked;
     this.data.bid = message?.bid;
     this.data.tricks = message?.tricks;
@@ -144,12 +145,125 @@ class SpadesGame {
     this.data.overtakes = message?.overtakes;
     this.data.turn = message?.turn;
     this.data.leader = message?.leader;
-    this.data.played = message?.played;
+    this.data.played = message?.played ? CardHand.deserialize(message.played) : null;
     this.data.spades_broken = message?.spades_broken;
-    this.data.history = message?.history;
+    this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
     this.data.config = message?.config;
 
     this.onChange(this);
+  }
+
+  valid_bids() {
+    var result = [
+      {
+        "label": "one",
+        "value": 1,
+      },
+      {
+        "label": "two",
+        "value": 2,
+      },
+      {
+        "label": "three",
+        "value": 3,
+      },
+      {
+        "label": "four",
+        "value": 4,
+      },
+      {
+        "label": "five",
+        "value": 5,
+      },
+      {
+        "label": "six",
+        "value": 6,
+      },
+      {
+        "label": "seven",
+        "value": 7,
+      },
+      {
+        "label": "eight",
+        "value": 8,
+      },
+      {
+        "label": "nine",
+        "value": 9,
+      },
+      {
+        "label": "ten",
+        "value": 10,
+      },
+      {
+        "label": "eleven",
+        "value": 11,
+      },
+      {
+        "label": "twelve",
+        "value": 12,
+      },
+      {
+        "label": "thirteen",
+        "value": 13,
+      },
+      {
+        "label": "fourteen",
+        "value": 14,
+      },
+      {
+        "label": "fifteen",
+        "value": 15,
+      },
+      {
+        "label": "sixteen",
+        "value": 16,
+      },
+      {
+        "label": "seventeen",
+        "value": 17,
+      },
+      {
+        "label": "eighteen",
+        "value": 18,
+      },
+    ];
+
+    // Shrink to possible bids from the above.
+    result = result.slice(0, this.data.hand.cards.length - 1);
+
+    if (this.data.config.with_nil) {
+      result.push(
+        {
+          "label": "nil",
+          "value": 19,
+        }
+      );
+    }
+
+    if (this.data.config.with_double_nil) {
+      result.push(
+        {
+          "label": "blind nil",
+          "value": 20,
+        }
+      );
+    }
+
+    if (this.data.config.with_triple_nil) {
+      result.push(
+        {
+          "label": "triple nil",
+          "value": 21,
+        }
+      );
+    }
+
+    return result;
+  }
+
+  my_turn() {
+    return +this.data.turn === +this.game.user.id;
   }
 
   async deal() {

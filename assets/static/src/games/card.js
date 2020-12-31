@@ -13,7 +13,7 @@ function rev(d) {
 }
 
 class CardSuit {
-  apiValueToString = {
+  static apiValueToString = {
     '0': 'none',
     '1': 'clubs',
     '2': 'hearts',
@@ -22,16 +22,16 @@ class CardSuit {
     '5': 'fancy',
   };
 
-  apiValueToImage = {
+  static apiValueToImage = {
     '0': null,
-    '1': 0,
-    '2': 2,
-    '3': 3,
-    '4': 1,
+    '1': "club",
+    '2': "heart",
+    '3': "spade",
+    '4': "diamond",
     '5': null,
   };
 
-  SPECIAL = 5;
+  static SPECIAL = 5;
 
   constructor(value) {
     this.value = value;
@@ -55,7 +55,7 @@ class CardSuit {
 }
 
 class CardRank {
-  apiValueToString = {
+  static apiValueToString = {
     '0':  'none',
     '1':  'ace',
     '2':  '2',
@@ -73,25 +73,25 @@ class CardRank {
     '14': 'joker',
   };
 
-  apiValueToImage = {
-    '0':  null,
-    '1':  0,
-    '2':  1,
-    '3':  2,
-    '4':  3,
-    '5':  4,
-    '6':  5,
-    '7':  6,
-    '8':  7,
-    '9':  8,
-    '10': 9,
-    '11': 10,
-    '12': 11,
-    '13': 12,
-    '14': 'joker',
+  static apiValueToImage = {
+    '0':  "",
+    '1':  "1",
+    '2':  "2",
+    '3':  "3",
+    '4':  "4",
+    '5':  "5",
+    '6':  "6",
+    '7':  "7",
+    '8':  "8",
+    '9':  "9",
+    '10': "10",
+    '11': "jack",
+    '12': "queen",
+    '13': "king",
+    '14': "joker",
   };
 
-  JOKER = 14;
+  static JOKER = 14;
 
   constructor(value) {
     this.value = value;
@@ -116,6 +116,10 @@ class CardRank {
 
 class Card {
   constructor(id, suit, rank) {
+    if (id instanceof Card) {
+      var { id, suit, rank } = id;
+    }
+
     if (id !== undefined && id !== null && suit !== undefined && suit !== null && (rank === undefined || rank === null)) {
       rank = suit;
       suit = id;
@@ -162,7 +166,7 @@ class Card {
   }
 
   toImage(props) {
-    return <CardImage suit={ this.suit.toString() } rank={ this.rank.toString() } {...props} />;
+    return <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />;
   }
 
   serialize() {
@@ -280,8 +284,33 @@ class CardHand {
     return null;
   }
 
-  toImage() {
-    // XXX: Nick to wire up again.
+  toImage(mapper, props) {
+    var cards = this.cards;
+    if (mapper) {
+      cards = [];
+      this.cards.forEach((v,i,vs) => {
+        var c = new Card(v);
+        cards[i] = mapper(c,i,vs)||c;
+      });
+    }
+    var { direction, ...props } = (props || {});
+    var selectable = cards.some(card => card.selected !== undefined && card.selected !== null);
+    var myProps = {
+      style: {
+      },
+    };
+    if (selectable) myProps.style.marginTop = "20px";
+    props = mergeProps(myProps, props);
+    return (<div {...props}>
+      {cards.map((card,i) =>
+        card.toImage({
+          key: i,
+          x_part: i>0 ? -0 : 1,
+          style: { transform: card.selected ? "translateY(-20px)" : "" },
+          onClick: card.onClick,
+        })
+      )}
+    </div>);
   }
 
   serialize() {
@@ -303,82 +332,7 @@ class CardHand {
   }
 }
 
-class CardHandProp extends React.Component {
-  render() {
-    var { cards, direction, ...props } = this.props;
-    var selectable = cards.some(card => card.selected !== undefined && card.selected !== null);
-    var myProps = {
-      style: {
-      },
-    };
-    if (selectable) myProps.style.marginTop = "20px";
-    props = mergeProps(myProps, props);
-    return (<div {...props}>
-      {cards.map((card,i) =>
-        <CardImage key={i} suit={ card.suit } rank={ card.rank }
-          x_part={ i>0 ? -0 : 1 }
-          style={{ transform: card.selected ? "translateY(-20px)" : "" }}
-          onClick={ card.onClick }
-        />
-      )}
-    </div>)
-  };
-}
-
-class CardGamePage extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {x:0,y:0};
-    var toggle = i => ()=>{
-      this.setState(state => {
-        state.cards[i].selected = !state.cards[i].selected;
-        return state;
-      });
-    };
-    this.state.cards = [{selected:false,onClick:toggle(0)},{selected:false,onClick:toggle(1)}];
-    this.calc_cards();
-    this.listeners = [];
-  }
-  calc_cards() {
-    for (let i in this.state.cards) {
-      Object.assign(this.state.cards[i], ungrid(this.state.x+ +i, this.state.y));
-    }
-  }
-  componentDidMount() {
-    var keypress = e => {
-      var key = e.key;
-      this.setState(state => {
-        switch (key) {
-          case "w":
-            state.y = Math.max(0, state.y-1); break;
-          case "a":
-            state.x = Math.max(0, state.x-1); break;
-          case "s":
-            state.y = Math.min(4, state.y+1); break;
-          case "d":
-            state.x = Math.min(12, state.x+1); break;
-          default: break;
-        }
-        this.calc_cards();
-        return state;
-      });
-    };
-    document.addEventListener("keypress", keypress);
-    this.listeners.push(() => document.removeEventListener("keypress", keypress));
-  }
-  componentWillUnmount() {
-    for (let l of this.listeners.splice(0, this.listeners.length)) {
-      l();
-    }
-  }
-  render() {
-    return (<>
-      <CardHandProp cards={ this.state.cards }/>
-    </>);
-  }
-}
-
 export {
-  CardGamePage,
   CardHand,
+  Card,
 };

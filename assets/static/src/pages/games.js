@@ -36,6 +36,8 @@ import '../App.css';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { LoginForm } from './login.js';
 import { Game } from '../component.js';
+import { SpadesGame } from '../games/spades.js';
+import { SpadesGameComponent } from './games/spades.js';
 import { RushGame, RushData } from '../games/rush.js';
 import { UserCache, GameCache } from '../utils/cache.js';
 import { gravatarify } from '../utils/gravatar.js';
@@ -45,7 +47,12 @@ function loadGame(game) {
 
   if (!game.interface) {
     // XXX: Update to support multiple game types.
-    game.interface = new RushGame(game);
+    var mode = game.mode || game.style;
+    if (mode === "rush") {
+      game.interface = new RushGame(game);
+    } else if (mode === "spades") {
+      game.interface = new SpadesGame(game);
+    }
   }
 
   return game;
@@ -223,6 +230,97 @@ class RushGameSynopsis extends React.Component {
             { player_view }
           </div>
         </c.Card>
+      </div>
+    );
+  }
+}
+
+class GamePage extends React.Component {
+  constructor(props) {
+    super(props);
+    console.log(this.props.game);
+  }
+  render() {
+    var mode = this.props.game.mode || this.props.game.style;
+    if (mode === 'rush') {
+      return <RushGamePage {...this.props}/>
+    } else if (mode === 'spades') {
+      return <SpadesGamePage {...this.props}/>
+    } else {
+      return "Unrecognized game mode: " + mode;
+    }
+  }
+}
+
+class SpadesGamePage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      countdown: null,
+    };
+
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+
+    let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
+    if (this.game) {
+      this.state.interface = this.game.interface;
+      this.unmount = addEv(this.game, {
+        "started": data => {
+          data.message = "Let the games begin!";
+          notify(this.props.snackbar, data.message, data.type);
+
+          if (!data.playing) {
+            this.props.setPage('afterparty');
+          }
+        },
+        "countdown": data => {
+          data.message = "Game starting in " + data.value;
+          this.setState(state => Object.assign({}, state, { countdown: data.value }));
+          setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
+          this.state.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
+
+        },
+        "draw": async (data) => {
+          data.message = await personalize(data.drawer) + " drew!";
+          notify(this.props.snackbar, data.message, data.type);
+        },
+        "finished": async (data) => {
+          data.message = await personalize(data.winner) + " won!";
+          notify(this.props.snackbar, data.message, data.type);
+          this.game.winner = data.winner;
+          this.props.setPage('afterparty');
+        },
+        "": data => {
+          if (data.message) {
+            notify(this.props.snackbar, data.message, data.type);
+          }
+        },
+      });
+    }
+  }
+  componentDidMount() {
+    //this.props.setImmersive(true);
+  }
+  componentWillUnmount() {
+    if (this.unmount) this.unmount();
+    //this.props.setImmersive(false);
+  }
+  render() {
+    var countdown = null;
+    if (this.state.countdown !== null && this.state.countdown !== 0) {
+      countdown = <div className="countdown-overlay">
+        <div className="countdown-circle">
+          { this.state.countdown }
+        </div>
+      </div>
+    }
+
+    return (
+      <div>
+        { countdown }
+        {/*<SpadesGameSynopsis {...this.props} />*/}
+        <SpadesGameComponent game={ this.game } interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
     );
   }
@@ -1709,4 +1807,5 @@ export {
   JoinGamePage,
   PreGamePage,
   RushGamePage,
+  GamePage,
 };

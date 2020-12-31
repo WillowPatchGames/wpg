@@ -149,6 +149,16 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		var response SpadesStateNotification
 		response.LoadData(game, state, player)
 		c.undispatch(game, player, response.MessageID, 0, response)
+
+		for _, next_player := range game.ToPlayer {
+			if next_player.Index != state.Turn {
+				continue
+			}
+
+			var notify SpadesStateNotification
+			notify.LoadData(game, state, next_player)
+			c.undispatch(game, next_player, notify.MessageID, 0, notify)
+		}
 	case "peek":
 		err = state.PeekCards(player.Index)
 		send_synopsis = err == nil
@@ -173,6 +183,16 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		var response SpadesStateNotification
 		response.LoadData(game, state, player)
 		c.undispatch(game, player, response.MessageID, 0, response)
+
+		for _, next_player := range game.ToPlayer {
+			if next_player.Index != state.Turn {
+				continue
+			}
+
+			var notify SpadesStateNotification
+			notify.LoadData(game, state, next_player)
+			c.undispatch(game, next_player, notify.MessageID, 0, notify)
+		}
 	case "play":
 		var data SpadesPlayMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -195,6 +215,15 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 				var response SpadesStateNotification
 				response.LoadData(game, state, indexed_player)
 				c.undispatch(game, indexed_player, response.MessageID, 0, response)
+
+				next_player := indexed_player
+				if next_player.Index != state.Turn {
+					continue
+				}
+
+				var notify SpadesStateNotification
+				notify.LoadData(game, state, next_player)
+				c.undispatch(game, next_player, notify.MessageID, 0, notify)
 			}
 		}
 	default:

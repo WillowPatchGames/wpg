@@ -10,7 +10,7 @@ import {
 import { AboutPage } from './pages/about.js';
 import { DocsPage } from './pages/docs.js';
 import { Footer } from './pages/footer.js';
-import { AfterPartyPage, CreateGamePage, CreateRoomPage, JoinGamePage, PreGamePage, RushGamePage } from './pages/games.js';
+import { AfterPartyPage, CreateGamePage, CreateRoomPage, JoinGamePage, PreGamePage, GamePage } from './pages/games.js';
 import { HomePage } from './pages/home.js';
 import { LoginPage } from './pages/login.js';
 import { ProfilePage } from './pages/profile.js';
@@ -20,7 +20,6 @@ import { SignupPage } from './pages/signup.js';
 import { PricingPage } from './pages/pricing.js';
 import { PrivacyPage } from './pages/privacy.js';
 import { TestGamePage } from './pages/test.js';
-import { CardGamePage } from './games/card.js';
 
 class RouteWithAuth extends React.Component {
   render() {
@@ -95,11 +94,8 @@ class Page extends React.Component {
           <PreGamePage {...this_props} key="path-play" />
           <JoinGamePage {...this_props} key="path-play-missing" />
         </RouteWithGame>
-        <Route path="/card">
-          <CardGamePage {...this_props} key="path-test" />
-        </Route>
         <RouteWithGame path="/playing" game={ this.props.game }>
-          <RushGamePage {...this_props} key="path-playing" />
+          <GamePage {...this_props} key="path-playing" />
           <JoinGamePage {...this_props} key="path-playing-missing" />
         </RouteWithGame>
         <Route path="/pricing">

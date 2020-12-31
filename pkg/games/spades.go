@@ -685,7 +685,11 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 		// Otherwise, ensure we follow the lead suit if we can.
 		lead_suit := ss.Played[0].Suit
 		lead_effectively_spade := lead_suit == SpadesSuit || ss.Played[0].Rank == JokerRank
-		if played.Suit != lead_suit && (lead_effectively_spade != effectively_spade) {
+		if lead_effectively_spade {
+			lead_suit = SpadesSuit
+		}
+
+		if played.Suit != lead_suit {
 			for _, card := range ss.Players[player].Hand {
 				this_effectively_spade := card.Suit == SpadesSuit || card.Rank == JokerRank
 				if card.Suit == lead_suit || (this_effectively_spade && lead_effectively_spade) {
@@ -726,14 +730,14 @@ func (ss *SpadesState) determineRoundWinner() error {
 	// Always have at least two players, so an offset of one is always valid.
 	for offset := 1; offset < ss.Config.NumPlayers; offset++ {
 		this_card := ss.Played[offset]
-		if winning_card.Suit == this_card.Suit {
+		if winning_card.Suit == this_card.Suit && this_card.Suit != NoneSuit && this_card.Suit != FancySuit {
 			// Highest card of the lead suit wins. Or, when playing with six players,
 			// choose the winner in case of tie according to config. Also, check for
 			// aces, cuz they have integer value 1, but beat 2 and above... :)
-			is_higher := this_card.Rank > winning_card.Rank
+			is_higher := this_card.Rank > winning_card.Rank && winning_card.Rank != AceRank
 			won_due_to_tie := this_card.Rank == winning_card.Rank && !ss.Config.FirstWins
-			is_ace := this_card.Rank == AceRank && winning_card.Rank != AceRank
-			if is_higher || won_due_to_tie || is_ace {
+			is_ace_win := this_card.Rank == AceRank && winning_card.Rank != AceRank && winning_card.Rank != JokerRank
+			if is_higher || won_due_to_tie || is_ace_win {
 				winner_offset = offset
 				winning_card = this_card
 			}
