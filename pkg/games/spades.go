@@ -366,6 +366,12 @@ func (ss *SpadesState) Start(players int) error {
 }
 
 func (ss *SpadesState) StartRound() error {
+	// Invariants: unless otherwise overridden below, start with dealt = false
+	// and bid = false -- this means we still need to deal out the cards before
+	// we begin.
+	ss.Dealt = false
+	ss.Bid = false
+
 	// Start with a clean deck and shuffle it.
 	ss.Deck.Init()
 	ss.Deck.AddStandard52Deck()
@@ -417,6 +423,7 @@ func (ss *SpadesState) StartRound() error {
 		ss.Players[index].Bid = NotBidSpades
 		ss.Players[index].Peeked = !ss.Config.BlindBidding || ss.Config.NumPlayers == 2
 		ss.Players[index].Tricks = 0
+		ss.Players[index].Hand = make([]Card, 0)
 	}
 	ss.Played = make([]Card, 0)
 
@@ -717,13 +724,13 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 	if ss.Turn == ss.Leader {
 		// Got back to the player who started this trick. Determine a winner and
 		// exit.
-		return ss.determineRoundWinner()
+		return ss.determineTrickWinner()
 	}
 
 	return nil
 }
 
-func (ss *SpadesState) determineRoundWinner() error {
+func (ss *SpadesState) determineTrickWinner() error {
 	var winner_offset = 0
 	var winning_card = ss.Played[0]
 
@@ -819,17 +826,14 @@ func (ss *SpadesState) tabulateRoundScore() error {
 		return errors.New(SpadesGameOver)
 	}
 
-	// Otherwise, play another round. Set the dealer to the next over and start
-	// bidding and dealing again.
-	for player := 0; player < max_count; player++ {
-		ss.Players[player].Bid = NotBidSpades
-		ss.Players[player].Hand = make([]Card, 0)
-		ss.Players[player].Tricks = 0
+	ss.Dealer = (ss.Dealer + 1) % ss.Config.NumPlayers
+
+	// Restart the round: shuffle the cards and (if necessary) deal them out.
+	if err := ss.StartRound(); err != nil {
+		log.Println("Error starting round: ", err)
+		return err
 	}
 
-	ss.Dealer = (ss.Dealer + 1) % ss.Config.NumPlayers
-	ss.Dealt = false
-	ss.Bid = false
 	return errors.New(SpadesNextRound)
 }
 
