@@ -215,15 +215,18 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 				var response SpadesStateNotification
 				response.LoadData(game, state, indexed_player)
 				c.undispatch(game, indexed_player, response.MessageID, 0, response)
-
-				next_player := indexed_player
-				if next_player.Index != state.Turn {
+			}
+		} else if err.Error() == SpadesNextRound {
+			send_synopsis = true
+			for _, indexed_player := range game.ToPlayer {
+				if !indexed_player.Admitted || !indexed_player.Playing {
 					continue
 				}
 
-				var notify SpadesStateNotification
-				notify.LoadData(game, state, next_player)
-				c.undispatch(game, next_player, notify.MessageID, 0, notify)
+				// Send players their initial state.
+				var response SpadesStateNotification
+				response.LoadData(game, state, indexed_player)
+				c.undispatch(game, indexed_player, response.MessageID, 0, response)
 			}
 		}
 	default:

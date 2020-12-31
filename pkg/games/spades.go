@@ -371,6 +371,8 @@ func (ss *SpadesState) StartRound() error {
 	// we begin.
 	ss.Dealt = false
 	ss.Bid = false
+	ss.Bid = false
+	ss.SpadesBroken = false
 
 	// Start with a clean deck and shuffle it.
 	ss.Deck.Init()
