@@ -103,60 +103,58 @@ class Navigation extends React.Component {
   }
 
   render() {
-    return (
-      <header>
-        <bar.TopAppBar fixed short shortCollapsed={ this.props.immersive }>
-          <bar.TopAppBarRow>
-            <bar.TopAppBarSection>
-              <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />
-              <Button className="App-Title" onClick={() => this.props.setPage('') } style={{ color: 'black' }}>Willow Patch Games</Button>
-            </bar.TopAppBarSection>
-            <bar.TopAppBarSection alignEnd className="App-AuthedHeaderComponent">
-              <AuthedHeaderComponent user={ this.props.user } immersive={ this.props.immersive } setPage={ this.props.setPage } setUser={ this.props.setUser } />
-            </bar.TopAppBarSection>
-          </bar.TopAppBarRow>
-        </bar.TopAppBar>
-        <bar.TopAppBarFixedAdjust />
-        <nav>
-          <d.Drawer modal open={ this.state.navVisible } onClose={ () => this.setOpen(false) } >
-            <d.DrawerContent>
-              <l.List onClick={ () => this.setOpen(false) }>
-                <l.ListItem onClick={ () => this.props.setPage('') }>
-                  <l.ListItemGraphic icon="home" />
-                  <l.ListItemText>Home</l.ListItemText>
-                </l.ListItem>
-                <AuthedNavComponent user={ this.props.user } setPage={ this.props.setPage } setUser={ this.props.setUser } />
-                <l.ListItem onClick={ () => this.props.setPage('about') }>
-                  <l.ListItemGraphic icon="notes" />
-                  <l.ListItemText>About</l.ListItemText>
-                </l.ListItem>
-                {
-                  // eslint-disable-next-line
-                  <a href="https://blog.willowpatchgames.com" target="_blank">
-                    <l.ListItem>
-                      <l.ListItemGraphic icon="book" />
-                      <l.ListItemText>Blog</l.ListItemText>
-                    </l.ListItem>
-                  </a>
-                }
-                <l.ListItem onClick={ () => this.props.setPage('rules/rush') }>
-                  <l.ListItemGraphic icon="notes" />
-                  <l.ListItemText>Rules - Rush!</l.ListItemText>
-                </l.ListItem>
-                <l.ListItem onClick={ () => this.props.setPage('docs') }>
-                  <l.ListItemGraphic icon="notes" />
-                  <l.ListItemText>Documentation</l.ListItemText>
-                </l.ListItem>
-                <l.ListItem onClick={ () => this.props.setPage('pricing') }>
-                  <l.ListItemGraphic icon="notes" />
-                  <l.ListItemText>Pricing</l.ListItemText>
-                </l.ListItem>
-              </l.List>
-            </d.DrawerContent>
-          </d.Drawer>
-        </nav>
-      </header>
-    );
+    return (<>
+      <bar.TopAppBar fixed short shortCollapsed={ this.props.immersive }>
+        <bar.TopAppBarRow>
+          <bar.TopAppBarSection>
+            <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />
+            <Button className="App-Title" onClick={() => this.props.setPage('') } style={{ color: 'black' }}>Willow Patch Games</Button>
+          </bar.TopAppBarSection>
+          <bar.TopAppBarSection alignEnd className="App-AuthedHeaderComponent">
+            <AuthedHeaderComponent user={ this.props.user } immersive={ this.props.immersive } setPage={ this.props.setPage } setUser={ this.props.setUser } />
+          </bar.TopAppBarSection>
+        </bar.TopAppBarRow>
+      </bar.TopAppBar>
+      <bar.TopAppBarFixedAdjust />
+      <nav>
+        <d.Drawer modal open={ this.state.navVisible } onClose={ () => this.setOpen(false) } >
+          <d.DrawerContent>
+            <l.List onClick={ () => this.setOpen(false) }>
+              <l.ListItem onClick={ () => this.props.setPage('') }>
+                <l.ListItemGraphic icon="home" />
+                <l.ListItemText>Home</l.ListItemText>
+              </l.ListItem>
+              <AuthedNavComponent user={ this.props.user } setPage={ this.props.setPage } setUser={ this.props.setUser } />
+              <l.ListItem onClick={ () => this.props.setPage('about') }>
+                <l.ListItemGraphic icon="notes" />
+                <l.ListItemText>About</l.ListItemText>
+              </l.ListItem>
+              {
+                // eslint-disable-next-line
+                <a href="https://blog.willowpatchgames.com" target="_blank">
+                  <l.ListItem>
+                    <l.ListItemGraphic icon="book" />
+                    <l.ListItemText>Blog</l.ListItemText>
+                  </l.ListItem>
+                </a>
+              }
+              <l.ListItem onClick={ () => this.props.setPage('rules/rush') }>
+                <l.ListItemGraphic icon="notes" />
+                <l.ListItemText>Rules - Rush!</l.ListItemText>
+              </l.ListItem>
+              <l.ListItem onClick={ () => this.props.setPage('docs') }>
+                <l.ListItemGraphic icon="notes" />
+                <l.ListItemText>Documentation</l.ListItemText>
+              </l.ListItem>
+              <l.ListItem onClick={ () => this.props.setPage('pricing') }>
+                <l.ListItemGraphic icon="notes" />
+                <l.ListItemText>Pricing</l.ListItemText>
+              </l.ListItem>
+            </l.List>
+          </d.DrawerContent>
+        </d.Drawer>
+      </nav>
+    </>);
   }
 }
 

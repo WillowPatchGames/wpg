@@ -132,7 +132,10 @@ p {
 /* TODO: upstream??? */
 .mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust {
   padding-top: 56px;
-  background-color: var(--mdc-theme-primary, #6200ee);
+}
+.mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust ~ .App-hero {
+  margin-top: -56px;
+  padding-top: calc(56px + 25px);
 }
 
 .mdc-snackbar__action:not(:disabled) {
