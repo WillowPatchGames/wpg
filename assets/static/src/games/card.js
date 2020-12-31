@@ -12,6 +12,176 @@ function rev(d) {
   return r;
 }
 
+class CardSuit {
+  apiValueToString = {
+    '0': 'none',
+    '1': 'clubs',
+    '2': 'hearts',
+    '3': 'spades',
+    '4': 'diamonds',
+    '5': 'fancy',
+  };
+
+  apiValueToImage = {
+    '0': null,
+    '1': 0,
+    '2': 2,
+    '3': 3,
+    '4': 1,
+    '5': null,
+  };
+
+  SPECIAL = 5;
+
+  constructor(value) {
+    this.value = value;
+  }
+
+  toString() {
+    return CardSuit.apiValueToString["" + this.value];
+  }
+
+  toImage() {
+    return CardSuit.apiValueToImage["" + this.value];
+  }
+
+  serialize() {
+    return this.value;
+  }
+
+  static deserialize(obj) {
+    return new CardSuit(obj);
+  }
+}
+
+class CardRank {
+  apiValueToString = {
+    '0':  'none',
+    '1':  'ace',
+    '2':  '2',
+    '3':  '3',
+    '4':  '4',
+    '5':  '5',
+    '6':  '6',
+    '7':  '7',
+    '8':  '8',
+    '9':  '9',
+    '10': '10',
+    '11': 'jack',
+    '12': 'queen',
+    '13': 'king',
+    '14': 'joker',
+  };
+
+  apiValueToImage = {
+    '0':  null,
+    '1':  0,
+    '2':  1,
+    '3':  2,
+    '4':  3,
+    '5':  4,
+    '6':  5,
+    '7':  6,
+    '8':  7,
+    '9':  8,
+    '10': 9,
+    '11': 10,
+    '12': 11,
+    '13': 12,
+    '14': 'joker',
+  };
+
+  JOKER = 14;
+
+  constructor(value) {
+    this.value = value;
+  }
+
+  toString() {
+    return CardRank.apiValueToString["" + this.value];
+  }
+
+  toImage() {
+    return CardRank.apiValueToImage["" + this.value];
+  }
+
+  serialize() {
+    return this.value;
+  }
+
+  static deserialize(obj) {
+    return new CardRank(obj);
+  }
+}
+
+class Card {
+  constructor(id, suit, rank) {
+    if (id !== undefined && id !== null && suit !== undefined && suit !== null && (rank === undefined || rank === null)) {
+      rank = suit;
+      suit = id;
+      id = null;
+    }
+
+    if (id !== undefined && id !== null) {
+      this.id = id;
+    } else {
+      this.id = null;
+    }
+
+    if (suit !== undefined && suit !== null) {
+      if (suit instanceof CardSuit) {
+        this.suit = new CardSuit(suit.value);
+      } else {
+        this.suit = new CardSuit(suit);
+      }
+    } else {
+      this.suit = null;
+    }
+
+    if (rank !== undefined && rank !== null) {
+      if (rank instanceof CardRank) {
+        this.rank = new CardRank(rank.value);
+      } else {
+        this.rank = new CardRank(rank);
+      }
+    } else {
+      this.rank = null;
+    }
+  }
+
+  toString() {
+    if (this.rank.value === CardRank.JOKER) {
+      if (this.suit.value === CardSuit.SPECIAL) {
+        return "special joker";
+      } else {
+        return "joker";
+      }
+    } else {
+      return this.rank.toString() + " of " + this.suit.toString();
+    }
+  }
+
+  toImage(props) {
+    return <CardImage suit={ this.suit.toString() } rank={ this.rank.toString() } {...props} />;
+  }
+
+  serialize() {
+    return {
+      'id': null,
+      'suit': this.suit.value,
+      'rank': this.rank.value,
+    };
+  }
+
+  static deserialize(obj) {
+    var id = 'id' in obj ? obj['id'] : null;
+    var suit = 'suit' in obj ? obj['suit'] : null;
+    var rank = 'rank' in obj ? obj['rank'] : null;
+
+    return new Card(id, suit, rank)
+  }
+}
+
 var suits = {
   "club": 0,
   "diamond": 1,
@@ -19,7 +189,7 @@ var suits = {
   "spade": 3,
 };
 suits.rev = rev(suits);
-var numbers = {
+var ranks = {
   "1": 0,
   "2": 1,
   "3": 2,
@@ -34,22 +204,22 @@ var numbers = {
   "queen": 11,
   "king": 12,
 };
-numbers.rev = rev(numbers);
+ranks.rev = rev(ranks);
 var ungrid = (x,y) => {
   var suit = suits.rev[y];
-  var number = numbers.rev[x];
+  var rank = ranks.rev[x];
   if (!suit) {
     if (x === 0) {
-      suit = "black"; number = "joker";
+      suit = "black"; rank = "joker";
     } else if (x === 1) {
-      suit = "red"; number = "joker";
+      suit = "red"; rank = "joker";
     } else {
-      suit = number = "";
+      suit = rank = "";
     }
-  } else if (!number) {
-    suit = number = "";
+  } else if (!rank) {
+    suit = rank = "";
   }
-  return { suit, number };
+  return { suit, rank };
 };
 var card_dim = [202.5,315];
 
@@ -59,13 +229,13 @@ class CardImage extends React.Component {
     var scale = this.props.scale || 0.5; delete props.scale;
     var x_part = this.props.x_part || 1; delete props.x_part;
     var y_part = this.props.y_part || 1; delete props.y_part;
-    var name = this.props.suit + "_" + this.props.number;
+    var name = this.props.suit + "_" + this.props.rank;
     var x = 0; var y = 0;
-    if (numbers[this.props.number] !== undefined && suits[this.props.suit] !== undefined) {
-      x = numbers[this.props.number] * -card_dim[0];
+    if (ranks[this.props.rank] !== undefined && suits[this.props.suit] !== undefined) {
+      x = ranks[this.props.rank] * -card_dim[0];
       y = suits[this.props.suit] * -card_dim[1];
-    } else if (this.props.number === "joker" && ["black","red","none","fancy"].includes(this.props.suit)) {
-      name = this.props.number + "_" + this.props.suit;
+    } else if (this.props.rank === "joker" && ["black","red","none","fancy"].includes(this.props.suit)) {
+      name = this.props.rank + "_" + this.props.suit;
       x = (["red","fancy"].includes(this.props.suit) ? 1 : 0) * -card_dim[0];
       y = 4 * -card_dim[1];
     } else {
@@ -85,7 +255,55 @@ class CardImage extends React.Component {
   }
 }
 
-class CardHand extends React.Component {
+class CardHand {
+  constructor(cards) {
+    this.cards = [...cards];
+  }
+
+  findCardIndex(id) {
+    for (let index in this.cards) {
+      if (this.cards[index] === id) {
+        return index;
+      }
+    }
+
+    return null;
+  }
+
+  findCard(suit, rank) {
+    for (let card of this.cards) {
+      if (card.suit === suit && card.rank === rank) {
+        return card.index;
+      }
+    }
+
+    return null;
+  }
+
+  toImage() {
+    // XXX: Nick to wire up again.
+  }
+
+  serialize() {
+    var result = [];
+    for (let card of this.cards) {
+      result.push(card.serialize);
+    }
+    return result;
+  }
+
+  static deserialize(cards) {
+    var our_cards = [];
+    for (let raw_card of cards) {
+      let card = Card.deserialize(raw_card);
+      our_cards.push(card);
+    }
+
+    return new CardHand(our_cards);
+  }
+}
+
+class CardHandProp extends React.Component {
   render() {
     var { cards, direction, ...props } = this.props;
     var selectable = cards.some(card => card.selected !== undefined && card.selected !== null);
@@ -97,7 +315,7 @@ class CardHand extends React.Component {
     props = mergeProps(myProps, props);
     return (<div {...props}>
       {cards.map((card,i) =>
-        <CardImage key={i} suit={ card.suit } number={ card.number }
+        <CardImage key={i} suit={ card.suit } rank={ card.rank }
           x_part={ i>0 ? -0 : 1 }
           style={{ transform: card.selected ? "translateY(-20px)" : "" }}
           onClick={ card.onClick }
@@ -155,11 +373,12 @@ class CardGamePage extends React.Component {
   }
   render() {
     return (<>
-      <CardHand cards={ this.state.cards }/>
+      <CardHandProp cards={ this.state.cards }/>
     </>);
   }
 }
 
 export {
   CardGamePage,
+  CardHand,
 };

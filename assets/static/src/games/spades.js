@@ -2,11 +2,13 @@ import {
   WebSocketController
 } from './common.js';
 
+import {
+  CardHand
+} from './card.js';
+
 class SpadesController {
   constructor(game) {
     this.game = game;
-    this.draw_id = 1;
-    this.remaining_tiles = 0;
 
     this.wsController = new WebSocketController(this.game);
   }
@@ -33,9 +35,36 @@ class SpadesController {
     });
   }
 
+  async deal() {
+    return await this.wsContrller.sendAndWait({
+      'message_type': 'deal',
+    });
+  }
+
+  async decide(keep) {
+    return await this.wsContrller.send({
+      'message_type': 'decide',
+      'keep': keep,
+    });
+  }
+
   async peek() {
-    return await this.wsController.send({
+    return await this.wsController.sendAndWait({
       'message_type': 'peek',
+    });
+  }
+
+  async bid(amount) {
+    return await this.wsContrller.send({
+      'message_type': 'bid',
+      'bid': +amount,
+    });
+  }
+
+  async play(card) {
+    return await this.wsContrller.send({
+      'message_type': 'play',
+      'card_id': +card,
     });
   }
 
@@ -45,6 +74,34 @@ class SpadesController {
 
   close() {
     this.wsController.close();
+  }
+}
+
+// Unlike Rush, where we have to duplicate logic on the client and server to
+// move and drop tiles &c, here we can lazily take values from the server and
+// blindly update ours. This is because we only do a single action at a time,
+// and unless there's a network glitch (in which case server wins anyways),
+// the data always aligns after the message is confirmed by the server.
+class SpadesData {
+  constructor(game, hand, drawn, peeked, bid, tricks, score, overtakes, turn, leader, played, spades_broken, config) {
+    this.game = game;
+
+    this.hand = hand;
+    this.drawn = drawn;
+    this.peeked = peeked;
+
+    this.bid = bid;
+    this.tricks = tricks;
+
+    this.score = score;
+    this.overtakes = overtakes;
+
+    this.turn = turn;
+    this.leader = leader;
+    this.played = played;
+    this.spades_broken = spades_broken;
+
+    this.config = config;
   }
 }
 
@@ -60,52 +117,59 @@ class SpadesGame {
     this.data = new SpadesData(game);
 
     this.started = false;
+    this.dealt = false;
+    this.bidded = false;
+    this.finished = false;
 
     this.onChange = () => {};
   }
 
   handleNewState(message) {
-    this.controller.draw_id = Math.max(message.draw_id, this.controller.draw_id);
-    this.controller.remaining_tiles = message.remaining;
+    // Spades is a simpler game than Rush. We can always take the hand from the
+    // server as this is a turn-based game. We won't get out of sync like Rush.
 
-    // If this message was in reply to another, ignore it. Don't process added
-    // events to give draw/discard a chance to work.
-    if (message.reply_to && message.reply_to !== 0) {
-      return;
-    }
+    // Update some metadata about game progress.
+    this.started = message.started;
+    this.dealt = message.dealt;
+    this.bidded = message.bidded;
+    this.finished = message.finished;
 
-    if (!this.started) {
-      if (message.hand && this.data.bank.empty()) {
-        this.data.bank = LetterBank.deserialize(message.hand);
-      }
-
-      if (message.board && this.data.grid.empty()) {
-        this.data.grid = LetterGrid.deserialize(message.board);
-      }
-    } else {
-      if (message.added !== undefined && message.added !== null) {
-        if (message.added.hand !== undefined && message.added.hand !== null) {
-          this.data.draw(...message.added.hand);
-        }
-      }
-
-      // Now go through the hand and board and make sure every tile that the
-      // server thinks is in the hand is at least present somewhere.
-      if (message.hand) {
-        for (let tile of message.hand) {
-          var l_tile = LetterTile.deserialize(tile);
-          if (this.data.positionOf(l_tile) === null) {
-            this.data.draw(l_tile);
-          }
-        }
-      }
-    }
-
-    // After the first state message, consider ourselves started and let the
-    // reply rules apply.
-    this.started = true;
+    // Then update the main data object.
+    this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
+    this.data.drawn = message?.drawn;
+    this.data.peeked = message?.peeked;
+    this.data.bid = message?.bid;
+    this.data.tricks = message?.tricks;
+    this.data.score = message?.score;
+    this.data.overtakes = message?.overtakes;
+    this.data.turn = message?.turn;
+    this.data.leader = message?.leader;
+    this.data.played = message?.played;
+    this.data.spades_broken = message?.spades_broken;
+    this.data.history = message?.history;
+    this.data.config = message?.config;
 
     this.onChange(this);
+  }
+
+  async deal() {
+    return this.controller.deal();
+  }
+
+  async decide(keep) {
+    return this.controller.decide(keep);
+  }
+
+  async peek() {
+    return this.controller.peek();
+  }
+
+  async bid(amount) {
+    return this.controller.bid(amount);
+  }
+
+  async play(card) {
+    return this.controller.play(card);
   }
 
   close() {
