@@ -329,6 +329,7 @@ func (ss *SpadesState) Start(players int) error {
 		return err
 	}
 
+	ss.Started = true
 	return nil
 }
 
