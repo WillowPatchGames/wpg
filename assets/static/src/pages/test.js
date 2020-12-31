@@ -92,7 +92,7 @@ function MakeSchemas(mode) {
 class TestGamePage extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {status:"",messages:[],mode:'spades',compose:"",state:{}};
+    this.state = {status:"",messages:[],mode:'spades',compose:"",state:{},synopsis:{}};
     this.schema = MakeSchemas();
   }
   render() {
@@ -110,6 +110,9 @@ class TestGamePage extends React.Component {
           break;
         case "state":
           color = "darkmagenta";
+          break;
+        case "synopsis":
+          color = "darkgreen";
           break;
         default:
           if (v.data.error) {
@@ -173,6 +176,16 @@ class TestGamePage extends React.Component {
             marginRight: v.sent ? "2px" : "auto",
           }}>{ message(v) }</div></li>)}
         </ol>
+        <div key="synopsis" style={{
+            width: "fit-content", maxWidth: "30%",
+            maxHeight: "70vh", overflow: "auto",
+            padding: "5px", flexGrow: 0,
+            display: "flex", flexDirection: "column-reverse",
+            backgroundColor: "darkgreen", color: "white",
+            borderBottomLeftRadius: "5px",
+          }}>
+          <pre style={{ textAlign: "left", whiteSpace: "pre" }}>{JSON.stringify(this.state.synopsis, null, 2)}</pre>
+        </div>
         <div key="state" style={{
             width: "fit-content", maxWidth: "30%",
             maxHeight: "70vh", overflow: "auto",
@@ -236,19 +249,24 @@ class TestGamePage extends React.Component {
     });
   }
   receive(e) {
+    var resp = undefined;
+    if (data.message_type === "countdown") {
+      var resp = {
+        message_type: "countback",
+        value: data.value,
+      };
+    }
+    if (resp) this.state.wsController.send(resp);
     this.setState(state => {
       var data = JSON.parse(e.data);
       state.messages.push({ sent: false, data: data, timestamp: e.timeStamp });
       if (data.message_type === "state") {
         state.state = data;
-      } else if (data.message_type === "countdown") {
-        var resp = {
-          message_type: "countback",
-          value: data.value,
-        };
-        state.messages.push({ sent: true, data: resp });
-        this.state.wsController.send(resp);
       }
+      if (data.message_type === "synopsis") {
+        state.synopsis = data;
+      }
+      if (resp) state.messages.push({ sent: true, data: resp });
       return state;
     });
   }
