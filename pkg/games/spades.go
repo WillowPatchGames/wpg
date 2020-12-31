@@ -262,6 +262,27 @@ func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
 	return nil
 }
 
+type SpadesTrick struct {
+	Leader int    `json:"leader"`
+	Trick  []Card `json:"trick"`
+	Winner int    `json:"winner"`
+}
+
+type SpadesRoundPlayer struct {
+	Hand []Card `json:"hand"`
+
+	Bid       SpadesBid `json:"bid"`
+	Tricks    int       `json:"tricks"`
+	Score     int       `json:"score"`
+	Overtakes int       `json:"overtakes"`
+}
+
+type SpadesRound struct {
+	Dealer  int                 `json:"dealer"`
+	Players []SpadesRoundPlayer `json:"players"`
+	Tricks  []SpadesTrick       `json:"tricks"`
+}
+
 type SpadesState struct {
 	Turn   int `json:"turn"`
 	Leader int `json:"leader"`
@@ -271,7 +292,8 @@ type SpadesState struct {
 	Players        []SpadesPlayer `json:"players"`         // Left of dealer is found by incrementing one.
 	Played         []Card         `json:"played"`          // Currently played cards in this round.
 	SpadesBroken   bool           `json:"spades_broken"`   // Whether or not spades have been broken.
-	PreviousTricks [][]Card       `json:"previous_tricks"` // Contents of previous tricks.
+	PreviousTricks [][]Card       `json:"previous_tricks"` // Contents of previous tricks in the current round; sent to clients.
+	RoundHistory   []SpadesRound  `json:"round_history"`   // Contents of previous rounds for analysis.
 
 	Config SpadesConfig `json:"config"`
 
@@ -666,7 +688,7 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 		if played.Suit != lead_suit && (lead_effectively_spade != effectively_spade) {
 			for _, card := range ss.Players[player].Hand {
 				this_effectively_spade := card.Suit == SpadesSuit || card.Rank == JokerRank
-				if card.Suit == played.Suit || (this_effectively_spade && lead_effectively_spade) {
+				if card.Suit == lead_suit || (this_effectively_spade && lead_effectively_spade) {
 					// Have a different card we could've played instead.
 					return errors.New("must follow the lead suit")
 				}
@@ -674,7 +696,7 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 		}
 
 		if !ss.SpadesBroken && effectively_spade {
-			// We got a sluffer!
+			// We've got a sluffer!
 			ss.SpadesBroken = true
 		}
 	}
@@ -740,7 +762,7 @@ func (ss *SpadesState) determineRoundWinner() error {
 
 	if len(ss.Players[0].Hand) == 0 {
 		// Can't play again in this round. Tabulate the round score and maybe try
-		// again.
+		// to play another round.
 		return ss.tabulateRoundScore()
 	}
 
