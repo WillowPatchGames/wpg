@@ -214,6 +214,7 @@ class TestGamePage extends React.Component {
       state.game = game;
       state.wsController = wsController;
       state.compose = "";
+      state.messages.push({ sent: true, data: { message_type: "join" }});
       return state;
     });
   }
@@ -240,6 +241,12 @@ class TestGamePage extends React.Component {
       state.messages.push({ sent: false, data: data, timestamp: e.timeStamp });
       if (data.message_type === "state") {
         state.state = data;
+      } else if (data.message_type === "countdown") {
+        var resp = {
+          message_type: "countback",
+          value: data.value,
+        };
+        state.message.push({ sent: true, data: resp });
       }
       return state;
     });
