@@ -15,29 +15,29 @@ const SpadesNextRound string = "begin next round"
 type SpadesBid int
 
 const (
-	NotBidSpades         SpadesBid = iota
-	OneBidSpades         SpadesBid = iota
-	TwoBidSpades         SpadesBid = iota
-	ThreeBidSpades       SpadesBid = iota
-	FourBidSpades        SpadesBid = iota
-	FiveBidSpades        SpadesBid = iota
-	SixBidSpades         SpadesBid = iota
-	SevenBidSpades       SpadesBid = iota
-	EightBidSpades       SpadesBid = iota
-	NineBidSpades        SpadesBid = iota
-	TenBidSpades         SpadesBid = iota
-	ElevenBidSpades      SpadesBid = iota
-	TwelveBidSpades      SpadesBid = iota
-	ThirteenBidSpades    SpadesBid = iota
-	FourteenBidSpades    SpadesBid = iota
-	FifteenBidSpades     SpadesBid = iota
-	SixteenBidSpades     SpadesBid = iota
-	SeventeenBidSpades   SpadesBid = iota
-	EighteenBidSpades    SpadesBid = iota
-	NilBidSpades         SpadesBid = iota
-	BlindNilBidSpades    SpadesBid = iota
-	TripleNilBidSpades   SpadesBid = iota
-	OutOfBoundsBidSpades SpadesBid = iota
+	NotBidSpades         SpadesBid = iota // 0
+	OneBidSpades         SpadesBid = iota // 1
+	TwoBidSpades         SpadesBid = iota // 2
+	ThreeBidSpades       SpadesBid = iota // 3
+	FourBidSpades        SpadesBid = iota // 4
+	FiveBidSpades        SpadesBid = iota // 5
+	SixBidSpades         SpadesBid = iota // 6
+	SevenBidSpades       SpadesBid = iota // 7
+	EightBidSpades       SpadesBid = iota // 8
+	NineBidSpades        SpadesBid = iota // 9
+	TenBidSpades         SpadesBid = iota // 10
+	ElevenBidSpades      SpadesBid = iota // 11
+	TwelveBidSpades      SpadesBid = iota // 12
+	ThirteenBidSpades    SpadesBid = iota // 13
+	FourteenBidSpades    SpadesBid = iota // 14
+	FifteenBidSpades     SpadesBid = iota // 15
+	SixteenBidSpades     SpadesBid = iota // 16
+	SeventeenBidSpades   SpadesBid = iota // 17
+	EighteenBidSpades    SpadesBid = iota // 18
+	NilBidSpades         SpadesBid = iota // 19
+	BlindNilBidSpades    SpadesBid = iota // 20
+	TripleNilBidSpades   SpadesBid = iota // 21
+	OutOfBoundsBidSpades SpadesBid = iota // 22
 )
 
 type SpadesPlayer struct {
@@ -703,7 +703,7 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 
 	var remaining []Card
 	if index > 0 {
-		remaining = ss.Players[player].Hand[:index-1]
+		remaining = ss.Players[player].Hand[:index]
 	}
 	remaining = append(remaining, ss.Players[player].Hand[index+1:]...)
 	ss.Players[player].Hand = remaining
@@ -728,10 +728,12 @@ func (ss *SpadesState) determineRoundWinner() error {
 		this_card := ss.Played[offset]
 		if winning_card.Suit == this_card.Suit {
 			// Highest card of the lead suit wins. Or, when playing with six players,
-			// choose the winner in case of tie according to config.
+			// choose the winner in case of tie according to config. Also, check for
+			// aces, cuz they have integer value 1, but beat 2 and above... :)
 			is_higher := this_card.Rank > winning_card.Rank
 			won_due_to_tie := this_card.Rank == winning_card.Rank && !ss.Config.FirstWins
-			if is_higher || won_due_to_tie {
+			is_ace := this_card.Rank == AceRank && !winning_card.Rank == AceRank
+			if is_higher || won_due_to_tie || is_ace {
 				winner_offset = offset
 				winning_card = this_card
 			}
@@ -750,7 +752,6 @@ func (ss *SpadesState) determineRoundWinner() error {
 				winner_offset = offset
 				winning_card = this_card
 			}
-		}
 	}
 
 	absolute_winner := (ss.Leader + winner_offset) % ss.Config.NumPlayers
