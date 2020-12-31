@@ -187,8 +187,8 @@ class TestGamePage extends React.Component {
           }}>
           <pre style={{ textAlign: "left", whiteSpace: "pre" }}>{JSON.stringify(this.state.synopsis, null, 2)}</pre>
         </div>
-        <div key="state" style={{
-            width: "fit-content", maxWidth: "30%",
+        <div key="state" className="fit-content" style={{
+            maxWidth: "30%",
             maxHeight: "70vh", overflow: "auto",
             padding: "5px", flexGrow: 0,
             display: "flex", flexDirection: "column-reverse",

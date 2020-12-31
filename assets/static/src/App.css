@@ -15,6 +15,11 @@ p {
   font-size: 1.1em;
 }
 
+.fit-content {
+  width: fit-content;
+  width: -moz-fit-content;
+}
+
 .App {
   text-align: center;
 }
