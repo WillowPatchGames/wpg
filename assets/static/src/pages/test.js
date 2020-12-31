@@ -257,7 +257,6 @@ class TestGamePage extends React.Component {
       };
     }
     if (resp) this.state.wsController.send(resp);
-    this.msgRef.current.scrollTo({top:this.msgRef.current.scrollHeight, behavior: 'smooth'});
     this.setState(state => {
       state.messages.push({ sent: false, data: data, timestamp: e.timeStamp });
       if (data.message_type === "state") {
@@ -268,6 +267,8 @@ class TestGamePage extends React.Component {
       }
       if (resp) state.messages.push({ sent: true, data: resp });
       return state;
+    }, () => {
+      this.msgRef.current.scrollTo({top:this.msgRef.current.scrollHeight, behavior: 'smooth'});
     });
   }
 }
