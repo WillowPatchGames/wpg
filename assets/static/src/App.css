@@ -133,9 +133,17 @@ p {
 .mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust {
   padding-top: 56px;
 }
+
+/* Let the hero portion overflow the top app bar so the background is
+   the primary color when it overflows.
+ */
+.mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust ~ .App-hero::before {
+  content: "";
+  display: block;
+  padding: 56px;
+}
 .mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust ~ .App-hero {
   margin-top: -56px;
-  padding-top: calc(56px + 25px);
 }
 
 .mdc-snackbar__action:not(:disabled) {
@@ -154,6 +162,12 @@ p {
 
 .mdc-top-app-bar {
   max-width: 100vw;
+}
+
+/* Prevent app title text from wrapping as it expands from collapsed state */
+.mdc-top-app-bar .App-Title .mdc-button__label {
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .mdc-layout-grid {
