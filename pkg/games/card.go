@@ -42,9 +42,9 @@ type Card struct {
 }
 
 type Deck struct {
-	Cards []Card `json:"cards"`
+	Cards []*Card `json:"cards"`
 }
 
 func (d *Deck) Init() {
-	d.Cards = make([]Card, 0)
+	d.Cards = make([]*Card, 0)
 }

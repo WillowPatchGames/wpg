@@ -8,7 +8,7 @@ func (d *Deck) AddStandard52Deck() {
 	for _, suit := range StandardCardSuits {
 		for _, rank := range StandardCardRanks {
 			var card Card = Card{0, suit, rank}
-			d.Cards = append(d.Cards, card)
+			d.Cards = append(d.Cards, &card)
 		}
 	}
 }
@@ -21,12 +21,12 @@ func (d *Deck) AddJokers(count int, marked bool) {
 		}
 
 		var card Card = Card{0, suit, JokerRank}
-		d.Cards = append(d.Cards, card)
+		d.Cards = append(d.Cards, &card)
 	}
 }
 
 func (d *Deck) RemoveCard(rank CardRank, suit CardSuit) bool {
-	var remaining []Card = nil
+	var remaining []*Card = nil
 	var remainder_index = -1
 	var found = false
 
@@ -51,6 +51,12 @@ func (d *Deck) RemoveCard(rank CardRank, suit CardSuit) bool {
 }
 
 func (d *Deck) Shuffle() {
+	// By shuffling, then assigning IDs, and then shuffling IDs, we get random
+	// identifier -> card assignments, and random order of IDs in a deck.
+	utils.SecureRand.Shuffle(len(d.Cards), func(i, j int) {
+		d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i]
+	})
+
 	for index, card := range d.Cards {
 		card.ID = index + 1
 	}

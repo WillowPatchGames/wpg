@@ -260,8 +260,9 @@ type SpadesState struct {
 
 	Deck         Deck           `json:"deck"`
 	Players      []SpadesPlayer `json:"players"` // Left of dealer is found by incrementing one.
-	Played       []Card         `json:"played"`
+	Played       []Card         `json:"played"` // Currently played cards in this round.
 	SpadesBroken bool           `json:"spades_broken"` // Whether or not spades have been broken.
+	PreviousRounds [][]Card `json:"previous_rounds"` // Contents of previous rounds.
 
 	Config SpadesConfig `json:"config"`
 
@@ -401,7 +402,7 @@ func (ss *SpadesState) StartRound() error {
 	for len(ss.Deck.Cards) >= len(ss.Players) {
 		for player_offset := 0; player_offset < len(ss.Players); player_offset++ {
 			player_index := (starting_player + player_offset) % len(ss.Players)
-			ss.Players[player_index].Hand = append(ss.Players[player_index].Hand, ss.Deck.Cards[0])
+			ss.Players[player_index].Hand = append(ss.Players[player_index].Hand, *ss.Deck.Cards[0])
 			ss.Deck.Cards = ss.Deck.Cards[1:]
 		}
 	}
@@ -445,7 +446,7 @@ func (ss *SpadesState) PeekTop(player int) error {
 		return errors.New("already have picked up a card; decide whether to keep or discard it")
 	}
 
-	ss.Players[player].Drawn = &ss.Deck.Cards[0]
+	ss.Players[player].Drawn = ss.Deck.Cards[0]
 	ss.Deck.Cards = ss.Deck.Cards[1:]
 	return nil
 }
@@ -487,7 +488,7 @@ func (ss *SpadesState) DecideTop(player int, keep bool) error {
 		ss.Players[player].Hand = append(ss.Players[player].Hand, *ss.Players[player].Drawn)
 		ss.Deck.Cards = ss.Deck.Cards[1:]
 	} else {
-		ss.Players[player].Hand = append(ss.Players[player].Hand, ss.Deck.Cards[0])
+		ss.Players[player].Hand = append(ss.Players[player].Hand, *ss.Deck.Cards[0])
 		ss.Deck.Cards = ss.Deck.Cards[1:]
 	}
 
@@ -725,6 +726,8 @@ func (ss *SpadesState) determineRoundWinner() error {
 	ss.Players[absolute_winner].Tricks += 1
 	ss.Leader = absolute_winner
 	ss.Turn = absolute_winner
+	ss.PreviousRounds = append(ss.PreviousRounds, ss.Played)
+	ss.Played = make([]Card, 0)
 
 	if len(ss.Players[0].Hand) == 0 {
 		// Can't play again in this round. Tabulate the round score and maybe try

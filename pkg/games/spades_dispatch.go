@@ -116,7 +116,7 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			}
 
 			err = state.StartRound()
-			if err != nil {
+			if err == nil {
 				send_synopsis = true
 				for _, indexed_player := range game.ToPlayer {
 					if !indexed_player.Admitted || !indexed_player.Playing {
@@ -177,11 +177,19 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		}
 
 		err = state.PlayCard(player.Index, data.CardID)
-		send_synopsis = err == nil
+		if err == nil {
+			send_synopsis = true
+			for _, indexed_player := range game.ToPlayer {
+				if !indexed_player.Admitted || !indexed_player.Playing {
+					continue
+				}
 
-		var response SpadesStateNotification
-		response.LoadData(game, state, player)
-		c.undispatch(game, player, response.MessageID, 0, response)
+				// Send players their initial state.
+				var response SpadesStateNotification
+				response.LoadData(game, state, indexed_player)
+				c.undispatch(game, indexed_player, response.MessageID, 0, response)
+			}
+		}
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}
