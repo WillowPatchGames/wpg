@@ -99,12 +99,37 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			c.undispatch(game, player, finished.MessageID, finished.ReplyTo, finished)
 		}
 	case "deal":
-		if player.Index != state.Dealer {
-			return errors.New("unable to deal round that you're not the dealer for")
-		}
+		if state.Config.NumPlayers == 2 {
+			if player.Index != state.Turn {
+				return errors.New("not your turn to select a card")
+			}
 
-		err = state.StartRound()
-		send_synopsis = err == nil
+			err = state.PeekTop(player.Index)
+			send_synopsis = err == nil
+
+			var response SpadesStateNotification
+			response.LoadData(game, state, player)
+			c.undispatch(game, player, response.MessageID, 0, response)
+		} else {
+			if player.Index != state.Dealer {
+				return errors.New("unable to deal round that you're not the dealer for")
+			}
+
+			err = state.StartRound()
+			if err != nil {
+				send_synopsis = true
+				for _, indexed_player := range game.ToPlayer {
+					if !indexed_player.Admitted || !indexed_player.Playing {
+						continue
+					}
+
+					// Send players their initial state.
+					var response SpadesStateNotification
+					response.LoadData(game, state, indexed_player)
+					c.undispatch(game, indexed_player, response.MessageID, 0, response)
+				}
+			}
+		}
 	case "decide":
 		var data SpadesDecideMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -112,10 +137,18 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		}
 
 		err = state.DecideTop(player.Index, data.Keep)
-		// No possible update to synopsis.
+		send_synopsis = err == nil
+
+		var response SpadesStateNotification
+		response.LoadData(game, state, player)
+		c.undispatch(game, player, response.MessageID, 0, response)
 	case "peek":
 		err = state.PeekCards(player.Index)
-		// No possible update to synopsis.
+		send_synopsis = err == nil
+
+		var response SpadesStateNotification
+		response.LoadData(game, state, player)
+		c.undispatch(game, player, response.MessageID, 0, response)
 	case "bid":
 		var data SpadesBidMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -129,6 +162,10 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		var bid = SpadesBid(data.Bid)
 		err = state.PlaceBid(player.Index, bid)
 		send_synopsis = err == nil
+
+		var response SpadesStateNotification
+		response.LoadData(game, state, player)
+		c.undispatch(game, player, response.MessageID, 0, response)
 	case "play":
 		var data SpadesPlayMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -141,6 +178,10 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 
 		err = state.PlayCard(player.Index, data.CardID)
 		send_synopsis = err == nil
+
+		var response SpadesStateNotification
+		response.LoadData(game, state, player)
+		c.undispatch(game, player, response.MessageID, 0, response)
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}

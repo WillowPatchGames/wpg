@@ -3,12 +3,12 @@ package games
 type CardSuit int
 
 const (
-	NoneSuit     CardSuit = iota
-	ClubsSuit    CardSuit = iota
-	HeartsSuit   CardSuit = iota
-	SpadesSuit   CardSuit = iota
-	DiamondsSuit CardSuit = iota
-	FancySuit    CardSuit = iota // A special suit for the high-valued joker
+	NoneSuit     CardSuit = iota // 0
+	ClubsSuit    CardSuit = iota // 1
+	HeartsSuit   CardSuit = iota // 2
+	SpadesSuit   CardSuit = iota // 3
+	DiamondsSuit CardSuit = iota // 4
+	FancySuit    CardSuit = iota // 5- A special suit for the high-valued joker
 )
 
 var StandardCardSuits = [...]CardSuit{ClubsSuit, HeartsSuit, SpadesSuit, DiamondsSuit}
@@ -16,21 +16,21 @@ var StandardCardSuits = [...]CardSuit{ClubsSuit, HeartsSuit, SpadesSuit, Diamond
 type CardRank int
 
 const (
-	NoneRank  CardRank = iota
-	AceRank   CardRank = iota
-	TwoRank   CardRank = iota
-	ThreeRank CardRank = iota
-	FourRank  CardRank = iota
-	FiveRank  CardRank = iota
-	SixRank   CardRank = iota
-	SevenRank CardRank = iota
-	EightRank CardRank = iota
-	NineRank  CardRank = iota
-	TenRank   CardRank = iota
-	JackRank  CardRank = iota
-	QueenRank CardRank = iota
-	KingRank  CardRank = iota
-	JokerRank CardRank = iota
+	NoneRank  CardRank = iota // 0
+	AceRank   CardRank = iota // 1
+	TwoRank   CardRank = iota // 2
+	ThreeRank CardRank = iota // 3
+	FourRank  CardRank = iota // 4
+	FiveRank  CardRank = iota // 5
+	SixRank   CardRank = iota // 6
+	SevenRank CardRank = iota // 7
+	EightRank CardRank = iota // 8
+	NineRank  CardRank = iota // 9
+	TenRank   CardRank = iota // 10
+	JackRank  CardRank = iota // 11
+	QueenRank CardRank = iota // 12
+	KingRank  CardRank = iota // 13
+	JokerRank CardRank = iota // 14
 )
 
 var StandardCardRanks = [...]CardRank{AceRank, TwoRank, ThreeRank, FourRank, FiveRank, SixRank, SevenRank, EightRank, NineRank, TenRank, JackRank, QueenRank, KingRank}
