@@ -19,12 +19,11 @@ import (
 )
 
 type createHandlerData struct {
-	RoomID       uint64                 `json:"room"`
-	Style        string                 `json:"style"`
-	Open         bool                   `json:"open"`
-	Config       map[string]interface{} `json:"config"`
-	parsedConfig interface{}
-	APIToken     string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	RoomID   uint64                 `json:"room"`
+	Style    string                 `json:"style"`
+	Open     bool                   `json:"open"`
+	Config   map[string]interface{} `json:"config"`
+	APIToken string                 `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type createHandlerResponse struct {
@@ -45,6 +44,8 @@ type CreateHandler struct {
 	req  createHandlerData
 	resp createHandlerResponse
 	user *database.User
+
+	parsedConfig interface{}
 }
 
 func (handle CreateHandler) GetResponse() interface{} {
@@ -63,7 +64,7 @@ func (handle *CreateHandler) SetUser(user *database.User) {
 	handle.user = user
 }
 
-func (handle CreateHandler) verifyRequest() error {
+func (handle *CreateHandler) verifyRequest() error {
 	if handle.req.Style == "" {
 		return api_errors.ErrMissingRequest
 	}
@@ -80,7 +81,7 @@ func (handle CreateHandler) verifyRequest() error {
 				return err
 			}
 
-			handle.req.parsedConfig = &rushConfig
+			handle.parsedConfig = &rushConfig
 		} else if handle.req.Style == "spades" {
 			var spadesConfig games.SpadesConfig
 			if err := spadesConfig.LoadConfig(handle.req.Config); err != nil {
@@ -92,7 +93,7 @@ func (handle CreateHandler) verifyRequest() error {
 				return err
 			}
 
-			handle.req.parsedConfig = &spadesConfig
+			handle.parsedConfig = &spadesConfig
 		} else {
 			panic("Unknown game mode: " + handle.req.Style)
 		}
@@ -141,8 +142,8 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			game.JoinCode.String = "gc-" + utils.JoinCode()
 		}
 
-		if handle.req.parsedConfig != nil {
-			data, err := json.Marshal(handle.req.parsedConfig)
+		if handle.parsedConfig != nil {
+			data, err := json.Marshal(handle.parsedConfig)
 			if err != nil {
 				return err
 			}

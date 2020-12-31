@@ -164,13 +164,13 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 
 		if mode == RushGame {
 			var rush_config RushConfig
-			if err := json.Unmarshal([]byte(gamedb.Config.String), &config); err != nil {
+			if err := json.Unmarshal([]byte(gamedb.Config.String), &rush_config); err != nil {
 				return err
 			}
 			config = &rush_config
 		} else if mode == SpadesGame {
 			var spades_config SpadesConfig
-			if err := json.Unmarshal([]byte(gamedb.Config.String), &config); err != nil {
+			if err := json.Unmarshal([]byte(gamedb.Config.String), &spades_config); err != nil {
 				return err
 			}
 			config = &spades_config
