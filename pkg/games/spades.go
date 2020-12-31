@@ -723,6 +723,9 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 	}
 	remaining = append(remaining, ss.Players[player].Hand[index+1:]...)
 	ss.Players[player].Hand = remaining
+	if ss.Turn == ss.Leader {
+		ss.Played = make([]Card, 0)
+	}
 	ss.Played = append(ss.Played, played)
 
 	ss.Turn = (ss.Turn + 1) % ss.Config.NumPlayers
@@ -776,7 +779,6 @@ func (ss *SpadesState) determineTrickWinner() error {
 	ss.Leader = absolute_winner
 	ss.Turn = absolute_winner
 	ss.PreviousTricks = append(ss.PreviousTricks, ss.Played)
-	ss.Played = make([]Card, 0)
 
 	if len(ss.Players[0].Hand) == 0 {
 		// Can't play again in this round. Tabulate the round score and maybe try

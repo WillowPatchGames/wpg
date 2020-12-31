@@ -291,6 +291,9 @@ class SpadesGamePage extends React.Component {
           this.game.winner = data.winner;
           this.props.setPage('afterparty');
         },
+        "error": data => {
+          notify(this.props.snackbar, data.error, "error");
+        },
         "": data => {
           if (data.message) {
             notify(this.props.snackbar, data.message, data.type);

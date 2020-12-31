@@ -113,9 +113,11 @@ class SpadesGame {
     if (readonly === undefined || readonly === null || readonly === false) {
       this.controller = new SpadesController(game);
       this.controller.onMessage("state", (data) => { this.handleNewState(data) });
+      this.controller.onMessage("synopsis", (data) => { this.handleNewSynopsis(data) });
     }
 
     this.data = new SpadesData(game);
+    this.synopsis = {};
 
     this.started = false;
     this.dealt = false;
@@ -149,6 +151,14 @@ class SpadesGame {
     this.data.spades_broken = message?.spades_broken;
     this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
     this.data.config = message?.config;
+
+    this.onChange(this);
+  }
+
+  handleNewSynopsis(message) {
+    // Spades is a simpler game than Rush. We can always take the hand from the
+    // server as this is a turn-based game. We won't get out of sync like Rush.
+    Object.assign(this.synopsis, message);
 
     this.onChange(this);
   }

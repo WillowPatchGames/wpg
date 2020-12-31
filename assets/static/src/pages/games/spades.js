@@ -40,7 +40,7 @@ class SpadesGameComponent extends React.Component {
   }
   render() {
     var status = a => a;
-    var player_info = "";//JSON.stringify(this.state.game.players);
+    var player_info = JSON.stringify(this.state.game.interface.synopsis.players);
     if (!this.state.game.interface.started) {
       return status("Waiting for game to start …");
     } else if (this.state.game.interface.finished) {
