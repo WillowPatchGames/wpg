@@ -165,8 +165,8 @@ class TestGamePage extends React.Component {
         value={ this.state.mode }
         onChange={ e => {var v = e.target.value; this.setState(state => {state.mode = v; return state}) }} />
       <div key="body" style={{ display: "flex", justifyContent: "space-between" }}>
-        <ol key="messages" ref={ this.msgRef } className="fit-content" style={{ margin: "0", flexGrow: 1, maxHeight: "70vh", overflow: "auto" }}>
-          {this.state.messages.map((v,k) => <li key={k}><div style={{
+        <ol key="messages" ref={ this.msgRef } style={{ margin: "0", flexGrow: 1, maxHeight: "70vh", overflow: "auto" }}>
+          {this.state.messages.map((v,k) => <li key={k}><div className="fit-content" style={{
             backgroundColor: "lightblue",
             borderRadius: "10px",
             padding: "6px",
