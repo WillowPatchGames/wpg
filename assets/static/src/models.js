@@ -896,20 +896,48 @@ class GameModel {
   }
 
   async create() {
+    var config = null;
+    if (this.mode === 'rush') {
+      config = {
+        'spectators': this.spectators,
+        'num_tiles': +this.num_tiles,
+        'start_size': +this.start_size,
+        'draw_size': +this.draw_size,
+        'discard_penalty': +this.discard_penalty,
+        'num_players': +this.num_players,
+        'tiles_per_player': this.tiles_per_player,
+        'frequency': +this.frequency,
+      };
+    } else if (this.mode === 'spades') {
+      config = {
+        'num_players': +this.num_players,
+        'overtakes': this.overtakes,
+        'overtake_limit': +this.overtake_limit,
+        'must_break_spades': this.must_break_spades,
+        'add_jokers': this.add_jokers,
+        'first_wins': this.first_wins,
+        'with_partners': this.with_partners,
+        'with_nil': this.with_nil,
+        'overtakes_nil': this.overtakes_nil,
+        'blind_bidding': this.blind_bidding,
+        'with_double_nil': this.with_double_nil,
+        'with_break_bonus': this.with_break_bonus,
+        'with_triple_nil': this.with_triple_nil,
+        'win_amount': +this.win_amount,
+        'overtake_penalty': +this.overtake_penalty,
+        'trick_multipler': +this.trick_multipler,
+        'perfect_round': this.perfect_round,
+        'nil_score': +this.nil_score,
+      };
+    } else {
+
+    }
+
     var request = {
       'owner': this.user.id,
       'style': this.mode,
       'open': this.open,
-      'config': {
-        'spectators': this.spectators,
-        'num_tiles': this.num_tiles,
-        'start_size': this.start_size,
-        'draw_size': this.draw_size,
-        'discard_penalty': this.discard_penalty,
-        'num_players': this.num_players,
-        'tiles_per_player': this.tiles_per_player,
-        'frequency': this.frequency,
-      }
+      'config': config,
     };
 
     if (this.room !== null) {

@@ -849,25 +849,121 @@ class CreateGameForm extends React.Component {
 
     var have_game = this.props.game !== undefined && this.props.game !== null && this.props.game.config !== undefined && this.props.game.config !== null;
     var game = have_game ? this.props.game : undefined;
-    var config = have_game ? game.config : undefined;
     var editable = this.props.editable === undefined || this.props.editable;
 
     this.state = {
       editable: editable,
       error: null,
-      mode: have_game ? game.style : 'rush',
+      mode: have_game ? game.style : null,
       open: have_game ? game.open : true,
       spectators: have_game && game.spectator !== undefined ? game.spectator : true,
-      num_players: have_game ? config.num_players : 4,
-      num_tiles: have_game ? config.num_tiles : 75,
-      tiles_per_player: have_game ? config.tiles_per_player : false,
-      start_size: have_game ? config.start_size : 12,
-      draw_size: have_game ? config.draw_size : 1,
-      discard_penalty: have_game ? config.discard_penalty : 3,
-      frequency: have_game ? config.frequency : 1,
     }
 
+    this.createGameConfig();
+
     console.log(this.state);
+  }
+
+  createGameConfig(new_style) {
+    var have_game = this.props.game !== undefined && this.props.game !== null && this.props.game.config !== undefined && this.props.game.config !== null;
+    var game = have_game ? this.props.game : undefined;
+    var config = have_game ? game.config : undefined;
+    var have_arg = new_style !== undefined && new_style !== null;
+    var have_state = this.state !== undefined && this.state !== null && this.state.mode === null && this.state.mode !== undefined;
+
+    if (!have_game && !have_arg && !have_state) {
+      return null;
+    }
+
+    var additional_state = null;
+    var style = have_arg
+                ? new_style
+                : (
+                  have_state ? this.state.mode : game.style
+                );
+    if (style === 'rush') {
+      additional_state = {
+        num_players: have_game ? config.num_players : 4,
+        num_tiles: have_game ? config.num_tiles : 75,
+        tiles_per_player: have_game ? config.tiles_per_player : false,
+        start_size: have_game ? config.start_size : 12,
+        draw_size: have_game ? config.draw_size : 1,
+        discard_penalty: have_game ? config.discard_penalty : 3,
+        frequency: have_game ? config.frequency : 1,
+      }
+    } else if (style === 'spades') {
+      additional_state = {
+        num_players: have_game ? config.num_players : 4,
+        overtakes: have_game ? config.overtakes : true,
+        overtake_limit: have_game ? config.overtake_limit : 10,
+        must_break_spades: have_game ? config.must_break_spades : true,
+        add_jokers: have_game ? config.add_jokers : false,
+        first_wins: have_game ? config.first_wins : false,
+        with_partners: have_game ? config.with_partners : true,
+        with_nil: have_game ? config.with_nil : true,
+        overtakes_nil: have_game ? config.overtakes_nil : true,
+        blind_bidding: have_game ? config.blind_bidding : true,
+        with_double_nil: have_game ? config.with_double_nil : true,
+        with_break_bonus: have_game ? config.with_break_bonus : false,
+        with_triple_nil: have_game ? config.with_triple_nil : false,
+        win_amount: have_game ? config.win_amount : 500,
+        overtake_penalty: have_game ? +config.overtake_penalty : 100,
+        trick_multipler: have_game ? config.trick_multipler : 10,
+        perfect_round: have_game ? config.perfect_round : false,
+        nil_score: have_game ? config.nil_score : 100,
+      };
+    } else {
+      console.log("Unknown game style: " + style, game, this.state, this.props);
+    }
+
+    if (additional_state !== null) {
+      this.setState(state => Object.assign({}, state, additional_state));
+    }
+  }
+
+  toObject() {
+    if (this.state.mode === 'rush') {
+      return this.rushToObject();
+    } else if (this.state.mode === 'spades') {
+      return this.spadesToObject();
+    } else {
+      console.log("Unknown game style: " + this.state.mode, this.state);
+    }
+  }
+
+  rushToObject() {
+    return {
+      'num_players': +this.state.num_players,
+      'num_tiles': +this.state.num_tiles,
+      'tiles_per_player': this.state.tiles_per_player,
+      'start_size': +this.state.start_size,
+      'draw_size': +this.state.draw_size,
+      'discard_penalty': +this.state.discard_penalty,
+      'frequency': +this.state.frequency,
+    };
+  }
+
+  spadesToObject() {
+    return {
+      'num_players': +this.state.num_players,
+      'overtakes': this.state.overtakes,
+      'overtake_limit': +this.state.overtake_limit,
+      'must_break_spades': this.state.must_break_spades,
+      'add_jokers': this.state.add_jokers,
+      'first_wins': this.state.first_wins,
+      'with_partners': this.state.with_partners,
+      'with_nil': this.state.with_nil,
+      'overtakes_nil': this.state.overtakes_nil,
+      'blind_bidding': this.state.blind_bidding,
+      'with_double_nil': this.state.with_double_nil,
+      'with_break_bonus': this.state.with_break_bonus,
+      'with_triple_nil': this.state.with_triple_nil,
+      'win_amount': +this.state.win_amount,
+      'overtake_penalty': +this.state.overtake_penalty,
+      'trick_multipler': +this.state.trick_multipler,
+      'perfect_round': this.state.perfect_round,
+      'nil_score': +this.state.nil_score,
+    };
   }
 
   async handleSubmit(event) {
@@ -886,13 +982,8 @@ class CreateGameForm extends React.Component {
     game.mode = this.state.mode;
     game.open = this.state.open;
     game.spectators = this.state.spectators;
-    game.num_players = +this.state.num_players;
-    game.num_tiles = +this.state.num_tiles;
-    game.tiles_per_player = this.state.tiles_per_player;
-    game.start_size = +this.state.start_size;
-    game.draw_size = +this.state.draw_size;
-    game.discard_penalty = +this.state.discard_penalty;
-    game.frequency = +this.state.frequency;
+    console.log(this.state);
+    Object.assign(game, this.toObject());
 
     if (this.props.room !== null) {
       game.room = this.props.room;
@@ -925,9 +1016,16 @@ class CreateGameForm extends React.Component {
   }
 
   inputHandler(name, checky) {
+    if (name !== "mode") {
+      return (e) => {
+        var v = checky ? e.target.checked : e.target.value;
+        return this.newState(() => ({ [name]: v }));
+      };
+    }
+
     return (e) => {
       var v = checky ? e.target.checked : e.target.value;
-      return this.newState(() => ({ [name]: v }));
+      return this.newState(() => ({ [name]: v, "config": this.createGameConfig(v) }));
     };
   }
 
@@ -939,13 +1037,215 @@ class CreateGameForm extends React.Component {
     this.setState(state => Object.assign({}, state, { error: message }));
   }
 
-  render() {
+  renderRush() {
     var pl = (num, name) => (""+num+" "+name+(+num === 1 ? "" : "s"));
+
+    return (
+      <>
+        <l.ListGroupSubheader>Rush Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Number of Tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("tiles_per_player") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.tiles_per_player ? "Tiles per Player" : "Total Number of Tiles" } name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        {
+          this.state.tiles_per_player
+          ? <p>There will be { this.state.num_tiles } tiles per player</p>
+          : <p>There will be { this.state.num_tiles } tiles overall</p>
+        }
+        <br />
+        <Select label="Tile Frequency" enhanced value={ "" + this.state.frequency } onChange={ this.inputHandler("frequency") }  disabled={ !this.state.editable } options={
+          [
+            {
+              label: 'Standard US English Letter Frequencies',
+              value: '1',
+            },
+            {
+              label: 'Bananagrams Tile Frequency',
+              value: '2',
+            },
+            {
+              label: 'Scrabble Tile Frequency',
+              value: '3',
+            }
+          ]
+        } />
+        <br/>
+        {
+          +this.state.frequency === 1 ?
+          <p>This uses the standard frequency breakdown of US English text to create a pool of tiles. Letters such as q and z are really infrequent while vowels are more common.</p>
+          : (
+            +this.state.frequency === 2 ?
+            <p>This uses the frequency breakdown of Bananagrams, scaled to the size of the pool.</p>
+            :
+            <p>This uses the frequency breakdown of Scrabble, scaled to the size of the pool.</p>
+          )
+        }
+        <br />
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="7" max="25" step="1" disabled={ !this.state.editable } />
+          <p></p>
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="10" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
+        <br/>
+      </>
+    );
+  }
+
+  renderSpades() {
+    return (
+      <>
+        <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>
+          Trick Options
+        </l.ListGroupSubheader>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("overtakes") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.overtakes ? "Overtakes Counted" : "No Overtakes" } name="overtakes" checked={ this.state.overtakes } onChange={ () => this.toggle("overtakes", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        {
+          this.state.overtakes
+          ? <l.ListItem disabled>
+              <TextField fullwidth type="number" label="Overtake Penalty Limit" name="overtake_limit" value={ this.state.overtake_limit } onChange={ this.inputHandler("overtake_limit") } min="2" max="15" step="1" disabled={ !this.state.editable || !this.state.overtakes } />
+            </l.ListItem>
+          : null
+        }
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("must_break_spades") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.must_break_spades ? "Can Play Spades at Any Time" : "Must Wait for Spades to be Sluffed Before leading Spades" } name="must_break_spades" checked={ this.state.must_break_spades } onChange={ () => this.toggle("must_break_spades", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("add_jokers") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.add_jokers ? "Add Jokers for Three or Six Players" : "Leave Jokers Out" } name="add_jokers" checked={ this.state.add_jokers } onChange={ () => this.toggle("add_jokers", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("first_wins") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.first_wins ? "First Highest Played Card Wins (Six Players Only)" : "Last Highest Played Card Wins (Six Players Only)" } name="first_wins" checked={ this.state.first_wins } onChange={ () => this.toggle("first_wins", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_partners") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.with_partners ? "Play With Partners (Four and Six Players Only)" : "Play Individually" } name="with_partners" checked={ this.state.with_partners } onChange={ () => this.toggle("with_partners", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>
+          Nil Options
+        </l.ListGroupSubheader>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_nil") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.with_nil ? "Allow Nil Builds" : "Forbid Nil and Zero Bids" } name="with_nil" checked={ this.state.with_nil } onChange={ () => this.toggle("with_nil", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("overtakes_nil") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.overtakes_nil ? "Score Overtakes with Nil Bids" : "Ignore Overtakes with Nil Bids" } name="overtakes_nil" checked={ this.state.overtakes_nil } onChange={ () => this.toggle("overtakes_nil", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("blind_bidding") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.blind_bidding ? "Enable Blind Bidding" : "Always Look at Cards First" } name="blind_bidding" checked={ this.state.blind_bidding } onChange={ () => this.toggle("blind_bidding", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_double_nil") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.with_double_nil ? "Require Both Partners Make Nil if Both Bid Nil (Double Nil)" : "Score Partners Bidding Nil Separately" } name="with_double_nil" checked={ this.state.with_double_nil } onChange={ () => this.toggle("with_double_nil", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_break_bonus") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.with_break_bonus ? "Give a Bonus for Breaking Both Partners in Double Nil" : "No Bonus for Breaking Both Partners Nil Bids" } name="with_break_bonus" checked={ this.state.with_break_bonus } onChange={ () => this.toggle("with_break_bonus", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_triple_nil") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.with_triple_nil ? "Allow Triple Nil Bids (Blind Nil Play -- Chose Played Suit Only)" : "Forbid Triple Nil Bids" } name="with_triple_nil" checked={ this.state.with_triple_nil } onChange={ () => this.toggle("with_triple_nil", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>
+          Scoring Options
+        </l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Winning Point Threshhold" name="win_amount" value={ this.state.win_amount } onChange={ this.inputHandler("win_amount") } min="50" max="1000" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <Select label="Overtake Penalty" enhanced value={ ""+this.state.overtake_penalty+"" } onChange={ this.inputHandler("overtake_penalty") }  disabled={ !this.state.editable } options={
+          [
+            {
+              label: '50 Points',
+              value: "50",
+            },
+            {
+              label: '100 Points',
+              value: "100",
+            },
+            {
+              label: '150 Points',
+              value: "150",
+            },
+            {
+              label: '200 Points',
+              value: "200",
+            },
+          ]
+        } />
+        <Select label="Trick Multiplier" enhanced value={ ""+this.state.trick_multipler+"" } onChange={ this.inputHandler("trick_multipler") }  disabled={ !this.state.editable } options={
+          [
+            {
+              label: '5x',
+              value: "5",
+            },
+            {
+              label: '10x',
+              value: "10",
+            },
+          ]
+        } />
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("perfect_round") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.perfect_round ? "Score Half of Winning Amount for a Perfect Round (Moon or Boston; taking all 13 tricks)" : "Score No Additional Points for a Perfect Round" } name="perfect_round" checked={ this.state.perfect_round } onChange={ () => this.toggle("perfect_round", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <Select label="Single Nil Score" enhanced value={ ""+this.state.nil_score+"" } onChange={ this.inputHandler("nil_score") }  disabled={ !this.state.editable } options={
+          [
+            {
+              label: '50 Points',
+              value: "50",
+            },
+            {
+              label: '75 Points',
+              value: "75",
+            },
+            {
+              label: '100 Points',
+              value: "100",
+            },
+            {
+              label: '125 Points',
+              value: "125",
+            },
+            {
+              label: '150 Points',
+              value: "150",
+            },
+            {
+              label: '200 Points',
+              value: "200",
+            },
+          ]
+        } />
+      </>
+    );
+  }
+
+  render() {
+    var messages = {
+      'rush': "In Rush, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!",
+      'spades': "In Spades, players bid how many tricks they will take. If they make their bid, they get more points. First to a set amount wins!"
+    }
+
+    var config = null;
+    if (this.state.mode === 'rush') {
+      config = this.renderRush();
+    } else if (this.state.mode === 'spades') {
+      config = this.renderSpades();
+    } else if (this.state.mode !== null) {
+      console.log("Unknown game mode: " + this.state.mode, this.state);
+    }
 
     return (
       <c.Card>
         <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-
           <form onSubmit={ this.handleSubmit.bind(this) }>
             <l.List twoLine>
               <l.ListGroup>
@@ -956,83 +1256,35 @@ class CreateGameForm extends React.Component {
                 <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("spectators") } disabled={ !this.state.editable }>
                   <Switch label="Allow spectators" checked={ this.state.spectators } onChange={ () => this.toggle("spectators", true) } disabled={ !this.state.editable } />
                 </l.ListItem>
-                <l.ListItem disabled>
-                  <TextField fullwidth type="number" label="Number of players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" disabled={ !this.state.editable } />
-                </l.ListItem>
               </l.ListGroup>
               <br />
               <br />
               <l.ListGroup>
-                <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+                <l.ListGroupSubheader>Game Mode</l.ListGroupSubheader>
                 <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") }  disabled={ !this.state.editable } options={
                   [
                     {
-                      label: 'Rush (Fast-Paced Game)',
+                      label: 'Rush (Fast-Paced Word Game)',
                       value: 'rush',
-                    }
+                    },
+                    {
+                      label: 'Spades (Card Game)',
+                      value: 'spades',
+                    },
                   ]
                 } />
                 <br/>
                 {
-                  this.state.mode === 'rush' ?
-                  <p>In rush mode, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!</p>
-                  : <></>
+                  this.state.mode in messages ? <p> { messages[this.state.mode] } </p> : null
                 }
-                <l.ListItem disabled>
-                  <TextField fullwidth type="number" label="Number of tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" disabled={ !this.state.editable } />
-                </l.ListItem>
-                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("tiles_per_player") } disabled={ !this.state.editable }>
-                  <Switch label={ this.state.tiles_per_player ? "Tiles per player" : "Total number of tiles" } name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } disabled={ !this.state.editable } />
-                </l.ListItem>
-                {
-                  this.state.tiles_per_player
-                  ? <p>There will be { this.state.num_tiles } tiles per player</p>
-                  : <p>There will be { this.state.num_tiles } tiles overall</p>
-                }
-                <br />
-                <Select label="Tile Frequency" enhanced value={ "" + this.state.frequency } onChange={ this.inputHandler("frequency") }  disabled={ !this.state.editable } options={
-                  [
-                    {
-                      label: 'Standard US English Letter Frequencies',
-                      value: '1',
-                    },
-                    {
-                      label: 'Bananagrams Tile Frequency',
-                      value: '2',
-                    },
-                    {
-                      label: 'Scrabble Tile Frequency',
-                      value: '3',
-                    }
-                  ]
-                } />
-                <br/>
-                {
-                  +this.state.frequency === 1 ?
-                  <p>This uses the standard frequency breakdown of US English text to create a pool of tiles. Letters such as q and z are really infrequent while vowels are more common.</p>
-                  : (
-                    +this.state.frequency === 2 ?
-                    <p>This uses the frequency breakdown of Bananagrams, scaled to the size of the pool.</p>
-                    :
-                    <p>This uses the frequency breakdown of Scrabble, scaled to the size of the pool.</p>
-                  )
-                }
-                <br />
-                <l.ListItem disabled>
-                  <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="7" max="25" step="1" disabled={ !this.state.editable } />
-                  <p></p>
-                </l.ListItem>
-                <l.ListItem disabled>
-                  <TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="10" step="1" disabled={ !this.state.editable } />
-                </l.ListItem>
-                <l.ListItem disabled>
-                  <TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" disabled={ !this.state.editable } />
-                </l.ListItem>
-                <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
-                <br/>
+              </l.ListGroup>
+              <br />
+              <br />
+              <l.ListGroup>
+                { config }
               </l.ListGroup>
             </l.List>
-            { this.state.editable ? <Button label="Create" raised disabled={ !this.state.editable } /> : <></> }
+            { this.state.editable ? <Button label="Create" raised disabled={ !this.state.editable || this.state.mode === null } /> : <></> }
           </form>
           <d.Dialog open={ this.state.error !== null } onClosed={() => this.setError(null) }>
             <d.DialogTitle>Error!</d.DialogTitle>
