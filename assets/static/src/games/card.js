@@ -376,9 +376,7 @@ class CardHand {
         index++
       }
 
-      console.log(sorted, index, card);
       sorted.splice(index, 0, card);
-      console.log(sorted);
     }
 
     this.cards = sorted;

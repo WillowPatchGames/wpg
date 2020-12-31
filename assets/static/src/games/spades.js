@@ -162,12 +162,12 @@ class SpadesGame {
     this.onChange(this);
   }
 
-  handleNewSynopsis(message) {
+  async handleNewSynopsis(message) {
     // Spades is a simpler game than Rush. We can always take the hand from the
     // server as this is a turn-based game. We won't get out of sync like Rush.
     if (message.players) {
       for (let player of message.players) {
-        player.user = UserCache.FromId(player.user);
+        player.user = await UserCache.FromId(player.user);
       }
     }
     Object.assign(this.synopsis, message);

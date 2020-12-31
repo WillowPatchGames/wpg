@@ -41,6 +41,7 @@ import { SpadesGameComponent } from './games/spades.js';
 import { RushGame, RushData } from '../games/rush.js';
 import { UserCache, GameCache } from '../utils/cache.js';
 import { gravatarify } from '../utils/gravatar.js';
+import { Lazy } from '../utils/lazy.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
@@ -235,20 +236,123 @@ class RushGameSynopsis extends React.Component {
   }
 }
 
-class GamePage extends React.Component {
+class SpadesGameSynopsis extends React.Component {
   constructor(props) {
     super(props);
-    console.log(this.props.game);
+
+    this.state = this.newState();
+
+    let old_handler = this.props.game.interface.onChange;
+    this.props.game.interface.onChange = () => {
+      old_handler();
+      this.setState(state => this.newState());
+    };
   }
-  render() {
-    var mode = this.props.game.mode || this.props.game.style;
-    if (mode === 'rush') {
-      return <RushGamePage {...this.props}/>
-    } else if (mode === 'spades') {
-      return <SpadesGamePage {...this.props}/>
-    } else {
-      return "Unrecognized game mode: " + mode;
+
+  newState() {
+    let new_state = { players: {} };
+
+    if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
+      for (let player of this.props.game.interface.synopsis.players) {
+        new_state.players[player.user.id] = player;
+      }
     }
+
+    return new_state;
+  }
+
+  render() {
+    var synopsis_columns = {
+      "user":{
+        name: "User",
+        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size="xlarge" />,
+      },
+      "is_turn":{
+        name: "Turn",
+        printer: a => a ? "•" : "",
+      },
+      "is_leader":{
+        name: "Leading",
+        printer: a => a ? "•" : "",
+      },
+      "is_dealer":{
+        name: "Dealing",
+        printer: a => a ? "•" : "",
+      },
+      "bid":"Bid",
+      "tricks":"Tricks taken",
+      "score":"Score",
+      "overtakes":"Overtakes",
+    };
+
+    var tabulate = columns => data => {
+      if (!data) return [null];
+      var rows = [[]];
+      for (let dat of data) {
+        rows.push([]);
+        for (let k in columns) {
+          var printer = a => a;
+          if (typeof columns[k] === "object") var printer = columns[k].printer;
+          rows[rows.length-1].push(<td key={ k }>{ printer(dat[k]) }</td>)
+        }
+      }
+      return rows.map((row,i) => <tr key={ i }>{row}</tr>);
+    };
+
+    var headings = [];
+    for (let k in synopsis_columns) {
+      var name = synopsis_columns[k];
+      if (typeof name === "object") name = name.name;
+      headings.push(<th key={ k }>{ name }</th>);
+    }
+
+    var player_rows = [];
+    if (this.state.players) {
+      var our_player = null;
+      var remaining = [];
+
+      for (let player_id of Object.keys(this.state.players).sort()) {
+        let player = this.state.players[player_id];
+        if (+player_id === +this.props.user.id) {
+          our_player = player;
+        } else {
+          remaining.push(player);
+        }
+      }
+
+      if (our_player) {
+        player_rows.push(...tabulate(synopsis_columns)([ our_player ]));
+      }
+
+      if (remaining) {
+        player_rows.push(...tabulate(synopsis_columns)(remaining));
+      }
+
+      console.log("synopsis -> render", our_player, remaining, player_rows);
+    }
+
+    var player_view = null;
+    if (player_rows) {
+      player_view = <table>
+        <tbody>
+          <tr key={ "spades_synopsis_headings" }>
+            { headings }
+          </tr>
+          { player_rows }
+        </tbody>
+      </table>
+    }
+
+    return (
+      <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+        <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+          <div className="text-left scrollable-x">
+            <b>Spades</b>
+            { player_view }
+          </div>
+        </c.Card>
+      </div>
+    );
   }
 }
 
@@ -322,7 +426,7 @@ class SpadesGamePage extends React.Component {
     return (
       <div>
         { countdown }
-        {/*<SpadesGameSynopsis {...this.props} />*/}
+        <SpadesGameSynopsis game={ this.game } {...this.props} />
         <SpadesGameComponent game={ this.game } interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
     );
@@ -400,6 +504,23 @@ class RushGamePage extends React.Component {
         <Game interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
     );
+  }
+}
+
+class GamePage extends React.Component {
+  constructor(props) {
+    super(props);
+    console.log(this.props.game);
+  }
+  render() {
+    var mode = this.props.game.mode || this.props.game.style;
+    if (mode === 'rush') {
+      return <RushGamePage {...this.props}/>
+    } else if (mode === 'spades') {
+      return <SpadesGamePage {...this.props}/>
+    } else {
+      return "Unrecognized game mode: " + mode;
+    }
   }
 }
 
