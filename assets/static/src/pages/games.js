@@ -1097,7 +1097,7 @@ class CreateGameForm extends React.Component {
     }
 
     var additional_state = {
-      initialized: true
+      initialized: true,
     };
     var style = have_arg
                 ? new_style
@@ -1106,6 +1106,7 @@ class CreateGameForm extends React.Component {
                 );
     if (style === 'rush') {
       additional_state = {
+        initialized: true,
         num_players: have_game ? config.num_players : 4,
         num_tiles: have_game ? config.num_tiles : 75,
         tiles_per_player: have_game ? config.tiles_per_player : false,
@@ -1116,6 +1117,7 @@ class CreateGameForm extends React.Component {
       }
     } else if (style === 'spades') {
       additional_state = {
+        initialized: true,
         num_players: have_game ? config.num_players : 4,
         overtakes: have_game ? config.overtakes : true,
         overtake_limit: have_game ? config.overtake_limit : 10,
@@ -1135,6 +1137,21 @@ class CreateGameForm extends React.Component {
         trick_multipler: have_game ? config.trick_multipler : 10,
         perfect_round: have_game ? config.perfect_round : false,
         nil_score: have_game ? config.nil_score : 100,
+      };
+    } else if (style === 'three thirteen') {
+      additional_state = {
+        initialized: true,
+        num_players: have_game ? config.num_players : 4,
+        min_draw_size: have_game ? config.min_draw_size : 8,
+        add_jokers: have_game ? config.add_jokers : true,
+        allow_mostly_wild: have_game ? config.allow_mostly_wild : false,
+        allow_all_wild_cards: have_game ? config.allow_all_wild_cards : true,
+        same_suit_runs: have_game ? config.same_suit_runs : true,
+        laying_down_limit: have_game ? config.laying_down_limit : 0,
+        allow_big_gin: have_game ? config.allow_big_gin : false,
+        with_fourteenth_round: have_game ? config.with_fourteenth_round : false,
+        to_point_limit: have_game ? config.to_point_limit : -1,
+        golf_scoring: have_game ? config.golf_scoring : true,
       };
     } else {
       console.log("Unknown game style: " + style, game, this.state, this.props);
