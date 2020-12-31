@@ -625,6 +625,7 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 			return errors.New(ThreeThirteenGameOver)
 		}
 
+		tts.Dealer = (tts.Dealer + 1) % len(tts.Players)
 		tts.Dealt = false
 		tts.LaidDown = -1
 		return errors.New(ThreeThirteenNextRound)

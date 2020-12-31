@@ -51,7 +51,6 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 	ssn.Score = game.Players[player.Index].Score
 	ssn.Overtakes = game.Players[player.Index].Overtakes
 
-	// XXX Map these correctly
 	ssn.Turn, _ = data.ToUserID(game.Turn)
 	ssn.Leader, _ = data.ToUserID(game.Leader)
 	ssn.Dealer, _ = data.ToUserID(game.Dealer)
