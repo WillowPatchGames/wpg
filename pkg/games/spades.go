@@ -732,7 +732,7 @@ func (ss *SpadesState) determineRoundWinner() error {
 			// aces, cuz they have integer value 1, but beat 2 and above... :)
 			is_higher := this_card.Rank > winning_card.Rank
 			won_due_to_tie := this_card.Rank == winning_card.Rank && !ss.Config.FirstWins
-			is_ace := this_card.Rank == AceRank && !winning_card.Rank == AceRank
+			is_ace := this_card.Rank == AceRank && winning_card.Rank != AceRank
 			if is_higher || won_due_to_tie || is_ace {
 				winner_offset = offset
 				winning_card = this_card
@@ -752,6 +752,7 @@ func (ss *SpadesState) determineRoundWinner() error {
 				winner_offset = offset
 				winning_card = this_card
 			}
+		}
 	}
 
 	absolute_winner := (ss.Leader + winner_offset) % ss.Config.NumPlayers
@@ -779,7 +780,7 @@ func (ss *SpadesState) tabulateRoundScore() error {
 	// Update everyone's scores first.
 	for player := 0; player < max_count; player++ {
 		partner := (player + max_count) % ss.Config.NumPlayers
-		have_partner := partner != player
+		have_partner := partner != player && ss.Config.WithPartners
 
 		if !have_partner {
 			// Everyone for themselves!
@@ -795,8 +796,36 @@ func (ss *SpadesState) tabulateRoundScore() error {
 		}
 	}
 
-	// XXX: correctly handle end of round.
+	var winner_offset = -1
+	var winner_score = -1
+	for player := 0; player < max_count; player++ {
+		if ss.Players[player].Score >= ss.Config.WinAmount {
+			if ss.Players[player].Score >= winner_score {
+				winner_score = ss.Players[player].Score
+				winner_offset = player
+			}
+		}
+	}
+
+	// If we have a winner, exit the game.
+	if winner_offset != -1 {
+		ss.Finished = true
+		ss.Dealt = true
+		ss.Bid = true
+		return errors.New(SpadesGameOver)
+	}
+
+	// Otherwise, play another round. Set the dealer to the next over and start
+	// bidding and dealing again.
+	for player := 0; player < max_count; player++ {
+		ss.Players[player].Bid = NotBidSpades
+		ss.Players[player].Hand = make([]Card, 0)
+		ss.Players[player].Tricks = 0
+	}
+
 	ss.Dealer = (ss.Dealer + 1) % ss.Config.NumPlayers
+	ss.Dealt = false
+	ss.Bid = false
 	return errors.New(SpadesNextRound)
 }
 
