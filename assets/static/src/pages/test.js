@@ -1,48 +1,23 @@
 // Library imports
 import React from 'react';
 
-import {
-  Link,
-} from "react-router-dom";
-
-import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
-import '@rmwc/card/styles';
 import '@rmwc/checkbox/styles';
-import '@rmwc/dialog/styles';
-import '@rmwc/grid/styles';
-import '@rmwc/icon/styles';
-import '@rmwc/list/styles';
 import '@rmwc/select/styles';
-import '@rmwc/switch/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 
-import { Avatar, AvatarCount, AvatarGroup } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import { Checkbox } from '@rmwc/checkbox';
-import * as c from '@rmwc/card';
-import * as d from '@rmwc/dialog';
-import * as g from '@rmwc/grid';
-import { Icon } from '@rmwc/icon';
-import * as l from '@rmwc/list';
 import { Select } from '@rmwc/select';
-import { Switch } from '@rmwc/switch';
-import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
 
 // Application imports
 import '../App.css';
-import { UserModel, RoomModel, GameModel, normalizeCode, ws } from '../models.js';
-import { LoginForm } from './login.js';
-import { Game } from '../component.js';
-import { RushGame, RushData } from '../games/rush.js';
+import { ws } from '../models.js';
 import { WebSocketController } from '../games/common.js';
-import { UserCache, GameCache } from '../utils/cache.js';
-import { gravatarify } from '../utils/gravatar.js';
 
-var StringSchema = {
-};
+//var StringSchema = {};
 var NumberSchema = {
   "type": "number",
 };
@@ -135,6 +110,7 @@ class TestGamePage extends React.Component {
           break;
         case "state":
           color = "darkmagenta";
+          break;
         default:
           if (v.data.error) {
             color = "red"; message_info = v.data.error;
@@ -160,7 +136,7 @@ class TestGamePage extends React.Component {
     }
     if (!open) {
       var n = Number(this.state.compose);
-      var compose_valid = n === n ? "" : "Please enter a numeric game id";
+      var compose_valid = !isNaN(n) ? "" : "Please enter a numeric game id";
     } else {
       var is_json = this.state.compose !== "" && !/^\w+$/.test(this.state.compose);
       if (is_json) {
@@ -184,7 +160,7 @@ class TestGamePage extends React.Component {
       </details>
       <Select label="Game Mode" options={['rush','spades']} disabled={ open }
         value={ this.state.mode }
-        onChange={ e => {var v = e.target.value; this.setState(state => {state.compose = v; return state}) }} />
+        onChange={ e => {var v = e.target.value; this.setState(state => {state.mode = v; return state}) }} />
       <div key="body" style={{ display: "flex", justifyContent: "space-between" }}>
         <ol key="messages" style={{ margin: "0", flexGrow: 1, maxHeight: "70vh", overflow: "auto" }}>
           {this.state.messages.map((v,k) => <li key={k}><div style={{
@@ -214,7 +190,7 @@ class TestGamePage extends React.Component {
             value={ this.state.compose } invalid={ compose_valid !== "" }
             label={ compose_valid || (open ? "Message" : "Game ID") }
             onChange={ e => {var v = e.target.value; this.setState(state => {state.compose = v; return state}) }} />
-          <div class="fields" style={{ textAlign: "left" }}>
+          <div className="fields" style={{ textAlign: "left" }}>
             { this.schema.renders[this.state.compose] || [] }
           </div>
         </div>
@@ -225,7 +201,6 @@ class TestGamePage extends React.Component {
   open() {
     var id = +this.state.compose;
     var mode = this.state.mode;
-    console.log("OPEN", id, mode);
     var game = {
       user: this.props.user,
       id: +id,
@@ -252,7 +227,7 @@ class TestGamePage extends React.Component {
     } catch(e) {
       message = { message_type: message };
     }
-    message = Object.assign((this.schema.gets[this.state.compose] || (() => {}))(), message);
+    message = Object.assign((this.schema.gets[this.state.compose] || (() => ({})))(), message);
     this.state.wsController.send(message);
     this.setState(state => {
       state.messages.push({ sent: true, data: message });

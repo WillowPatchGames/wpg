@@ -292,8 +292,8 @@ class RushData {
   }
 
   letterPositions(bankFirst) {
-    var grids = this.grid.letterPositions().map(l => (l.pos.unshift("grid"), l));
-    var banks = this.bank.letterPositions().map(l => (l.pos.unshift("bank"), l));
+    var grids = this.grid.letterPositions().map(l => {l.pos.unshift("grid"); return l});
+    var banks = this.bank.letterPositions().map(l => {l.pos.unshift("bank"); return l});
     return [].concat(bankFirst ? banks : grids, bankFirst ? grids : banks);
   }
 
