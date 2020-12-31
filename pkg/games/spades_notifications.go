@@ -17,8 +17,9 @@ type SpadesGameState struct {
 	Leader uint64 `json:"leader"`
 	Dealer uint64 `json:"dealer"`
 
-	Played       []Card `json:"played"`
-	SpadesBroken bool   `json:"spades_broken"`
+	Played       []Card   `json:"played"`
+	SpadesBroken bool     `json:"spades_broken"`
+	History      [][]Card `json:"history"`
 
 	Config SpadesConfig `json:"config"`
 
@@ -64,6 +65,19 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 	ssn.Dealt = game.Dealt
 	ssn.Bidded = game.Bid
 	ssn.Finished = game.Finished
+
+	if game.Config.FullHistory {
+		ssn.History = game.PreviousTricks
+	} else {
+		if len(game.PreviousTricks) >= 1 {
+			last_trick := game.PreviousTricks[len(game.PreviousTricks)-1]
+			if len(last_trick) >= 1 {
+				last_card := last_trick[len(last_trick)-1]
+				ssn.History = make([][]Card, 1)
+				ssn.History[0] = append(ssn.History[0], last_card)
+			}
+		}
+	}
 }
 
 type SpadesPlayerSynopsis struct {

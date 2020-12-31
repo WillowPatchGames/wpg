@@ -917,6 +917,7 @@ class GameModel {
         'add_jokers': this.add_jokers,
         'first_wins': this.first_wins,
         'with_partners': this.with_partners,
+        'full_history': this.full_history,
         'with_nil': this.with_nil,
         'overtakes_nil': this.overtakes_nil,
         'blind_bidding': this.blind_bidding,

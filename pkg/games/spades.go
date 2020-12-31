@@ -74,6 +74,7 @@ type SpadesConfig struct {
 	AddJokers       bool `json:"add_jokers"`        // For three or six players: add jokers to round off the number of cards. Otherwise, one card will be left in the deck with three players, or the twos will be removed with six.
 	FirstWins       bool `json:"first_wins"`        // For six players: whether the first or the last card played wins in case of a tie in value.
 	WithPartners    bool `json:"with_partners"`     // For four or six players: whether to play with partners.
+	FullHistory     bool `json:"full_history"`      // Whether or not to allow peeking at past rounds.
 
 	// Nil
 	WithNil        bool `json:"with_nil"`         // Allow nil bids.
@@ -159,6 +160,14 @@ func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
 			cfg.WithPartners = with_partners
 		} else {
 			return errors.New("unable to parse value for with_partners as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["full_history"]; ok {
+		if full_history, ok := wire_value.(bool); ok {
+			cfg.FullHistory = full_history
+		} else {
+			return errors.New("unable to parse value for full_history as boolean: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
@@ -258,11 +267,11 @@ type SpadesState struct {
 	Leader int `json:"leader"`
 	Dealer int `json:"dealer"`
 
-	Deck         Deck           `json:"deck"`
-	Players      []SpadesPlayer `json:"players"` // Left of dealer is found by incrementing one.
-	Played       []Card         `json:"played"` // Currently played cards in this round.
-	SpadesBroken bool           `json:"spades_broken"` // Whether or not spades have been broken.
-	PreviousRounds [][]Card `json:"previous_rounds"` // Contents of previous rounds.
+	Deck           Deck           `json:"deck"`
+	Players        []SpadesPlayer `json:"players"`         // Left of dealer is found by incrementing one.
+	Played         []Card         `json:"played"`          // Currently played cards in this round.
+	SpadesBroken   bool           `json:"spades_broken"`   // Whether or not spades have been broken.
+	PreviousTricks [][]Card       `json:"previous_tricks"` // Contents of previous tricks.
 
 	Config SpadesConfig `json:"config"`
 
@@ -726,7 +735,7 @@ func (ss *SpadesState) determineRoundWinner() error {
 	ss.Players[absolute_winner].Tricks += 1
 	ss.Leader = absolute_winner
 	ss.Turn = absolute_winner
-	ss.PreviousRounds = append(ss.PreviousRounds, ss.Played)
+	ss.PreviousTricks = append(ss.PreviousTricks, ss.Played)
 	ss.Played = make([]Card, 0)
 
 	if len(ss.Players[0].Hand) == 0 {

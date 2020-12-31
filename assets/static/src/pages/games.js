@@ -900,6 +900,7 @@ class CreateGameForm extends React.Component {
         add_jokers: have_game ? config.add_jokers : false,
         first_wins: have_game ? config.first_wins : false,
         with_partners: have_game ? config.with_partners : true,
+        full_history: have_game ? config.full_history : false,
         with_nil: have_game ? config.with_nil : true,
         overtakes_nil: have_game ? config.overtakes_nil : true,
         blind_bidding: have_game ? config.blind_bidding : true,
@@ -952,6 +953,7 @@ class CreateGameForm extends React.Component {
       'add_jokers': this.state.add_jokers,
       'first_wins': this.state.first_wins,
       'with_partners': this.state.with_partners,
+      'full_history': this.state.full_history,
       'with_nil': this.state.with_nil,
       'overtakes_nil': this.state.overtakes_nil,
       'blind_bidding': this.state.blind_bidding,
@@ -1133,6 +1135,9 @@ class CreateGameForm extends React.Component {
         </l.ListItem>
         <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_partners") } disabled={ !this.state.editable }>
           <Switch label={ this.state.with_partners ? "Play With Partners (Four and Six Players Only)" : "Play Individually" } name="with_partners" checked={ this.state.with_partners } onChange={ () => this.toggle("with_partners", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("full_history") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.full_history ? "Allow Peeking at Previous Tricks" : "Only See Final Card in the Previous Trick" } name="full_history" checked={ this.state.full_history } onChange={ () => this.toggle("full_history", true) } disabled={ !this.state.editable } />
         </l.ListItem>
         <l.ListGroupSubheader>
           Nil Options
