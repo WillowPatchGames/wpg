@@ -245,6 +245,8 @@ class TestGamePage extends React.Component {
     this.setState(state => {
       state.messages.push({ sent: true, data: message });
       return state;
+    }, () => {
+      this.msgRef.current.scrollTo({top:this.msgRef.current.scrollHeight});
     });
   }
   receive(e) {
@@ -268,7 +270,7 @@ class TestGamePage extends React.Component {
       if (resp) state.messages.push({ sent: true, data: resp });
       return state;
     }, () => {
-      this.msgRef.current.scrollTo({top:this.msgRef.current.scrollHeight, behavior: 'smooth'});
+      this.msgRef.current.scrollTo({top:this.msgRef.current.scrollHeight});
     });
   }
 }
