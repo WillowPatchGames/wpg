@@ -3,6 +3,7 @@ package games
 import (
 	"errors"
 	"log"
+	"reflect"
 	"strconv"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
@@ -86,6 +87,70 @@ func (cfg RushConfig) Validate() error {
 		}
 
 		return GameConfigError{"number of tiles", tilesRepr, "must be enough for 1 to 100 rounds of drawing"}
+	}
+
+	return nil
+}
+
+func (cfg *RushConfig) LoadConfig(wire map[string]interface{}) error {
+	if wire_value, ok := wire["num_players"]; ok {
+		if num_players, ok := wire_value.(float64); ok {
+			cfg.NumPlayers = int(num_players)
+		} else {
+			return errors.New("unable to parse value for num_players as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["num_tiles"]; ok {
+		if num_tiles, ok := wire_value.(float64); ok {
+			cfg.NumTiles = int(num_tiles)
+		} else {
+			return errors.New("unable to parse value for num_tiles as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["tiles_per_player"]; ok {
+		if tiles_per_player, ok := wire_value.(bool); ok {
+			cfg.TilesPerPlayer = tiles_per_player
+		} else {
+			return errors.New("unable to parse value for tiles_per_player as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["start_size"]; ok {
+		if start_size, ok := wire_value.(float64); ok {
+			cfg.StartSize = int(start_size)
+		} else {
+			return errors.New("unable to parse value for start_size as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["draw_size"]; ok {
+		if draw_size, ok := wire_value.(float64); ok {
+			cfg.DrawSize = int(draw_size)
+		} else {
+			return errors.New("unable to parse value for draw_size as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["discard_penalty"]; ok {
+		if discard_penalty, ok := wire_value.(float64); ok {
+			cfg.DiscardPenalty = int(discard_penalty)
+		} else {
+			return errors.New("unable to parse value for discard_penalty as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["frequency"]; ok {
+		if frequency, ok := wire_value.(float64); ok {
+			if int(frequency) > int(StartFreqRange) && int(frequency) < int(EndFreqRange) {
+				cfg.Frequency = Frequency(int(frequency))
+			} else {
+				return errors.New("value for frequency is outside acceptable range: " + strconv.Itoa(int(frequency)) + " is not in (" + strconv.Itoa(int(StartFreqRange)) + ", " + strconv.Itoa(int(EndFreqRange)) + ")")
+			}
+		} else {
+			return errors.New("unable to parse value for frequency as integer: " + reflect.TypeOf(wire_value).String())
+		}
 	}
 
 	return nil

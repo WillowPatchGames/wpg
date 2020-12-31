@@ -3,6 +3,7 @@ package games
 import (
 	"errors"
 	"log"
+	"reflect"
 	"strconv"
 )
 
@@ -87,16 +88,166 @@ type SpadesConfig struct {
 	OvertakePenalty int  `json:"overtake_penalty"` // n in {50, 100, 150, 200}.
 	TrickMultipler  int  `json:"trick_multipler"`  // n in {5, 10}.
 	MoonOrBoston    bool `json:"perfect_round"`    // Score half of the win amount for a perfect round (taking all tricks tricks).
-	NilScore        int  `json:"nil_score"`        // n in {50, 100}.
+	NilScore        int  `json:"nil_score"`        // n in {50, 75. 100, 125, 150, 200}.
 }
 
 func (cfg SpadesConfig) Validate() error {
-	if cfg.NumPlayers <= 1 || cfg.NumPlayers >= 7 {
+	if cfg.NumPlayers < 2 || cfg.NumPlayers > 6 {
 		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 6"}
 	}
 
-	if cfg.WinAmount <= 49 || cfg.WinAmount >= 1001 {
+	if cfg.WinAmount < 50 || cfg.WinAmount > 1000 {
 		return GameConfigError{"winning score", strconv.Itoa(cfg.WinAmount), "between 50 and 1000"}
+	}
+
+	// XXX: Validate more configuration options.
+
+	return nil
+}
+
+func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
+	if wire_value, ok := wire["num_players"]; ok {
+		if num_players, ok := wire_value.(float64); ok {
+			cfg.NumPlayers = int(num_players)
+		} else {
+			return errors.New("unable to parse value for num_players as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["overtakes"]; ok {
+		if overtakes, ok := wire_value.(bool); ok {
+			cfg.Overtakes = overtakes
+		} else {
+			return errors.New("unable to parse value for overtakes as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["overtake_limit"]; ok {
+		if overtake_limit, ok := wire_value.(float64); ok {
+			cfg.OvertakeLimit = int(overtake_limit)
+		} else {
+			return errors.New("unable to parse value for overtake_limit as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["must_break_spades"]; ok {
+		if must_break_spades, ok := wire_value.(bool); ok {
+			cfg.MustBreakSpades = must_break_spades
+		} else {
+			return errors.New("unable to parse value for must_break_spades as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["add_jokers"]; ok {
+		if add_jokers, ok := wire_value.(bool); ok {
+			cfg.AddJokers = add_jokers
+		} else {
+			return errors.New("unable to parse value for add_jokers as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["first_wins"]; ok {
+		if first_wins, ok := wire_value.(bool); ok {
+			cfg.FirstWins = first_wins
+		} else {
+			return errors.New("unable to parse value for first_wins as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["with_partners"]; ok {
+		if with_partners, ok := wire_value.(bool); ok {
+			cfg.WithPartners = with_partners
+		} else {
+			return errors.New("unable to parse value for with_partners as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["with_nil"]; ok {
+		if with_nil, ok := wire_value.(bool); ok {
+			cfg.WithNil = with_nil
+		} else {
+			return errors.New("unable to parse value for with_nil as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["overtakes_nil"]; ok {
+		if overtakes_nil, ok := wire_value.(bool); ok {
+			cfg.OvertakesNil = overtakes_nil
+		} else {
+			return errors.New("unable to parse value for overtakes_nil as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["blind_bidding"]; ok {
+		if blind_bidding, ok := wire_value.(bool); ok {
+			cfg.BlindBidding = blind_bidding
+		} else {
+			return errors.New("unable to parse value for blind_bidding as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["with_double_nil"]; ok {
+		if with_double_nil, ok := wire_value.(bool); ok {
+			cfg.WithDoubleNil = with_double_nil
+		} else {
+			return errors.New("unable to parse value for with_double_nil as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["with_break_bonus"]; ok {
+		if with_break_bonus, ok := wire_value.(bool); ok {
+			cfg.WithBreakBonus = with_break_bonus
+		} else {
+			return errors.New("unable to parse value for with_break_bonus as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["with_triple_nil"]; ok {
+		if with_triple_nil, ok := wire_value.(bool); ok {
+			cfg.WithTripleNil = with_triple_nil
+		} else {
+			return errors.New("unable to parse value for with_triple_nil as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["win_amount"]; ok {
+		if win_amount, ok := wire_value.(float64); ok {
+			cfg.WinAmount = int(win_amount)
+		} else {
+			return errors.New("unable to parse value for win_amount as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["overtake_penalty"]; ok {
+		if overtake_penalty, ok := wire_value.(float64); ok {
+			cfg.OvertakePenalty = int(overtake_penalty)
+		} else {
+			return errors.New("unable to parse value for overtake_penalty as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["trick_multipler"]; ok {
+		if trick_multipler, ok := wire_value.(float64); ok {
+			cfg.TrickMultipler = int(trick_multipler)
+		} else {
+			return errors.New("unable to parse value for trick_multipler as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["perfect_round"]; ok {
+		if perfect_round, ok := wire_value.(bool); ok {
+			cfg.MoonOrBoston = perfect_round
+		} else {
+			return errors.New("unable to parse value for perfect_round as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["nil_score"]; ok {
+		if nil_score, ok := wire_value.(float64); ok {
+			cfg.NilScore = int(nil_score)
+		} else {
+			return errors.New("unable to parse value for nil_score as integer: " + reflect.TypeOf(wire_value).String())
+		}
 	}
 
 	return nil

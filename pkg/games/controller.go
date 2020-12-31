@@ -87,14 +87,14 @@ type GameData struct {
 }
 
 // Map a player identifier to Index.
-func (data *GameData) ToUserID(index int) (bool, uint64) {
+func (data *GameData) ToUserID(index int) (uint64, bool) {
 	for _, player := range data.ToPlayer {
 		if player.Index == index {
-			return true, player.UID
+			return player.UID, true
 		}
 	}
 
-	return false, 0
+	return 0, false
 }
 
 // Controller wraps game data and handles the parsing of messages from the
