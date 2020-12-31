@@ -246,7 +246,7 @@ class TestGamePage extends React.Component {
           message_type: "countback",
           value: data.value,
         };
-        state.message.push({ sent: true, data: resp });
+        state.messages.push({ sent: true, data: resp });
       }
       return state;
     });
