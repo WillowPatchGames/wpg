@@ -371,7 +371,6 @@ func (ss *SpadesState) StartRound() error {
 	// we begin.
 	ss.Dealt = false
 	ss.Bid = false
-	ss.Bid = false
 	ss.SpadesBroken = false
 
 	// Start with a clean deck and shuffle it.
@@ -478,7 +477,7 @@ func (ss *SpadesState) PeekTop(player int) error {
 	}
 
 	if len(ss.Deck.Cards) == 0 {
-		ss.Dealt = true
+		ss.Dealt = false
 		return errors.New("invalid state: no more cards to draw")
 	}
 
@@ -515,7 +514,7 @@ func (ss *SpadesState) DecideTop(player int, keep bool) error {
 	}
 
 	if len(ss.Deck.Cards) == 0 {
-		ss.Dealt = true
+		ss.Dealt = false
 		return errors.New("invalid state: no more cards to draw")
 	}
 

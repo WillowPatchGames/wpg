@@ -41,6 +41,14 @@ type Card struct {
 	Rank CardRank `json:"rank"`
 }
 
+func (c Card) Copy() *Card {
+	return &Card{
+		ID:   c.ID,
+		Suit: c.Suit,
+		Rank: c.Rank,
+	}
+}
+
 type Deck struct {
 	Cards []*Card `json:"cards"`
 }
