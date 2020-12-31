@@ -128,11 +128,10 @@ class TestGamePage extends React.Component {
             <summary style={{ textAlign, outline: "none" }}>
               <h4 style={{ textAlign, color, margin: "0", display: "inline" }}>{ v.data.message_type }{ message_info }</h4>
             </summary>
-            <pre style={{
+            <pre className="fit-content" style={{
                 textAlign: "left",
                 marginLeft: v.sent ? "auto" : "0",
                 marginRight: v.sent ? "0" : "auto",
-                width: "fit-content",
               }}>{JSON.stringify(v.data, null, 2)}</pre>
           </details>
         </>
@@ -166,19 +165,18 @@ class TestGamePage extends React.Component {
         value={ this.state.mode }
         onChange={ e => {var v = e.target.value; this.setState(state => {state.mode = v; return state}) }} />
       <div key="body" style={{ display: "flex", justifyContent: "space-between" }}>
-        <ol key="messages" ref={ this.msgRef } style={{ margin: "0", flexGrow: 1, maxHeight: "70vh", overflow: "auto" }}>
+        <ol key="messages" ref={ this.msgRef } className="fit-content" style={{ margin: "0", flexGrow: 1, maxHeight: "70vh", overflow: "auto" }}>
           {this.state.messages.map((v,k) => <li key={k}><div style={{
             backgroundColor: "lightblue",
             borderRadius: "10px",
             padding: "6px",
             margin: "12px 2px",
-            width: "fit-content",
             marginLeft: v.sent ? "auto" : "2px",
             marginRight: v.sent ? "2px" : "auto",
           }}>{ message(v) }</div></li>)}
         </ol>
-        <div key="synopsis" style={{
-            width: "fit-content", maxWidth: "30%",
+        <div key="synopsis" className="fit-content" style={{
+            maxWidth: "30%",
             maxHeight: "70vh", overflow: "auto",
             padding: "5px", flexGrow: 0,
             display: "flex", flexDirection: "column-reverse",
@@ -253,7 +251,7 @@ class TestGamePage extends React.Component {
     var data = JSON.parse(e.data);
     var resp = undefined;
     if (data.message_type === "countdown") {
-      var resp = {
+      resp = {
         message_type: "countback",
         value: data.value,
       };
