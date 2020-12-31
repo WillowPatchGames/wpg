@@ -41,6 +41,10 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		var state *SpadesState = game.State.(*SpadesState)
 		started = state.Started
 		// finished = state.Finished
+	} else if game.Mode == ThreeThirteenGame {
+		var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
+		started = state.Started
+		// finished = state.Finished
 	} else {
 		panic("Unknown game mode: " + game.Mode.String())
 	}
@@ -148,6 +152,8 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		return c.dispatchRush(message, header, game, player)
 	} else if game.Mode == SpadesGame {
 		return c.dispatchSpades(message, header, game, player)
+		} else if game.Mode == ThreeThirteenGame {
+			return c.dispatchThreeThirteen(message, header, game, player)
 	} else {
 		panic("Valid but unsupported game mode: " + game.Mode.String())
 	}
@@ -183,6 +189,11 @@ func (c *Controller) handleCountdown(game *GameData) error {
 			var state *SpadesState = game.State.(*SpadesState)
 			if !state.Started {
 				return c.doSpadesStart(game, state)
+			}
+		} else if game.Mode == ThreeThirteenGame {
+			var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
+			if !state.Started {
+				return c.doThreeThirteenStart(game, state)
 			}
 		} else {
 			panic("Unknown game mode: " + game.Mode.String())

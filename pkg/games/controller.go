@@ -143,6 +143,8 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		data.State = new(RushState)
 	} else if mode == SpadesGame {
 		data.State = new(SpadesState)
+	} else if mode == ThreeThirteenGame {
+		data.State = new(ThreeThirteenState)
 	} else {
 		panic("Valid but unsupported game mode: " + gamedb.Style)
 	}
@@ -174,6 +176,12 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 				return err
 			}
 			config = &spades_config
+		} else if mode == ThreeThirteenGame {
+			var threethirteen_config ThreeThirteenConfig
+			if err := json.Unmarshal([]byte(gamedb.Config.String), &threethirteen_config); err != nil {
+				return err
+			}
+			config = &threethirteen_config
 		} else {
 			panic("Valid but unsupported game mode: " + gamedb.Style)
 		}
@@ -202,6 +210,13 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		}
 	} else if mode == SpadesGame {
 		var state *SpadesState = c.ToGame[gamedb.ID].State.(*SpadesState)
+		if state != nil {
+			if err := state.ReInit(); err != nil {
+				return err
+			}
+		}
+	} else if mode == ThreeThirteenGame {
+		var state *ThreeThirteenState = c.ToGame[gamedb.ID].State.(*ThreeThirteenState)
 		if state != nil {
 			if err := state.ReInit(); err != nil {
 				return err
@@ -247,6 +262,15 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 		var state *SpadesState = new(SpadesState)
 
 		if err := state.Init(*spadesConfig); err != nil {
+			return err
+		}
+
+		game.State = state
+	} else if mode == ThreeThirteenGame {
+		var threethirteenConfig *ThreeThirteenConfig = config.(*ThreeThirteenConfig)
+		var state *ThreeThirteenState = new(ThreeThirteenState)
+
+		if err := state.Init(*threethirteenConfig); err != nil {
 			return err
 		}
 
@@ -307,6 +331,18 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 
 			started = state.Started
 			finished = state.Finished
+		} else if game.Mode == ThreeThirteenGame {
+			var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
+			var config = state.Config
+
+			encoded, err = json.Marshal(config)
+			if err != nil {
+				c.lock.Unlock()
+				return err
+			}
+
+			started = state.Started
+			finished = state.Finished
 		} else {
 			panic("Unknown game mode: " + game.Mode.String())
 		}
@@ -326,6 +362,10 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 				state.Finished = false
 			} else if game.Mode == SpadesGame {
 				var state *SpadesState = game.State.(*SpadesState)
+				state.Started = false
+				state.Finished = false
+			} else if game.Mode == ThreeThirteenGame {
+				var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
 				state.Started = false
 				state.Finished = false
 			} else {

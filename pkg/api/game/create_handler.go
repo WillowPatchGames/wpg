@@ -94,6 +94,18 @@ func (handle *CreateHandler) verifyRequest() error {
 			}
 
 			handle.parsedConfig = &spadesConfig
+		} else if handle.req.Style == "three thirteen" {
+			var threethirteenConfig games.ThreeThirteenConfig
+			if err := threethirteenConfig.LoadConfig(handle.req.Config); err != nil {
+				return err
+			}
+
+			err := threethirteenConfig.Validate()
+			if err != nil {
+				return err
+			}
+
+			handle.parsedConfig = &threethirteenConfig
 		} else {
 			panic("Unknown game mode: " + handle.req.Style)
 		}
