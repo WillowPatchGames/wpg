@@ -262,7 +262,7 @@ class SpadesGame {
     ];
 
     // Shrink to possible bids from the above.
-    result = result.slice(0, this.data.hand.cards.length - 1);
+    result = result.slice(0, this.data.hand.cards.length);
 
     if (this.data.config.with_nil) {
       result.push(

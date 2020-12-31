@@ -287,7 +287,7 @@ class SpadesGameSynopsis extends React.Component {
 
     var tabulate = columns => data => {
       if (!data) return [null];
-      var rows = [[]];
+      var rows = [];
       for (let dat of data) {
         rows.push([]);
         for (let k in columns) {
@@ -296,7 +296,7 @@ class SpadesGameSynopsis extends React.Component {
           rows[rows.length-1].push(<td key={ k }>{ printer(dat[k]) }</td>)
         }
       }
-      return rows.map((row,i) => <tr key={ i }>{row}</tr>);
+      return rows.map((row, i) => <tr key={ data[i].user.id }>{row}</tr>);
     };
 
     var headings = [];
@@ -1079,6 +1079,7 @@ class CreateGameForm extends React.Component {
       mode: have_game ? game.style : null,
       open: have_game ? game.open : true,
       spectators: have_game && game.spectator !== undefined ? game.spectator : true,
+      initialized: false,
     }
 
     Object.assign(this.state, this.createGameConfig());
@@ -1095,7 +1096,9 @@ class CreateGameForm extends React.Component {
       return null;
     }
 
-    var additional_state = null;
+    var additional_state = {
+      initialized: true
+    };
     var style = have_arg
                 ? new_style
                 : (
@@ -1138,7 +1141,9 @@ class CreateGameForm extends React.Component {
     }
 
     if (additional_state !== null) {
-      this.setState(state => Object.assign({}, state, additional_state));
+      if (this.state.initialized) {
+        this.setState(state => Object.assign({}, state, additional_state));
+      }
       return additional_state;
     }
 
