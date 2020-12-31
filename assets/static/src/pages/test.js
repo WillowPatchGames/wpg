@@ -247,6 +247,7 @@ class TestGamePage extends React.Component {
           value: data.value,
         };
         state.messages.push({ sent: true, data: resp });
+        this.state.wsController.send(resp);
       }
       return state;
     });
