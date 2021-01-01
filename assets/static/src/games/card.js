@@ -308,6 +308,8 @@ class CardImage extends React.Component {
       name = this.props.rank + "_" + joker_suit;
       x = (joker_suit === "red" ? 1 : 0) * -card_dim[0];
       y = 4 * -card_dim[1];
+    } else if (this.props.rank === "blank") {
+      name = "rect9340";
     } else {
       name = "back";
       x = 2 * -card_dim[0];

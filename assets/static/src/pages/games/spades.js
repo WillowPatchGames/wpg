@@ -29,6 +29,7 @@ class SpadesGameComponent extends React.Component {
     this.state.bid_select = new Set();
     this.state.bid = null;
     this.state.bid_suggesting = true;
+    this.state.last_hand = null;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -72,6 +73,26 @@ class SpadesGameComponent extends React.Component {
             state.bid_select.delete(card.id);
           else
             state.bid_select.add(card.id);
+          return state;
+        });
+      },
+    });
+  }
+  captureHandAnd(then) {
+    return (...arg) => {
+      this.setState(state => Object.assign(state, {
+        last_hand: this.state.game.interface.data.hand?.cards.map(card => card.id),
+      }));
+      return then && then(...arg);
+    };
+  }
+  showing_new(card) {
+    if (!this.state.last_hand) return;
+    return Object.assign(card, {
+      selected: !this.state.last_hand.includes(card.id),
+      onClick: () => {
+        this.setState(state => {
+          state.last_hand = null;
           return state;
         });
       },
@@ -121,9 +142,9 @@ class SpadesGameComponent extends React.Component {
                   { this.state.game.interface.data.drawn?.toImage() }
                   <CardImage/>
                   <br />
-                  <Button label="Keep" unelevated ripple={false} onClick={() => this.state.game.interface.decide(true)} />
+                  <Button label="Keep" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(true))} />
                   &nbsp;&nbsp;
-                  <Button label="Take from deck" unelevated ripple={false} onClick={() => this.state.game.interface.decide(false)} />
+                  <Button label="Take from deck" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(false))} />
                 </div>
               </c.Card>
             </div>
@@ -150,7 +171,7 @@ class SpadesGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Hand</h3>
-                { this.state.game.interface.data.hand?.toImage(handProps) }
+                { this.state.game.interface.data.hand?.toImage(this.showing_new.bind(this), handProps) }
               </div>
             </c.Card>
           </div>
