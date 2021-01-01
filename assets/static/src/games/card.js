@@ -277,11 +277,13 @@ class CardImage extends React.Component {
     if (ranks[this.props.rank] !== undefined && suits[this.props.suit] !== undefined) {
       x = ranks[this.props.rank] * -card_dim[0];
       y = suits[this.props.suit] * -card_dim[1];
-    } else if (this.props.rank === "joker" && ["black","red","none","fancy"].includes(this.props.suit)) {
-      name = this.props.rank + "_" + this.props.suit;
-      x = (["red","fancy"].includes(this.props.suit) ? 1 : 0) * -card_dim[0];
+    } else if (this.props.rank === "joker" && ["black","red","none","fancy", null].includes(this.props.suit)) {
+      var joker_suit = ["red","fancy"].includes(this.props.suit) ? "red" : "black";
+      name = this.props.rank + "_" + joker_suit;
+      x = (joker_suit === "red" ? 1 : 0) * -card_dim[0];
       y = 4 * -card_dim[1];
     } else {
+      console.log(this.props.rank, this.props.suit);
       name = "back";
       x = 2 * -card_dim[0];
       y = 4 * -card_dim[1];
