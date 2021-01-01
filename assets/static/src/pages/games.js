@@ -327,8 +327,6 @@ class SpadesGameSynopsis extends React.Component {
       if (remaining) {
         player_rows.push(...tabulate(synopsis_columns)(remaining));
       }
-
-      console.log("synopsis -> render", our_player, remaining, player_rows);
     }
 
     var player_view = null;
@@ -698,9 +696,9 @@ class PreGameUserPage extends React.Component {
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
         if (data.playing) {
-          this.props.setPage('playing');
+          this.props.setPage('playing', true);
         } else {
-          this.props.setPage('afterparty');
+          this.props.setPage('afterparty', true);
         }
       },
       "countdown": data => {
@@ -895,9 +893,9 @@ class PreGameAdminPage extends React.Component {
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
         if (data.playing) {
-          this.props.setPage('playing');
+          this.props.setPage('playing', true);
         } else {
-          this.props.setPage('afterparty');
+          this.props.setPage('afterparty', true);
         }
       },
       "countdown": data => {
@@ -964,7 +962,7 @@ class PreGameAdminPage extends React.Component {
       return;
     }
 
-    this.props.setPage('playing');
+    this.props.setPage('playing', true);
   }
   render() {
     let invite = null;

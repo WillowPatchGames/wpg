@@ -171,12 +171,15 @@ class SpadesGameComponent extends React.Component {
         </div>;
       }
     } else {
+      var already_played = +this.state.game.interface.data.played.cards.length;
+      var num_players = +this.state.game.interface.data.config.num_players;
       if (this.state.game.interface.my_turn()) {
+        var leading = !already_played || already_played >= num_players;
         return <div>
           <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                {status(this.state.game.interface.data.played.cards.length ? "Already played" : "You lead")}
+                {status(leading ? (already_played ? "You took it, lead the next trick!" : "You lead off!") : already_played === 1 ? "This card was led" : "These cards have been played")}
                 { this.state.game.interface.data.played?.toImage() }
                 {big_status("Your turn to play")}
                 {status("Choose a card")}
@@ -200,7 +203,7 @@ class SpadesGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.played?.toImage() }
-                {status("Waiting for other player to play …")}
+                {status("Waiting for the other player" + (num_players < 3 ? "" : "s") + " to play …")}
               </div>
             </c.Card>
           </div>
