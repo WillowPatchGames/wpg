@@ -15,6 +15,7 @@ import (
 type ThreeThirteenDiscardMsg struct {
 	MessageHeader
 	CardID int `json:"card_id"`
+	LayingDown bool `json:"laying_down"`
 }
 
 type ThreeThirteenScoreMsg struct {
@@ -122,16 +123,11 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 			return err
 		}
 
-		err = state.DiscardCard(player.Index, data.CardID)
-		send_synopsis = err == nil
-		send_state = true
-	case "laydown":
-		var data ThreeThirteenDiscardMsg
-		if err = json.Unmarshal(message, &data); err != nil {
-			return err
+		if !data.LayingDown {
+			err = state.DiscardCard(player.Index, data.CardID)
+		} else {
+			err = state.LayDown(player.Index, data.CardID)
 		}
-
-		err = state.LayDown(player.Index, data.CardID)
 		send_synopsis = err == nil
 		send_state = true
 	case "score":

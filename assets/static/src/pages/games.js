@@ -36,9 +36,10 @@ import '../App.css';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { LoginForm } from './login.js';
 import { Game } from '../component.js';
+import { RushGame, RushData } from '../games/rush.js';
 import { SpadesGame } from '../games/spades.js';
 import { SpadesGameComponent } from './games/spades.js';
-import { RushGame, RushData } from '../games/rush.js';
+import { ThreeThirteenGame } from '../games/threethirteen.js';
 import { UserCache, GameCache } from '../utils/cache.js';
 import { gravatarify } from '../utils/gravatar.js';
 import { Lazy } from '../utils/lazy.js';
@@ -53,6 +54,10 @@ function loadGame(game) {
       game.interface = new RushGame(game);
     } else if (mode === "spades") {
       game.interface = new SpadesGame(game);
+    } else if (mode === "three thirteen") {
+      game.interface = new ThreeThirteenGame(game);
+    } else {
+      console.log("Unknown game mode:", mode);
     }
   }
 
@@ -1237,8 +1242,7 @@ class CreateGameForm extends React.Component {
     game.mode = this.state.mode;
     game.open = this.state.open;
     game.spectators = this.state.spectators;
-    console.log(this.state);
-    Object.assign(game, this.toObject());
+    game.config = this.toObject();
 
     if (this.props.room !== null) {
       game.room = this.props.room;
@@ -1486,6 +1490,50 @@ class CreateGameForm extends React.Component {
     );
   }
 
+  renderThreeThirteen() {
+    return (
+      <>
+        <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Minimum Extra Cards (Per Player)" name="min_draw_size" value={ this.state.min_draw_size } onChange={ this.inputHandler("min_draw_size") } min="8" max="20" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("add_jokers") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.add_jokers ? "Add Jokers as Permanent Wild Cards" : "Leave Jokers Out" } name="add_jokers" checked={ this.state.add_jokers } onChange={ () => this.toggle("add_jokers", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>Set (Grouping) Options</l.ListGroupSubheader>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("allow_mostly_wild") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.allow_mostly_wild ? "Allow Sets with More Wild Cards" : "Require Fewer or Equal Wild Cards in a Set" } name="allow_mostly_wild" checked={ this.state.allow_mostly_wild } onChange={ () => this.toggle("allow_mostly_wild", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("allow_all_wild_cards") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.allow_all_wild_cards ? "Allow Sets with Only Wild Cards" : "Require at Least One Non-Wild Card in a Set" } name="allow_all_wild_cards" checked={ this.state.allow_all_wild_cards } onChange={ () => this.toggle("allow_all_wild_cards", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("same_suit_runs") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.same_suit_runs ? "Require Runs to be of the Same Suit" : "Allow Mixed-Suit Runs" } name="same_suit_runs" checked={ this.state.same_suit_runs } onChange={ () => this.toggle("same_suit_runs", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>Laying Down Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Laying Down Limit" name="laying_down_limit" value={ this.state.laying_down_limit } onChange={ this.inputHandler("laying_down_limit") } min="0" max="20" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("allow_big_gin") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.allow_big_gin ? "Allow Laying Down Without Discarding" : "Always Discard Before Going Out" } name="allow_big_gin" checked={ this.state.allow_big_gin } onChange={ () => this.toggle("allow_big_gin", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_fourteenth_round") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.with_fourteenth_round ? "Play an Extra Round with No Extra Wild Cards" : "Stick to Thirteen Rounds (Kings Wild)" } name="with_fourteenth_round" checked={ this.state.with_fourteenth_round } onChange={ () => this.toggle("with_fourteenth_round", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Early End Score" name="num_players" value={ this.state.to_point_limit } onChange={ this.inputHandler("to_point_limit") } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("golf_scoring") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.golf_scoring ? "Count Points Against Yourself" : "Give Points to Player Laying Down" } name="golf_scoring" checked={ this.state.golf_scoring } onChange={ () => this.toggle("golf_scoring", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+      </>
+    );
+  }
+
   render() {
     var messages = {
       'rush': "In Rush, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!",
@@ -1497,6 +1545,8 @@ class CreateGameForm extends React.Component {
       config = this.renderRush();
     } else if (this.state.mode === 'spades') {
       config = this.renderSpades();
+    } else if (this.state.mode === 'three thirteen') {
+      config = this.renderThreeThirteen();
     } else if (this.state.mode !== null) {
       console.log("Unknown game mode: " + this.state.mode, this.state);
     }
@@ -1528,6 +1578,10 @@ class CreateGameForm extends React.Component {
                     {
                       label: 'Spades (Card Game)',
                       value: 'spades',
+                    },
+                    {
+                      label: 'Three Thirteen (Card Game)',
+                      value: 'three thirteen',
                     },
                   ]
                 } />

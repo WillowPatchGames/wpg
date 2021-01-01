@@ -36,7 +36,7 @@ func (ttp *ThreeThirteenPlayer) FindCard(cardID int) (int, bool) {
 }
 
 type ThreeThirteenConfig struct {
-	NumPlayers int `json:"num_players"` // 2 <= n <= 15; best with four-ish.
+	NumPlayers int `json:"num_players"` // 1 <= n <= 15; best with four-ish.
 
 	MinDrawSize int  `json:"min_draw_size"` // 8 <= n <= 20; minimum card count overhead per player -- used when calculating number of decks to use. Best with 7ish.
 	AddJokers   bool `json:"add_jokers"`    // Add jokers as a permanent wild cards, two per deck used.
@@ -54,8 +54,8 @@ type ThreeThirteenConfig struct {
 }
 
 func (cfg ThreeThirteenConfig) Validate() error {
-	if cfg.NumPlayers < 2 || cfg.NumPlayers > 15 {
-		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 6"}
+	if cfg.NumPlayers < 1 || cfg.NumPlayers > 15 {
+		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 1 and 6"}
 	}
 
 	if cfg.MinDrawSize < 8 || cfg.MinDrawSize > 20 {

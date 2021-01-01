@@ -88,7 +88,7 @@ class SpadesController {
 // and unless there's a network glitch (in which case server wins anyways),
 // the data always aligns after the message is confirmed by the server.
 class SpadesData {
-  constructor(game, hand, drawn, peeked, bid, tricks, score, overtakes, turn, leader, played, spades_broken, config) {
+  constructor(game, hand, drawn, peeked, bid, tricks, score, overtakes, turn, leader, dealer, played, spades_broken, config) {
     this.game = game;
 
     this.hand = hand;
@@ -103,6 +103,8 @@ class SpadesData {
 
     this.turn = turn;
     this.leader = leader;
+    this.dealer = dealer;
+
     this.played = played;
     this.spades_broken = spades_broken;
 
@@ -154,6 +156,7 @@ class SpadesGame {
     this.data.overtakes = message?.overtakes;
     this.data.turn = message?.turn;
     this.data.leader = message?.leader;
+    this.data.dealer = message?.dealer;
     this.data.played = message?.played ? CardHand.deserialize(message.played) : null;
     this.data.spades_broken = message?.spades_broken;
     this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
