@@ -281,7 +281,7 @@ class SpadesGameSynopsis extends React.Component {
       },
       "bid":{
         name: "Bid",
-        printer: a => a == 0 ? "–" : a >= 19 ? SpadesGame.bid_names[a] : ""+a,
+        printer: a => a === 0 ? "–" : a >= 19 ? SpadesGame.bid_names[a] : ""+a,
       },
       "tricks":"Tricks",
       "score":"Score",
@@ -1162,6 +1162,8 @@ class CreateGameForm extends React.Component {
       return this.rushToObject();
     } else if (this.state.mode === 'spades') {
       return this.spadesToObject();
+    } else if (this.state.mode === 'three thirteen') {
+      return this.threethirteenToObject();
     } else {
       console.log("Unknown game style: " + this.state.mode, this.state);
     }
@@ -1200,6 +1202,22 @@ class CreateGameForm extends React.Component {
       'trick_multipler': +this.state.trick_multipler,
       'perfect_round': this.state.perfect_round,
       'nil_score': +this.state.nil_score,
+    };
+  }
+
+  threethirteenToObject() {
+    return {
+      'num_players': +this.state.num_players,
+      'min_draw_size': +this.state.min_draw_size,
+      'add_jokers': this.state.add_jokers,
+      'allow_mostly_wild': this.state.allow_mostly_wild,
+      'allow_all_wild_cards': this.state.allow_all_wild_cards,
+      'same_suit_runs': this.state.same_suit_runs,
+      'laying_down_limit': +this.state.laying_down_limit,
+      'allow_big_gin': this.state.allow_big_gin,
+      'with_fourteenth_round': this.state.with_fourteenth_round,
+      'to_point_limit': +this.state.to_point_limit,
+      'golf_scoring': this.state.golf_scoring,
     };
   }
 
