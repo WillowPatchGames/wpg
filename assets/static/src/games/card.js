@@ -362,7 +362,6 @@ class CardHand {
         tr += "rotate(" + (j * 10) + "deg) ";
       }
       if (card.selected) tr += "translateY(-" + select_dist + "px) ";
-      console.log(tr);
       if (!tr) return "translate(0,0)"; // push a transform to avoid z-index issues
       return tr;
     };
