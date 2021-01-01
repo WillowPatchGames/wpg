@@ -70,6 +70,7 @@ class SpadesGameComponent extends React.Component {
             <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                  <h3>Hand</h3>
                   { this.state.game.interface.data.hand?.toImage() }
                 </div>
               </c.Card>
@@ -91,6 +92,7 @@ class SpadesGameComponent extends React.Component {
             <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                  <h3>Hand</h3>
                   { this.state.game.interface.data.hand?.toImage() }
                 </div>
               </c.Card>
@@ -109,6 +111,7 @@ class SpadesGameComponent extends React.Component {
           <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Hand</h3>
                 { this.state.game.interface.data.hand?.toImage() }
               </div>
             </c.Card>
@@ -140,6 +143,7 @@ class SpadesGameComponent extends React.Component {
             ? <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
                 <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                   <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                    <h3>Hand</h3>
                     { this.state.game.interface.data.hand?.toImage() }
                   </div>
                 </c.Card>
@@ -159,6 +163,7 @@ class SpadesGameComponent extends React.Component {
           <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Hand</h3>
                 { this.state.game.interface.data.hand?.toImage() }
               </div>
             </c.Card>
@@ -183,6 +188,7 @@ class SpadesGameComponent extends React.Component {
           <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Hand</h3>
                 { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this)) }
               </div>
             </c.Card>
@@ -201,6 +207,7 @@ class SpadesGameComponent extends React.Component {
           <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Hand</h3>
                 { this.state.game.interface.data.hand?.toImage() }
               </div>
             </c.Card>

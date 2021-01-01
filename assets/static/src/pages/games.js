@@ -280,7 +280,7 @@ class SpadesGameSynopsis extends React.Component {
         printer: a => a ? "•" : "",
       },
       "bid":"Bid",
-      "tricks":"Tricks taken",
+      "tricks":"Tricks",
       "score":"Score",
       "overtakes":"Overtakes",
     };
