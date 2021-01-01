@@ -261,7 +261,7 @@ class SpadesGame {
       result.push("triple nil");
     }
 
-    return result;
+    return result.map(labellify);
   }
 
   my_turn() {
