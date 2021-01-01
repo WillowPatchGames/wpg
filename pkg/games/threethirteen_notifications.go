@@ -14,6 +14,9 @@ type ThreeThirteenGameState struct {
 	Turn   uint64 `json:"turn"`
 	Dealer uint64 `json:"dealer"`
 
+	LaidDown   bool   `json:"laid_down"`
+	LaidDownID uint64 `json:"laid_down_id,omitempty"`
+
 	Discard []Card `json:"discard"`
 	Round   int    `json:"round"`
 
@@ -21,7 +24,6 @@ type ThreeThirteenGameState struct {
 
 	Started  bool `json:"started"`
 	Dealt    bool `json:"dealt"`
-	LaidDown int  `json:"laid_down"`
 	Finished bool `json:"finished"`
 }
 
@@ -46,17 +48,24 @@ func (ttsn *ThreeThirteenStateNotification) LoadData(data *GameData, game *Three
 
 	ttsn.Turn, _ = data.ToUserID(game.Turn)
 	ttsn.Dealer, _ = data.ToUserID(game.Dealer)
+	ttsn.LaidDown = game.LaidDown != -1
+	if ttsn.LaidDown {
+		ttsn.LaidDownID, _ = data.ToUserID(game.LaidDown)
+	}
 
 	if len(game.Discard) >= 2 {
 		ttsn.Discard = append(ttsn.Discard, *game.Discard[len(game.Discard)-2])
 	}
-	ttsn.Discard = append(ttsn.Discard, *game.Discard[len(game.Discard)-1])
+	if len(game.Discard) >= 1 {
+		ttsn.Discard = append(ttsn.Discard, *game.Discard[len(game.Discard)-1])
+	}
+
+	ttsn.Round = game.Round
 
 	ttsn.Config = game.Config
 
 	ttsn.Started = game.Started
 	ttsn.Dealt = game.Dealt
-	ttsn.LaidDown = game.LaidDown
 	ttsn.Finished = game.Finished
 }
 

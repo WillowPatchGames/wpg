@@ -1,5 +1,9 @@
 package games
 
+import (
+	"strconv"
+)
+
 type CardSuit int
 
 const (
@@ -47,6 +51,10 @@ func (c Card) Copy() *Card {
 		Suit: c.Suit,
 		Rank: c.Rank,
 	}
+}
+
+func (c Card) String() string {
+	return "{id:" + strconv.Itoa(c.ID) + " suit:" + strconv.Itoa(int(c.Suit)) + " rank:" + strconv.Itoa(int(c.Rank)) + " }"
 }
 
 type Deck struct {

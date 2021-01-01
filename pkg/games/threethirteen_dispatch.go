@@ -8,13 +8,18 @@ import (
 // ThreeThirteen message types:
 //
 // 1. Deal
-// 2. TakeTop/TakeDiscard
-// 3. Discard/LayDown
+// 2. Take
+// 3. Discard
 // 4. Score
+
+type ThreeThirteenTakeMsg struct {
+	MessageHeader
+	FromDiscard bool `json:"from_discard"`
+}
 
 type ThreeThirteenDiscardMsg struct {
 	MessageHeader
-	CardID int `json:"card_id"`
+	CardID     int  `json:"card_id"`
 	LayingDown bool `json:"laying_down"`
 }
 
@@ -103,31 +108,27 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 			send_synopsis = true
 			send_state = true
 		}
-	case "take-discard":
-		err = state.TakeDiscard(player.Index)
+	case "take":
+		var data ThreeThirteenTakeMsg
+		if err = json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		err = state.TakeCard(player.Index, data.FromDiscard)
 		send_synopsis = err == nil
 
-		var response ThreeThirteenStateNotification
-		response.LoadData(game, state, player)
-		c.undispatch(game, player, response.MessageID, header.MessageID, response)
-	case "take-top":
-		err = state.TakeTop(player.Index)
-		send_synopsis = err == nil
-
-		var response ThreeThirteenStateNotification
-		response.LoadData(game, state, player)
-		c.undispatch(game, player, response.MessageID, header.MessageID, response)
+		if player.Playing && player.Index >= 0 {
+			var response ThreeThirteenStateNotification
+			response.LoadData(game, state, player)
+			c.undispatch(game, player, response.MessageID, header.MessageID, response)
+		}
 	case "discard":
 		var data ThreeThirteenDiscardMsg
 		if err = json.Unmarshal(message, &data); err != nil {
 			return err
 		}
 
-		if !data.LayingDown {
-			err = state.DiscardCard(player.Index, data.CardID)
-		} else {
-			err = state.LayDown(player.Index, data.CardID)
-		}
+		err = state.DiscardCard(player.Index, data.CardID, data.LayingDown)
 		send_synopsis = err == nil
 		send_state = true
 	case "score":

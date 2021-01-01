@@ -327,7 +327,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 	return nil
 }
 
-func (tts *ThreeThirteenState) TakeDiscard(player int) error {
+func (tts *ThreeThirteenState) TakeCard(player int, FromDiscard bool) error {
 	if !tts.Started {
 		return errors.New("game hasn't started yet")
 	}
@@ -356,54 +356,27 @@ func (tts *ThreeThirteenState) TakeDiscard(player int) error {
 		return errors.New("unable to take discard after already having taken card")
 	}
 
-	tts.Players[player].Drawn = tts.Discard[len(tts.Discard)-1]
-	tts.Discard = tts.Discard[:len(tts.Discard)-1]
-	tts.Players[player].PickedUpDiscard = true
+	if FromDiscard {
+		if len(tts.Discard) == 0 {
+			return errors.New("unable to draw with no more cards remaining")
+		}
+
+		tts.Players[player].Drawn = tts.Discard[len(tts.Discard)-1]
+		tts.Discard = tts.Discard[:len(tts.Discard)-1]
+	} else {
+		if len(tts.Deck.Cards) == 0 {
+			return errors.New("unable to draw with no more cards remaining")
+		}
+
+		tts.Players[player].Drawn = tts.Deck.Cards[0]
+		tts.Deck.Cards = tts.Deck.Cards[1:]
+	}
+	tts.Players[player].PickedUpDiscard = FromDiscard
 
 	return nil
 }
 
-func (tts *ThreeThirteenState) TakeTop(player int) error {
-	if !tts.Started {
-		return errors.New("game hasn't started yet")
-	}
-
-	if tts.Finished {
-		return errors.New("game has already finished")
-	}
-
-	if player < 0 || player >= len(tts.Players) {
-		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
-	}
-
-	if !tts.Dealt {
-		return errors.New("unable to take top card before dealing cards")
-	}
-
-	if tts.LaidDown != -1 {
-		return errors.New("unable to take top card after someone has gone out")
-	}
-
-	if tts.Turn != player {
-		return errors.New("unable to play out of turn")
-	}
-
-	if tts.Players[player].Drawn != nil {
-		return errors.New("unable to take top card after already having taken card")
-	}
-
-	if len(tts.Deck.Cards) == 0 {
-		return errors.New("unable to draw with no more cards remaining")
-	}
-
-	tts.Players[player].Drawn = tts.Deck.Cards[0]
-	tts.Deck.Cards = tts.Deck.Cards[1:]
-	tts.Players[player].PickedUpDiscard = false
-
-	return nil
-}
-
-func (tts *ThreeThirteenState) DiscardCard(player int, cardID int) error {
+func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool) error {
 	if !tts.Started {
 		return errors.New("game hasn't started yet")
 	}
@@ -428,7 +401,11 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int) error {
 		return errors.New("it is not your turn to discard")
 	}
 
-	if cardID == tts.Players[player].Drawn.ID && tts.Players[player].PickedUpDiscard && tts.LaidDown != -1 {
+	if tts.LaidDown != -1 && laidDown {
+		return errors.New("somebody already laid down before you")
+	}
+
+	if cardID == tts.Players[player].Drawn.ID && tts.Players[player].PickedUpDiscard && tts.LaidDown == -1 {
 		// If the player discards the card they picked up from the discard, give
 		// them another change to make a move. Put the discard back and clear their
 		// drawn card.
@@ -445,6 +422,9 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int) error {
 		tts.Discard = append(tts.Discard, tts.Players[player].Drawn)
 		tts.Players[player].Drawn = nil
 		tts.Turn = (tts.Turn + 1) % len(tts.Players)
+		if laidDown {
+			tts.LaidDown = player
+		}
 		return nil
 	}
 
@@ -465,88 +445,16 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int) error {
 
 	// Add remaining and the drawn card back into the hand.
 	tts.Players[player].Hand = append(remaining, *tts.Players[player].Drawn)
+	tts.Players[player].Drawn = nil
 
 	// Advanced the turn.
 	tts.Turn = (tts.Turn + 1) % len(tts.Players)
-	return nil
-}
 
-func (tts *ThreeThirteenState) LayDown(player int, cardID int) error {
-	if !tts.Started {
-		return errors.New("game hasn't started yet")
+	// Lay down if necessary.
+	if laidDown {
+		tts.LaidDown = player
 	}
 
-	if tts.Finished {
-		return errors.New("game has already finished")
-	}
-
-	if player < 0 || player >= len(tts.Players) {
-		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
-	}
-
-	if !tts.Dealt {
-		return errors.New("unable to discard before dealing cards")
-	}
-
-	if tts.Players[player].Drawn == nil {
-		return errors.New("unable to discard after without having taken a card")
-	}
-
-	if tts.Turn != player {
-		return errors.New("it is not your turn to play")
-	}
-
-	if tts.LaidDown != -1 {
-		return errors.New("somebody already laid down before you")
-	}
-
-	tts.LaidDown = player
-
-	// Give everyone else another card first. This is safe because we've already
-	// touched the deck before. Additionally, it allows us to exit early later.
-	for player_offset := 1; player_offset < len(tts.Players); player_offset++ {
-		other_player := (player + player_offset) % len(tts.Players)
-		tts.Players[other_player].Drawn = tts.Deck.Cards[0]
-		tts.Deck.Cards = tts.Deck.Cards[1:]
-		tts.Players[other_player].PickedUpDiscard = false
-	}
-
-	// Note that in the below, we need not advance the turn. We'll just reset it
-	// after all the scores are in and we advance the state.
-
-	if cardID == tts.Players[player].Drawn.ID && tts.Players[player].PickedUpDiscard {
-		// If the player discards the card they picked up from the discard, give
-		// them another change to make a move. Put the discard back and clear their
-		// drawn card.
-		tts.Discard = append(tts.Discard, tts.Players[player].Drawn)
-		tts.Players[player].Drawn = nil
-		return nil
-	}
-
-	if cardID == tts.Players[player].Drawn.ID {
-		// They must've taken the top card. Discard it and advance the turn.
-		tts.Discard = append(tts.Discard, tts.Players[player].Drawn)
-		tts.Players[player].Drawn = nil
-		return nil
-	}
-
-	// Check if the card is in the hand.
-	index, found := tts.Players[player].FindCard(cardID)
-	if !found {
-		return errors.New("unable to find card with specified identifier")
-	}
-
-	// Discard this card and remove it from the hand.
-	tts.Discard = append(tts.Discard, tts.Players[player].Hand[index].Copy())
-
-	var remaining []Card
-	if index > 0 {
-		remaining = tts.Players[player].Hand[:index]
-	}
-	remaining = append(remaining, tts.Players[player].Hand[index+1:]...)
-
-	// Add remaining and the drawn card back into the hand.
-	tts.Players[player].Hand = append(remaining, *tts.Players[player].Drawn)
 	return nil
 }
 
