@@ -122,6 +122,7 @@ class SpadesGameComponent extends React.Component {
                   <CardImage/>
                   <br />
                   <Button label="Keep" unelevated ripple={false} onClick={() => this.state.game.interface.decide(true)} />
+                  &nbsp;&nbsp;
                   <Button label="Take from deck" unelevated ripple={false} onClick={() => this.state.game.interface.decide(false)} />
                 </div>
               </c.Card>
@@ -172,7 +173,7 @@ class SpadesGameComponent extends React.Component {
                 }/>
                 {
                   !this.state.game.interface.data.peeked
-                  ? <Button label="Peek at cards" raised ripple={false} onClick={() => this.state.game.interface.peek()} />
+                  ? <>&nbsp;&nbsp;<Button label="Peek at cards" raised ripple={false} onClick={() => this.state.game.interface.peek()} /></>
                   : null
                 }
               </div>
