@@ -436,6 +436,8 @@ func (ss *SpadesState) StartRound() error {
 		// When we have two players, the first step of play is dealing out the
 		// cards with player involvement; exit without setting Dealt to true.
 		ss.Turn = ss.Dealer
+		// The first trick will be led by the other player
+		ss.Leader = (ss.Dealer + 1) % 2
 		return nil
 	}
 
@@ -449,8 +451,9 @@ func (ss *SpadesState) StartRound() error {
 		}
 	}
 
-	// The first person to play is the one left of the dealer.
+	// The first person to bid and play is the one left of the dealer.
 	ss.Turn = starting_player
+	ss.Leader = ss.Turn
 	ss.Dealt = true
 
 	return nil
@@ -645,7 +648,6 @@ func (ss *SpadesState) PlaceBid(player int, bid SpadesBid) error {
 	}
 
 	ss.Turn = (ss.Turn + 1) % ss.Config.NumPlayers
-	ss.Leader = ss.Turn
 	return nil
 }
 
