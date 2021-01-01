@@ -175,111 +175,90 @@ class SpadesGame {
     this.onChange(this);
   }
 
+  static bid_values = {
+    "triple nil": 21,
+    "blind nil": 20,
+    "nil": 19,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+  };
+  static bid_names = {
+    21: "triple nil",
+    20: "blind nil",
+    19: "nil",
+    1: "one",
+    2: "two",
+    3: "three",
+    4: "four",
+    5: "five",
+    6: "six",
+    7: "seven",
+    8: "eight",
+    9: "nine",
+    10: "ten",
+    11: "eleven",
+    12: "twelve",
+    13: "thirteen",
+    14: "fourteen",
+    15: "fifteen",
+    16: "sixteen",
+    17: "seventeen",
+    18: "eighteen",
+  };
+
   valid_bids() {
+    var labellify = l => ({label: l, value: SpadesGame.bid_values[l] });
     // Handle blind bidding. When we've not yet peeked, we have to bid blind.
     if (this.data.hand === null && !this.data.peeked) {
-      return [
-        {
-          "label": "blind nil",
-          "value": 20,
-        }
-      ];
+      return ["blind nil"].map(labellify);
     }
 
     var result = [
-      {
-        "label": "one",
-        "value": 1,
-      },
-      {
-        "label": "two",
-        "value": 2,
-      },
-      {
-        "label": "three",
-        "value": 3,
-      },
-      {
-        "label": "four",
-        "value": 4,
-      },
-      {
-        "label": "five",
-        "value": 5,
-      },
-      {
-        "label": "six",
-        "value": 6,
-      },
-      {
-        "label": "seven",
-        "value": 7,
-      },
-      {
-        "label": "eight",
-        "value": 8,
-      },
-      {
-        "label": "nine",
-        "value": 9,
-      },
-      {
-        "label": "ten",
-        "value": 10,
-      },
-      {
-        "label": "eleven",
-        "value": 11,
-      },
-      {
-        "label": "twelve",
-        "value": 12,
-      },
-      {
-        "label": "thirteen",
-        "value": 13,
-      },
-      {
-        "label": "fourteen",
-        "value": 14,
-      },
-      {
-        "label": "fifteen",
-        "value": 15,
-      },
-      {
-        "label": "sixteen",
-        "value": 16,
-      },
-      {
-        "label": "seventeen",
-        "value": 17,
-      },
-      {
-        "label": "eighteen",
-        "value": 18,
-      },
+      "one",
+      "two",
+      "three",
+      "four",
+      "five",
+      "six",
+      "seven",
+      "eight",
+      "nine",
+      "ten",
+      "eleven",
+      "twelve",
+      "thirteen",
+      "fourteen",
+      "fifteen",
+      "sixteen",
+      "seventeen",
+      "eighteen",
     ];
 
     // Shrink to possible bids from the above.
     result = result.slice(0, this.data.hand.cards.length);
 
     if (this.data.config.with_nil) {
-      result.push(
-        {
-          "label": "nil",
-          "value": 19,
-        }
-      );
+      result.push("nil");
     }
 
     if (this.data.config.with_triple_nil) {
-      result.push(
-        {
-          "label": "triple nil",
-          "value": 21,
-        }
-      );
+      result.push("triple nil");
     }
 
     return result;

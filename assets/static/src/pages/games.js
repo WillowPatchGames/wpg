@@ -269,17 +269,20 @@ class SpadesGameSynopsis extends React.Component {
       },
       "is_turn":{
         name: "Turn",
-        printer: a => a ? "•" : "",
+        printer: a => a ? "♠" : "",
       },
       "is_leader":{
         name: "Leading",
-        printer: a => a ? "•" : "",
+        printer: a => a ? "♠" : "",
       },
       "is_dealer":{
         name: "Dealing",
-        printer: a => a ? "•" : "",
+        printer: a => a ? "♠" : "",
       },
-      "bid":"Bid",
+      "bid":{
+        name: "Bid",
+        printer: a => a == 0 ? "–" : a >= 19 ? SpadesGame.bid_names[a] : ""+a,
+      },
       "tricks":"Tricks",
       "score":"Score",
       "overtakes":"Overtakes",
