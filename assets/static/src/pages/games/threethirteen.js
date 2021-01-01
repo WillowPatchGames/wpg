@@ -416,22 +416,22 @@ class ThreeThirteenGameSynopsis extends React.Component {
   }
 
   render() {
+    var sigil = (t,c) => <span style={{ fontSize: "170%", color: c }}>{ t }</span>
     var synopsis_columns = {
       "user":{
         name: "User",
-        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
-      },
-      "is_turn":{
-        name: "Turn",
-        printer: a => a ? "♠" : "",
+        printer: (user,player) =>
+          <Avatar src={ gravatarify(user) } name={ user.display }
+            style={{ border: "2px solid "+(player.is_turn ? "#2acc0c" : "#FFFFFF00") }}
+            size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
       },
       "is_dealer":{
         name: "Dealing",
-        printer: a => a ? "♠" : "",
+        printer: a => a ? sigil("♠") : "",
       },
       "has_laid_down":{
         name: "Laid Down",
-        printer: a => a ? "♠" : "",
+        printer: a => a ? sigil("♠") : "",
       },
       "round_score":{
         name: "Round Score",
@@ -454,7 +454,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
         for (let k in columns) {
           var printer = a => a;
           if (typeof columns[k] === "object") printer = columns[k].printer;
-          rows[rows.length-1].push(<td key={ k }>{ printer(dat[k]) }</td>)
+          rows[rows.length-1].push(<td key={ k }>{ printer(dat[k],dat,this.state) }</td>)
         }
       }
       return rows.map((row, i) => <tr key={ data[i].user.id }>{row}</tr>);
