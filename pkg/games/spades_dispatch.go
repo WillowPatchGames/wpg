@@ -109,10 +109,12 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 
 			// In two player spades, we're expecting to get a reply right away,
 			// because we're really only dealing one card to ourselves to peek at.
-			var response SpadesStateNotification
-			response.LoadData(game, state, player)
-			response.ReplyTo = header.MessageID
-			c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
+			if player.Playing && player.Index >= 0 {
+				var response SpadesStateNotification
+				response.LoadData(game, state, player)
+				response.ReplyTo = header.MessageID
+				c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
+			}
 		} else {
 			if player.Index != state.Dealer {
 				return errors.New("unable to deal round that you're not the dealer for")
@@ -146,9 +148,11 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		err = state.DecideTop(player.Index, data.Keep)
 		send_synopsis = err == nil
 
-		var response SpadesStateNotification
-		response.LoadData(game, state, player)
-		c.undispatch(game, player, response.MessageID, 0, response)
+		if player.Playing && player.Index >= 0 {
+			var response SpadesStateNotification
+			response.LoadData(game, state, player)
+			c.undispatch(game, player, response.MessageID, 0, response)
+		}
 
 		for _, next_player := range game.ToPlayer {
 			if next_player.Index != state.Turn {
@@ -163,9 +167,11 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		err = state.PeekCards(player.Index)
 		send_synopsis = err == nil
 
-		var response SpadesStateNotification
-		response.LoadData(game, state, player)
-		c.undispatch(game, player, response.MessageID, header.MessageID, response)
+		if player.Playing && player.Index >= 0 {
+			var response SpadesStateNotification
+			response.LoadData(game, state, player)
+			c.undispatch(game, player, response.MessageID, header.MessageID, response)
+		}
 	case "bid":
 		var data SpadesBidMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -180,9 +186,11 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		err = state.PlaceBid(player.Index, bid)
 		send_synopsis = err == nil
 
-		var response SpadesStateNotification
-		response.LoadData(game, state, player)
-		c.undispatch(game, player, response.MessageID, 0, response)
+		if player.Playing && player.Index >= 0 {
+			var response SpadesStateNotification
+			response.LoadData(game, state, player)
+			c.undispatch(game, player, response.MessageID, 0, response)
+		}
 
 		for _, next_player := range game.ToPlayer {
 			if next_player.Index != state.Turn {
