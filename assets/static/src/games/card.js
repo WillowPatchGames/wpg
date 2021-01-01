@@ -283,7 +283,6 @@ class CardImage extends React.Component {
       x = (joker_suit === "red" ? 1 : 0) * -card_dim[0];
       y = 4 * -card_dim[1];
     } else {
-      console.log(this.props.rank, this.props.suit);
       name = "back";
       x = 2 * -card_dim[0];
       y = 4 * -card_dim[1];
@@ -327,6 +326,10 @@ class CardHand {
 
   toImage(mapper, props) {
     var cards = this.cards;
+    if (mapper && typeof mapper !== 'function' && !props) {
+      props = mapper;
+      mapper = props.mapper;
+    }
     if (mapper) {
       cards = [];
       this.cards.forEach((v,i,vs) => {
@@ -334,20 +337,46 @@ class CardHand {
         cards[i] = mapper(c,i,vs)||c;
       });
     }
-    var { direction, ...props } = (props || {});
+    var { overlap, curve, scale, ...props } = (props || {});
+    scale = scale || 0.5;
+    if (typeof overlap !== 'number') overlap = overlap ? 0.6 : 0;
     var selectable = cards.some(card => card.selected !== undefined && card.selected !== null);
     var myProps = {
       style: {
       },
     };
-    if (selectable) myProps.style.marginTop = "20px";
-    props = mergeProps(myProps, props);
-    return (<div {...props}>
+    var marginTop = 0;
+    var marginBottom = 0;
+    var select_dist = 40*scale;
+    if (selectable) marginTop += select_dist*1.2;
+    if (curve) { marginBottom += cards.length*8*scale }
+    if (marginTop) myProps.style.marginTop = marginTop + "px";
+    if (marginBottom) myProps.style.marginBottom = marginBottom + "px";
+    var transform = (card,i) => {
+      if (!curve && !selectable) return "";
+      var tr = "";
+      if (curve && cards.length > 1) {
+        var mid = (cards.length-1)/2;
+        var j = i/mid - 1;
+        tr += "translateY(" + ((1-Math.cos(j)) * cards.length*10*scale) + "px) ";
+        tr += "rotate(" + (j * 10) + "deg) ";
+      }
+      if (card.selected) tr += "translateY(-" + select_dist + "px) ";
+      console.log(tr);
+      if (!tr) return "translate(0,0)"; // push a transform to avoid z-index issues
+      return tr;
+    };
+    return (<div {...mergeProps(myProps, props)}>
       {cards.map((card,i) =>
         card.toImage({
           key: i,
-          x_part: i>0 ? -0 : 1,
-          style: { transform: card.selected ? "translateY(-20px)" : "" },
+          //x_part: i<cards.length-1 ? 0.55 : 1,
+          //y_part: 0.5,
+          scale: scale,
+          style: {
+            transform: transform(card,i),
+            marginRight: overlap && i<cards.length-1 ? -overlap*card_dim[0]*scale : 0,
+          },
           onClick: card.onClick,
         })
       )}
@@ -391,5 +420,6 @@ class CardHand {
 
 export {
   CardHand,
+  CardImage,
   Card,
 };
