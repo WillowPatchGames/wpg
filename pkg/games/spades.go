@@ -703,7 +703,7 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 			lead_suit = SpadesSuit
 		}
 
-		if played.Suit != lead_suit {
+		if (lead_effectively_spade && !effectively_spade) || (!lead_effectively_spade && !effectively_spade && lead_suit != played.Suit) || (!lead_effectively_spade && effectively_spade) {
 			for _, card := range ss.Players[player].Hand {
 				this_effectively_spade := card.Suit == SpadesSuit || card.Rank == JokerRank
 				if card.Suit == lead_suit || (this_effectively_spade && lead_effectively_spade) {
