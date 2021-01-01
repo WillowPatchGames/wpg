@@ -291,6 +291,7 @@ class ThreeThirteenGameComponent extends React.Component {
                     }
                   </div>
                 </div>
+                <h2>Your turn! Which card would you like to pick up?</h2>
                 <Button label="From Deck" unelevated ripple={false} onClick={() => this.state.game.interface.takeTop()} />
                 &nbsp;&nbsp;
                 <Button label="From Discard" unelevated ripple={false} onClick={() => this.state.game.interface.takeDiscard()} />
