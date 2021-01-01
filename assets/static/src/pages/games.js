@@ -311,25 +311,14 @@ class SpadesGameSynopsis extends React.Component {
 
     var player_rows = [];
     if (this.state.players) {
-      var our_player = null;
       var remaining = [];
 
       for (let player_index of Object.keys(this.state.players).sort()) {
         let player = this.state.players[player_index];
-        if (+player.user.id === +this.props.user.id) {
-          our_player = player;
-        } else {
-          remaining.push(player);
-        }
+        remaining.push(player);
       }
 
-      if (our_player) {
-        player_rows.push(...tabulate(synopsis_columns)([ our_player ]));
-      }
-
-      if (remaining) {
-        player_rows.push(...tabulate(synopsis_columns)(remaining));
-      }
+      player_rows.push(...tabulate(synopsis_columns)(remaining));
     }
 
     var player_view = null;
