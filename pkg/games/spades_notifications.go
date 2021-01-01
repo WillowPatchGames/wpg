@@ -80,8 +80,9 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 }
 
 type SpadesPlayerSynopsis struct {
-	UID     uint64 `json:"user"`
-	Playing bool   `json:"playing"`
+	UID         uint64 `json:"user"`
+	Playing     bool   `json:"playing"`
+	PlayerIndex int    `json:"player_index"`
 
 	IsTurn   bool `json:"is_turn"`
 	IsLeader bool `json:"is_leader"`
@@ -107,6 +108,7 @@ func (ssn *SpadesSynopsisNotification) LoadData(data *GameData, state *SpadesSta
 		var synopsis SpadesPlayerSynopsis
 		synopsis.UID = indexed_player.UID
 		synopsis.Playing = indexed_player.Playing
+		synopsis.PlayerIndex = indexed_player.Index
 
 		if indexed_player.Index >= 0 {
 			synopsis.IsTurn = indexed_player.Index == state.Turn

@@ -152,8 +152,8 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		return c.dispatchRush(message, header, game, player)
 	} else if game.Mode == SpadesGame {
 		return c.dispatchSpades(message, header, game, player)
-		} else if game.Mode == ThreeThirteenGame {
-			return c.dispatchThreeThirteen(message, header, game, player)
+	} else if game.Mode == ThreeThirteenGame {
+		return c.dispatchThreeThirteen(message, header, game, player)
 	} else {
 		panic("Valid but unsupported game mode: " + game.Mode.String())
 	}

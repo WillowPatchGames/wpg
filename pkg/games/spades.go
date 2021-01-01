@@ -279,7 +279,7 @@ type SpadesRoundPlayer struct {
 }
 
 type SpadesRound struct {
-	Dealer  int                 `json:"dealer"`
+	Dealer  int                  `json:"dealer"`
 	Players []*SpadesRoundPlayer `json:"players"`
 	Tricks  []*SpadesTrick       `json:"tricks"`
 }
@@ -294,7 +294,7 @@ type SpadesState struct {
 	Played         []Card         `json:"played"`          // Currently played cards in this round.
 	SpadesBroken   bool           `json:"spades_broken"`   // Whether or not spades have been broken.
 	PreviousTricks [][]Card       `json:"previous_tricks"` // Contents of previous tricks in the current round; sent to clients.
-	RoundHistory   []*SpadesRound  `json:"round_history"`   // Contents of previous rounds for analysis.
+	RoundHistory   []*SpadesRound `json:"round_history"`   // Contents of previous rounds for analysis.
 
 	Config SpadesConfig `json:"config"`
 

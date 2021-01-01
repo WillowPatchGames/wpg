@@ -254,7 +254,7 @@ class SpadesGameSynopsis extends React.Component {
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
-        new_state.players[player.user.id] = player;
+        new_state.players[player.player_index] = player;
       }
     }
 
@@ -311,9 +311,9 @@ class SpadesGameSynopsis extends React.Component {
       var our_player = null;
       var remaining = [];
 
-      for (let player_id of Object.keys(this.state.players).sort()) {
-        let player = this.state.players[player_id];
-        if (+player_id === +this.props.user.id) {
+      for (let player_index of Object.keys(this.state.players).sort()) {
+        let player = this.state.players[player_index];
+        if (+player.user.id === +this.props.user.id) {
           our_player = player;
         } else {
           remaining.push(player);
