@@ -15,6 +15,7 @@ import '@rmwc/textfield/styles';
 
 import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
+import { CardImage } from '../../games/card.js';
 
 class ThreeThirteenGameComponent extends React.Component {
   constructor(props) {
@@ -137,8 +138,16 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
-                <h3>Discard Pile</h3>
-                { this.state.game.interface.data.discard?.toImage(discardProps) }
+                <div className="flexbox">
+                  <div className="flexible">
+                    <h3>Deck</h3>
+                    <CardImage />
+                  </div>
+                  <div className="flexible">
+                    <h3>Discard Pile</h3>
+                    { this.state.game.interface.data.discard?.toImage(discardProps) }
+                  </div>
+                </div>
                 <h3>Picked Up</h3>
                 {
                   this.state.game.interface.data.drawn.toImage(
@@ -187,8 +196,16 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
-                <h3>Discard Pile</h3>
-                { this.state.game.interface.data.discard?.toImage(discardProps) }
+                <div className="flexbox">
+                  <div className="flexible">
+                    <h3>Deck</h3>
+                    <CardImage />
+                  </div>
+                  <div className="flexible">
+                    <h3>Discard Pile</h3>
+                    { this.state.game.interface.data.discard?.toImage(discardProps) }
+                  </div>
+                </div>
                 <h3>Score Your Hand</h3>
                 <TextField fullwidth type="number" label="Score" name="score" value={ this.state.round_score } onChange={ this.inputHandler.bind(this) } min="0" max="250" step="1" />
                 <Button label="Submit" unelevated ripple={false} onClick={ () => { this.state.game.interface.score(this.state.round_score) ; this.inputHandler({ target: { value: 0 } }) } } />
@@ -230,8 +247,16 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
-                <h3>Discard Pile</h3>
-                { this.state.game.interface.data.discard?.toImage(discardProps) }
+                <div className="flexbox">
+                  <div className="flexible">
+                    <h3>Deck</h3>
+                    <CardImage />
+                  </div>
+                  <div className="flexible">
+                    <h3>Discard Pile</h3>
+                    { this.state.game.interface.data.discard?.toImage(discardProps) }
+                  </div>
+                </div>
                 <h3>Please wait for others to score their hands...</h3>
                 <b>Your Score:</b> { this.state.game.interface.data.round_score }
               </div>
@@ -247,8 +272,25 @@ class ThreeThirteenGameComponent extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h3>Discard Pile</h3>
-                { this.state.game.interface.data.discard?.toImage(discardProps) }
+                <div className="flexbox">
+                  <div className="flexible">
+                    <h3>Deck</h3>
+                    <CardImage onClick={ () => this.state.game.interface.takeTop() } />
+                  </div>
+                  <div className="flexible">
+                    <h3>Discard Pile</h3>
+                    {
+                      this.state.game.interface.data.discard?.toImage(
+                        Object.assign(
+                          {
+                            onClick: () => this.state.game.interface.takeDiscard()
+                          },
+                          discardProps
+                        )
+                      )
+                    }
+                  </div>
+                </div>
                 <Button label="From Deck" unelevated ripple={false} onClick={() => this.state.game.interface.takeTop()} />
                 &nbsp;&nbsp;
                 <Button label="From Discard" unelevated ripple={false} onClick={() => this.state.game.interface.takeDiscard()} />
@@ -269,8 +311,16 @@ class ThreeThirteenGameComponent extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h3>Discard Pile</h3>
-                { this.state.game.interface.data.discard?.toImage(discardProps) }
+                <div className="flexbox">
+                  <div className="flexible">
+                    <h3>Deck</h3>
+                    <CardImage />
+                  </div>
+                  <div className="flexible">
+                    <h3>Discard Pile</h3>
+                    { this.state.game.interface.data.discard?.toImage(discardProps) }
+                  </div>
+                </div>
                 <h3>Picked Up</h3>
                 {
                   this.state.game.interface.data.drawn.toImage(
@@ -309,8 +359,16 @@ class ThreeThirteenGameComponent extends React.Component {
         <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
           <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
             <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-              <h3>Discard Pile</h3>
-              { this.state.game.interface.data.discard?.toImage(discardProps) }
+              <div className="flexbox">
+                <div className="flexible">
+                  <h3>Deck</h3>
+                  <CardImage />
+                </div>
+                <div className="flexible">
+                  <h3>Discard Pile</h3>
+                  { this.state.game.interface.data.discard?.toImage(discardProps) }
+                </div>
+              </div>
               <h3>Waiting for the other { "player" + (num_players < 3 ? "" : "s") } to play …</h3>
             </div>
           </c.Card>

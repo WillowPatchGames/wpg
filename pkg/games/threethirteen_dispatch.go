@@ -116,12 +116,7 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 
 		err = state.TakeCard(player.Index, data.FromDiscard)
 		send_synopsis = err == nil
-
-		if player.Playing && player.Index >= 0 {
-			var response ThreeThirteenStateNotification
-			response.LoadData(game, state, player)
-			c.undispatch(game, player, response.MessageID, header.MessageID, response)
-		}
+		send_state = true
 	case "discard":
 		var data ThreeThirteenDiscardMsg
 		if err = json.Unmarshal(message, &data); err != nil {
