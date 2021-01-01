@@ -207,6 +207,10 @@ class ThreeThirteenGame {
       return this.controller.score(amount);
     }
   }
+
+  close() {
+    this.controller.close();
+  }
 }
 
 export {
