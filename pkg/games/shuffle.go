@@ -32,7 +32,7 @@ func (d *Deck) RemoveCard(rank CardRank, suit CardSuit) bool {
 
 	for index, card := range d.Cards {
 		if card.Rank == rank && card.Suit == suit {
-			remaining = d.Cards[:index-1]
+			remaining = d.Cards[:index]
 			remainder_index = index + 1
 			found = true
 			break
