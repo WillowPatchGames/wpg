@@ -250,6 +250,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 <h3>Discard Pile</h3>
                 { this.state.game.interface.data.discard?.toImage(discardProps) }
                 <Button label="From Deck" unelevated ripple={false} onClick={() => this.state.game.interface.takeTop()} />
+                &nbsp;&nbsp;
                 <Button label="From Discard" unelevated ripple={false} onClick={() => this.state.game.interface.takeDiscard()} />
               </div>
             </c.Card>
@@ -288,6 +289,7 @@ class ThreeThirteenGameComponent extends React.Component {
                   )
                 } <br />
                 <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
+                &nbsp;&nbsp;
                 <Button label="Go Out" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.clearSelected() }} />
               </div>
             </c.Card>
