@@ -31,6 +31,24 @@ class CardSuit {
     '5': null,
   };
 
+  static apiValueToUnicode = {
+    '0': null,
+    '1': "♣",
+    '2': "♥",
+    '3': "♠",
+    '4': "♦",
+    '5': null,
+  };
+
+  static apiValueToColor = {
+    '0': null,
+    '1': "black",
+    '2': "red",
+    '3': "black",
+    '4': "red",
+    '5': null,
+  }
+
   static FANCY = 5;
 
   constructor(value) {
@@ -43,6 +61,14 @@ class CardSuit {
 
   toImage() {
     return CardSuit.apiValueToImage["" + this.value];
+  }
+
+  toUnicode() {
+    return CardSuit.apiValueToUnicode["" + this.value];
+  }
+
+  toColor() {
+    return CardSuit.apiValueToColor["" + this.value];
   }
 
   serialize() {
@@ -339,7 +365,9 @@ class CardHand {
     }
     var { overlap, curve, scale, ...props } = (props || {});
     scale = scale || 0.5;
-    if (typeof overlap !== 'number') overlap = overlap ? 0.6 : 0;
+    if (typeof overlap !== 'number') overlap = overlap ? 0.75 : 0;
+    if (typeof curve !== 'number') curve = curve ? 3*cards.length : 0;
+    var curve_norm = curve ? Math.sin(curve*Math.PI/180) : 0;
     var selectable = cards.some(card => card.selected !== undefined && card.selected !== null);
     var myProps = {
       style: {
@@ -347,19 +375,29 @@ class CardHand {
     };
     var marginTop = 0;
     var marginBottom = 0;
+    var padding = 0;
     var select_dist = 40*scale;
     if (selectable) marginTop += select_dist*1.2;
-    if (curve) { marginBottom += cards.length*8*scale }
+    if (curve) {
+      marginBottom += cards.length*50*scale*curve_norm*(1-overlap);
+      padding += card_dim[1]*curve_norm/10;
+    }
+    if (overlap) padding += overlap*card_dim[0]*scale/2;
+
     if (marginTop) myProps.style.marginTop = marginTop + "px";
     if (marginBottom) myProps.style.marginBottom = marginBottom + "px";
+    if (padding) {
+      myProps.style.paddingLeft = padding + "px";
+      myProps.style.paddingRight = padding + "px";
+    }
     var transform = (card,i) => {
       if (!curve && !selectable) return "";
       var tr = "";
       if (curve && cards.length > 1) {
         var mid = (cards.length-1)/2;
         var j = i/mid - 1;
-        tr += "translateY(" + ((1-Math.cos(j)) * cards.length*10*scale) + "px) ";
-        tr += "rotate(" + (j * 10) + "deg) ";
+        tr += "translateY(" + ((1-Math.cos(j)) * cards.length*1.6*curve*scale*(1-overlap)) + "px) ";
+        tr += "rotate(" + (j * curve) + "deg) ";
       }
       if (card.selected) tr += "translateY(-" + select_dist + "px) ";
       if (!tr) return "translate(0,0)"; // push a transform to avoid z-index issues
@@ -368,13 +406,14 @@ class CardHand {
     return (<div {...mergeProps(myProps, props)}>
       {cards.map((card,i) =>
         card.toImage({
-          key: i,
+          key: card.id,
           //x_part: i<cards.length-1 ? 0.55 : 1,
           //y_part: 0.5,
           scale: scale,
           style: {
             transform: transform(card,i),
-            marginRight: overlap && i<cards.length-1 ? -overlap*card_dim[0]*scale : 0,
+            marginLeft: overlap ? -overlap*card_dim[0]*scale/2 : 0,
+            marginRight: overlap ? -overlap*card_dim[0]*scale/2 : 0,
           },
           onClick: card.onClick,
         })
@@ -421,4 +460,6 @@ export {
   CardHand,
   CardImage,
   Card,
+  CardSuit,
+  CardRank,
 };

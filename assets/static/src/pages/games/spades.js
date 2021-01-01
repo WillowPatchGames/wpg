@@ -12,9 +12,11 @@ import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
 import { Select } from '@rmwc/select';
 import '@rmwc/select/styles';
+import { CircularProgress } from '@rmwc/circular-progress';
+import '@rmwc/circular-progress/styles';
 
 import { SpadesGame } from '../../games/spades.js';
-import { CardImage } from '../../games/card.js';
+import { CardSuit, CardImage } from '../../games/card.js';
 import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 
@@ -161,12 +163,12 @@ class SpadesGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 {status("Please place your bid:")}
                 <Select label="Bid value" enhanced options={ this.state.game.interface.valid_bids() }
-                  value={ this.state.bid_suggesting ? ""+this.state.bid_select.size : this.state.bid }
+                  value={ this.state.bid_suggesting ? ""+this.state.bid_select.size : ""+this.state.bid }
                   onChange={ e => {let bid = +e.currentTarget.value; this.setState(state => Object.assign(state, {bid,bid_suggesting:false}))}
                 }/>
                 <br />
                 <Button label="Place bid" raised ripple={false} onClick={this.clearSelectAnd(() =>
-                  this.state.game.interface.bid(this.state.bid_suggesting ? this.state.bid_select.size : this.state.bid))
+                  this.state.game.interface.bid(this.state.bid_suggesting ? +this.state.bid_select.size : +this.state.bid))
                 }/>
                 {
                   !this.state.game.interface.data.peeked
@@ -283,7 +285,7 @@ class SpadesGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { indexed_players: {}, spectators: {} };
+    let new_state = { indexed_players: {}, spectators: {}, suit: undefined };
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
@@ -294,27 +296,48 @@ class SpadesGameSynopsis extends React.Component {
         }
       }
     }
+    if (this.props.game.interface.data && this.props.game.interface.data.played) {
+      var i = this.props.game.interface;
+      if (i.bidded && i.dealt && !i.finished) {
+        var num_played = this.props.game.interface.data.played.cards.length;
+        var num_players = this.props.game.interface.data.config.num_players;
+        if (num_played > 0 && num_played < num_players) {
+          new_state.suit = this.props.game.interface.data.played.cards[0].suit;
+        } else {
+          new_state.suit = "waiting";
+        }
+      } else if (!i.finished) {
+        new_state.suit = i.dealt ? "bidding" : "dealing";
+      }
+    }
 
     return new_state;
   }
 
   render() {
+    var sigil = (t,c) => <span style={{ fontSize: "170%", color: c }}>{ t }</span>
     var synopsis_columns = {
       "user":{
         name: "User",
-        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
-      },
-      "is_turn":{
-        name: "Turn",
-        printer: a => a ? "♠" : "",
+        printer: (user,player) =>
+          <Avatar src={ gravatarify(user) } name={ user.display }
+            style={{ border: "2px solid "+(player.is_turn ? "#2acc0c" : "#FFFFFF00") }}
+            size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
       },
       "is_leader":{
-        name: "Leading",
-        printer: a => a ? "♠" : "",
+        name: "Lead",
+        printer: (is_leader,player,state) =>
+          !is_leader || !state.suit
+          ? ""
+          : state.suit instanceof CardSuit
+          ? sigil(state.suit.toUnicode() || "♤", state.suit.toColor())
+          : state.suit === "waiting"
+          ? <CircularProgress size="xsmall" style={{ color: "#558abf" }} />
+          : sigil("♠"),
       },
       "is_dealer":{
-        name: "Dealing",
-        printer: a => a ? "♠" : "",
+        name: "Dealer",
+        printer: a => a ? sigil("♠") : "",
       },
       "bid":{
         name: "Bid",
@@ -333,7 +356,7 @@ class SpadesGameSynopsis extends React.Component {
         for (let k in columns) {
           var printer = a => a;
           if (typeof columns[k] === "object") printer = columns[k].printer;
-          rows[rows.length-1].push(<td key={ k }>{ printer(dat[k]) }</td>)
+          rows[rows.length-1].push(<td key={ k }>{ printer(dat[k],dat,this.state) }</td>)
         }
       }
       return rows.map((row, i) => <tr key={ data[i].user.id }>{row}</tr>);
