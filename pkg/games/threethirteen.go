@@ -400,7 +400,7 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		return errors.New("unable to discard after without having taken a card")
 	}
 
-	if tts.LaidDown != -1 && tts.Turn != player {
+	if tts.LaidDown == -1 && tts.Turn != player {
 		return errors.New("it is not your turn to discard")
 	}
 
