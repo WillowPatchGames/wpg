@@ -151,7 +151,7 @@ class ThreeThirteenGame {
     // Then update the main data object.
     this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
     if (this.data.hand != null) {
-      this.data.hand.sort(true);
+      this.data.hand.cardSort(false, false);
     }
     this.data.drawn = message?.drawn ? Card.deserialize(message.drawn) : null;
     this.data.picked_up_discard = message?.picked_up_discard;

@@ -247,13 +247,17 @@ class SpadesGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { players: {} };
+  let new_state = { indexed_players: {}, spectators: {} };
 
-    if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
-      for (let player of this.props.game.interface.synopsis.players) {
-        new_state.players[player.player_index] = player;
+  if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
+    for (let player of this.props.game.interface.synopsis.players) {
+      if (player.player_index != -1) {
+        new_state.indexed_players[player.player_index] = player;
+      } else {
+        new_state.spectators[player.player_index] = player;
       }
     }
+  }
 
     return new_state;
   }

@@ -154,7 +154,7 @@ class Card {
     }
   }
 
-  compareTo(other, ace_high) {
+  compareTo(other, by_suit, ace_high) {
     if (this.suit.value === other.suit.value && this.rank.value === other.rank.value) {
       return 0;
     }
@@ -170,13 +170,15 @@ class Card {
       return -1;
     }
 
-    // Otherwise, traditional sorting will work well.
-    if (this.suit.value < other.suit.value) {
-      return -1;
-    }
+    if (by_suit) {
+      // Otherwise, traditional sorting will work well.
+      if (this.suit.value < other.suit.value) {
+        return -1;
+      }
 
-    if (this.suit.value > other.suit.value) {
-      return 1;
+      if (this.suit.value > other.suit.value) {
+        return 1;
+      }
     }
 
     if (ace_high) {
@@ -366,13 +368,13 @@ class CardHand {
     </div>);
   }
 
-  sort(ace_high) {
+  cardSort(by_suit, ace_high) {
     let sorted = [];
 
     // Insertion sort
     for (let card of this.cards) {
       var index = 0;
-      while (index < sorted.length && card.compareTo(sorted[index], ace_high) <= 0) {
+      while (index < sorted.length && card.compareTo(sorted[index], by_suit, ace_high) <= 0) {
         index++
       }
 

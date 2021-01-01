@@ -301,7 +301,6 @@ func (tts *ThreeThirteenState) StartRound() error {
 		tts.Players[index].Hand = make([]Card, 0)
 		tts.Players[index].Drawn = nil
 		tts.Players[index].PickedUpDiscard = false
-		tts.Players[index].RoundScore = -1
 	}
 	tts.Discard = make([]*Card, 0)
 
@@ -423,7 +422,7 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		tts.Players[player].Drawn = nil
 		tts.Turn = (tts.Turn + 1) % len(tts.Players)
 		if laidDown {
-			tts.LaidDown = player
+			tts.HandleLayDown(player)
 		}
 		return nil
 	}
@@ -452,10 +451,24 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 
 	// Lay down if necessary.
 	if laidDown {
-		tts.LaidDown = player
+		tts.HandleLayDown(player)
 	}
 
 	return nil
+}
+
+func (tts *ThreeThirteenState) HandleLayDown(player int) {
+	tts.LaidDown = player
+	for index, _ := range tts.Players {
+		tts.Players[index].RoundScore = -1
+	}
+
+	for player_offset := 1; player_offset < len(tts.Players); player_offset++ {
+		player_index := (player + player_offset) % len(tts.Players)
+		tts.Players[player_index].Drawn = tts.Deck.Cards[0]
+		tts.Deck.Cards = tts.Deck.Cards[1:]
+		tts.Turn = player_index
+	}
 }
 
 func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
@@ -500,7 +513,6 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 			// When golfing, add everyones' score to themselves. Lowest score wins.
 			for index, _ := range tts.Players {
 				tts.Players[index].Score += tts.Players[index].RoundScore
-				tts.Players[index].RoundScore = 0
 
 				if tts.Players[index].Score > max_score {
 					max_score = tts.Players[index].Score
@@ -510,7 +522,6 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 			// Otherwise, the player who goes out gets the sum of others' scores.
 			for index, _ := range tts.Players {
 				tts.Players[tts.LaidDown].Score += tts.Players[index].RoundScore
-				tts.Players[index].RoundScore = 0
 			}
 
 			max_score = tts.Players[tts.LaidDown].Score

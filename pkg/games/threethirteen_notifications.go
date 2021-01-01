@@ -70,13 +70,15 @@ func (ttsn *ThreeThirteenStateNotification) LoadData(data *GameData, game *Three
 }
 
 type ThreeThirteenPlayerSynopsis struct {
-	UID     uint64 `json:"user"`
-	Playing bool   `json:"playing"`
+	UID         uint64 `json:"user"`
+	Playing     bool   `json:"playing"`
+	PlayerIndex int    `json:"player_index"`
 
 	IsTurn   bool `json:"is_turn"`
 	IsDealer bool `json:"is_dealer"`
 
-	Score int `json:"score"`
+	RoundScore int `json:"round_score"`
+	Score      int `json:"score"`
 }
 
 type ThreeThirteenSynopsisNotification struct {
@@ -96,11 +98,13 @@ func (ttsn *ThreeThirteenSynopsisNotification) LoadData(data *GameData, state *T
 		var synopsis ThreeThirteenPlayerSynopsis
 		synopsis.UID = indexed_player.UID
 		synopsis.Playing = indexed_player.Playing
+		synopsis.PlayerIndex = indexed_player.Index
 
-		if indexed_player.Index >= 0 {
+		if indexed_player.Index != -1 {
 			synopsis.IsTurn = indexed_player.Index == state.Turn
 			synopsis.IsDealer = indexed_player.Index == state.Dealer
 
+			synopsis.RoundScore = state.Players[indexed_player.Index].RoundScore
 			synopsis.Score = state.Players[indexed_player.Index].Score
 		}
 

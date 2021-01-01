@@ -29,7 +29,7 @@ class ThreeThirteenGameComponent extends React.Component {
     this.state = {};
     this.state.game = props.game;
     this.state.selected = null;
-    this.state.round_score = null;
+    this.state.round_score = 0;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -74,15 +74,28 @@ class ThreeThirteenGameComponent extends React.Component {
         {status("Finished")}
       </div>;
     } else if (!this.state.game.interface.dealt) {
-      return <div>
-        <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
-          <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-            <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-              <Button label="Deal!" unelevated ripple={false} onClick={() => this.state.game.interface.deal()} />
-            </div>
-          </c.Card>
-        </div>
-      </div>
+      console.log(this.state.game.interface.data.dealer, this.props.user.id);
+      if (+this.state.game.interface.data.dealer === +this.props.user.id) {
+        return <div>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <Button label="Deal!" unelevated ripple={false} onClick={() => this.state.game.interface.deal()} />
+              </div>
+            </c.Card>
+          </div>
+        </div>;
+      } else {
+        return <div>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Please wait for the round to begin...</h3>
+              </div>
+            </c.Card>
+          </div>
+        </div>;
+      }
     } else if (this.state.game.interface.laid_down) {
       if (this.state.game.interface.data.drawn) {
         return <div>
@@ -117,7 +130,7 @@ class ThreeThirteenGameComponent extends React.Component {
             </c.Card>
           </div>
         </div>;
-      } else {
+      } else if (this.state.game.interface.data.round_score === -1) {
         return <div>
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
@@ -126,8 +139,30 @@ class ThreeThirteenGameComponent extends React.Component {
                 <h3>Discard Pile</h3>
                 { this.state.game.interface.data.discard?.toImage() }
                 <h3>Score Your Hand</h3>
-                <TextField fullwidth type="number" label="Score" name="score" value={ this.state.round_score === null ? 0 : this.state.round_score } onChange={ this.inputHandler.bind(this) } min="0" max="250" step="1" />
+                <TextField fullwidth type="number" label="Score" name="score" value={ this.state.round_score } onChange={ this.inputHandler.bind(this) } min="0" max="250" step="1" />
                 <Button label="Submit" unelevated ripple={false} onClick={() => { this.state.game.interface.score(this.state.round_score) ; this.state.round_score = null }} />
+              </div>
+            </c.Card>
+          </div>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Hand</h3>
+                { this.state.game.interface.data.hand?.toImage() }
+              </div>
+            </c.Card>
+          </div>
+        </div>;
+      } else {
+        return <div>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
+                <h3>Discard Pile</h3>
+                { this.state.game.interface.data.discard?.toImage() }
+                <h3>Please wait for others to score their hands...</h3>
+                <b>Your Score:</b> { this.state.game.interface.data.round_score }
               </div>
             </c.Card>
           </div>
@@ -184,7 +219,7 @@ class ThreeThirteenGameComponent extends React.Component {
                   })
                 } <br />
                 <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.state.selected = null }} />
-                <Button label="Lay Down" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.state.selected = null }} />
+                <Button label="Go Out" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.state.selected = null }} />
               </div>
             </c.Card>
           </div>
@@ -236,11 +271,15 @@ class ThreeThirteenGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { players: {}, round: this.props.game.interface.data.round };
+    let new_state = { indexed_players: {}, spectators: {}, round: this.props.game.interface.data.round };
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
-        new_state.players[player.player_index] = player;
+        if (player.player_index != -1) {
+          new_state.indexed_players[player.player_index] = player;
+        } else {
+          new_state.spectators[player.user.id] = player;
+        }
       }
     }
 
@@ -251,7 +290,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
     var synopsis_columns = {
       "user":{
         name: "User",
-        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size="xlarge" />,
+        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
       },
       "is_turn":{
         name: "Turn",
@@ -264,6 +303,10 @@ class ThreeThirteenGameSynopsis extends React.Component {
       "has_laid_down":{
         name: "Laid Down",
         printer: a => a ? "♠" : "",
+      },
+      "round_score":{
+        name: "Round Score",
+        printer: a => a === -1 ? " " : a,
       },
       "score":"Score",
     };
@@ -290,11 +333,23 @@ class ThreeThirteenGameSynopsis extends React.Component {
     }
 
     var player_rows = [];
-    if (this.state.players) {
+    if (this.state.indexed_players) {
       var remaining = [];
 
-      for (let player_index of Object.keys(this.state.players).sort()) {
-        let player = this.state.players[player_index];
+      for (let player_index of Object.keys(this.state.indexed_players).sort()) {
+        let player = this.state.indexed_players[player_index];
+        remaining.push(player);
+      }
+
+      player_rows.push(...tabulate(synopsis_columns)(remaining));
+    }
+
+    var spectator_rows = [];
+    if (this.state.spectator_rows) {
+      var remaining = [];
+
+      for (let spectator_id of Object.keys(this.state.spectator_rows).sort()) {
+        let player = this.state.spectator_rows[spectator_id];
         remaining.push(player);
       }
 
@@ -317,7 +372,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left scrollable-x">
-            <b>ThreeThirteen</b> - Round { this.state.round }<br />
+            <b>Three Thirteen</b> - Round { this.state.round }<br />
             { player_view }
           </div>
         </c.Card>
@@ -397,7 +452,7 @@ class ThreeThirteenGamePage extends React.Component {
       <div>
         { countdown }
         <ThreeThirteenGameSynopsis game={ this.game } {...this.props} />
-        <ThreeThirteenGameComponent game={ this.game } interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
+        <ThreeThirteenGameComponent game={ this.game } interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } {...this.props} />
       </div>
     );
   }
