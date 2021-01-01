@@ -331,7 +331,7 @@ class SpadesGameSynopsis extends React.Component {
 
     var player_view = null;
     if (player_rows) {
-      player_view = <table>
+      player_view = <table style={{ "textAlign": "center" }}>
         <tbody>
           <tr key={ "spades_synopsis_headings" }>
             { headings }
@@ -342,7 +342,7 @@ class SpadesGameSynopsis extends React.Component {
     }
 
     return (
-      <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+      <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left scrollable-x">
             <b>Spades</b>
