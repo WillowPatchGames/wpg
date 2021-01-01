@@ -252,6 +252,10 @@ func (tts *ThreeThirteenState) Start(players int) error {
 }
 
 func (tts *ThreeThirteenState) StartRound() error {
+	if tts.Dealt {
+		return errors.New("unable to deal if cards have already been dealt")
+	}
+
 	// Invariants: unless otherwise overridden below, start with dealt = false
 	// and increment the round number.
 	tts.Dealt = false

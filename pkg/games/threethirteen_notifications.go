@@ -77,6 +77,8 @@ type ThreeThirteenPlayerSynopsis struct {
 	IsTurn   bool `json:"is_turn"`
 	IsDealer bool `json:"is_dealer"`
 
+	Hand []Card `json:"hand,omitempty"`
+
 	RoundScore int `json:"round_score"`
 	Score      int `json:"score"`
 }
@@ -106,6 +108,10 @@ func (ttsn *ThreeThirteenSynopsisNotification) LoadData(data *GameData, state *T
 
 			synopsis.RoundScore = state.Players[indexed_player.Index].RoundScore
 			synopsis.Score = state.Players[indexed_player.Index].Score
+
+			if (!state.Dealt || state.LaidDown != -1) && len(state.Players[indexed_player.Index].Hand) > 0 && state.Players[indexed_player.Index].Drawn == nil {
+				synopsis.Hand = state.Players[indexed_player.Index].Hand
+			}
 		}
 
 		ttsn.Players = append(ttsn.Players, synopsis)
