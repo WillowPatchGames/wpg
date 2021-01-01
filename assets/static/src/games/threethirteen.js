@@ -48,19 +48,21 @@ class ThreeThirteenController {
 
   async takeDiscard() {
     return await this.wsController.sendAndWait({
-      'message_type': 'take-discard',
+      'message_type': 'take',
+      'from_discard': true,
     });
   }
 
   async takeTop() {
     return await this.wsController.sendAndWait({
-      'message_type': 'take-top',
+      'message_type': 'take',
+      'from_discard': false,
     });
   }
 
   async discard(card, out) {
     return await this.wsController.sendAndWait({
-      'message_type': 'deal',
+      'message_type': 'discard',
       'card_id': card,
       'laying_down': out,
     });
@@ -123,13 +125,14 @@ class ThreeThirteenGame {
 
     this.started = false;
     this.dealt = false;
-    this.laidDown = -1;
+    this.laid_down = false;
+    this.laid_down_user = null;
     this.finished = false;
 
     this.onChange = () => {};
   }
 
-  handleNewState(message) {
+  async handleNewState(message) {
     // Three Thirteen is a simpler game than Rush. We can always take the hand
     // from the server as this is a turn-based game. We won't get out of sync
     // like Rush.
@@ -137,8 +140,13 @@ class ThreeThirteenGame {
     // Update some metadata about game progress.
     this.started = message.started;
     this.dealt = message.dealt;
-    this.laidDown = message.laidDown;
+    this.laid_down = message.laid_down;
+    this.laid_down_id = message.laid_down_id;
     this.finished = message.finished;
+
+    if (this.laid_down) {
+      this.laid_down_user = await UserCache.FromId(this.laid_down_id);
+    }
 
     // Then update the main data object.
     this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
@@ -162,6 +170,7 @@ class ThreeThirteenGame {
     if (message.players) {
       for (let player of message.players) {
         player.user = await UserCache.FromId(player.user);
+        player.has_laid_down = (+player.user.id === +this.laid_down_id);
       }
     }
     Object.assign(this.synopsis, message);
@@ -182,7 +191,7 @@ class ThreeThirteenGame {
   }
 
   async takeTop() {
-    return this.controller.takeDiscard();
+    return this.controller.takeTop();
   }
 
   async discard(card, out) {
@@ -190,7 +199,9 @@ class ThreeThirteenGame {
   }
 
   async score(amount) {
-    return this.controller.play(amount);
+    if (amount !== null && amount !== undefined) {
+      return this.controller.score(amount);
+    }
   }
 }
 
