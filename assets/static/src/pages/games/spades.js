@@ -262,7 +262,7 @@ class SpadesGameSynopsis extends React.Component {
     var synopsis_columns = {
       "user":{
         name: "User",
-        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size="xlarge" />,
+        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
       },
       "is_turn":{
         name: "Turn",
