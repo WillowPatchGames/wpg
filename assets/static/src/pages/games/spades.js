@@ -60,14 +60,14 @@ class SpadesGameComponent extends React.Component {
       if (this.state.game.interface.my_turn()) {
         if (!this.state.game.interface.data.drawn) {
           return <div>
-            <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+            <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   <Button label="Draw!" unelevated ripple={false} onClick={() => this.state.game.interface.deal()} />
                 </div>
               </c.Card>
             </div>
-            <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+            <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   <h3>Hand</h3>
@@ -78,7 +78,7 @@ class SpadesGameComponent extends React.Component {
           </div>
         } else {
           return <div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   {status("You got this card:")}
@@ -89,7 +89,7 @@ class SpadesGameComponent extends React.Component {
                 </div>
               </c.Card>
             </div>
-            <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+            <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   <h3>Hand</h3>
@@ -101,14 +101,14 @@ class SpadesGameComponent extends React.Component {
         }
       } else {
         return <div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { status("Waiting for other player to draw …") }
               </div>
             </c.Card>
           </div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Hand</h3>
@@ -121,7 +121,7 @@ class SpadesGameComponent extends React.Component {
     } else if (!this.state.game.interface.bidded) {
       if (this.state.game.interface.my_turn()) {
         return <div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 {status("Please place your bid:")}
@@ -140,7 +140,7 @@ class SpadesGameComponent extends React.Component {
           </div>
           {
             this.state.game.interface.data.peeked
-            ? <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+            ? <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
                 <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                   <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                     <h3>Hand</h3>
@@ -153,7 +153,7 @@ class SpadesGameComponent extends React.Component {
         </div>;
       } else {
         return <div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 {status("Waiting for bids …")}
@@ -168,7 +168,7 @@ class SpadesGameComponent extends React.Component {
           </div>
           {
             this.state.game.interface.data.peeked
-            ? <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+            ? <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
                 <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                   <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                     <h3>Hand</h3>
@@ -186,7 +186,7 @@ class SpadesGameComponent extends React.Component {
       if (this.state.game.interface.my_turn()) {
         var leading = !already_played || already_played >= num_players;
         return <div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 {status(leading ? (already_played ? "You took it, lead the next trick!" : "You lead off!") : already_played === 1 ? "This card was led" : "These cards have been played")}
@@ -198,7 +198,7 @@ class SpadesGameComponent extends React.Component {
               </div>
             </c.Card>
           </div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Hand</h3>
@@ -209,7 +209,7 @@ class SpadesGameComponent extends React.Component {
         </div>;
       } else {
         return <div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.played?.toImage() }
@@ -217,7 +217,7 @@ class SpadesGameComponent extends React.Component {
               </div>
             </c.Card>
           </div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Hand</h3>
