@@ -139,12 +139,15 @@ class SpadesGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   {status("You got this card:")}
-                  { this.state.game.interface.data.drawn?.toImage() }
-                  <CardImage/>
-                  <br />
-                  <Button label="Keep" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(true))} />
-                  &nbsp;&nbsp;
-                  <Button label="Take from deck" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(false))} />
+                  <div style={{ display: "inline-flex", flexDirection: "column", width: "min-content" }}>
+                    { this.state.game.interface.data.drawn.toImage() }
+                    <Button style={{ flexShrink: 1, flexGrow: 1 }} label="Keep" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(true))} />
+                  </div>
+                  &nbsp;&nbsp;&nbsp;&nbsp;
+                  <div style={{ display: "inline-flex", flexDirection: "column", width: "min-content" }}>
+                    <CardImage/>
+                    <Button style={{ flexShrink: 1, flexGrow: 1 }} label="Take from deck" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(false))} />
+                  </div>
                 </div>
               </c.Card>
             </div>
