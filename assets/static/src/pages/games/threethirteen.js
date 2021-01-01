@@ -1,6 +1,4 @@
 import React from 'react';
-import shallowEqual from 'shallow-eq';
-import mergeProps from 'react-merge-props';
 
 import '../../main.scss';
 
@@ -12,16 +10,11 @@ import { Button } from '@rmwc/button';
 import '@rmwc/card/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
-import { Select } from '@rmwc/select';
-import '@rmwc/select/styles';
 import { TextField } from '@rmwc/textfield';
 import '@rmwc/textfield/styles';
 
-import { ThreeThirteenGame } from '../../games/threethirteen.js';
 import { loadGame, addEv, notify } from '../games.js';
-import { UserCache, GameCache } from '../../utils/cache.js';
-
-import { CardImage, CardHand } from '../../games/card.js';
+import { UserCache } from '../../utils/cache.js';
 
 class ThreeThirteenGameComponent extends React.Component {
   constructor(props) {
@@ -39,6 +32,9 @@ class ThreeThirteenGameComponent extends React.Component {
         return state;
       });
     };
+  }
+  clearSelected() {
+    return this.setState(state => Object.assign({}, state, { selected: null }));
   }
   selecting(card) {
     return Object.assign(card, {
@@ -63,15 +59,13 @@ class ThreeThirteenGameComponent extends React.Component {
     this.setState(state => Object.assign({}, state, { "round_score": v }));
   }
   render() {
-    var big_status = a => <h2>{ a }</h2>;
-    var status = a => <h3>{ a }</h3>;
     var num_players = this.state.game.config.num_players;
 
     if (!this.state.game.interface.started) {
-      return status("Waiting for game to start …");
+      return <h3>Waiting for game to start …</h3>;
     } else if (this.state.game.interface.finished) {
       return <div>
-        {status("Finished")}
+        <h3>Finished</h3>
       </div>;
     } else if (!this.state.game.interface.dealt) {
       console.log(this.state.game.interface.data.dealer, this.props.user.id);
@@ -117,7 +111,7 @@ class ThreeThirteenGameComponent extends React.Component {
                     style: { transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" },
                   })
                 } <br />
-                <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.state.selected = null }} />
+              <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
               </div>
             </c.Card>
           </div>
@@ -140,7 +134,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 { this.state.game.interface.data.discard?.toImage() }
                 <h3>Score Your Hand</h3>
                 <TextField fullwidth type="number" label="Score" name="score" value={ this.state.round_score } onChange={ this.inputHandler.bind(this) } min="0" max="250" step="1" />
-                <Button label="Submit" unelevated ripple={false} onClick={() => { this.state.game.interface.score(this.state.round_score) ; this.state.round_score = null }} />
+                <Button label="Submit" unelevated ripple={false} onClick={ () => { this.state.game.interface.score(this.state.round_score) ; this.inputHandler({ target: { value: 0 } }) } } />
               </div>
             </c.Card>
           </div>
@@ -218,8 +212,8 @@ class ThreeThirteenGameComponent extends React.Component {
                     style: { transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" },
                   })
                 } <br />
-                <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.state.selected = null }} />
-                <Button label="Go Out" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.state.selected = null }} />
+                <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
+                <Button label="Go Out" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.clearSelected() }} />
               </div>
             </c.Card>
           </div>
@@ -240,7 +234,7 @@ class ThreeThirteenGameComponent extends React.Component {
             <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
               <h3>Discard Pile</h3>
               { this.state.game.interface.data.discard?.toImage() }
-              {status("Waiting for the other player" + (num_players < 3 ? "" : "s") + " to play …")}
+              <h3>Waiting for the other { "player" + (num_players < 3 ? "" : "s") } to play …</h3>
             </div>
           </c.Card>
         </div>
@@ -275,7 +269,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
-        if (player.player_index != -1) {
+        if (player.player_index !== -1) {
           new_state.indexed_players[player.player_index] = player;
         } else {
           new_state.spectators[player.user.id] = player;
@@ -310,6 +304,12 @@ class ThreeThirteenGameSynopsis extends React.Component {
       },
       "score":"Score",
     };
+    var spectator_columns = {
+      "user":{
+        name: "User",
+        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
+      },
+    };
 
     var tabulate = columns => data => {
       if (!data) return [null];
@@ -318,7 +318,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
         rows.push([]);
         for (let k in columns) {
           var printer = a => a;
-          if (typeof columns[k] === "object") var printer = columns[k].printer;
+          if (typeof columns[k] === "object") printer = columns[k].printer;
           rows[rows.length-1].push(<td key={ k }>{ printer(dat[k]) }</td>)
         }
       }
@@ -332,9 +332,11 @@ class ThreeThirteenGameSynopsis extends React.Component {
       headings.push(<th key={ k }>{ name }</th>);
     }
 
+    var remaining = [];
+
     var player_rows = [];
     if (this.state.indexed_players) {
-      var remaining = [];
+      remaining = [];
 
       for (let player_index of Object.keys(this.state.indexed_players).sort()) {
         let player = this.state.indexed_players[player_index];
@@ -346,14 +348,14 @@ class ThreeThirteenGameSynopsis extends React.Component {
 
     var spectator_rows = [];
     if (this.state.spectator_rows) {
-      var remaining = [];
+      remaining = [];
 
       for (let spectator_id of Object.keys(this.state.spectator_rows).sort()) {
         let player = this.state.spectator_rows[spectator_id];
         remaining.push(player);
       }
 
-      player_rows.push(...tabulate(synopsis_columns)(remaining));
+      player_rows.push(...tabulate(spectator_columns)(remaining));
     }
 
     var player_view = null;
@@ -364,6 +366,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
             { headings }
           </tr>
           { player_rows }
+          { spectator_rows }
         </tbody>
       </table>
     }

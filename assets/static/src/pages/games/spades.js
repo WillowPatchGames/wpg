@@ -1,6 +1,4 @@
 import React from 'react';
-import shallowEqual from 'shallow-eq';
-import mergeProps from 'react-merge-props';
 
 import '../../main.scss';
 
@@ -17,9 +15,7 @@ import '@rmwc/select/styles';
 
 import { SpadesGame } from '../../games/spades.js';
 import { loadGame, addEv, notify } from '../games.js';
-import { UserCache, GameCache } from '../../utils/cache.js';
-
-import { CardImage, CardHand } from '../../games/card.js';
+import { UserCache } from '../../utils/cache.js';
 
 class SpadesGameComponent extends React.Component {
   constructor(props) {
@@ -251,7 +247,7 @@ class SpadesGameSynopsis extends React.Component {
 
   if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
     for (let player of this.props.game.interface.synopsis.players) {
-      if (player.player_index != -1) {
+      if (player.player_index !== -1) {
         new_state.indexed_players[player.player_index] = player;
       } else {
         new_state.spectators[player.player_index] = player;
@@ -296,7 +292,7 @@ class SpadesGameSynopsis extends React.Component {
         rows.push([]);
         for (let k in columns) {
           var printer = a => a;
-          if (typeof columns[k] === "object") var printer = columns[k].printer;
+          if (typeof columns[k] === "object") printer = columns[k].printer;
           rows[rows.length-1].push(<td key={ k }>{ printer(dat[k]) }</td>)
         }
       }

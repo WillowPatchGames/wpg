@@ -43,7 +43,6 @@ import { ThreeThirteenGame } from '../games/threethirteen.js';
 import { ThreeThirteenGamePage } from './games/threethirteen.js';
 import { UserCache, GameCache } from '../utils/cache.js';
 import { gravatarify } from '../utils/gravatar.js';
-import { Lazy } from '../utils/lazy.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;

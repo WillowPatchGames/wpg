@@ -264,22 +264,6 @@ var ranks = {
   "king": 12,
 };
 ranks.rev = rev(ranks);
-var ungrid = (x,y) => {
-  var suit = suits.rev[y];
-  var rank = ranks.rev[x];
-  if (!suit) {
-    if (x === 0) {
-      suit = "black"; rank = "joker";
-    } else if (x === 1) {
-      suit = "red"; rank = "joker";
-    } else {
-      suit = rank = "";
-    }
-  } else if (!rank) {
-    suit = rank = "";
-  }
-  return { suit, rank };
-};
 var card_dim = [202.5,315];
 
 class CardImage extends React.Component {
