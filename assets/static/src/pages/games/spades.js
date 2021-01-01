@@ -157,17 +157,27 @@ class SpadesGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 {status("Waiting for bids …")}
+                <br />
+                {
+                  !this.state.game.interface.data.peeked
+                  ? <Button label="Peek at cards" raised ripple={false} onClick={() => this.state.game.interface.peek()} />
+                  : null
+                }
               </div>
             </c.Card>
           </div>
-          <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
-            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h3>Hand</h3>
-                { this.state.game.interface.data.hand?.toImage() }
+          {
+            this.state.game.interface.data.peeked
+            ? <div style={{ width: "80%" , margin: "0 auto 0.5em auto" }}>
+                <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+                  <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                    <h3>Hand</h3>
+                    { this.state.game.interface.data.hand?.toImage() }
+                  </div>
+                </c.Card>
               </div>
-            </c.Card>
-          </div>
+            : null
+          }
         </div>;
       }
     } else {
