@@ -420,13 +420,13 @@ func (ss *SpadesState) StartRound() error {
 		if !ss.Config.AddJokers {
 			found := ss.Deck.RemoveCard(TwoRank, ClubsSuit)
 			if !found {
-				log.Println("Error! Expected one two of clubs in standard deck, but wasn't found")
+				log.Println("Error! Expected one of the two of clubs in standard deck, but wasn't found")
 				return errors.New("bad deck of cards; no two of clubs to remove")
 			}
 
 			found = ss.Deck.RemoveCard(TwoRank, ClubsSuit)
 			if !found {
-				log.Println("Error! Expected one two of clubs in standard deck, but wasn't found")
+				log.Println("Error! Expected two of the two of clubs in standard deck, but wasn't found")
 				return errors.New("bad deck of cards; no two of clubs to remove")
 			}
 		} else {
@@ -434,7 +434,7 @@ func (ss *SpadesState) StartRound() error {
 		}
 	}
 
-	// Shuffling the deck assigns cards to each player.
+	// Shuffling the deck before assigning cards to players.
 	ss.Deck.Shuffle()
 
 	// Clear out all round-specific status before each round.
