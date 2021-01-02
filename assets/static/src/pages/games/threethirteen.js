@@ -74,7 +74,18 @@ class ThreeThirteenGameComponent extends React.Component {
 
     var previous_round_hands = [];
     if ((!this.state.game.interface.dealt || this.state.game.interface.laid_down) && this.state.game.interface.synopsis && this.state.game.interface.synopsis.players) {
-      for (let player of this.state.game.interface.synopsis.players) {
+      var index_mapping = {};
+      for (let array_index in this.state.game.interface.synopsis.players) {
+        var game_index = this.state.game.interface.synopsis.players[array_index].player_index;
+        if (game_index in index_mapping) {
+          console.log("Bad game! Different players have the same identifier!", this.state.game.interface.synopsis.players);
+        }
+
+        index_mapping[game_index] = array_index;
+      }
+
+      for (let game_index in Object.keys(index_mapping).sort()) {
+        var player = this.state.game.interface.synopsis.players[index_mapping[game_index]];
         if (player && player.hand && player.user && player.user.display) {
           previous_round_hands.push(
             <>
@@ -517,7 +528,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left scrollable-x">
-            <b>Three Thirteen</b> - Round { this.state.round } cards / { this.state.remaining } in Deck / { this.state.discarded } in Discard<br />
+            <b>Three Thirteen</b> - { this.state.round } cards / { this.state.remaining } cards remaining / { this.state.discarded } cards discarded<br />
             { player_view }
           </div>
         </c.Card>
