@@ -676,6 +676,10 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 		return errors.New("unable to play before bidding")
 	}
 
+	if card <= 0 {
+		return errors.New("need to specify a card")
+	}
+
 	index, found := ss.Players[player].FindCard(card)
 	if !found {
 		return errors.New("unable to play card not in hand")

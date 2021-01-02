@@ -408,6 +408,10 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		return errors.New("somebody already laid down before you")
 	}
 
+	if cardID <= 0 {
+		return errors.New("need to specify a card")
+	}
+
 	if cardID == tts.Players[player].Drawn.ID && tts.Players[player].PickedUpDiscard && tts.LaidDown == -1 {
 		// If the player discards the card they picked up from the discard, give
 		// them another change to make a move. Put the discard back and clear their
