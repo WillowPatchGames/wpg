@@ -35,6 +35,22 @@ func (ttp *ThreeThirteenPlayer) FindCard(cardID int) (int, bool) {
 	return -1, false
 }
 
+func (ttp *ThreeThirteenPlayer) RemoveCard(cardID int) bool {
+	index, found := ttp.FindCard(cardID)
+	if !found {
+		return false
+	}
+
+	var remaining []Card
+	if index > 0 {
+		remaining = ttp.Hand[:index]
+	}
+	remaining = append(remaining, ttp.Hand[index+1:]...)
+	ttp.Hand = remaining
+
+	return true
+}
+
 type ThreeThirteenConfig struct {
 	NumPlayers int `json:"num_players"` // 1 <= n <= 15; best with four-ish.
 
@@ -449,15 +465,10 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 
 	// Discard this card and remove it from the hand.
 	tts.Discard = append(tts.Discard, tts.Players[player].Hand[index].Copy())
+	tts.Players[player].RemoveCard(cardID)
 
-	var remaining []Card
-	if index > 0 {
-		remaining = tts.Players[player].Hand[:index]
-	}
-	remaining = append(remaining, tts.Players[player].Hand[index+1:]...)
-
-	// Add remaining and the drawn card back into the hand.
-	tts.Players[player].Hand = append(remaining, *tts.Players[player].Drawn)
+	// Add the drawn card into the hand.
+	tts.Players[player].Hand = append(tts.Players[player].Hand, *tts.Players[player].Drawn)
 	tts.Players[player].Drawn = nil
 
 	// Advanced the turn.
