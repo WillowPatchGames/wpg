@@ -474,7 +474,7 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 func (tts *ThreeThirteenState) HandleLayDown(player int) {
 	tts.LaidDown = player
 
-	for index, _ := range tts.Players {
+	for index := range tts.Players {
 		tts.Players[index].RoundScore = -1
 	}
 
@@ -528,7 +528,7 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 
 		if tts.Config.GolfScoring {
 			// When golfing, add everyones' score to themselves. Lowest score wins.
-			for index, _ := range tts.Players {
+			for index := range tts.Players {
 				tts.Players[index].Score += tts.Players[index].RoundScore
 
 				if tts.Players[index].Score > max_score {
@@ -537,7 +537,7 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 			}
 		} else {
 			// Otherwise, the player who goes out gets the sum of others' scores.
-			for index, _ := range tts.Players {
+			for index := range tts.Players {
 				tts.Players[tts.LaidDown].Score += tts.Players[index].RoundScore
 			}
 
@@ -575,7 +575,7 @@ func (tts *ThreeThirteenState) AssignWinner() {
 		min_score := tts.Players[0].Score
 		winner := 0
 
-		for index, _ := range tts.Players {
+		for index := range tts.Players {
 			if tts.Players[index].Score < min_score {
 				min_score = tts.Players[index].Score
 				winner = index
@@ -594,7 +594,7 @@ func (tts *ThreeThirteenState) AssignWinner() {
 	max_score := tts.Players[0].Score
 	winner := 0
 
-	for index, _ := range tts.Players {
+	for index := range tts.Players {
 		if tts.Players[index].Score > max_score {
 			max_score = tts.Players[index].Score
 			winner = index
