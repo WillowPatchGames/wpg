@@ -18,6 +18,7 @@ type SpadesGameState struct {
 	Dealer uint64 `json:"dealer"`
 
 	Played       []Card   `json:"played"`
+	WhoPlayed []uint64 `json:"who_played"`
 	SpadesBroken bool     `json:"spades_broken"`
 	History      [][]Card `json:"history"`
 
@@ -56,6 +57,14 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 	ssn.Dealer, _ = data.ToUserID(game.Dealer)
 
 	ssn.Played = game.Played
+
+	ssn.WhoPlayed = make([]uint64, 0)
+	for offset := 0; offset < len(game.Players); offset++ {
+		player_index := (game.Leader + offset) % len(game.Players)
+		player_uid, _ := data.ToUserID(player_index)
+		ssn.WhoPlayed = append(ssn.WhoPlayed, player_uid)
+	}
+
 	ssn.SpadesBroken = game.SpadesBroken
 
 	ssn.Config = game.Config
