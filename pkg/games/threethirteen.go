@@ -467,15 +467,18 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 
 func (tts *ThreeThirteenState) HandleLayDown(player int) {
 	tts.LaidDown = player
+
 	for index, _ := range tts.Players {
 		tts.Players[index].RoundScore = -1
 	}
 
-	for player_offset := 1; player_offset < len(tts.Players); player_offset++ {
-		player_index := (player + player_offset) % len(tts.Players)
-		tts.Players[player_index].Drawn = tts.Deck.Cards[0]
-		tts.Deck.Cards = tts.Deck.Cards[1:]
-		tts.Turn = player_index
+	if len(tts.Deck.Cards) >= len(tts.Players) - 1 {
+		for player_offset := 1; player_offset < len(tts.Players); player_offset++ {
+			player_index := (player + player_offset) % len(tts.Players)
+			tts.Players[player_index].Drawn = tts.Deck.Cards[0]
+			tts.Deck.Cards = tts.Deck.Cards[1:]
+			tts.Turn = player_index
+		}
 	}
 }
 

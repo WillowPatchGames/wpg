@@ -401,7 +401,13 @@ class ThreeThirteenGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { indexed_players: {}, spectators: {}, round: this.props.game.interface.data.round };
+    let new_state = {
+      indexed_players: {},
+      spectators: {},
+      round: this.props.game.interface.data.round,
+      remaining: this.props.game.interface.data.remaining,
+      discarded: this.props.game.interface.data.discarded,
+    };
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
@@ -511,7 +517,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left scrollable-x">
-            <b>Three Thirteen</b> - Round { this.state.round }<br />
+            <b>Three Thirteen</b> - Round { this.state.round } cards / { this.state.remaining } in Deck / { this.state.discarded } in Discard<br />
             { player_view }
           </div>
         </c.Card>

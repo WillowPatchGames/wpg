@@ -87,12 +87,18 @@ type ThreeThirteenSynopsisNotification struct {
 	MessageHeader
 
 	Players []ThreeThirteenPlayerSynopsis `json:"players"`
+
+	Remaining int `json:"remaining"`
+	Discarded int `json:"discarded"`
 	Round   int                           `json:"round"`
 }
 
 func (ttsn *ThreeThirteenSynopsisNotification) LoadData(data *GameData, state *ThreeThirteenState, player *PlayerData) {
 	ttsn.LoadHeader(data, player)
 	ttsn.MessageType = "synopsis"
+
+	ttsn.Remaining = len(state.Deck.Cards)
+	ttsn.Discarded = len(state.Discard)
 
 	ttsn.Round = state.Round
 
