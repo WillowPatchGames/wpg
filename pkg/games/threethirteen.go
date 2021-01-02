@@ -283,7 +283,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 	}
 
 	// Figure out how many decks we need.
-	num_decks := (tts.Config.NumPlayers * (tts.Config.MinDrawSize + max_round) + (deck_size - 1)) / (deck_size)
+	num_decks := (tts.Config.NumPlayers*(tts.Config.MinDrawSize+max_round) + (deck_size - 1)) / (deck_size)
 	if num_decks < 1 {
 		num_decks = 1
 	}
@@ -478,7 +478,7 @@ func (tts *ThreeThirteenState) HandleLayDown(player int) {
 		tts.Players[index].RoundScore = -1
 	}
 
-	if len(tts.Deck.Cards) >= len(tts.Players) - 1 {
+	if len(tts.Deck.Cards) >= len(tts.Players)-1 {
 		for player_offset := 1; player_offset < len(tts.Players); player_offset++ {
 			player_index := (player + player_offset) % len(tts.Players)
 			tts.Players[player_index].Drawn = tts.Deck.Cards[0]

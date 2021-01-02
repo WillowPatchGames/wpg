@@ -18,7 +18,7 @@ type SpadesGameState struct {
 	Dealer uint64 `json:"dealer"`
 
 	Played       []Card   `json:"played"`
-	WhoPlayed []uint64 `json:"who_played"`
+	WhoPlayed    []uint64 `json:"who_played"`
 	SpadesBroken bool     `json:"spades_broken"`
 	History      [][]Card `json:"history"`
 

@@ -90,7 +90,7 @@ type ThreeThirteenSynopsisNotification struct {
 
 	Remaining int `json:"remaining"`
 	Discarded int `json:"discarded"`
-	Round   int                           `json:"round"`
+	Round     int `json:"round"`
 }
 
 func (ttsn *ThreeThirteenSynopsisNotification) LoadData(data *GameData, state *ThreeThirteenState, player *PlayerData) {
