@@ -11,11 +11,15 @@ import (
 const EightJacksGameOver string = "game is over"
 
 func IsOneEyedJack(card Card) bool {
-	return card.Rank == JackRank && (card.Suit == HeartsSuit || card.Suit == SpadesSuit)
+	is_jack := card.Rank == JackRank && (card.Suit == HeartsSuit || card.Suit == SpadesSuit)
+	is_joker := card.Rank == JokerRank
+	return is_jack || is_joker
 }
 
 func IsTwoEyedJack(card Card) bool {
-	return card.Rank == JackRank && (card.Suit == DiamondsSuit || card.Suit == ClubsSuit)
+	is_jack := card.Rank == JackRank && (card.Suit == DiamondsSuit || card.Suit == ClubsSuit)
+	is_joker := card.Rank == JokerRank
+	return is_jack || is_joker
 }
 
 type EightJacksSquare struct {
