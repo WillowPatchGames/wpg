@@ -336,6 +336,8 @@ func (ss *SpadesState) Init(cfg SpadesConfig) error {
 	ss.Finished = false
 	ss.Winner = -1
 
+	ss.PreviousTricks = make([][]Card, 0)
+
 	return nil
 }
 
