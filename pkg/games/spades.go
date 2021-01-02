@@ -67,6 +67,22 @@ func (sp *SpadesPlayer) FindCard(cardID int) (int, bool) {
 	return -1, false
 }
 
+func (sp *SpadesPlayer) RemoveCard(cardID int) bool {
+	index, found := sp.FindCard(cardID)
+	if !found {
+		return false
+	}
+
+	var remaining []Card
+	if index > 0 {
+		remaining = sp.Hand[:index]
+	}
+	remaining = append(remaining, sp.Hand[index+1:]...)
+	sp.Hand = remaining
+
+	return true
+}
+
 type SpadesConfig struct {
 	NumPlayers      int  `json:"num_players"`       // 2 <= n <= 6; best with four.
 	Overtakes       bool `json:"overtakes"`         // No overtakes at all.
@@ -725,12 +741,7 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 		}
 	}
 
-	var remaining []Card
-	if index > 0 {
-		remaining = ss.Players[player].Hand[:index]
-	}
-	remaining = append(remaining, ss.Players[player].Hand[index+1:]...)
-	ss.Players[player].Hand = remaining
+	ss.Players[player].RemoveCard(card)
 	if ss.Turn == ss.Leader {
 		ss.Played = make([]Card, 0)
 	}

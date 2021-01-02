@@ -53,12 +53,16 @@ func (d *Deck) RemoveCard(rank CardRank, suit CardSuit) bool {
 func (d *Deck) Shuffle() {
 	// By shuffling, then assigning IDs, and then shuffling IDs, we get random
 	// identifier -> card assignments, and random order of IDs in a deck.
-	utils.SecureRand.Shuffle(len(d.Cards), func(i, j int) {
-		d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i]
-	})
+	missing_ids := d.Cards[0].ID == 0
 
-	for index, card := range d.Cards {
-		card.ID = index + 1
+	if missing_ids {
+		utils.SecureRand.Shuffle(len(d.Cards), func(i, j int) {
+			d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i]
+		})
+
+		for index, card := range d.Cards {
+			card.ID = index + 1
+		}
 	}
 
 	utils.SecureRand.Shuffle(len(d.Cards), func(i, j int) {

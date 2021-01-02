@@ -71,41 +71,53 @@ func (handle *CreateHandler) verifyRequest() error {
 
 	if handle.req.Config != nil {
 		if handle.req.Style == "rush" {
-			var rushConfig games.RushConfig
-			if err := rushConfig.LoadConfig(handle.req.Config); err != nil {
+			var config games.RushConfig
+			if err := config.LoadConfig(handle.req.Config); err != nil {
 				return err
 			}
 
-			err := rushConfig.Validate()
+			err := config.Validate()
 			if err != nil {
 				return err
 			}
 
-			handle.parsedConfig = &rushConfig
+			handle.parsedConfig = &config
 		} else if handle.req.Style == "spades" {
-			var spadesConfig games.SpadesConfig
-			if err := spadesConfig.LoadConfig(handle.req.Config); err != nil {
+			var config games.SpadesConfig
+			if err := config.LoadConfig(handle.req.Config); err != nil {
 				return err
 			}
 
-			err := spadesConfig.Validate()
+			err := config.Validate()
 			if err != nil {
 				return err
 			}
 
-			handle.parsedConfig = &spadesConfig
+			handle.parsedConfig = &config
 		} else if handle.req.Style == "three thirteen" {
-			var threethirteenConfig games.ThreeThirteenConfig
-			if err := threethirteenConfig.LoadConfig(handle.req.Config); err != nil {
+			var config games.ThreeThirteenConfig
+			if err := config.LoadConfig(handle.req.Config); err != nil {
 				return err
 			}
 
-			err := threethirteenConfig.Validate()
+			err := config.Validate()
 			if err != nil {
 				return err
 			}
 
-			handle.parsedConfig = &threethirteenConfig
+			handle.parsedConfig = &config
+		} else if handle.req.Style == "eight jacks" {
+			var config games.EightJacksConfig
+			if err := config.LoadConfig(handle.req.Config); err != nil {
+				return err
+			}
+
+			err := config.Validate()
+			if err != nil {
+				return err
+			}
+
+			handle.parsedConfig = &config
 		} else {
 			panic("Unknown game mode: " + handle.req.Style)
 		}
