@@ -405,8 +405,8 @@ class ThreeThirteenGameSynopsis extends React.Component {
       indexed_players: {},
       spectators: {},
       round: this.props.game.interface.data.round,
-      remaining: this.props.game.interface.data.remaining,
-      discarded: this.props.game.interface.data.discarded,
+      remaining: this.props.game.interface.synopsis.remaining,
+      discarded: this.props.game.interface.synopsis.discarded,
     };
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
