@@ -38,7 +38,7 @@ func (ttp *ThreeThirteenPlayer) FindCard(cardID int) (int, bool) {
 type ThreeThirteenConfig struct {
 	NumPlayers int `json:"num_players"` // 1 <= n <= 15; best with four-ish.
 
-	MinDrawSize int  `json:"min_draw_size"` // 8 <= n <= 20; minimum card count overhead per player -- used when calculating number of decks to use. Best with 7ish.
+	MinDrawSize int  `json:"min_draw_size"` // 13 <= n <= 40; minimum card count overhead per player -- used when calculating number of decks to use. Best with 7ish.
 	AddJokers   bool `json:"add_jokers"`    // Add jokers as a permanent wild cards, two per deck used.
 
 	AllowMostlyWild   bool `json:"allow_mostly_wild"`    // Allow groupings to have more wild cards than non-wild cards.
@@ -58,8 +58,8 @@ func (cfg ThreeThirteenConfig) Validate() error {
 		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 1 and 6"}
 	}
 
-	if cfg.MinDrawSize < 8 || cfg.MinDrawSize > 20 {
-		return GameConfigError{"minimum draw size", strconv.Itoa(cfg.MinDrawSize), "between 8 and 20"}
+	if cfg.MinDrawSize < 13 || cfg.MinDrawSize > 40 {
+		return GameConfigError{"minimum draw size", strconv.Itoa(cfg.MinDrawSize), "between 13 and 40"}
 	}
 
 	if cfg.LayingDownLimit < 0 || cfg.LayingDownLimit > 20 {
@@ -283,7 +283,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 	}
 
 	// Figure out how many decks we need.
-	num_decks := (tts.Config.NumPlayers * (tts.Config.MinDrawSize + max_round)) / (deck_size)
+	num_decks := (tts.Config.NumPlayers * (tts.Config.MinDrawSize + max_round) + (deck_size - 1)) / (deck_size)
 	if num_decks < 1 {
 		num_decks = 1
 	}
@@ -419,6 +419,12 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		tts.Discard = append(tts.Discard, tts.Players[player].Drawn)
 		tts.Players[player].Drawn = nil
 		return nil
+	}
+
+	// If we aren't going out and we're running out of cards, stop the game.
+	// Assign the current player as the leader.
+	if !laidDown && len(tts.Deck.Cards) <= len(tts.Players) {
+		laidDown = true
 	}
 
 	// Unlike in LayDown, we still advance the turn below. This isn't really

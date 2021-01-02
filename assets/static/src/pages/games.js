@@ -952,7 +952,7 @@ class CreateGameForm extends React.Component {
       additional_state = {
         initialized: true,
         num_players: have_game ? config.num_players : 4,
-        min_draw_size: have_game ? config.min_draw_size : 8,
+        min_draw_size: have_game ? config.min_draw_size : 14,
         add_jokers: have_game ? config.add_jokers : true,
         allow_mostly_wild: have_game ? config.allow_mostly_wild : false,
         allow_all_wild_cards: have_game ? config.allow_all_wild_cards : true,
