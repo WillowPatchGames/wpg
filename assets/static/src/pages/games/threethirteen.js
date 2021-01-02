@@ -97,6 +97,7 @@ class ThreeThirteenGameComponent extends React.Component {
       }
     }
 
+    var bottom = null;
     if (!this.state.game.interface.started) {
       return <h3>Waiting for game to start …</h3>;
     } else if (this.state.game.interface.finished) {
@@ -126,7 +127,6 @@ class ThreeThirteenGameComponent extends React.Component {
         </div>;
       }
 
-      var bottom = null;
       if (previous_round_hands) {
         bottom = <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
           <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
@@ -190,7 +190,6 @@ class ThreeThirteenGameComponent extends React.Component {
           </div>
         </div>;
       } else if (this.state.game.interface.data.round_score === -1) {
-        var bottom = null;
         if (previous_round_hands && previous_round_hands.length > 0) {
           bottom = <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
@@ -234,7 +233,7 @@ class ThreeThirteenGameComponent extends React.Component {
           { bottom }
         </div>;
       } else {
-        var bottom = <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+        bottom = <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
           <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
             <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
               <h3>Hand</h3>
