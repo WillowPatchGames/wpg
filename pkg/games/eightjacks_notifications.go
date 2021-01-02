@@ -133,30 +133,15 @@ func (ejsn *EightJacksSynopsisNotification) LoadData(data *GameData, state *Eigh
 	}
 }
 
-type EightJacksBidNotification struct {
-	MessageHeader
-
-	Bidder uint64 `json:"bidder"`
-	Bidded int    `json:"bidded"`
-}
-
-func (sbn *EightJacksBidNotification) LoadFromController(data *GameData, player *PlayerData, bidder uint64, value int) {
-	sbn.LoadHeader(data, player)
-	sbn.MessageType = "bid"
-
-	sbn.Bidder = bidder
-	sbn.Bidded = value
-}
-
 type EightJacksFinishedNotification struct {
 	MessageHeader
 
 	Winner uint64 `json:"winner"`
 }
 
-func (swn *EightJacksFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
-	swn.LoadHeader(data, player)
-	swn.MessageType = "finished"
+func (ejwn *EightJacksFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+	ejwn.LoadHeader(data, player)
+	ejwn.MessageType = "finished"
 
-	swn.Winner = winner
+	ejwn.Winner = winner
 }
