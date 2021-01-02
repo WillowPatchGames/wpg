@@ -963,6 +963,19 @@ class CreateGameForm extends React.Component {
         to_point_limit: have_game ? config.to_point_limit : -1,
         golf_scoring: have_game ? config.golf_scoring : true,
       };
+    } else if (style === 'eight jacks') {
+      additional_state = {
+        initialized: true,
+        num_players: have_game ? config.num_players : 4,
+        run_length: have_game ? config.run_length : 4,
+        win_limit: have_game ? config.win_limit : 3,
+        board_width: have_game ? config.board_width : 9,
+        board_height: have_game ? config.board_height : 9,
+        remove_unused: have_game ? config.remove_unused : true,
+        wild_corners: have_game ? config.wild_corners : true,
+        hand_size: have_game ? config.hand_size : 5,
+        joker_count: have_game ? config.joker_count : 4,
+      };
     } else {
       console.log("Unknown game style: " + style, game, this.state, this.props);
     }
@@ -984,6 +997,8 @@ class CreateGameForm extends React.Component {
       return this.spadesToObject();
     } else if (this.state.mode === 'three thirteen') {
       return this.threethirteenToObject();
+    } else if (this.state.mode === 'eight jacks') {
+      return this.eightjacksToObject();
     } else {
       console.log("Unknown game style: " + this.state.mode, this.state);
     }
@@ -1038,6 +1053,20 @@ class CreateGameForm extends React.Component {
       'with_fourteenth_round': this.state.with_fourteenth_round,
       'to_point_limit': +this.state.to_point_limit,
       'golf_scoring': this.state.golf_scoring,
+    };
+  }
+
+  eightjacksToObject() {
+    return {
+      'num_players': +this.state.num_players,
+      'run_length': +this.state.run_length,
+      'win_limit': +this.state.win_limit,
+      'board_width': +this.state.board_width,
+      'board_height': +this.state.board_height,
+      'remove_unused': this.state.remove_unused,
+      'wild_corners': this.state.wild_corners,
+      'hand_size': +this.state.hand_size,
+      'joker_count': +this.state.joker_count,
     };
   }
 
@@ -1349,6 +1378,43 @@ class CreateGameForm extends React.Component {
     );
   }
 
+  renderEightJacks() {
+    return (
+      <>
+        <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="8" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Run Length" name="run_length" value={ this.state.run_length } onChange={ this.inputHandler("run_length") } min="4" max="6" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Win Limit" name="win_limit" value={ this.state.win_limit } onChange={ this.inputHandler("win_limit") } min="1" max="5" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>Board Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Board Width" name="board_width" value={ this.state.board_width } onChange={ this.inputHandler("board_width") } min="8" max="10" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Board Height" name="board_height" value={ this.state.board_height } onChange={ this.inputHandler("board_height") } min="8" max="10" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("remove_unused") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.remove_unused ? "Remove Cards not Used on the Board from the Deck" : "Keep All Cards (Even Those Not Present on the Board)" } name="remove_unused" checked={ this.state.remove_unused } onChange={ () => this.toggle("remove_unused", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("wild_corners") } disabled={ !this.state.editable }>
+          <Switch label={ this.state.wild_corners ? "Add Wild Cards in the Corners" : "Don't Fill In Corners with Wild Cards" } name="wild_corners" checked={ this.state.wild_corners } onChange={ () => this.toggle("wild_corners", true) } disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListGroupSubheader>Hand Options</l.ListGroupSubheader>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Hand Size" name="hand_size" value={ this.state.hand_size } onChange={ this.inputHandler("hand_size") } min="4" max="10" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+        <l.ListItem disabled>
+          <TextField fullwidth type="number" label="Joker Count" name="joker_count" value={ this.state.joker_count } onChange={ this.inputHandler("joker_count") } min="0" max="10" step="1" disabled={ !this.state.editable } />
+        </l.ListItem>
+      </>
+    );
+  }
+
   render() {
     var messages = {
       'rush': "In Rush, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!",
@@ -1362,6 +1428,8 @@ class CreateGameForm extends React.Component {
       config = this.renderSpades();
     } else if (this.state.mode === 'three thirteen') {
       config = this.renderThreeThirteen();
+    } else if (this.state.mode === 'eight jacks') {
+      config = this.renderEightJacks();
     } else if (this.state.mode !== null) {
       console.log("Unknown game mode: " + this.state.mode, this.state);
     }
@@ -1397,6 +1465,10 @@ class CreateGameForm extends React.Component {
                     {
                       label: 'Three Thirteen (Card Game)',
                       value: 'three thirteen',
+                    },
+                    {
+                      label: 'Eight Jacks (Card Game)',
+                      value: 'eight jacks',
                     },
                   ]
                 } />
