@@ -246,8 +246,19 @@ class Card {
     }
   }
 
-  toImage(props) {
-    return <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />;
+  toImage(props, annotation) {
+    if (!annotation) {
+      return <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />;
+    }
+
+    return <div style={{ display: "inline-block" }}>
+      <div style={{ marginBottom: "2px" }}>
+        { annotation }
+      </div>
+      <div>
+        <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />
+      </div>
+    </div>
   }
 
   serialize() {
@@ -352,7 +363,7 @@ class CardHand {
     return null;
   }
 
-  toImage(mapper, props) {
+  toImage(mapper, props, annotations) {
     var cards = this.cards;
     if (mapper && typeof mapper !== 'function' && !props) {
       props = mapper;
@@ -418,7 +429,8 @@ class CardHand {
             marginRight: overlap ? -overlap*card_dim[0]*scale/2 : 0,
           },
           onClick: card.onClick,
-        })
+        },
+        annotations ? annotations[i] : null)
       )}
     </div>);
   }
@@ -437,6 +449,7 @@ class CardHand {
     }
 
     this.cards = sorted;
+    return this;
   }
 
   serialize() {
