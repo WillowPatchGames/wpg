@@ -112,6 +112,11 @@ func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *
 		err = state.PlayCard(player.Index, data.CardID)
 		send_synopsis = true
 		send_state = true
+	case "peek":
+		var response HeartsPeekNotification
+		response.LoadData(game, state, player)
+		response.ReplyTo = header.MessageID
+		c.undispatch(game, player, response.MessageID, header.MessageID, response)
 	default:
 		return errors.New("unknown message_type issued to hearts game: " + header.MessageType)
 	}

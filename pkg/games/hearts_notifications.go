@@ -37,50 +37,59 @@ type HeartsStateNotification struct {
 	HeartsGameState
 }
 
-func (ssn *HeartsStateNotification) LoadData(data *GameData, game *HeartsState, player *PlayerData) {
-	ssn.LoadHeader(data, player)
-	ssn.MessageType = "state"
+func (hsn *HeartsStateNotification) LoadData(data *GameData, game *HeartsState, player *PlayerData) {
+	hsn.LoadHeader(data, player)
+	hsn.MessageType = "state"
 
-	ssn.Hand = game.Players[player.Index].Hand
-	ssn.HavePassed = game.Players[player.Index].Passed
-	if ssn.HavePassed {
-		ssn.Incoming = game.Players[player.Index].Incoming
+	hsn.Hand = game.Players[player.Index].Hand
+	hsn.HavePassed = game.Players[player.Index].Passed
+	if hsn.HavePassed {
+		hsn.Incoming = game.Players[player.Index].Incoming
 	}
 
-	ssn.Tricks = game.Players[player.Index].Tricks
-	ssn.RoundScore = game.Players[player.Index].RoundScore
-	ssn.Score = game.Players[player.Index].Score
+	hsn.Tricks = game.Players[player.Index].Tricks
+	hsn.RoundScore = game.Players[player.Index].RoundScore
+	hsn.Score = game.Players[player.Index].Score
 
-	ssn.Turn, _ = data.ToUserID(game.Turn)
-	ssn.Leader, _ = data.ToUserID(game.Leader)
-	ssn.Dealer, _ = data.ToUserID(game.Dealer)
+	hsn.Turn, _ = data.ToUserID(game.Turn)
+	hsn.Leader, _ = data.ToUserID(game.Leader)
+	hsn.Dealer, _ = data.ToUserID(game.Dealer)
 
-	ssn.PassDirection = game.PassDirection
-	ssn.Played = game.Played
+	hsn.PassDirection = game.PassDirection
+	hsn.Played = game.Played
 
-	ssn.WhoPlayed = make([]uint64, 0)
+	hsn.WhoPlayed = make([]uint64, 0)
 	for offset := 0; offset < len(game.Players); offset++ {
 		player_index := (game.Leader + offset) % len(game.Players)
 		player_uid, _ := data.ToUserID(player_index)
-		ssn.WhoPlayed = append(ssn.WhoPlayed, player_uid)
+		hsn.WhoPlayed = append(hsn.WhoPlayed, player_uid)
 	}
 
-	ssn.HeartsBroken = game.HeartsBroken
+	hsn.HeartsBroken = game.HeartsBroken
 
-	ssn.Crib = game.Crib
-	ssn.Config = game.Config
+	// Sometimes the crib isn't really visible, because it gets removed too
+	// quickly.
+	hsn.Crib = game.Crib
+	if len(game.RoundHistory) > 0 {
+		this_round := len(game.RoundHistory) - 1
+		if len(game.RoundHistory[this_round].Tricks) > 1 {
+			hsn.Crib = nil
+		}
+	}
 
-	ssn.Started = game.Started
-	ssn.Dealt = game.Dealt
-	ssn.Passed = game.Passed
-	ssn.Finished = game.Finished
+	hsn.Config = game.Config
+
+	hsn.Started = game.Started
+	hsn.Dealt = game.Dealt
+	hsn.Passed = game.Passed
+	hsn.Finished = game.Finished
 
 	if len(game.PreviousTricks) >= 1 {
 		last_trick := game.PreviousTricks[len(game.PreviousTricks)-1]
 		if len(last_trick) >= 1 {
 			last_card := last_trick[len(last_trick)-1]
-			ssn.History = make([][]Card, 1)
-			ssn.History[0] = append(ssn.History[0], last_card)
+			hsn.History = make([][]Card, 1)
+			hsn.History[0] = append(hsn.History[0], last_card)
 		}
 	}
 }
@@ -107,9 +116,9 @@ type HeartsSynopsisNotification struct {
 	PassDirection HeartsPassDirection `json:"pass_direction"` // Direction to pass cards.
 }
 
-func (ssn *HeartsSynopsisNotification) LoadData(data *GameData, state *HeartsState, player *PlayerData) {
-	ssn.LoadHeader(data, player)
-	ssn.MessageType = "synopsis"
+func (hsn *HeartsSynopsisNotification) LoadData(data *GameData, state *HeartsState, player *PlayerData) {
+	hsn.LoadHeader(data, player)
+	hsn.MessageType = "synopsis"
 
 	for _, indexed_player := range data.ToPlayer {
 		var synopsis HeartsPlayerSynopsis
@@ -127,23 +136,83 @@ func (ssn *HeartsSynopsisNotification) LoadData(data *GameData, state *HeartsSta
 			synopsis.Score = state.Players[indexed_player.Index].Score
 		}
 
-		ssn.Players = append(ssn.Players, synopsis)
+		hsn.Players = append(hsn.Players, synopsis)
 	}
+
+	hsn.PassDirection = state.PassDirection
 }
 
-type HeartsBidNotification struct {
+type HeartsPeekNotification struct {
 	MessageHeader
 
-	Bidder uint64 `json:"bidder"`
-	Bidded int    `json:"bidded"`
+	PlayerMapping []uint64 `json:"player_mapping"`
+
+	// Info for Ended Games
+	RoundHistory []*HeartsRound `json:"round_history"`
+
+	// Info for Active Games
+	Turn   uint64 `json:"turn"`
+	Leader uint64 `json:"leader"`
+	Dealer uint64 `json:"dealer"`
+
+	PassDirection HeartsPassDirection `json:"pass_direction"` // Direction to pass cards.
+	Played        []Card              `json:"played,omitempty"`
+	WhoPlayed     []uint64            `json:"who_played,omitempty"`
+	HeartsBroken  bool                `json:"hearts_broken"`
+	PlayedHistory [][]Card            `json:"played_history,omitempty"`
+
+	Started  bool `json:"started"`
+	Dealt    bool `json:"dealt"`
+	Passed   bool `json:"passed"`
+	Finished bool `json:"finished"`
+
+	Winner uint64 `json:"winner"`
 }
 
-func (sbn *HeartsBidNotification) LoadFromController(data *GameData, player *PlayerData, bidder uint64, value int) {
-	sbn.LoadHeader(data, player)
-	sbn.MessageType = "bid"
+func (hpn *HeartsPeekNotification) LoadData(data *GameData, game *HeartsState, player *PlayerData) {
+	hpn.LoadHeader(data, player)
+	hpn.MessageType = "peek"
 
-	sbn.Bidder = bidder
-	sbn.Bidded = value
+	for index := range game.Players {
+		player_uid, _ := data.ToUserID(index)
+		hpn.PlayerMapping = append(hpn.PlayerMapping, player_uid)
+	}
+
+	if !game.Finished {
+		hpn.Turn, _ = data.ToUserID(game.Turn)
+		hpn.Leader, _ = data.ToUserID(game.Leader)
+		hpn.Dealer, _ = data.ToUserID(game.Dealer)
+
+		hpn.PassDirection = game.PassDirection
+		hpn.Played = game.Played
+
+		hpn.WhoPlayed = make([]uint64, 0)
+		for offset := 0; offset < len(game.Players); offset++ {
+			player_index := (game.Leader + offset) % len(game.Players)
+			player_uid, _ := data.ToUserID(player_index)
+			hpn.WhoPlayed = append(hpn.WhoPlayed, player_uid)
+		}
+
+		hpn.HeartsBroken = game.HeartsBroken
+
+		if len(game.PreviousTricks) >= 1 {
+			last_trick := game.PreviousTricks[len(game.PreviousTricks)-1]
+			if len(last_trick) >= 1 {
+				last_card := last_trick[len(last_trick)-1]
+				hpn.PlayedHistory = make([][]Card, 1)
+				hpn.PlayedHistory[0] = append(hpn.PlayedHistory[0], last_card)
+			}
+		}
+	} else {
+		hpn.RoundHistory = game.RoundHistory
+	}
+
+	hpn.Started = game.Started
+	hpn.Dealt = game.Dealt
+	hpn.Passed = game.Passed
+	hpn.Finished = game.Finished
+
+	hpn.Winner, _ = data.ToUserID(game.Winner)
 }
 
 type HeartsFinishedNotification struct {
@@ -152,9 +221,9 @@ type HeartsFinishedNotification struct {
 	Winner uint64 `json:"winner"`
 }
 
-func (swn *HeartsFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
-	swn.LoadHeader(data, player)
-	swn.MessageType = "finished"
+func (hwn *HeartsFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+	hwn.LoadHeader(data, player)
+	hwn.MessageType = "finished"
 
-	swn.Winner = winner
+	hwn.Winner = winner
 }
