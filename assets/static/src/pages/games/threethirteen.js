@@ -13,7 +13,7 @@ import '@rmwc/button/styles';
 import { TextField } from '@rmwc/textfield';
 import '@rmwc/textfield/styles';
 
-import { loadGame, addEv, notify } from '../games.js';
+import { loadGame, addEv, notify, killable } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 import { CardImage } from '../../games/card.js';
 
@@ -613,6 +613,24 @@ class ThreeThirteenGamePage extends React.Component {
   }
 }
 
+class ThreeThirteenAfterPartyPage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+  }
+
+  render() {
+    return (
+      <div>
+        <ThreeThirteenGameSynopsis game={ this.game } {...this.props} />
+      </div>
+    );
+  }
+}
+
 export {
   ThreeThirteenGamePage,
+  ThreeThirteenAfterPartyPage,
 };

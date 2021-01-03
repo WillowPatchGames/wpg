@@ -17,7 +17,7 @@ import '@rmwc/circular-progress/styles';
 
 import { SpadesGame } from '../../games/spades.js';
 import { CardSuit, CardImage } from '../../games/card.js';
-import { loadGame, addEv, notify } from '../games.js';
+import { loadGame, addEv, notify, killable } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 
 class SpadesGameComponent extends React.Component {
@@ -508,6 +508,24 @@ class SpadesGamePage extends React.Component {
   }
 }
 
+class SpadesAfterPartyPage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+  }
+
+  render() {
+    return (
+      <div>
+        <SpadesGameSynopsis game={ this.game } {...this.props} />
+      </div>
+    );
+  }
+}
+
 export {
   SpadesGamePage,
+  SpadesAfterPartyPage,
 }

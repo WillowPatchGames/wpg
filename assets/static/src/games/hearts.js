@@ -8,7 +8,6 @@ import {
 
 import {
   CardHand,
-  Card,
 } from './card.js';
 
 class HeartsController {
@@ -136,7 +135,10 @@ class HeartsGame {
     }
     this.data.hearts_broken = message?.hearts_broken;
     this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
-    this.data.crib = message?.crib;
+    this.data.crib = message?.crib ? CardHand.deserialize(message.crib) : null;
+    if (this.data.crib != null) {
+      this.data.crib.cardSort(true, true);
+    }
     this.data.config = message?.config;
 
     this.onChange(this);

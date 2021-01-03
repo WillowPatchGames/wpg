@@ -10,14 +10,11 @@ import { Button } from '@rmwc/button';
 import '@rmwc/card/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
-import { Select } from '@rmwc/select';
-import '@rmwc/select/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
 
-import { HeartsGame } from '../../games/hearts.js';
-import { CardSuit, CardImage } from '../../games/card.js';
-import { loadGame, addEv, notify } from '../games.js';
+import { CardSuit } from '../../games/card.js';
+import { loadGame, addEv, notify, killable } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 
 class HeartsGameComponent extends React.Component {
@@ -177,6 +174,8 @@ class HeartsGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.incoming ? status("Incoming Cards") : null }
                 { this.state.game.interface.data.incoming?.toImage(handProps) }
+                { this.state.game.interface.data.crib ? status("Crib (First Trick)") : null }
+                { this.state.game.interface.data.crib?.toImage(handProps) }
                 {status(leading ? (already_played ? "You took it, lead the next trick!" : "You lead off!") : already_played === 1 ? "This card was led" : "These cards have been played")}
                 { this.state.game.interface.data.played?.toImage() }
                 {big_status("Your turn to play")}
@@ -202,7 +201,9 @@ class HeartsGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.incoming ? status("Incoming Cards") : null }
                 { this.state.game.interface.data.incoming?.toImage(handProps) }
-                { status(this.state.game.interface.data.played.cards.length == num_players ? "Last Trick" : "Current Trick") }
+                { this.state.game.interface.data.crib ? status("Crib (First Trick)") : null }
+                { this.state.game.interface.data.crib?.toImage(handProps) }
+                { status(this.state.game.interface.data.played.cards.length === num_players ? "Last Trick" : "Current Trick") }
                 { this.state.game.interface.data.played?.toImage() }
                 {status("Waiting for the other player" + (num_players < 3 ? "" : "s") + " to play …")}
               </div>
@@ -441,6 +442,24 @@ class HeartsGamePage extends React.Component {
   }
 }
 
+class HeartsAfterPartyPage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+  }
+
+  render() {
+    return (
+      <div>
+        <HeartsGameSynopsis game={ this.game } {...this.props} />
+      </div>
+    );
+  }
+}
+
 export {
   HeartsGamePage,
+  HeartsAfterPartyPage,
 }
