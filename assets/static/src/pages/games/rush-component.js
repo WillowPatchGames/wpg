@@ -2,7 +2,7 @@ import React from 'react';
 import shallowEqual from 'shallow-eq';
 import mergeProps from 'react-merge-props';
 
-import './main.scss';
+import '../../main.scss';
 
 import { Button } from '@rmwc/button';
 import { CircularProgress } from '@rmwc/circular-progress';
@@ -24,7 +24,7 @@ var PADDING = [7,7];
 var SIZE = 35;
 var ALLOW_SCALE = false;
 
-class Game extends React.Component {
+class RushGameComponent extends React.Component {
   constructor(props) {
     super(props);
 
@@ -1107,6 +1107,6 @@ class Drag extends React.Component {
 }
 
 export {
-  Game,
+  RushGameComponent,
   Drag,
 }
