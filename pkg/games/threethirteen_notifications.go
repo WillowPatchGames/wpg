@@ -53,6 +53,9 @@ func (ttsn *ThreeThirteenStateNotification) LoadData(data *GameData, game *Three
 		ttsn.LaidDownID, _ = data.ToUserID(game.LaidDown)
 	}
 
+	if len(game.Discard) >= 3 {
+		ttsn.Discard = append(ttsn.Discard, *game.Discard[len(game.Discard)-3])
+	}
 	if len(game.Discard) >= 2 {
 		ttsn.Discard = append(ttsn.Discard, *game.Discard[len(game.Discard)-2])
 	}
