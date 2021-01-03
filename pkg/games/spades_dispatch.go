@@ -120,7 +120,7 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		err = state.DecideTop(player.Index, data.Keep)
 		send_synopsis = err == nil
 		send_state = err == nil
-	case "peek":
+	case "look":
 		err = state.PeekCards(player.Index)
 		send_synopsis = err == nil
 
@@ -149,6 +149,19 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		err = state.PlayCard(player.Index, data.CardID)
 		send_synopsis = true
 		send_state = true
+	case "peek":
+		if player.Index != -1 && !state.Finished {
+			return errors.New("can only peek once game is complete")
+		}
+
+		var response SpadesPeekNotification
+		response.LoadData(game, state, player)
+		response.ReplyTo = header.MessageID
+		c.undispatch(game, player, response.MessageID, header.MessageID, response)
+
+		var synopsis SpadesSynopsisNotification
+		synopsis.LoadData(game, state, player)
+		c.undispatch(game, player, synopsis.MessageID, 0, synopsis)
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}

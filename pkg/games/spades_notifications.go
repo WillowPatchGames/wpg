@@ -151,6 +151,79 @@ func (sbn *SpadesBidNotification) LoadFromController(data *GameData, player *Pla
 	sbn.Bidded = value
 }
 
+type SpadesPeekNotification struct {
+	MessageHeader
+
+	PlayerMapping []uint64 `json:"player_mapping"`
+
+	// Info for Ended Games (Everyone)
+	RoundHistory []*SpadesRound `json:"round_history"`
+
+	// Info for Active Games (Spectators)
+	Turn   uint64 `json:"turn"`
+	Leader uint64 `json:"leader"`
+	Dealer uint64 `json:"dealer"`
+
+	Played        []Card   `json:"played,omitempty"`
+	WhoPlayed     []uint64 `json:"who_played,omitempty"`
+	SpadesBroken  bool     `json:"spades_broken"`
+	PlayedHistory [][]Card `json:"played_history,omitempty"`
+
+	Started  bool `json:"started"`
+	Dealt    bool `json:"dealt"`
+	Split    bool `json:"split"`
+	Finished bool `json:"finished"`
+
+	Winner uint64 `json:"winner"`
+}
+
+func (spn *SpadesPeekNotification) LoadData(data *GameData, game *SpadesState, player *PlayerData) {
+	spn.LoadHeader(data, player)
+	spn.MessageType = "game-state"
+
+	for index := range game.Players {
+		player_uid, _ := data.ToUserID(index)
+		spn.PlayerMapping = append(spn.PlayerMapping, player_uid)
+	}
+
+	if !game.Finished {
+		spn.Turn, _ = data.ToUserID(game.Turn)
+		spn.Leader, _ = data.ToUserID(game.Leader)
+		spn.Dealer, _ = data.ToUserID(game.Dealer)
+
+		spn.Played = game.Played
+
+		spn.WhoPlayed = make([]uint64, 0)
+		for offset := 0; offset < len(game.Players); offset++ {
+			player_index := (game.Leader + offset) % len(game.Players)
+			player_uid, _ := data.ToUserID(player_index)
+			spn.WhoPlayed = append(spn.WhoPlayed, player_uid)
+		}
+
+		spn.SpadesBroken = game.SpadesBroken
+
+		if len(game.PreviousTricks) >= 1 {
+			last_trick := game.PreviousTricks[len(game.PreviousTricks)-1]
+			if len(last_trick) >= 1 {
+				last_card := last_trick[len(last_trick)-1]
+				spn.PlayedHistory = make([][]Card, 1)
+				spn.PlayedHistory[0] = append(spn.PlayedHistory[0], last_card)
+			}
+		}
+
+		spn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+	} else {
+		spn.RoundHistory = game.RoundHistory
+	}
+
+	spn.Started = game.Started
+	spn.Dealt = game.Dealt
+	spn.Split = game.Split
+	spn.Finished = game.Finished
+
+	spn.Winner, _ = data.ToUserID(game.Winner)
+}
+
 type SpadesFinishedNotification struct {
 	MessageHeader
 

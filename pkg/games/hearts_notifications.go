@@ -147,10 +147,10 @@ type HeartsPeekNotification struct {
 
 	PlayerMapping []uint64 `json:"player_mapping"`
 
-	// Info for Ended Games
+	// Info for Ended Games (Everyone)
 	RoundHistory []*HeartsRound `json:"round_history"`
 
-	// Info for Active Games
+	// Info for Active Games (Spectators)
 	Turn   uint64 `json:"turn"`
 	Leader uint64 `json:"leader"`
 	Dealer uint64 `json:"dealer"`
@@ -203,6 +203,9 @@ func (hpn *HeartsPeekNotification) LoadData(data *GameData, game *HeartsState, p
 				hpn.PlayedHistory[0] = append(hpn.PlayedHistory[0], last_card)
 			}
 		}
+
+		// Allow spectators to see previous rounds before the game has ended.
+		hpn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
 	} else {
 		hpn.RoundHistory = game.RoundHistory
 	}
