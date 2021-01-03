@@ -114,12 +114,22 @@ class HeartsGameComponent extends React.Component {
         {status("Finished")}
       </div>;
     } else if (!this.state.game.interface.passed) {
+      var pass_direction = "nowhere";
+      if (this.props.game.interface.synopsis) {
+        if (this.props.game.interface.synopsis.pass_direction === 0) {
+          pass_direction = "left";
+        } else if (this.props.game.interface.synopsis.pass_direction === 1) {
+          pass_direction = "right";
+        } else if (this.props.game.interface.synopsis.pass_direction === 2) {
+          pass_direction = "accross";
+        }
+      }
       if (!this.state.game.interface.data.have_passed) {
         return <div>
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                {status("Please select " + this.state.game.config.number_to_pass + " cards to pass:")}
+                {status("Please select " + this.state.game.config.number_to_pass + " cards to pass " + pass_direction + ":")}
                 <Button label="Pass" raised ripple={false} onClick={this.clearSelectAnd(() =>
                   this.state.game.interface.pass(Array.from(this.state.pass_select)))
                 }/>
@@ -280,13 +290,9 @@ class HeartsGameSynopsis extends React.Component {
         name: "Dealer",
         printer: a => a ? sigil("♠") : "",
       },
-      "pass":{
-        name: "Bid",
-        printer: a => a === 0 ? "–" : a >= 19 ? HeartsGame.pass_names[a] : ""+a,
-      },
       "tricks":"Tricks",
+      "round_score":"Round Score",
       "score":"Score",
-      "overtakes":"Overtakes",
     };
 
     var tabulate = columns => data => {
@@ -334,11 +340,22 @@ class HeartsGameSynopsis extends React.Component {
       </table>
     }
 
+    var pass_direction = "Holding";
+    if (this.props.game.interface.synopsis) {
+      if (this.props.game.interface.synopsis.pass_direction === 0) {
+        pass_direction = "Passing Left";
+      } else if (this.props.game.interface.synopsis.pass_direction === 1) {
+        pass_direction = "Passing Right";
+      } else if (this.props.game.interface.synopsis.pass_direction === 2) {
+        pass_direction = "Passing Accross";
+      }
+    }
+
     return (
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left scrollable-x">
-            <b>Hearts</b>
+            <b>Hearts</b> - { pass_direction }
             { player_view }
           </div>
         </c.Card>

@@ -1059,7 +1059,7 @@ func (hs *HeartsState) scoreSingle(player int) {
 		hand_value *= 2
 	}
 
-	if !took_trick {
+	if !took_trick && hs.Config.NoTrickBonus {
 		hand_value = -5
 	}
 

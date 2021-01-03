@@ -103,6 +103,8 @@ type HeartsSynopsisNotification struct {
 	MessageHeader
 
 	Players []HeartsPlayerSynopsis `json:"players"`
+
+	PassDirection HeartsPassDirection `json:"pass_direction"` // Direction to pass cards.
 }
 
 func (ssn *HeartsSynopsisNotification) LoadData(data *GameData, state *HeartsState, player *PlayerData) {
