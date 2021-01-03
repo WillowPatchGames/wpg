@@ -90,23 +90,8 @@ class ThreeThirteenController {
 // and unless there's a network glitch (in which case server wins anyways),
 // the data always aligns after the message is confirmed by the server.
 class ThreeThirteenData {
-  constructor(game, hand, drawn, picked_up_discard, round_score, score, turn, dealer, discard, round, config) {
+  constructor(game) {
     this.game = game;
-
-    this.hand = hand;
-    this.drawn = drawn;
-    this.picked_up_discard = picked_up_discard;
-
-    this.round_score = round_score;
-    this.score = score;
-
-    this.turn = turn;
-    this.dealer = dealer;
-
-    this.discard = discard;
-    this.round = round;
-
-    this.config = config;
   }
 }
 

@@ -247,7 +247,7 @@ class SpadesGameComponent extends React.Component {
       }
     } else {
       var already_played = +this.state.game.interface.data.played.cards.length;
-      var num_players = +this.state.game.interface.data.config.num_players;
+      var num_players = +this.state.game.config.num_players;
       if (this.state.game.interface.my_turn()) {
         var leading = !already_played || already_played >= num_players;
         return <div>
@@ -325,7 +325,7 @@ class SpadesGameSynopsis extends React.Component {
       var i = this.props.game.interface;
       if (i.bidded && i.dealt && !i.finished) {
         var num_played = this.props.game.interface.data.played.cards.length;
-        var num_players = this.props.game.interface.data.config.num_players;
+        var num_players = this.props.game.config.num_players;
         if (num_played > 0 && num_played < num_players) {
           new_state.suit = this.props.game.interface.data.played.cards[0].suit;
         } else {

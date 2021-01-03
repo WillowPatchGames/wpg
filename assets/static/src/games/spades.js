@@ -88,27 +88,8 @@ class SpadesController {
 // and unless there's a network glitch (in which case server wins anyways),
 // the data always aligns after the message is confirmed by the server.
 class SpadesData {
-  constructor(game, hand, drawn, peeked, bid, tricks, score, overtakes, turn, leader, dealer, played, spades_broken, config) {
+  constructor(game) {
     this.game = game;
-
-    this.hand = hand;
-    this.drawn = drawn;
-    this.peeked = peeked;
-
-    this.bid = bid;
-    this.tricks = tricks;
-
-    this.score = score;
-    this.overtakes = overtakes;
-
-    this.turn = turn;
-    this.leader = leader;
-    this.dealer = dealer;
-
-    this.played = played;
-    this.spades_broken = spades_broken;
-
-    this.config = config;
   }
 }
 
@@ -133,7 +114,7 @@ class SpadesGame {
     this.onChange = () => {};
   }
 
-  handleNewState(message) {
+  async handleNewState(message) {
     // Spades is a simpler game than Rush. We can always take the hand from the
     // server as this is a turn-based game. We won't get out of sync like Rush.
 
@@ -158,6 +139,11 @@ class SpadesGame {
     this.data.leader = message?.leader;
     this.data.dealer = message?.dealer;
     this.data.played = message?.played ? CardHand.deserialize(message.played) : null;
+    this.data.who_played = [];
+    for (let uid of message.who_played) {
+      let player = await UserCache.FromId(uid);
+      this.data.who_played.push(player);
+    }
     this.data.spades_broken = message?.spades_broken;
     this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
     this.data.config = message?.config;
