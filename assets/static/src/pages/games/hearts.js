@@ -793,7 +793,7 @@ class HeartsAfterPartyPage extends React.Component {
       }
       for (let round_index in this.state.history.scores) {
         let round_row = [];
-        round_row.push(<td style={{ borderTop: "15px solid transparent", borderBottom: "15px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
+        round_row.push(<td style={{ borderTop: "10px solid transparent", borderBottom: "10px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
         for (let player_index of Object.keys(this.state.player_mapping).sort()) {
           let round_score = parseInt(this.state.history.scores[round_index][player_index].round_score);
           let score = parseInt(this.state.history.scores[round_index][player_index].score);
