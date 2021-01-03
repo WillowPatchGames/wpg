@@ -14,10 +14,11 @@ const (
 	SpadesGame        GameMode = iota // 1
 	ThreeThirteenGame GameMode = iota // 2
 	EightJacksGame    GameMode = iota // 3
+	HeartsGame        GameMode = iota // 4
 )
 
 func (gm GameMode) String() string {
-	return []string{"rush", "spades", "three thirteen", "eigth jacks"}[gm]
+	return []string{"rush", "spades", "three thirteen", "eigth jacks", "hearts"}[gm]
 }
 
 // Convert the representation of a GameMode to a string.
@@ -31,13 +32,15 @@ func GameModeFromString(repr string) GameMode {
 		return ThreeThirteenGame
 	case "eight jacks":
 		return EightJacksGame
+	case "hearts":
+		return HeartsGame
 	default:
 		return -1
 	}
 }
 
 func (gm GameMode) IsValid() bool {
-	return gm == RushGame || gm == SpadesGame || gm == ThreeThirteenGame || gm == EightJacksGame
+	return gm == RushGame || gm == SpadesGame || gm == ThreeThirteenGame || gm == EightJacksGame || gm == HeartsGame
 }
 
 // GameConfigError is a type of error specific for errors in the

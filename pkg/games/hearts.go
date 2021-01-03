@@ -634,9 +634,7 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 
 		leading_player := -1
 		for player_index, indexed_player := range hs.Players {
-			for _, card := range indexed_player.Incoming {
-				hs.Players[player_index].Hand = append(hs.Players[player_index].Hand, card)
-			}
+			hs.Players[player_index].Hand = append(hs.Players[player_index].Hand, indexed_player.Incoming...)
 			hs.Players[player_index].Incoming = make([]Card, 0)
 
 			for _, card := range indexed_player.Hand {

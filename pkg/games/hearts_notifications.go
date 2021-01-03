@@ -22,6 +22,7 @@ type HeartsGameState struct {
 	HeartsBroken  bool                `json:"hearts_broken"`
 	History       [][]Card            `json:"history"`
 
+	Crib   []Card       `json:"crib"`
 	Config HeartsConfig `json:"config"`
 
 	Started  bool `json:"started"`
@@ -66,6 +67,7 @@ func (ssn *HeartsStateNotification) LoadData(data *GameData, game *HeartsState, 
 
 	ssn.HeartsBroken = game.HeartsBroken
 
+	ssn.Crib = game.Crib
 	ssn.Config = game.Config
 
 	ssn.Started = game.Started
