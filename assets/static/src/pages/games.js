@@ -1168,7 +1168,7 @@ class CreateGameForm extends React.Component {
             <TextField fullwidth type="number" label="Ending Amount" name="win_amount" value={ this.state.win_amount } onChange={ this.inputHandler("win_amount") } min="50" max="250" step="1" disabled={ !this.state.editable } />
           </l.ListItem>
           <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("shoot_moon_reduces") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.wild_corners ? "Shooting the Moon Reduces Your Score" : "Shooting the Moon Increases Other Players' Scores" } name="shoot_moon_reduces" checked={ this.state.shoot_moon_reduces } onChange={ () => this.toggle("shoot_moon_reduces", true) } disabled={ !this.state.editable } />
+            <Switch label={ this.state.shoot_moon_reduces ? "Shooting the Moon Reduces Your Score" : "Shooting the Moon Increases Other Players' Scores" } name="shoot_moon_reduces" checked={ this.state.shoot_moon_reduces } onChange={ () => this.toggle("shoot_moon_reduces", true) } disabled={ !this.state.editable } />
           </l.ListItem>
           <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("shoot_the_sun") } disabled={ !this.state.editable }>
             <Switch label={ this.state.shoot_the_sun ? "Score Double for Shooting the Sun (Taking All Tricks)" : "No Bonus for Shooting the Sun" } name="shoot_the_sun" checked={ this.state.shoot_the_sun } onChange={ () => this.toggle("shoot_the_sun", true) } disabled={ !this.state.editable } />
