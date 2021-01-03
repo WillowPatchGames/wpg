@@ -18,7 +18,6 @@ import '@rmwc/switch/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 
-import { Avatar, AvatarCount, AvatarGroup } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
@@ -35,7 +34,7 @@ import { TextField } from '@rmwc/textfield';
 import '../App.css';
 import { UserModel, RoomModel, GameModel, normalizeCode } from '../models.js';
 import { LoginForm } from './login.js';
-import { RushGame, RushData } from '../games/rush.js';
+import { RushGame } from '../games/rush.js';
 import { RushGamePage, RushAfterPartyPage } from './games/rush.js';
 import { SpadesGame } from '../games/spades.js';
 import { SpadesGamePage, SpadesAfterPartyPage } from './games/spades.js';
@@ -43,8 +42,7 @@ import { ThreeThirteenGame } from '../games/threethirteen.js';
 import { ThreeThirteenGamePage, ThreeThirteenAfterPartyPage } from './games/threethirteen.js';
 import { HeartsGame } from '../games/hearts.js';
 import { HeartsGamePage, HeartsAfterPartyPage } from './games/hearts.js';
-import { UserCache, GameCache } from '../utils/cache.js';
-import { gravatarify } from '../utils/gravatar.js';
+import { UserCache } from '../utils/cache.js';
 
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
