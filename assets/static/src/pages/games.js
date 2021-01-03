@@ -144,6 +144,9 @@ class AfterPartyPage extends React.Component {
   constructor(props) {
     super(props);
     console.log(this.props.game);
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+    console.log(this.game);
   }
   render() {
     var mode = this.props.game.mode || this.props.game.style;
@@ -224,7 +227,7 @@ class PreGameUserPage extends React.Component {
         data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
         this.game.winner = data.winner;
-        this.props.setPage('afterparty');
+        this.props.setPage('afterparty', true);
       },
       "": data => {
         if (data.message) {
@@ -399,7 +402,7 @@ class PreGameAdminPage extends React.Component {
         data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
         this.game.winner = data.winner;
-        this.props.setPage('afterparty');
+        this.props.setPage('afterparty', true);
       },
       "": data => {
         if (data.message) {

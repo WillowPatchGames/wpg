@@ -175,7 +175,7 @@ class RushGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
 
           if (!data.playing) {
-            this.props.setPage('afterparty');
+            this.props.setPage('afterparty', true);
           }
         },
         "countdown": data => {
@@ -193,7 +193,7 @@ class RushGamePage extends React.Component {
           data.message = await personalize(data.winner) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.winner;
-          this.props.setPage('afterparty');
+          this.props.setPage('afterparty', true);
         },
         "": data => {
           if (data.message) {

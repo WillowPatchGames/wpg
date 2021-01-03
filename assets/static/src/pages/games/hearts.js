@@ -365,10 +365,11 @@ class HeartsGameSynopsis extends React.Component {
     }
 
     return (
-      <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
-        <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-          <div className="text-left scrollable-x">
-            <b>Hearts</b> { pass_direction ? " - " + pass_direction : null }
+      <div className="fit-content" style={{ margin: "0 auto 1em auto" }}>
+        <c.Card className="fit-content" style={{ padding: "0.5em 0.5em 0.5em 0.5em" }}>
+          <div className="scrollable-x">
+            <h1 style={{ marginBottom: pass_direction ? 0 : null, color: "#bd2525" }}>Hearts</h1>
+            { pass_direction ? <span style={{ fontStyle: "italic" }}>{ pass_direction }</span> : <></> }
             { player_view }
           </div>
         </c.Card>
@@ -396,7 +397,7 @@ class HeartsGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
 
           if (!data.playing) {
-            this.props.setPage('afterparty');
+            this.props.setPage('afterparty', true);
           }
         },
         "countdown": data => {
@@ -414,7 +415,7 @@ class HeartsGamePage extends React.Component {
           data.message = await personalize(data.winner) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.winner;
-          this.props.setPage('afterparty');
+          this.props.setPage('afterparty', true);
         },
         "error": data => {
           notify(this.props.snackbar, data.error, "error");
@@ -788,11 +789,11 @@ class HeartsAfterPartyPage extends React.Component {
       var final_scores = [];
       for (let player_index of Object.keys(this.state.player_mapping).sort()) {
         let score_player = this.state.player_mapping[player_index];
-        score_players.push(<td style={{ borderBottom: "1px solid #000", paddingLeft: '25px', paddingRight: '25px' }}><Avatar src={ gravatarify(score_player) } name={ score_player.display } size="medium" /> { score_player.display }</td>);
+        score_players.push(<td colspan={2} style={{ borderBottom: "1px solid #777", paddingLeft: '25px', paddingRight: '25px' }}><Avatar src={ gravatarify(score_player) } name={ score_player.display } size="medium" /> { score_player.display }</td>);
       }
       for (let round_index in this.state.history.scores) {
         let round_row = [];
-        round_row.push(<td style={{ borderRight: "1px solid #000" }}> { parseInt(round_index) + 1 } </td>);
+        round_row.push(<td style={{ borderTop: "15px solid transparent", borderBottom: "15px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
         for (let player_index of Object.keys(this.state.player_mapping).sort()) {
           let round_score = parseInt(this.state.history.scores[round_index][player_index].round_score);
           let score = parseInt(this.state.history.scores[round_index][player_index].score);
@@ -800,34 +801,30 @@ class HeartsAfterPartyPage extends React.Component {
 
           if (parseInt(round_index) === (this.state.history.scores.length - 1)) {
             if (+this.state.player_mapping[player_index].id === +this.state.winner.id) {
-              final_scores.push(<td style={{ borderTop: "2px solid #000" }}> <b> { score } </b> </td>);
+              final_scores.push(<td colspan={2} style={{ borderTop: "1px solid #000" }}> <b> { score } </b> </td>);
             } else {
-              final_scores.push(<td style={{ borderTop: "2px solid #000" }}> { score } </td>);
+              final_scores.push(<td colspan={2} style={{ borderTop: "1px solid #000" }}> { score } </td>);
             }
             score_display = null;
           }
 
           let entry = '-';
-          if (!isNaN(round_score) && round_score < 0) {
-            entry = <>{ round_score } { score_display }</>;
-          } else if (!isNaN(round_score) && round_score >= 0) {
-            entry = <> +{ round_score } { score_display }</>;
-          }
+          let incr = !isNaN(round_score) && round_score < 0 ? ""+round_score : "+"+round_score
+          entry = <>
+            <td style={{ textAlign: "right", paddingLeft: "20px" }}>{ score }&nbsp;</td>
+            <td style={{ textAlign: "left", paddingRight: "20px", fontSize: "75%" }}>({ incr })</td>
+          </>;
 
-          if (+this.state.player_mapping[player_index].id === +this.state.winner.id) {
-            round_row.push(<td><b>{ entry }</b></td>)
-          } else {
-            round_row.push(<td>{ entry }</td>);
-          }
+          round_row.push(entry);
         }
         round_scores.push(<tr> { round_row } </tr>);
       }
 
-      scoreboard_data = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
-        <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-          <div className="text-left">
+      scoreboard_data = <div className="fit-content" style={{ margin: "0 auto 0.5em auto" }}>
+        <c.Card className="fit-content" style={{ padding: "0.5em 0.5em 0.5em 0.5em" }}>
+          <div>
             <h3>Score Board</h3>
-            <table style={{ fontSize: '1.5em' }}>
+            <table style={{ fontSize: '1.2em', borderCollapse: "collapse", borderSpacing: 0 }}>
               <thead>
                 <tr>
                   <td style={{ paddingLeft: '15px', paddingRight: '15px' }}>Round</td>
@@ -867,11 +864,11 @@ class HeartsAfterPartyPage extends React.Component {
 
     return (
       <div>
-        <HeartsGameSynopsis game={ this.game } {...this.props} />
+        <h1 style={{ color: "#bd2525" }}>Hearts</h1>
         <div>
           {
             this.state.finished && this.state.winner
-            ? <h1>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
+            ? <h1 style={{ color: "#249724" }}>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
             : <h1>Please wait while the game finishes...</h1>
           }
           { scoreboard_data }

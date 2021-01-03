@@ -555,7 +555,7 @@ class ThreeThirteenGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
 
           if (!data.playing) {
-            this.props.setPage('afterparty');
+            this.props.setPage('afterparty', true);
           }
         },
         "countdown": data => {
@@ -573,7 +573,7 @@ class ThreeThirteenGamePage extends React.Component {
           data.message = await personalize(data.winner) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.winner;
-          this.props.setPage('afterparty');
+          this.props.setPage('afterparty', true);
         },
         "error": data => {
           notify(this.props.snackbar, data.error, "error");
