@@ -146,12 +146,8 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			return err
 		}
 
-		if data.CardID == 0 {
-			return errors.New("unknown card identifier")
-		}
-
 		err = state.PlayCard(player.Index, data.CardID)
-		send_synopsis = err == nil
+		send_synopsis = true
 		send_state = true
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)

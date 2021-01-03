@@ -282,7 +282,7 @@ func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
 
 type SpadesTrick struct {
 	Leader int    `json:"leader"`
-	Trick  []Card `json:"trick"`
+	Played []Card `json:"played"`
 	Winner int    `json:"winner"`
 }
 
@@ -293,11 +293,9 @@ type SpadesRoundPlayer struct {
 	Bid    SpadesBid `json:"bid"`
 	Tricks int       `json:"tricks"`
 
-	RoundScore     int `json:"round_score"`
-	RoundOvertakes int `json:"round_overtakes"`
-
-	Score     int `json:"score"`
-	Overtakes int `json:"overtakes"`
+	RoundScore int `json:"round_score"`
+	Score      int `json:"score"`
+	Overtakes  int `json:"overtakes"`
 }
 
 type SpadesRound struct {
@@ -459,6 +457,10 @@ func (ss *SpadesState) StartRound() error {
 	// Shuffling the deck before assigning cards to players.
 	ss.Deck.Shuffle()
 
+	// Save the initial deck.
+	history.Deck = make([]*Card, len(ss.Deck.Cards))
+	copy(history.Deck, ss.Deck.Cards)
+
 	// Clear out all round-specific status before each round.
 	for index := range ss.Players {
 		ss.Players[index].Drawn = nil
@@ -501,6 +503,12 @@ func (ss *SpadesState) StartRound() error {
 			}
 		}
 
+		// Save the initial draw pile assignments.
+		for player_index := 0; player_index < len(ss.Players); player_index++ {
+			history.Players[player_index].DrawPile = make([]*Card, len(ss.Players[player_index].DrawPile))
+			copy(history.Players[player_index].DrawPile, ss.Players[player_index].DrawPile)
+		}
+
 		ss.Dealt = true
 
 		return nil
@@ -521,6 +529,12 @@ func (ss *SpadesState) StartRound() error {
 	ss.Leader = ss.Turn
 	ss.Dealt = true
 	ss.Split = true
+
+	// Copy everyone's dealt hands.
+	for index, indexed_player := range ss.Players {
+		history.Players[index].Hand = make([]Card, len(indexed_player.Hand))
+		copy(history.Players[index].Hand, indexed_player.Hand)
+	}
 
 	return nil
 }
@@ -629,6 +643,13 @@ func (ss *SpadesState) DecideTop(player int, keep bool) error {
 		// the other player bids first. Correct the offset if all the cards have
 		// been dealt.
 		ss.Turn = (ss.Dealer + 1) % ss.Config.NumPlayers
+
+		// Copy everyone's picked hands.
+		history := ss.RoundHistory[len(ss.RoundHistory)-1]
+		for index, indexed_player := range ss.Players {
+			history.Players[index].Hand = make([]Card, len(indexed_player.Hand))
+			copy(history.Players[index].Hand, indexed_player.Hand)
+		}
 	} else {
 		if len(ss.Players[player].DrawPile) >= 2 {
 			return ss.PeekTop(player)
@@ -730,8 +751,11 @@ func (ss *SpadesState) PlaceBid(player int, bid SpadesBid) error {
 		}
 	}
 
+	history := ss.RoundHistory[len(ss.RoundHistory)-1]
+
 	// Record the bid.
 	ss.Players[player].Bid = bid
+	history.Players[player].Bid = bid
 
 	// Also, allow players to look at their cards now.
 	ss.Players[player].Peeked = true
@@ -786,7 +810,9 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 		return errors.New("unable to play card not in hand")
 	}
 
+	var this_trick *SpadesTrick = nil
 	played := ss.Players[player].Hand[index]
+	history := ss.RoundHistory[len(ss.RoundHistory)-1]
 	effectively_spade := played.Suit == SpadesSuit || played.Rank == JokerRank
 
 	// Validate we can play this card first.
@@ -802,7 +828,16 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 			}
 			ss.SpadesBroken = true
 		}
+
+		// Create our trick only after we're allowed to play this card.
+		trick_index := len(history.Tricks)
+		history.Tricks = append(history.Tricks, SpadesTrick{})
+		this_trick = &history.Tricks[trick_index]
+		this_trick.Leader = ss.Leader
 	} else {
+		// Got an existing trick
+		this_trick = &history.Tricks[len(history.Tricks)-1]
+
 		// Otherwise, ensure we follow the lead suit if we can.
 		lead_suit := ss.Played[0].Suit
 		lead_effectively_spade := lead_suit == SpadesSuit || ss.Played[0].Rank == JokerRank
@@ -831,6 +866,7 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 		ss.Played = make([]Card, 0)
 	}
 	ss.Played = append(ss.Played, played)
+	this_trick.Played = append(this_trick.Played, played)
 
 	ss.Turn = (ss.Turn + 1) % ss.Config.NumPlayers
 	if ss.Turn == ss.Leader {
@@ -845,6 +881,9 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 func (ss *SpadesState) determineTrickWinner() error {
 	var winner_offset = 0
 	var winning_card = ss.Played[0]
+
+	history := ss.RoundHistory[len(ss.RoundHistory)-1]
+	this_trick := &history.Tricks[len(history.Tricks)-1]
 
 	// Always have at least two players, so an offset of one is always valid.
 	for offset := 1; offset < ss.Config.NumPlayers; offset++ {
@@ -883,6 +922,7 @@ func (ss *SpadesState) determineTrickWinner() error {
 	ss.Leader = absolute_winner
 	ss.Turn = absolute_winner
 	ss.PreviousTricks = append(ss.PreviousTricks, ss.Played)
+	this_trick.Winner = absolute_winner
 
 	if len(ss.Players[0].Hand) == 0 {
 		// Can't play again in this round. Tabulate the round score and maybe try
@@ -894,6 +934,8 @@ func (ss *SpadesState) determineTrickWinner() error {
 }
 
 func (ss *SpadesState) tabulateRoundScore() error {
+	history := ss.RoundHistory[len(ss.RoundHistory)-1]
+
 	var max_count = ss.Config.NumPlayers
 	if ss.Config.WithPartners && (ss.Config.NumPlayers == 4 || ss.Config.NumPlayers == 6) {
 		max_count = ss.Config.NumPlayers / 2
@@ -904,17 +946,37 @@ func (ss *SpadesState) tabulateRoundScore() error {
 		partner := (player + max_count) % ss.Config.NumPlayers
 		have_partner := partner != player && ss.Config.WithPartners
 
+		if have_partner && partner < player {
+			break
+		}
+
 		if !have_partner {
 			// Everyone for themselves!
 			score, overtakes := ss.scoreSingle(player)
 			ss.Players[player].Score += score
 			ss.Players[player].Overtakes = overtakes
+
+			// Update the history
+			history.Players[player].Tricks = ss.Players[player].Tricks
+			history.Players[player].RoundScore = score
+			history.Players[player].Score = ss.Players[player].Score
+			history.Players[player].Overtakes = ss.Players[player].Overtakes
 		} else {
 			score, overtakes := ss.scorePartnership(player, partner)
 			ss.Players[player].Score += score
 			ss.Players[player].Overtakes = overtakes
 			ss.Players[partner].Score += score
 			ss.Players[partner].Overtakes = overtakes
+
+			// Update the history for both
+			history.Players[player].Tricks = ss.Players[player].Tricks
+			history.Players[player].RoundScore = score
+			history.Players[player].Score = ss.Players[player].Score
+			history.Players[player].Overtakes = ss.Players[player].Overtakes
+			history.Players[partner].Tricks = ss.Players[partner].Tricks
+			history.Players[partner].RoundScore = score
+			history.Players[partner].Score = ss.Players[partner].Score
+			history.Players[partner].Overtakes = ss.Players[partner].Overtakes
 		}
 	}
 
