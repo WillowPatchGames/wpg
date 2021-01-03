@@ -42,6 +42,7 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 
 	var was_finished = state.Finished
 	var send_synopsis = false
+	var send_state = false
 
 	switch header.MessageType {
 	case "start":
@@ -79,7 +80,6 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			if player.Playing && player.Index >= 0 {
 				var response SpadesStateNotification
 				response.LoadData(game, state, player)
-
 				c.undispatch(game, player, response.MessageID, 0, response)
 
 				send_synopsis = true
@@ -106,38 +106,15 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 
 			err = state.PeekTop(player.Index)
 			send_synopsis = err == nil
-
-			// In two player spades, we're expecting to get a reply right away,
-			// because we're really only dealing one card to ourselves to peek at.
-			if player.Playing && player.Index >= 0 {
-				var response SpadesStateNotification
-				response.LoadData(game, state, player)
-				response.ReplyTo = header.MessageID
-				c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
-			}
+			send_state = err == nil
 		} else {
 			if player.Index != state.Dealer {
 				return errors.New("unable to deal round that you're not the dealer for")
 			}
 
 			err = state.StartRound()
-			if err == nil {
-				send_synopsis = true
-				for _, indexed_player := range game.ToPlayer {
-					if !indexed_player.Admitted || !indexed_player.Playing {
-						continue
-					}
-
-					// Send players their initial state. Mark it as a reply to the player
-					// who originally dealt, so they know the deal was successful.
-					var response SpadesStateNotification
-					response.LoadData(game, state, indexed_player)
-					if indexed_player.UID == player.UID {
-						response.ReplyTo = header.MessageID
-					}
-					c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
-				}
-			}
+			send_synopsis = err == nil
+			send_state = err == nil
 		}
 	case "decide":
 		var data SpadesDecideMsg
@@ -147,26 +124,12 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 
 		err = state.DecideTop(player.Index, data.Keep)
 		send_synopsis = err == nil
-
-		if player.Playing && player.Index >= 0 {
-			var response SpadesStateNotification
-			response.LoadData(game, state, player)
-			c.undispatch(game, player, response.MessageID, 0, response)
-		}
-
-		for _, next_player := range game.ToPlayer {
-			if next_player.Index != state.Turn {
-				continue
-			}
-
-			var notify SpadesStateNotification
-			notify.LoadData(game, state, next_player)
-			c.undispatch(game, next_player, notify.MessageID, 0, notify)
-		}
+		send_state = err == nil
 	case "peek":
 		err = state.PeekCards(player.Index)
 		send_synopsis = err == nil
 
+		// Only need to notify ourselves.
 		if player.Playing && player.Index >= 0 {
 			var response SpadesStateNotification
 			response.LoadData(game, state, player)
@@ -178,29 +141,10 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			return err
 		}
 
-		if data.Bid <= int(NotBidSpades) || data.Bid >= int(OutOfBoundsBidSpades) {
-			return errors.New("invalid bid value for spades")
-		}
-
 		var bid = SpadesBid(data.Bid)
 		err = state.PlaceBid(player.Index, bid)
 		send_synopsis = err == nil
-
-		if player.Playing && player.Index >= 0 {
-			var response SpadesStateNotification
-			response.LoadData(game, state, player)
-			c.undispatch(game, player, response.MessageID, 0, response)
-		}
-
-		for _, next_player := range game.ToPlayer {
-			if next_player.Index != state.Turn {
-				continue
-			}
-
-			var notify SpadesStateNotification
-			notify.LoadData(game, state, next_player)
-			c.undispatch(game, next_player, notify.MessageID, 0, notify)
-		}
+		send_state = err == nil
 	case "play":
 		var data SpadesPlayMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -212,31 +156,8 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		}
 
 		err = state.PlayCard(player.Index, data.CardID)
-		if err == nil {
-			send_synopsis = true
-			for _, indexed_player := range game.ToPlayer {
-				if !indexed_player.Admitted || !indexed_player.Playing {
-					continue
-				}
-
-				// Send players their initial state.
-				var response SpadesStateNotification
-				response.LoadData(game, state, indexed_player)
-				c.undispatch(game, indexed_player, response.MessageID, 0, response)
-			}
-		} else if err.Error() == SpadesNextRound {
-			send_synopsis = true
-			for _, indexed_player := range game.ToPlayer {
-				if !indexed_player.Admitted || !indexed_player.Playing {
-					continue
-				}
-
-				// Send players their initial state.
-				var response SpadesStateNotification
-				response.LoadData(game, state, indexed_player)
-				c.undispatch(game, indexed_player, response.MessageID, 0, response)
-			}
-		}
+		send_synopsis = err == nil
+		send_state = true
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}
@@ -257,6 +178,25 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			var synopsis SpadesSynopsisNotification
 			synopsis.LoadData(game, state, indexed_player)
 			c.undispatch(game, indexed_player, synopsis.MessageID, 0, synopsis)
+		}
+	}
+
+	// If the state changed for a bunch of people, notify them all.
+	if send_state {
+		for _, indexed_player := range game.ToPlayer {
+			if !indexed_player.Admitted || !indexed_player.Playing {
+				continue
+			}
+
+			// Send players their initial state. Mark it as a reply to the player
+			// who originally dealt, so they know the deal was successful.
+			var response SpadesStateNotification
+			response.LoadData(game, state, indexed_player)
+			if indexed_player.UID == player.UID {
+				response.ReplyTo = header.MessageID
+			}
+
+			c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
 		}
 	}
 

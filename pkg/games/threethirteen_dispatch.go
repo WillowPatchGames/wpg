@@ -75,7 +75,6 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 			if player.Playing && player.Index >= 0 {
 				var response ThreeThirteenStateNotification
 				response.LoadData(game, state, player)
-
 				c.undispatch(game, player, response.MessageID, 0, response)
 
 				send_synopsis = true

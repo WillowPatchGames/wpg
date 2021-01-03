@@ -621,6 +621,10 @@ func (ss *SpadesState) PlaceBid(player int, bid SpadesBid) error {
 		return errors.New("can't skip bidding")
 	}
 
+	if bid <= NotBidSpades || bid >= OutOfBoundsBidSpades {
+		return errors.New("invalid bid value for spades")
+	}
+
 	if bid == NilBidSpades && !ss.Config.WithNil {
 		return errors.New("can't bid nil when not enabled by config")
 	}
