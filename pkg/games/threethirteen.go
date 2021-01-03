@@ -181,6 +181,34 @@ func (cfg *ThreeThirteenConfig) LoadConfig(wire map[string]interface{}) error {
 	return nil
 }
 
+type ThreeThirteenRoundPlayer struct {
+	DealtHand []Card `json:"dealt_hand"`
+	FinalHand []Card `json:"final_hand"`
+
+	RoundScore int `json:"round_score"`
+	Score      int `json:"score"`
+}
+
+type ThreeThirteenTurn struct {
+	Player int `json:"player"`
+
+	Drawn       Card `json:"drawn"`
+	FromDiscard bool `json:"from_discard"`
+	Discarded   Card `json:"discarded"`
+
+	StartingHand []Card `json:"starting_hand"`
+	EndingHand   []Card `json:"ending_hand"`
+}
+
+type ThreeThirteenRound struct {
+	Size   int `json:"size"`
+	Dealer int `json:"dealer"`
+	Leader int `json:"leader"`
+
+	Players []ThreeThirteenRoundPlayer `json:"players"`
+	Turns   []ThreeThirteenTurn        `json:"plays"`
+}
+
 type ThreeThirteenState struct {
 	Turn   int `json:"turn"`
 	Dealer int `json:"dealer"`

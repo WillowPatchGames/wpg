@@ -759,7 +759,7 @@ class HeartsAfterPartyPage extends React.Component {
       historical_data = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left">
-            <h3>Game History</h3>
+            <h3>Game Analysis</h3>
             <l.List style={{ maxWidth: "15em" }}>
               <l.ListGroup>
                 <Select
