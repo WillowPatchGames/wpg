@@ -41,7 +41,8 @@ const (
 )
 
 type SpadesPlayer struct {
-	Hand []Card `json:"hand"`
+	Hand     []Card  `json:"hand"`
+	DrawPile []*Card `json:"draw_pile"`
 
 	Drawn  *Card     `json:"drawn"`
 	Peeked bool      `json:"peeked"`
@@ -286,18 +287,25 @@ type SpadesTrick struct {
 }
 
 type SpadesRoundPlayer struct {
-	Hand []Card `json:"hand"`
+	Hand     []Card  `json:"hand"`
+	DrawPile []*Card `json:"draw_pile"`
 
-	Bid       SpadesBid `json:"bid"`
-	Tricks    int       `json:"tricks"`
-	Score     int       `json:"score"`
-	Overtakes int       `json:"overtakes"`
+	Bid    SpadesBid `json:"bid"`
+	Tricks int       `json:"tricks"`
+
+	RoundScore     int `json:"round_score"`
+	RoundOvertakes int `json:"round_overtakes"`
+
+	Score     int `json:"score"`
+	Overtakes int `json:"overtakes"`
 }
 
 type SpadesRound struct {
-	Dealer  int                  `json:"dealer"`
-	Players []*SpadesRoundPlayer `json:"players"`
-	Tricks  []*SpadesTrick       `json:"tricks"`
+	Dealer int     `json:"dealer"`
+	Deck   []*Card `json:"deck"`
+
+	Players []SpadesRoundPlayer `json:"players"`
+	Tricks  []SpadesTrick       `json:"tricks"`
 }
 
 type SpadesState struct {
@@ -316,6 +324,7 @@ type SpadesState struct {
 
 	Started bool `json:"started"`
 	Dealt   bool `json:"dealt"`
+	Split   bool `json:"split"`
 	Bid     bool `json:"bid"`
 
 	Finished bool `json:"finished"`
@@ -370,6 +379,7 @@ func (ss *SpadesState) Start(players int) error {
 
 	// Force us to call StartRound() next.
 	ss.Dealt = false
+	ss.Split = false
 	ss.Bid = false
 	ss.Dealer = 0
 
@@ -381,18 +391,28 @@ func (ss *SpadesState) Start(players int) error {
 	}
 
 	ss.Started = true
+
 	return nil
 }
 
 func (ss *SpadesState) StartRound() error {
+	if ss.Dealt {
+		return errors.New("unable to call StartRound while existing round in progress")
+	}
+
 	// Invariants: unless otherwise overridden below, start with dealt = false
 	// and bid = false -- this means we still need to deal out the cards before
 	// we begin.
 	ss.Dealt = false
+	ss.Split = false
 	ss.Bid = false
 	ss.SpadesBroken = false
 
 	ss.RoundHistory = append(ss.RoundHistory, &SpadesRound{})
+	history := ss.RoundHistory[len(ss.RoundHistory)-1]
+	history.Dealer = ss.Dealer
+	history.Players = make([]SpadesRoundPlayer, len(ss.Players))
+	history.Tricks = make([]SpadesTrick, 0)
 
 	// Start with a clean deck and shuffle it.
 	ss.Deck.Init()
@@ -452,10 +472,37 @@ func (ss *SpadesState) StartRound() error {
 	// We don't deal cards out when playing with two players; exit early.
 	if ss.Config.NumPlayers == 2 {
 		// When we have two players, the first step of play is dealing out the
-		// cards with player involvement; exit without setting Dealt to true.
+		// cards with player involvement; set Dealt to true (to indicate we've
+		// split into two piles).
 		ss.Turn = ss.Dealer
+
 		// The first trick will be led by the other player
 		ss.Leader = (ss.Dealer + 1) % 2
+
+		// Here, we facilitate the act of drawing. Notice the pattern: peek
+		// at the top card, and either take that card (discarding the next),
+		// or discard and take the next. This means each player looks at the
+		// same cards, regardless of what the other did -- always two at a time.
+		// While we could just let each player draw from the top of the deck,
+		// until they reach their limit, we're doing this correctly and instead
+		// splitting it in two up front, according to what they would've drawn.
+		//
+		// Note: like the note above, we start this with the dealer, NOT with
+		// the player left of the dealer.
+		for len(ss.Deck.Cards) >= 2*len(ss.Players) {
+			for player_offset := 0; player_offset < len(ss.Players); player_offset++ {
+				if len(ss.Deck.Cards) < 2 {
+					return errors.New("invariant failure: fewer than two left in deck while creating draw piles")
+				}
+
+				player_index := (ss.Dealer + player_offset) % len(ss.Players)
+				ss.Players[player_index].DrawPile = append(ss.Players[player_index].DrawPile, ss.Deck.Cards[:2]...)
+				ss.Deck.Cards = ss.Deck.Cards[2:]
+			}
+		}
+
+		ss.Dealt = true
+
 		return nil
 	}
 
@@ -473,6 +520,7 @@ func (ss *SpadesState) StartRound() error {
 	ss.Turn = starting_player
 	ss.Leader = ss.Turn
 	ss.Dealt = true
+	ss.Split = true
 
 	return nil
 }
@@ -491,8 +539,12 @@ func (ss *SpadesState) PeekTop(player int) error {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
-	if ss.Turn != player {
-		return errors.New("not your turn")
+	if !ss.Dealt {
+		return errors.New("not able to peek before dealing")
+	}
+
+	if ss.Split {
+		return errors.New("not able to peek after splitting")
 	}
 
 	if ss.Config.NumPlayers != 2 {
@@ -500,17 +552,17 @@ func (ss *SpadesState) PeekTop(player int) error {
 		return errors.New("invalid call: more than two players")
 	}
 
-	if len(ss.Deck.Cards) == 0 {
-		ss.Dealt = false
-		return errors.New("invalid state: no more cards to draw")
-	}
-
 	if ss.Players[player].Drawn != nil {
 		return errors.New("already have picked up a card; decide whether to keep or discard it")
 	}
 
-	ss.Players[player].Drawn = ss.Deck.Cards[0]
-	ss.Deck.Cards = ss.Deck.Cards[1:]
+	if len(ss.Players[player].DrawPile) == 0 {
+		return errors.New("already picked up all cards; wait for other play to finish")
+	}
+
+	ss.Players[player].Drawn = ss.Players[player].DrawPile[0]
+	ss.Players[player].DrawPile = ss.Players[player].DrawPile[1:]
+
 	return nil
 }
 
@@ -524,12 +576,16 @@ func (ss *SpadesState) DecideTop(player int, keep bool) error {
 		return errors.New("game has already finished")
 	}
 
-	if player < 0 || player >= len(ss.Players) {
-		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
+	if !ss.Dealt {
+		return errors.New("unable to DecideTop before dealing")
 	}
 
-	if ss.Turn != player {
-		return errors.New("not your turn")
+	if ss.Split {
+		return errors.New("unable to DecideTop after splitting")
+	}
+
+	if player < 0 || player >= len(ss.Players) {
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
 	if ss.Config.NumPlayers != 2 {
@@ -537,8 +593,9 @@ func (ss *SpadesState) DecideTop(player int, keep bool) error {
 		return errors.New("invalid call: more than two players")
 	}
 
-	if len(ss.Deck.Cards) == 0 {
+	if len(ss.Players[player].DrawPile) == 0 {
 		ss.Dealt = false
+		ss.Split = false
 		return errors.New("invalid state: no more cards to draw")
 	}
 
@@ -549,21 +606,35 @@ func (ss *SpadesState) DecideTop(player int, keep bool) error {
 	if keep {
 		// Keep the card we peeked at and discard the rest.
 		ss.Players[player].Hand = append(ss.Players[player].Hand, *ss.Players[player].Drawn)
-		ss.Deck.Cards = ss.Deck.Cards[1:]
 	} else {
-		ss.Players[player].Hand = append(ss.Players[player].Hand, *ss.Deck.Cards[0])
-		ss.Deck.Cards = ss.Deck.Cards[1:]
+		ss.Players[player].Hand = append(ss.Players[player].Hand, *ss.Players[player].DrawPile[0])
 	}
+	ss.Players[player].DrawPile = ss.Players[player].DrawPile[1:]
 
 	ss.Players[player].Drawn = nil
-	ss.Turn = (ss.Turn + 1) % ss.Config.NumPlayers
-	ss.Dealt = len(ss.Deck.Cards) < 2
-	if ss.Dealt {
+
+	all_split := true
+	for player_index := 0; player_index < len(ss.Players); player_index++ {
+		if len(ss.Players[player_index].DrawPile) >= 2 || ss.Players[player_index].Drawn != nil {
+			ss.Turn = player_index
+			all_split = false
+			break
+		}
+	}
+
+	if all_split {
+		ss.Split = true
+
 		// Oddly, with two player spades, the dealer starts by taking a card, but
 		// the other player bids first. Correct the offset if all the cards have
 		// been dealt.
 		ss.Turn = (ss.Dealer + 1) % ss.Config.NumPlayers
+	} else {
+		if len(ss.Players[player].DrawPile) >= 2 {
+			return ss.PeekTop(player)
+		}
 	}
+
 	return nil
 }
 
@@ -610,7 +681,11 @@ func (ss *SpadesState) PlaceBid(player int, bid SpadesBid) error {
 	}
 
 	if !ss.Dealt {
-		return errors.New("unable to peek before dealing cards")
+		return errors.New("unable to place bid before dealing cards")
+	}
+
+	if !ss.Split {
+		return errors.New("unable to place bid before spliting cards")
 	}
 
 	if ss.Bid {
@@ -692,6 +767,10 @@ func (ss *SpadesState) PlayCard(player int, card int) error {
 
 	if !ss.Dealt {
 		return errors.New("unable to play a card before dealing cards")
+	}
+
+	if !ss.Split {
+		return errors.New("unable to play a card before spliting cards")
 	}
 
 	if !ss.Bid {
@@ -858,11 +937,10 @@ func (ss *SpadesState) tabulateRoundScore() error {
 		return errors.New(SpadesGameOver)
 	}
 
+	ss.Dealt = false
 	ss.Dealer = (ss.Dealer + 1) % ss.Config.NumPlayers
 
-	// Restart the round: shuffle the cards and (if necessary) deal them out.
 	if err := ss.StartRound(); err != nil {
-		log.Println("Error starting round: ", err)
 		return err
 	}
 

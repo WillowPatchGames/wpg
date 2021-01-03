@@ -108,6 +108,7 @@ class SpadesGame {
 
     this.started = false;
     this.dealt = false;
+    this.split = false;
     this.bidded = false;
     this.finished = false;
 
@@ -121,6 +122,7 @@ class SpadesGame {
     // Update some metadata about game progress.
     this.started = message.started;
     this.dealt = message.dealt;
+    this.split = message.split;
     this.bidded = message.bidded;
     this.finished = message.finished;
 

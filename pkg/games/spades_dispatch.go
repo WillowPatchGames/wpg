@@ -100,22 +100,17 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		}
 	case "deal":
 		if state.Config.NumPlayers == 2 {
-			if player.Index != state.Turn {
-				return errors.New("not your turn to select a card")
-			}
-
 			err = state.PeekTop(player.Index)
-			send_synopsis = err == nil
-			send_state = err == nil
 		} else {
 			if player.Index != state.Dealer {
 				return errors.New("unable to deal round that you're not the dealer for")
 			}
 
 			err = state.StartRound()
-			send_synopsis = err == nil
-			send_state = err == nil
 		}
+
+		send_synopsis = err == nil
+		send_state = err == nil
 	case "decide":
 		var data SpadesDecideMsg
 		if err = json.Unmarshal(message, &data); err != nil {

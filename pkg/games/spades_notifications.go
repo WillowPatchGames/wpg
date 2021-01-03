@@ -26,6 +26,7 @@ type SpadesGameState struct {
 
 	Started  bool `json:"started"`
 	Dealt    bool `json:"dealt"`
+	Split    bool `json:"split"`
 	Bidded   bool `json:"bidded"`
 	Finished bool `json:"finished"`
 }
@@ -71,6 +72,7 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 
 	ssn.Started = game.Started
 	ssn.Dealt = game.Dealt
+	ssn.Split = game.Split
 	ssn.Bidded = game.Bid
 	ssn.Finished = game.Finished
 
