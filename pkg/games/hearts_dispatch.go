@@ -113,10 +113,18 @@ func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *
 		send_synopsis = true
 		send_state = true
 	case "peek":
+		if player.Index != -1 && !state.Finished {
+			return errors.New("can only peek once game is complete")
+		}
+
 		var response HeartsPeekNotification
 		response.LoadData(game, state, player)
 		response.ReplyTo = header.MessageID
 		c.undispatch(game, player, response.MessageID, header.MessageID, response)
+
+		var synopsis HeartsSynopsisNotification
+		synopsis.LoadData(game, state, player)
+		c.undispatch(game, player, synopsis.MessageID, 0, synopsis)
 	default:
 		return errors.New("unknown message_type issued to hearts game: " + header.MessageType)
 	}

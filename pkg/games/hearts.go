@@ -229,12 +229,17 @@ type HeartsTrick struct {
 }
 
 type HeartsRoundPlayer struct {
-	Hand []Card `json:"hand"`
+	DealtHand  []Card `json:"dealt_hand"`
+	PlayedHand []Card `json:"played_hand"`
 
-	Tricks     int    `json:"tricks"`
-	RoundScore int    `json:"round_score"`
-	Score      int    `json:"score"`
-	Passed     []Card `json:"passed"` // Cards the player passed to someone else.
+	Tricks     int `json:"tricks"`
+	RoundScore int `json:"round_score"`
+	Score      int `json:"score"`
+
+	PassedTo   int    `json:"passed_to"`
+	PassedFrom int    `json:"passed_from"`
+	Passed     []Card `json:"passed"`     // Cards the player passed to someone else.
+	GotPassed  []Card `json:"got_passed"` // Cards someone passed to us.
 }
 
 type HeartsRound struct {
@@ -543,10 +548,10 @@ func (hs *HeartsState) StartRound() error {
 		hs.Passed = false
 	}
 
-	// Copy everyone's starting hands.
+	// Copy everyone's dealt hands.
 	for index, indexed_player := range hs.Players {
-		history.Players[index].Hand = make([]Card, len(indexed_player.Hand))
-		copy(history.Players[index].Hand, indexed_player.Hand)
+		history.Players[index].DealtHand = make([]Card, len(indexed_player.Hand))
+		copy(history.Players[index].DealtHand, indexed_player.Hand)
 	}
 
 	hs.Dealt = true
@@ -610,9 +615,12 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 		card := hs.Players[player].Hand[hand_index]
 		hs.Players[new_player].Incoming = append(hs.Players[new_player].Incoming, card)
 		history.Players[player].Passed = append(history.Players[player].Passed, card)
+		history.Players[new_player].GotPassed = append(history.Players[new_player].GotPassed, card)
 		hs.Players[player].RemoveCard(cardID)
 	}
 	hs.Players[player].Passed = true
+	history.Players[player].PassedTo = new_player
+	history.Players[new_player].PassedFrom = player
 
 	all_passed := true
 	for _, indexed_player := range hs.Players {
@@ -628,6 +636,12 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 		for player_index, indexed_player := range hs.Players {
 			hs.Players[player_index].Hand = append(hs.Players[player_index].Hand, indexed_player.Incoming...)
 			hs.Players[player_index].Incoming = make([]Card, 0)
+		}
+
+		// Then copy off their hands again...
+		for index, indexed_player := range hs.Players {
+			history.Players[index].PlayedHand = make([]Card, len(indexed_player.Hand))
+			copy(history.Players[index].PlayedHand, indexed_player.Hand)
 		}
 
 		// Now we've gotta find the Two of Clubs so we know who the round
@@ -837,6 +851,8 @@ func (hs *HeartsState) determineTrickWinner() error {
 }
 
 func (hs *HeartsState) tabulateRoundScore() error {
+	history := hs.RoundHistory[len(hs.RoundHistory)-1]
+
 	// Update everyone's scores first. But before we do that, we need to reset
 	// everyone's RoundScore to 0. This lets us correctly handle shooting the
 	// moon/sun. Apply HundredToHalf last, after everyones' scores have been
@@ -854,6 +870,13 @@ func (hs *HeartsState) tabulateRoundScore() error {
 				hs.Players[player].Score = hs.Config.WinAmount / 2
 			}
 		}
+	}
+
+	// Save stuff in history while we're at it.
+	for player := 0; player < hs.Config.NumPlayers; player++ {
+		history.Players[player].Tricks = hs.Players[player].Tricks
+		history.Players[player].RoundScore = hs.Players[player].RoundScore
+		history.Players[player].Score = hs.Players[player].Score
 	}
 
 	var winner_offset = 0

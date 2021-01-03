@@ -171,7 +171,7 @@ type HeartsPeekNotification struct {
 
 func (hpn *HeartsPeekNotification) LoadData(data *GameData, game *HeartsState, player *PlayerData) {
 	hpn.LoadHeader(data, player)
-	hpn.MessageType = "peek"
+	hpn.MessageType = "game-state"
 
 	for index := range game.Players {
 		player_uid, _ := data.ToUserID(index)
