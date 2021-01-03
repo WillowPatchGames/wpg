@@ -811,8 +811,8 @@ class HeartsAfterPartyPage extends React.Component {
           let entry = '-';
           let incr = !isNaN(round_score) && round_score < 0 ? ""+round_score : "+"+round_score
           entry = <>
-            <td style={{ textAlign: "right", paddingLeft: "20px" }}>{ score }&nbsp;</td>
-            <td style={{ textAlign: "left", paddingRight: "20px", fontSize: "75%" }}>({ incr })</td>
+            <td style={{ textAlign: "right", paddingLeft: "10px" }}>{ score }&nbsp;</td>
+            <td style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>
           </>;
 
           round_row.push(entry);
@@ -820,10 +820,11 @@ class HeartsAfterPartyPage extends React.Component {
         round_scores.push(<tr> { round_row } </tr>);
       }
 
-      scoreboard_data = <div className="fit-content" style={{ margin: "0 auto 0.5em auto" }}>
-        <c.Card className="fit-content" style={{ padding: "0.5em 0.5em 0.5em 0.5em" }}>
+      scoreboard_data = <div className="fit-content" style={{ margin: "0 auto 0.5em auto", maxWidth: "90%" }}>
+        <c.Card className="fit-content" style={{ padding: "0.5em 0.5em 0.5em 0.5em", maxWidth: "100%" }}>
           <div>
             <h3>Score Board</h3>
+            <div style={{ overflow: "auto", maxWidth: "100%" }}>
             <table style={{ fontSize: '1.2em', borderCollapse: "collapse", borderSpacing: 0 }}>
               <thead>
                 <tr>
@@ -841,6 +842,7 @@ class HeartsAfterPartyPage extends React.Component {
                 </tr>
               </tfoot>
             </table>
+            </div>
           </div>
         </c.Card>
       </div>;
