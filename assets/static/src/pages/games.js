@@ -41,6 +41,8 @@ import { SpadesGame } from '../games/spades.js';
 import { SpadesGamePage } from './games/spades.js';
 import { ThreeThirteenGame } from '../games/threethirteen.js';
 import { ThreeThirteenGamePage } from './games/threethirteen.js';
+import { HeartsGame } from '../games/hearts.js';
+import { HeartsGamePage } from './games/hearts.js';
 import { UserCache, GameCache } from '../utils/cache.js';
 import { gravatarify } from '../utils/gravatar.js';
 
@@ -56,6 +58,8 @@ function loadGame(game) {
       game.interface = new SpadesGame(game);
     } else if (mode === "three thirteen") {
       game.interface = new ThreeThirteenGame(game);
+    } else if (mode === "hearts") {
+      game.interface = new HeartsGame(game);
     } else {
       console.log("Unknown game mode:", mode);
     }
@@ -328,6 +332,8 @@ class GamePage extends React.Component {
       return <SpadesGamePage {...this.props}/>
     } else if (mode === 'three thirteen') {
       return <ThreeThirteenGamePage {...this.props}/>
+    } else if (mode === 'hearts') {
+      return <HeartsGamePage {...this.props}/>
     } else {
       return "Unrecognized game mode: " + mode;
     }
@@ -976,6 +982,26 @@ class CreateGameForm extends React.Component {
         hand_size: have_game ? config.hand_size : 5,
         joker_count: have_game ? config.joker_count : 4,
       };
+    } else if (style === 'hearts') {
+      additional_state = {
+        initialized: true,
+        num_players: have_game ? config.num_players : 4,
+        number_to_pass: have_game ? config.number_to_pass : 3,
+        hold_round: have_game ? config.hold_round : true,
+        must_break_hearts: have_game ? config.must_break_hearts : true,
+        black_widow_breaks: have_game ? config.black_widow_breaks : false,
+        first_trick_hearts: have_game ? config.first_trick_hearts : false,
+        with_crib: have_game ? config.with_crib : false,
+        win_amount: have_game ? config.win_amount : 100,
+        shoot_moon_reduces: have_game ? config.shoot_moon_reduces : true,
+        shoot_the_sun: have_game ? config.shoot_the_sun : true,
+        jack_of_dimaonds: have_game ? config.jack_of_dimaonds : false,
+        ten_of_clubs: have_game ? config.ten_of_clubs : false,
+        black_widow_for_five: have_game ? config.black_widow_for_five : false,
+        ace_of_hearts: have_game ? config.ace_of_hearts : false,
+        no_trick_bonus: have_game ? config.no_trick_bonus : false,
+        hundred_to_half: have_game ? config.hundred_to_half : false,
+      };
     } else {
       console.log("Unknown game style: " + style, game, this.state, this.props);
     }
@@ -999,6 +1025,8 @@ class CreateGameForm extends React.Component {
       return this.threethirteenToObject();
     } else if (this.state.mode === 'eight jacks') {
       return this.eightjacksToObject();
+    } else if (this.state.mode === 'hearts') {
+      return this.heartsToObject();
     } else {
       console.log("Unknown game style: " + this.state.mode, this.state);
     }
@@ -1067,6 +1095,27 @@ class CreateGameForm extends React.Component {
       'wild_corners': this.state.wild_corners,
       'hand_size': +this.state.hand_size,
       'joker_count': +this.state.joker_count,
+    };
+  }
+
+  heartsToObject() {
+    return {
+      'num_players': +this.state.num_players,
+      'number_to_pass': +this.state.number_to_pass,
+      'hold_round': this.state.hold_round,
+      'must_break_hearts': this.state.must_break_hearts,
+      'black_widow_breaks': this.state.black_widow_breaks,
+      'first_trick_hearts': this.state.first_trick_hearts,
+      'with_crib': this.state.with_crib,
+      'win_amount': +this.state.win_amount,
+      'shoot_moon_reduces': this.state.shoot_moon_reduces,
+      'shoot_the_sun': this.state.shoot_the_sun,
+      'jack_of_dimaonds': this.state.jack_of_dimaonds,
+      'ten_of_clubs': this.state.ten_of_clubs,
+      'black_widow_for_five': this.state.black_widow_for_five,
+      'ace_of_hearts': this.state.ace_of_hearts,
+      'no_trick_bonus': this.state.no_trick_bonus,
+      'hundred_to_half': this.state.hundred_to_half,
     };
   }
 
@@ -1415,6 +1464,64 @@ class CreateGameForm extends React.Component {
     );
   }
 
+    renderHearts() {
+      return (
+        <>
+          <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+          <l.ListItem disabled>
+            <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="3" max="7" step="1" disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListGroupSubheader>Playing Options</l.ListGroupSubheader>
+          <l.ListItem disabled>
+            <TextField fullwidth type="number" label="Number of Cards to Pass" name="number_to_pass" value={ this.state.number_to_pass } onChange={ this.inputHandler("number_to_pass") } min="1" max="5" step="1" disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("hold_round") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.hold_round ? "Pass Left, Right, then Hold (non-Four Players Only)" : "Only Pass Left and Right (non-Four Players Only)" } name="hold_round" checked={ this.state.hold_round } onChange={ () => this.toggle("hold_round", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("must_break_hearts") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.must_break_hearts ? "Hearts Must be Broken Before Being Lead" : "Can Lead Hearts at Any Time" } name="must_break_hearts" checked={ this.state.must_break_hearts } onChange={ () => this.toggle("must_break_hearts", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("black_widow_breaks") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.black_widow_breaks ? "Black Widow (Queen of Spades) Breaks Hearts" : "Black Widow Doesn't Break Hearts" } name="black_widow_breaks" checked={ this.state.black_widow_breaks } onChange={ () => this.toggle("black_widow_breaks", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("first_trick_hearts") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.first_trick_hearts ? "Can Sluff Points on the First Trick" : "Can't Play Points on the First Trick" } name="first_trick_hearts" checked={ this.state.first_trick_hearts } onChange={ () => this.toggle("first_trick_hearts", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_crib") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.with_crib ? "Put Extra Cards in a Crib (Taken with First Trick)" : "Remove Cards To Deal Evenly" } name="with_crib" checked={ this.state.with_crib } onChange={ () => this.toggle("with_crib", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
+          <l.ListItem disabled>
+            <TextField fullwidth type="number" label="Ending Amount" name="win_amount" value={ this.state.win_amount } onChange={ this.inputHandler("win_amount") } min="50" max="250" step="1" disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("shoot_moon_reduces") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.wild_corners ? "Shooting the Moon Reduces Your Score" : "Shooting the Moon Increases Other Players' Scores" } name="shoot_moon_reduces" checked={ this.state.shoot_moon_reduces } onChange={ () => this.toggle("shoot_moon_reduces", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("shoot_the_sun") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.shoot_the_sun ? "Score Double for Shooting the Sun (Taking All Tricks)" : "No Bonus for Shooting the Sun" } name="shoot_the_sun" checked={ this.state.shoot_the_sun } onChange={ () => this.toggle("shoot_the_sun", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("jack_of_dimaonds") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.jack_of_dimaonds ? "Taking the Jack of Diamonds Reduces Your Score by 11" : "No Bonus For Taking the Jack of Diamonds" } name="jack_of_dimaonds" checked={ this.state.jack_of_dimaonds } onChange={ () => this.toggle("jack_of_dimaonds", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("ten_of_clubs") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.ten_of_clubs ? "Taking the Ten of Clubs Doubles Your Score for the Round" : "Ten of Clubs Doesn't Double Your Score for the Round" } name="ten_of_clubs" checked={ this.state.ten_of_clubs } onChange={ () => this.toggle("ten_of_clubs", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("black_widow_for_five") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.black_widow_for_five ? "Black Widow Counts as 5" : "Black Widow Counts as 13" } name="black_widow_for_five" checked={ this.state.black_widow_for_five } onChange={ () => this.toggle("black_widow_for_five", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("ace_of_hearts") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.ace_of_hearts ? "Ace of Hearts Counts as 5" : "Ace of Hearts Counts as 1" } name="ace_of_hearts" checked={ this.state.ace_of_hearts } onChange={ () => this.toggle("ace_of_hearts", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("no_trick_bonus") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.no_trick_bonus ? "Taking No Tricks Reduces Your Score By 5" : "No Bonus for Taking No Tricks" } name="no_trick_bonus" checked={ this.state.no_trick_bonus } onChange={ () => this.toggle("no_trick_bonus", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("hundred_to_half") } disabled={ !this.state.editable }>
+            <Switch label={ this.state.hundred_to_half ? "Hitting Exactly The Ending Amount Halves Your Score" : "No Prize for Hitting Exactly the End Amount" } name="hundred_to_half" checked={ this.state.hundred_to_half } onChange={ () => this.toggle("hundred_to_half", true) } disabled={ !this.state.editable } />
+          </l.ListItem>
+        </>
+      );
+  }
+
   render() {
     var messages = {
       'rush': "In Rush, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!",
@@ -1430,6 +1537,8 @@ class CreateGameForm extends React.Component {
       config = this.renderThreeThirteen();
     } else if (this.state.mode === 'eight jacks') {
       config = this.renderEightJacks();
+    } else if (this.state.mode === 'hearts') {
+      config = this.renderHearts();
     } else if (this.state.mode !== null) {
       console.log("Unknown game mode: " + this.state.mode, this.state);
     }
@@ -1461,6 +1570,10 @@ class CreateGameForm extends React.Component {
                     {
                       label: 'Spades (Card Game)',
                       value: 'spades',
+                    },
+                    {
+                      label: 'Hearts (Card Game)',
+                      value: 'hearts',
                     },
                     {
                       label: 'Three Thirteen (Card Game)',
