@@ -110,7 +110,7 @@ func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *
 		}
 
 		err = state.PlayCard(player.Index, data.CardID)
-		send_synopsis = err == nil
+		send_synopsis = true
 		send_state = true
 	default:
 		return errors.New("unknown message_type issued to hearts game: " + header.MessageType)

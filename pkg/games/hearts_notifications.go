@@ -4,7 +4,7 @@ type HeartsPlayerState struct {
 	Hand []Card `json:"hand"`
 
 	HavePassed bool   `json:"have_passed"`
-	Incoming   []Card `json:"incoming"`
+	Incoming   []Card `json:"incoming,omitempty"`
 
 	Tricks     int `json:"tricks"`
 	RoundScore int `json:"round_score"`

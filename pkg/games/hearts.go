@@ -71,7 +71,7 @@ type HeartsConfig struct {
 	BlackWidowForFive bool `json:"black_widow_for_five"` // Whether the Queen of Spades counts as 5 instead of 13.
 	AceOfHearts       bool `json:"ace_of_hearts"`        // Whether taking the Ace of Hearts counts as 5 points.
 	NoTrickBonus      bool `json:"no_trick_bonus"`       // Whether taking no tricks grants a -5 point bonus.
-	HundredToHalf     bool `json:"hundred_to_half"`      // Whether hitting exactly WinAmount points reduces your score to 50.
+	HundredToHalf     bool `json:"hundred_to_half"`      // Whether hitting exactly WinAmount points reduces your score to half.
 }
 
 func (cfg HeartsConfig) Validate() error {
@@ -328,6 +328,7 @@ func (hs *HeartsState) Start(players int) error {
 	hs.Dealt = false
 	hs.Passed = false
 	hs.Dealer = 0
+	hs.PassDirection = HoldPassDirectionHearts
 
 	// Start the round: shuffle the cards and (if necessary) deal them out.
 	err = hs.StartRound()
@@ -341,6 +342,10 @@ func (hs *HeartsState) Start(players int) error {
 }
 
 func (hs *HeartsState) StartRound() error {
+	if hs.Dealt {
+		return errors.New("unable to call StartRound while we've already dealt")
+	}
+
 	// Invariants: unless otherwise overridden below, start with dealt = false
 	// and passed = false -- this means we still need to deal out the cards before
 	// we begin.
@@ -423,6 +428,7 @@ func (hs *HeartsState) StartRound() error {
 	for index := range hs.Players {
 		hs.Players[index].Hand = make([]Card, 0)
 		hs.Players[index].Incoming = make([]Card, 0)
+		hs.Players[index].Passed = false
 	}
 	hs.Played = make([]Card, 0)
 	hs.Crib = make([]Card, 0)
@@ -561,10 +567,6 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
 	}
 
-	if hs.Turn != player {
-		return errors.New("not your turn")
-	}
-
 	if !hs.Dealt {
 		return errors.New("unable to play a card before dealing cards")
 	}
@@ -612,19 +614,24 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 	}
 	hs.Players[player].Passed = true
 
-	all_played := true
+	all_passed := true
 	for _, indexed_player := range hs.Players {
 		if !indexed_player.Passed {
-			all_played = false
+			all_passed = false
 		}
 	}
 
-	if all_played {
+	if all_passed {
 		hs.Passed = true
+
+		// First put the passed cards into the hand...
+		for player_index, indexed_player := range hs.Players {
+			hs.Players[player_index].Hand = append(hs.Players[player_index].Hand, indexed_player.Incoming...)
+			hs.Players[player_index].Incoming = make([]Card, 0)
+		}
 
 		// Now we've gotta find the Two of Clubs so we know who the round
 		// leader is...
-		// ...while we're at it though, put the new cards into the hand.
 		// ...and oh by the way, sometimes it is the Three of Clubs. \o/
 
 		target := Card{0, ClubsSuit, TwoRank}
@@ -634,23 +641,20 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 
 		leading_player := -1
 		for player_index, indexed_player := range hs.Players {
-			hs.Players[player_index].Hand = append(hs.Players[player_index].Hand, indexed_player.Incoming...)
-			hs.Players[player_index].Incoming = make([]Card, 0)
-
 			for _, card := range indexed_player.Hand {
 				if card.Rank == target.Rank && card.Suit == target.Suit {
 					leading_player = player_index
 					break
 				}
 			}
-
-			if leading_player == -1 {
-				return errors.New("invalid configuration and dealing: unable to find leading card in anyone's hand after passing")
-			}
-
-			hs.Turn = leading_player
-			hs.Leader = leading_player
 		}
+
+		if leading_player == -1 {
+			return errors.New("invalid configuration and dealing: unable to find leading card in anyone's hand after passing")
+		}
+
+		hs.Turn = leading_player
+		hs.Leader = leading_player
 	}
 
 	return nil
@@ -699,10 +703,7 @@ func (hs *HeartsState) PlayCard(player int, card int) error {
 	if hs.Turn == hs.Leader {
 		// Create our new trick in the history.
 		trick_index := len(history.Tricks)
-		first_trick = trick_index == 0
-		history.Tricks = append(history.Tricks, HeartsTrick{})
-		this_trick = &history.Tricks[trick_index]
-		this_trick.Leader = hs.Leader
+		first_trick = trick_index == 0 || (trick_index == 1 && len(history.Tricks[0].Played) == 0)
 
 		// If this is the very first round, check whether or not we chose the
 		// right card. It will either be the Two or Three of Clubs.
@@ -729,6 +730,11 @@ func (hs *HeartsState) PlayCard(player int, card int) error {
 			}
 			hs.HeartsBroken = true
 		}
+
+		// Create our trick only after we're allowed to play this card.
+		history.Tricks = append(history.Tricks, HeartsTrick{})
+		this_trick = &history.Tricks[trick_index]
+		this_trick.Leader = hs.Leader
 	} else {
 		// Got an existing trick
 		this_trick = &history.Tricks[len(history.Tricks)-1]
@@ -806,7 +812,8 @@ func (hs *HeartsState) determineTrickWinner() error {
 		if winning_card.Suit == this_card.Suit {
 			// Highest card of the lead suit wins, always.
 			is_higher := this_card.Rank > winning_card.Rank && winning_card.Rank != AceRank
-			if is_higher {
+			is_ace_win := this_card.Rank == AceRank
+			if is_higher || is_ace_win {
 				winner_offset = offset
 				winning_card = this_card
 			}
@@ -832,12 +839,21 @@ func (hs *HeartsState) determineTrickWinner() error {
 func (hs *HeartsState) tabulateRoundScore() error {
 	// Update everyone's scores first. But before we do that, we need to reset
 	// everyone's RoundScore to 0. This lets us correctly handle shooting the
-	// moon/sun.
+	// moon/sun. Apply HundredToHalf last, after everyones' scores have been
+	// taken into account.
 	for player := 0; player < hs.Config.NumPlayers; player++ {
 		hs.Players[player].RoundScore = 0
 	}
 	for player := 0; player < hs.Config.NumPlayers; player++ {
 		hs.scoreSingle(player)
+	}
+	if hs.Config.HundredToHalf {
+		for player := 0; player < hs.Config.NumPlayers; player++ {
+			if hs.Players[player].Score == hs.Config.WinAmount {
+				// Leave the round score as it is, so people know why it was halved.
+				hs.Players[player].Score = hs.Config.WinAmount / 2
+			}
+		}
 	}
 
 	var winner_offset = 0
@@ -867,6 +883,12 @@ func (hs *HeartsState) tabulateRoundScore() error {
 	hs.Dealt = false
 	hs.Dealer = (hs.Dealer + 1) % hs.Config.NumPlayers
 
+	// Start the round: shuffle the cards and (if necessary) deal them out.
+	if err := hs.StartRound(); err != nil {
+		log.Println("Error starting round: ", err)
+		return err
+	}
+
 	return errors.New(HeartsNextRound)
 }
 
@@ -882,9 +904,11 @@ func (hs *HeartsState) scoreSingle(player int) {
 	have_ten_clubs := false
 	shot_moon := true
 	shot_sun := true
+	took_trick := false
 
 	for index, trick := range history.Tricks {
 		if trick.Winner != player {
+			log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found trick taken by " + strconv.Itoa(trick.Winner) + " -- not shot sun")
 			shot_sun = false
 
 			// Check if we shot the moon: if someone else took a trick with hearts
@@ -892,11 +916,13 @@ func (hs *HeartsState) scoreSingle(player int) {
 			if shot_moon {
 				for _, card := range trick.Played {
 					if card.Suit == HeartsSuit {
+						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found hearts in trick taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}
 
 					if card.Rank == QueenRank && card.Suit == SpadesSuit {
+						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found queen of spades in trick taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}
@@ -906,11 +932,13 @@ func (hs *HeartsState) scoreSingle(player int) {
 			if index == 0 && len(history.Crib) > 0 {
 				for _, card := range history.Crib {
 					if card.Suit == HeartsSuit {
+						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found hearts in crib taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}
 
 					if card.Rank == QueenRank && card.Suit == SpadesSuit {
+						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found queen of spades in crib taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}
@@ -920,25 +948,27 @@ func (hs *HeartsState) scoreSingle(player int) {
 			continue
 		}
 
+		took_trick = true
+
 		for _, card := range trick.Played {
 			if card.Suit == HeartsSuit {
 				num_hearts += 1
 			}
 
 			if card.Rank == AceRank && card.Suit == HeartsSuit {
-				have_ace_hearts = false
+				have_ace_hearts = true
 			}
 
 			if card.Rank == QueenRank && card.Suit == SpadesSuit {
-				have_queen_spades = false
+				have_queen_spades = true
 			}
 
 			if card.Rank == JackRank && card.Suit == DiamondsSuit {
-				have_jack_diamonds = false
+				have_jack_diamonds = true
 			}
 
 			if card.Rank == TenRank && card.Suit == ClubsSuit {
-				have_ten_clubs = false
+				have_ten_clubs = true
 			}
 		}
 
@@ -949,19 +979,19 @@ func (hs *HeartsState) scoreSingle(player int) {
 				}
 
 				if card.Rank == AceRank && card.Suit == HeartsSuit {
-					have_ace_hearts = false
+					have_ace_hearts = true
 				}
 
 				if card.Rank == QueenRank && card.Suit == SpadesSuit {
-					have_queen_spades = false
+					have_queen_spades = true
 				}
 
 				if card.Rank == JackRank && card.Suit == DiamondsSuit {
-					have_jack_diamonds = false
+					have_jack_diamonds = true
 				}
 
 				if card.Rank == TenRank && card.Suit == ClubsSuit {
-					have_ten_clubs = false
+					have_ten_clubs = true
 				}
 			}
 		}
@@ -983,8 +1013,10 @@ func (hs *HeartsState) scoreSingle(player int) {
 			hand_value += 11
 		}
 
-		if shot_sun || (have_ten_clubs && hs.Config.TenOfClubs) {
+		if shot_sun {
 			hand_value *= 2
+		} else if have_ten_clubs && hs.Config.TenOfClubs {
+			hand_value /= 2
 		}
 
 		if hs.Config.ShootMoonReduces {
@@ -1025,6 +1057,10 @@ func (hs *HeartsState) scoreSingle(player int) {
 
 	if have_ten_clubs && hs.Config.TenOfClubs {
 		hand_value *= 2
+	}
+
+	if !took_trick {
+		hand_value = -5
 	}
 
 	hs.Players[player].RoundScore += hand_value
