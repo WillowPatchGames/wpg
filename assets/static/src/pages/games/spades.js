@@ -115,7 +115,7 @@ class SpadesGameComponent extends React.Component {
     if (this.state.game.interface.data.who_played) {
       annotations = [];
       for (let who_player of this.state.game.interface.data.who_played) {
-        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> { who_player.display }</>;
+        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></>;
         annotations.push(annotation);
       }
     }
@@ -769,9 +769,9 @@ class SpadesAfterPartyPage extends React.Component {
               for (let offset = 0; offset < num_players; offset++) {
                 let annotation_player_index = (trick.leader + offset) % num_players;
                 let annotation_player = this.state.player_mapping[annotation_player_index];
-                let annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> { annotation_player.display }</>;
+                let annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <span title={ annotation_player.display }>{ annotation_player.display }</span></>;
                 if (annotation_player_index === trick.winner) {
-                  annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b>{ annotation_player.display }</b></>;
+                  annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b title={ annotation_player.display }>{ annotation_player.display }</b></>;
                 }
                 annotations.push(annotation);
               }

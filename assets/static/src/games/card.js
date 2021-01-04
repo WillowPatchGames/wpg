@@ -251,11 +251,13 @@ class Card {
       return <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />;
     }
 
-    return <div style={{ display: "inline-block" }}>
-      <div style={{ marginBottom: "2px" }}>
+    var scale = props.scale || 0.5;
+    var x_part = props.x_part || 1;
+    return <div style={{ display: "inline-block", width: card_dim[0]*scale*Math.abs(x_part) }}>
+      <div style={{ marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         { annotation }
       </div>
-      <div>
+      <div style={{}}>
         <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />
       </div>
     </div>
