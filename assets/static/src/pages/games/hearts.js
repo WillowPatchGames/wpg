@@ -563,13 +563,12 @@ class HeartsAfterPartyPage extends React.Component {
                 'got_passed': player?.got_passed,
                 'passed_to': player?.passed_to !== null && player?.passed_to !== undefined ? { index: player.passed_to , user: mapping[player.passed_to] } : null,
                 'passed_from': player?.passed_from !== null && player?.passed_from !== undefined ? { index: player.passed_from , user: mapping[player.passed_from] } : null,
-              }
+              };
             }
 
             history.scores.push(round_scores);
             history.players.push(info);
 
-            console.log(round.tricks);
             history.tricks.push(round.tricks);
           }
         }
@@ -806,7 +805,6 @@ class HeartsAfterPartyPage extends React.Component {
         for (let player_index of Object.keys(this.state.player_mapping).sort()) {
           let round_score = parseInt(this.state.history.scores[round_index][player_index].round_score);
           let score = parseInt(this.state.history.scores[round_index][player_index].score);
-          let score_display = <span style={{ fontSize: '75%' }}> = { score } </span>;
 
           if (parseInt(round_index) === (this.state.history.scores.length - 1)) {
             if (+this.state.player_mapping[player_index].id === +this.state.winner.id) {
@@ -814,7 +812,6 @@ class HeartsAfterPartyPage extends React.Component {
             } else {
               final_scores.push(<td colspan={2} style={{ borderTop: "1px solid #000" }}> { score } </td>);
             }
-            score_display = null;
           }
 
           let entry = '-';

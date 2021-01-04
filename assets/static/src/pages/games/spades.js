@@ -2,23 +2,33 @@ import React from 'react';
 
 import '../../main.scss';
 
-import { gravatarify } from '../../utils/gravatar.js';
-
 import { Avatar } from '@rmwc/avatar';
 import '@rmwc/avatar/styles';
 import { Button } from '@rmwc/button';
 import '@rmwc/card/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
-import { Select } from '@rmwc/select';
-import '@rmwc/select/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
+import * as l from '@rmwc/list';
+import '@rmwc/list/styles';
+import * as g from '@rmwc/grid';
+import '@rmwc/grid/styles';
+import { Select } from '@rmwc/select';
+import '@rmwc/select/styles';
 
 import { SpadesGame } from '../../games/spades.js';
-import { CardSuit, CardImage } from '../../games/card.js';
-import { loadGame, addEv, notify, killable } from '../games.js';
-import { UserCache } from '../../utils/cache.js';
+import { CardSuit, CardImage, CardHand } from '../../games/card.js';
+import { loadGame, addEv, notify, killable, CreateGameForm } from '../games.js';
+import { UserCache, GameCache } from '../../utils/cache.js';
+import { gravatarify } from '../../utils/gravatar.js';
+
+// Properties used for display card hands
+var handProps = {
+  overlap: true,
+  curve: true,
+  scale: 0.50,
+};
 
 class SpadesGameComponent extends React.Component {
   constructor(props) {
@@ -101,12 +111,6 @@ class SpadesGameComponent extends React.Component {
   render() {
     var status = a => <h3>{ a }</h3>;
     var big_status = a => <h2>{ a }</h2>;
-    // Properties used for display card hands
-    var handProps = {
-      overlap: true,
-      curve: true,
-      scale: 0.50,
-    };
     let annotations = null;
     if (this.state.game.interface.data.who_played) {
       annotations = [];
@@ -555,22 +559,409 @@ class SpadesGamePage extends React.Component {
   }
 }
 
+
 class SpadesAfterPartyPage extends React.Component {
   constructor(props) {
     super(props);
-
     this.game = loadGame(this.props.game);
-    this.props.setGame(this.game);
+    this.state = {
+      player_mapping: null,
+      history: null,
+      historical_round: "0",
+      active: {
+        turn: null,
+        leader: null,
+        dealer: null,
+        pass_direction: null,
+        played: null,
+        who_played: null,
+        Spades_broken: false,
+        played_history: null,
+      },
+      winners: this.game?.winners,
+      dealt: false,
+      passed: false,
+      finished: false,
+      message: "Loading results...",
+      timeout: killable(() => { this.refreshData() }, 5000),
+    };
+
+    GameCache.Invalidate(this.props.game.id);
+
+    this.unmount = addEv(this.game, {
+      "game-state": async (data) => {
+        var mapping = {};
+        for (let index in data.player_mapping) {
+          mapping[index] = await UserCache.FromId(data.player_mapping[index]);
+        }
+
+        let winners = [];
+
+        var history = null;
+        if (data.round_history) {
+          history = {
+            scores: [],
+            players: [],
+            tricks: [],
+          };
+
+          for (let round_index in data.round_history) {
+            let round = data.round_history[round_index];
+            var round_scores = {};
+            var info = {};
+            var num_players = round.players.length;
+            var max_score = 0;
+            for (let player_index in round.players) {
+              let player = round.players[player_index];
+              round_scores[player_index] = {
+                'user': mapping[player_index],
+                'bid': player.bid,
+                'tricks': player.tricks,
+                'round_score': player.round_score,
+                'score': player.score,
+                'overtakes': player.overtakes,
+              };
+              info[player_index] = {
+                'hand': player?.hand,
+                'bid': player.bid,
+                'tricks': player.tricks,
+              };
+              if (num_players === 2) {
+                info.draw_pile = player?.draw_pile;
+              }
+              if (+round_scores[player_index].score > +max_score) {
+                winners = [];
+                winners.push(mapping[player_index]);
+                max_score = round_scores[player_index].score;
+              } else if (+round_scores[player_index].score === +max_score) {
+                winners.push(mapping[player_index]);
+              }
+            }
+
+            history.scores.push(round_scores);
+            history.players.push(info);
+
+            history.tricks.push(round.tricks);
+          }
+        }
+
+        // HACK: When refreshData() is called from the button, we don't redraw
+        // the screen even though new data is sent. Use snapshots to send only
+        // the data we care about.
+        this.setState(state => Object.assign({}, state, { history: null }));
+        this.setState(state => Object.assign({}, state, {
+          player_mapping: mapping,
+          history: history,
+          winners: winners,
+          dealt: data.dealt,
+          passed: data.passed,
+          finished: data.finished,
+        }));
+
+        if (data.finished) {
+          if (this.state.timeout) {
+            this.state.timeout.kill();
+          }
+
+          this.setState(state => Object.assign({}, state, { timeout: null }));
+        }
+      },
+      "error": (data) => {
+        var message = "Unable to load game data.";
+        if (data.error) {
+          message = data.error;
+        }
+
+        notify(this.props.snackbar, message, data.message_type);
+        this.setState(state => Object.assign({}, state, { message }));
+      },
+      "": data => {
+        if (data.message) {
+          notify(this.props.snackbar, data.message, data.message_type);
+        }
+      },
+    });
+  }
+  componentDidMount() {
+    this.state.timeout.exec();
+  }
+  componentWillUnmount() {
+    this.props.setGame(null);
+
+    if (this.state.timeout) {
+      this.state.timeout.kill();
+    }
+
+    if (this.unmount) this.unmount();
+  }
+  refreshData() {
+    this.game.interface.controller.wsController.send({"message_type": "peek"});
+  }
+  returnToRoom() {
+    if (this.props.game.interface) {
+      this.props.game.interface.close();
+    }
+
+    this.props.game.interface = null;
+
+    this.props.setGame(null);
+    this.props.setPage("room");
   }
 
   render() {
+    var historical_data = null;
+    var scoreboard_data = null;
+
+    if (this.state.history) {
+      let round_index = parseInt(this.state.historical_round);
+      let round_data = <b>No data found for round { round_index + 1 }!</b>;
+      if (this.state.history.players[round_index]) {
+        let round_players = this.state.history.players[round_index];
+        let num_players = Object.keys(round_players).length;
+        round_data = [<b>Data for round { round_index + 1}</b>];
+        let hands_data = [];
+        for (let player_index in this.state.history.players[round_index]) {
+          let user = this.state.player_mapping[player_index];
+          let player = round_players[player_index];
+          let hand = player?.hand ? CardHand.deserialize(player.hand).cardSort(true, true) : null;
+          hands_data.push(
+            <div>
+              <l.List>
+                <l.CollapsibleList handle={
+                    <l.SimpleListItem text={ <b>{user.display + "'s"} Hand</b> } metaIcon="chevron_right" />
+                  }
+                >
+                  <div style={{ paddingTop: '15px', paddingBottom: '15px' }}>
+                    { hand ? hand.toImage(handProps) : null }
+                  </div>
+                </l.CollapsibleList>
+              </l.List>
+            </div>
+          );
+        }
+        round_data.push(
+          <l.CollapsibleList handle={
+              <l.SimpleListItem text={ <b>Player Hands</b> } metaIcon="chevron_right" />
+            }
+          >
+            <div style={{ textAlign: 'center' }}>
+              { hands_data }
+            </div>
+          </l.CollapsibleList>
+        );
+
+        if (this.state.history.tricks[round_index]) {
+          let tricks_data = [];
+          for (let trick_index in this.state.history.tricks[round_index]) {
+            let trick = this.state.history.tricks[round_index][trick_index];
+            let leader = this.state.player_mapping[trick.leader];
+            let winner = this.state.player_mapping[trick.winner];
+            let leader_line = null;
+            let winner_line = null;
+            if (leader) {
+              leader_line = <><b>Leader</b>: <Avatar src={ gravatarify(leader) } name={ leader.display } size="medium" /> { leader.display }<br /></>
+            }
+            if (winner) {
+              winner_line = <><b>Winner</b>: <Avatar src={ gravatarify(winner) } name={ winner.display } size="medium" /> <b>{ winner.display }</b><br /></>
+            }
+            let annotations = [];
+            if (leader) {
+              for (let offset = 0; offset < num_players; offset++) {
+                let annotation_player_index = (trick.leader + offset) % num_players;
+                let annotation_player = this.state.player_mapping[annotation_player_index];
+                let annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> { annotation_player.display }</>;
+                if (annotation_player_index === trick.winner) {
+                  annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b>{ annotation_player.display }</b></>;
+                }
+                annotations.push(annotation);
+              }
+            }
+            let cards = trick?.played ? CardHand.deserialize(trick.played).toImage(null, null, annotations) : null;
+            tricks_data.push(
+              <l.CollapsibleList handle={
+                  <l.SimpleListItem text={ <b>Trick { parseInt(trick_index) + 1 }</b> } metaIcon="chevron_right" />
+                }
+              >
+                <div style={{ textAlign: 'left' }}>
+                  { leader_line }
+                  { winner_line }
+                </div>
+                { cards }
+              </l.CollapsibleList>
+            );
+          }
+
+          round_data.push(
+            <l.CollapsibleList handle={
+                <l.SimpleListItem text={ <b>Tricks</b> } metaIcon="chevron_right" />
+              }
+            >
+              <div style={{ textAlign: 'center' }}>
+                <l.List>
+                  { tricks_data }
+                </l.List>
+              </div>
+            </l.CollapsibleList>
+          );
+        }
+      }
+
+      historical_data = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
+        <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+          <div className="text-left">
+            <h3>Game Analysis</h3>
+            <l.List style={{ maxWidth: "15em" }}>
+              <l.ListGroup>
+                <Select
+                  label="Choose a Round" enhanced
+                  value={ this.state.historical_round }
+                  onChange={ (e) => this.setState(Object.assign({}, this.state, { historical_round: e.target.value })) }
+                  options={ Object.keys(this.state.history.players).map(x => ({ label: 'Round ' + (parseInt(x) + 1), value: x })) }
+                />
+              </l.ListGroup>
+            </l.List>
+            <l.List>
+              { round_data }
+            </l.List>
+          </div>
+        </c.Card>
+      </div>;
+
+      var score_players = [];
+      var round_scores = [];
+      var final_scores = [];
+      for (let player_index of Object.keys(this.state.player_mapping).sort()) {
+        let score_player = this.state.player_mapping[player_index];
+        score_players.push(<td colspan={2} style={{ borderBottom: "1px solid #777", paddingLeft: '25px', paddingRight: '25px' }}><Avatar src={ gravatarify(score_player) } name={ score_player.display } size="medium" /> { score_player.display }</td>);
+      }
+      for (let round_index in this.state.history.scores) {
+        let round_row = [];
+        round_row.push(<td style={{ borderTop: "10px solid transparent", borderBottom: "10px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
+        for (let player_index of Object.keys(this.state.player_mapping).sort()) {
+          let round_score = parseInt(this.state.history.scores[round_index][player_index].round_score);
+          let score = parseInt(this.state.history.scores[round_index][player_index].score);
+          let overtakes = parseInt(this.state.history.scores[round_index][player_index].overtakes);
+
+          if (parseInt(round_index) === (this.state.history.scores.length - 1)) {
+            final_scores.push(<td colspan={2} style={{ borderTop: "1px solid #000" }}> { score } / { overtakes } </td>);
+          }
+
+          let entry = '-';
+          let incr = !isNaN(round_score) && round_score < 0 ? ""+round_score : "+"+round_score
+          entry = <>
+            <td style={{ textAlign: "right", paddingLeft: "10px" }}>{ score } / { overtakes }&nbsp;</td>
+            <td style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>
+          </>;
+
+          round_row.push(entry);
+        }
+        round_scores.push(<tr> { round_row } </tr>);
+      }
+
+      scoreboard_data = <div className="fit-content" style={{ margin: "0 auto 0.5em auto", maxWidth: "90%" }}>
+        <c.Card className="fit-content" style={{ padding: "0.5em 0.5em 0.5em 0.5em", maxWidth: "100%" }}>
+          <div>
+            <h3>Score Board</h3>
+            <div style={{ overflow: "auto", maxWidth: "100%" }}>
+            <table style={{ fontSize: '1.2em', borderCollapse: "collapse", borderSpacing: 0 }}>
+              <thead>
+                <tr>
+                  <td style={{ paddingLeft: '15px', paddingRight: '15px' }}>Round</td>
+                  { score_players }
+                </tr>
+              </thead>
+              <tbody>
+                { round_scores }
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  { final_scores }
+                </tr>
+              </tfoot>
+            </table>
+            </div>
+          </div>
+        </c.Card>
+      </div>;
+    }
+
+    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
+      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+        <div className="text-center">
+          <h3>Game Configuration</h3>
+          <l.List>
+            <l.CollapsibleList handle={
+                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+              }
+            >
+              <CreateGameForm {...this.props} editable={ false } />
+            </l.CollapsibleList>
+          </l.List>
+        </div>
+      </c.Card>
+    </div>;
+
+    var winner_info = <h1>Please wait while the game finishes...</h1>;
+    if (this.state.finished && this.state.winners) {
+      var winner_names = this.state.winners[0].display;
+      if (this.state.winners.length === 1) {
+        if (+this.state.winners[0].id === +this.props.user.id) {
+          winner_names = "You"
+        }
+      } else {
+        let all_names = [];
+        for (let winner of this.state.winners) {
+          if (+winner.id === +this.props.user.id) {
+            all_names.push("You");
+          } else {
+            all_names.push(winner.display);
+          }
+        }
+
+        winner_names = "";
+        for (let name_index in all_names) {
+          let name = all_names[name_index];
+          if (+name_index === 0) {
+            winner_names = name;
+            continue;
+          }
+
+          if (+name_index < all_names.length - 1) {
+            winner_names += ", " + name;
+            continue;
+          }
+
+          if (+name_index === 1) {
+            winner_names += " and " + name;
+          } else {
+            winner_names += ", and " + name;
+          }
+        }
+      }
+
+      winner_info = <h1 style={{ color: "#249724" }}>{winner_names} won!</h1>
+    }
+
     return (
       <div>
-        <SpadesGameSynopsis game={ this.game } {...this.props} />
+        <h1 style={{ color: "#000000" }}>Spades</h1>
+        <div>
+          { winner_info }
+          { scoreboard_data }
+          { historical_data }
+          <g.Grid fixedColumnWidth={ true }>
+            <g.GridCell align="left" span={3} tablet={8} />
+            <g.GridCell align="right" span={6} tablet={8}>
+              { configuration }
+            </g.GridCell>
+          </g.Grid>
+        </div>
       </div>
     );
   }
 }
+
 
 export {
   SpadesGamePage,

@@ -55,7 +55,7 @@ func (hp *HeartsPlayer) RemoveCard(cardID int) bool {
 type HeartsConfig struct {
 	NumPlayers int `json:"num_players"` // 3 <= n <= 7; best with four.
 
-	NumberToPass     int  `json:"number_to_pass"`     // 1 <= n <= 5; number of cards to pass.
+	NumberToPass     int  `json:"number_to_pass"`     // 1 <= n <= 8; number of cards to pass.
 	HoldRound        bool `json:"hold_round"`         // Whether to add a holding round when playing with non-four players.
 	MustBreakHearts  bool `json:"must_break_hearts"`  // Whether hearts need to be broken before they can be lead.
 	BlackWidowBreaks bool `json:"black_widow_breaks"` // Whether Queen of Spades breaks hearts.
@@ -79,8 +79,8 @@ func (cfg HeartsConfig) Validate() error {
 		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 3 and 7"}
 	}
 
-	if cfg.NumberToPass < 1 || cfg.NumberToPass > 5 {
-		return GameConfigError{"winning score", strconv.Itoa(cfg.WinAmount), "between 1 and 5"}
+	if cfg.NumberToPass < 1 || cfg.NumberToPass > 8 {
+		return GameConfigError{"winning score", strconv.Itoa(cfg.WinAmount), "between 1 and 8"}
 	}
 
 	if cfg.WinAmount < 50 || cfg.WinAmount > 250 {

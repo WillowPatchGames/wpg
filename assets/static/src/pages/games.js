@@ -1149,7 +1149,7 @@ class CreateGameForm extends React.Component {
           </l.ListItem>
           <l.ListGroupSubheader>Playing Options</l.ListGroupSubheader>
           <l.ListItem disabled>
-            <TextField fullwidth type="number" label="Number of Cards to Pass" name="number_to_pass" value={ this.state.number_to_pass } onChange={ this.inputHandler("number_to_pass") } min="1" max="5" step="1" disabled={ !this.state.editable } />
+            <TextField fullwidth type="number" label="Number of Cards to Pass" name="number_to_pass" value={ this.state.number_to_pass } onChange={ this.inputHandler("number_to_pass") } min="1" max="8" step="1" disabled={ !this.state.editable } />
           </l.ListItem>
           <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("hold_round") } disabled={ !this.state.editable }>
             <Switch label={ this.state.hold_round ? "Pass Left, Right, then Hold (non-Four Players Only)" : "Only Pass Left and Right (non-Four Players Only)" } name="hold_round" checked={ this.state.hold_round } onChange={ () => this.toggle("hold_round", true) } disabled={ !this.state.editable } />
