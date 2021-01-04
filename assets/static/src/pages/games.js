@@ -7,6 +7,7 @@ import {
 
 import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
+import '@rmwc/icon-button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/checkbox/styles';
 import '@rmwc/dialog/styles';
@@ -19,6 +20,7 @@ import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 
 import { Button } from '@rmwc/button';
+import { IconButton } from '@rmwc/icon-button';
 import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
@@ -330,9 +332,11 @@ class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      waitlist: [Object.assign({}, this.props.user, { admitted: true, playing: false, connected: false })],
+      waitlist: [Object.assign({}, this.props.user, { admitted: true, playing: false, connected: false, team: null })],
       started: false,
       countdown: null,
+      order: true,
+      teams: true,
     };
 
     this.game = this.props.game || {};
@@ -371,7 +375,7 @@ class PreGameAdminPage extends React.Component {
           this.state.waitlist.push(Object.assign(user, { admitted, playing, connected }));
         }
 
-        this.setState(state => state);
+        this.sortUsers();
       });
     }
 
@@ -417,6 +421,41 @@ class PreGameAdminPage extends React.Component {
   componentWillUnmount() {
     if (this.unmount) this.unmount();
   }
+  sortUsers() {
+    this.setState(state => {
+      // Do this inside a proper React setState
+      // otherwise the input elements get lost in the shuffle
+      state.waitlist.sort((a,b) => (
+        (b.playing - a.playing) ||
+        (b.admitted - a.admitted)
+      ));
+      return state;
+    });
+  }
+  moveUser(user, up) {
+    this.setState(state => {
+      var i = state.waitlist.findIndex(u => u === user);
+      if (i < 0) return state;
+      if (i === 0 && up) return state;
+      if (i === state.waitlist.length-1 && !up) return state;
+      state.waitlist.splice(i-up, 2, ...state.waitlist.slice(i-up, i+!up+1).reverse());
+
+      state.waitlist.sort((a,b) => (
+        (b.playing - a.playing) ||
+        (b.admitted - a.admitted)
+      ));
+      return state;
+    });
+  }
+  setTeam(user, team) {
+    for (let u in this.state.waitlist) {
+      if (this.state.waitlist[u] === user) {
+        user.team = team ? +team : null;
+
+        this.sortUsers();
+      }
+    }
+  }
   toggleAdmitted(user) {
     for (let u in this.state.waitlist) {
       if (this.state.waitlist[u] === user) {
@@ -425,10 +464,10 @@ class PreGameAdminPage extends React.Component {
         }
 
         if (!user.admitted) {
-          this.playing = false;
+          user.playing = false;
         }
 
-        this.setState(state => state);
+        this.sortUsers();
         this.game.interface.controller.admitPlayer(user.id, user.admitted, user.playing);
       }
     }
@@ -438,10 +477,10 @@ class PreGameAdminPage extends React.Component {
       if (this.state.waitlist[u] === user) {
         user.playing = !user.playing;
         if (!user.admitted) {
-          this.playing = false;
+          user.playing = false;
         }
 
-        this.setState(state => state);
+        this.sortUsers();
         this.game.interface.controller.admitPlayer(user.id, user.admitted, user.playing);
       }
     }
@@ -484,6 +523,12 @@ class PreGameAdminPage extends React.Component {
       </l.ListGroup>;
     }
 
+    let teams = [{label:'None',value:null}];
+    let max_team = Math.max(...this.state.waitlist.map(u => u.team).filter(isFinite)) || 0;
+    for (let i=0; i<=max_team; i+=1) {
+      teams.push({label:''+(+i+1), value: +i+1});
+    }
+
     let content = <c.Card>
       <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
         <l.List twoLine>
@@ -497,22 +542,39 @@ class PreGameAdminPage extends React.Component {
           <l.ListGroup>
             <l.ListItem disabled>
               <b>Users</b>
+              &nbsp;&nbsp;
+              <Switch checked={ this.state.order } label="Order manually" onChange={ () => this.setState(state => Object.assign(state, { order: !state.order })) } />
+              &nbsp;&nbsp;
+              <Switch checked={ this.state.teams } label="Put into teams" onChange={ () => this.setState(state => Object.assign(state, { teams: !state.teams })) } />
             </l.ListItem>
             { this.state.waitlist.map((user, i) =>
-                <l.ListItem key={user.display} disabled>
-                  <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}
+                <l.ListItem key={user.id} disabled>
+                  <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
                     <Checkbox checked={user.admitted} label="Admitted" onChange={ () => this.toggleAdmitted(user) } />
                     {
                       user.admitted ?
-                        <span className="leftpad"><Switch checked={ user.playing } label={ user.playing ? "Player" : "Spectator" } onChange={ () => this.toggleSpectator(user) } /></span>
-                        :
-                        <></>
+                        <>
+                          <span className="leftpad"><Switch checked={ user.playing } label={ user.playing ? "Player" : "Spectator" } onChange={ () => this.toggleSpectator(user) } /></span>
+                          { user.playing && this.state.order
+                            ? <>
+                                <IconButton className="vertical-align-middle" icon={{ icon: 'north', size: 'xsmall' }} onClick={ () => this.moveUser(user, true) } />
+                                <IconButton className="vertical-align-middle" icon={{ icon: 'south', size: 'xsmall' }} onClick={ () => this.moveUser(user, false) } />
+                              </>
+                            : null
+                          }
+                          { user.playing && this.state.teams
+                            ? //<Select theme={['secondary']} outlined enhanced label="Team" options={ teams } value={ ''+user.team } onChange={ e => this.setTeam(user, +e.target.value) } />
+                              <TextField style={{ width: "80px" }} type="number" label="Team" min="0" value={ user.team ? ''+user.team : "" } onChange={ e => this.setTeam(user, +e.target.value) } />
+                            : null
+                          }
+                        </>
+                        : <></>
                     }
                     {
                       this.state.started
                       ? <Icon icon={ user.connected ? 'check' : 'hourglass_empty' } style={{ 'verticalAlign': 'middle' }} />
-                      : null
+                      : <></>
                     }
                   </l.ListItemMeta>
                 </l.ListItem>

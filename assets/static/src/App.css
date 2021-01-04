@@ -147,6 +147,12 @@ p {
 .mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust {
   padding-top: 56px;
 }
+.mdc-select, .mdc-text-field {
+  --mdc-theme-primary: var(--mdc-theme-secondary);
+}
+.mdc-select--focused .mdc-select__dropdown-icon {
+  background: url(data:image/svg+xml,%3Csvg%20width%3D%2210px%22%20height%3D%225px%22%20viewBox%3D%227%2010%2010%205%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%0A%20%20%20%20%3Cpolygon%20id%3D%22Shape%22%20stroke%3D%22none%22%20style%3D%22fill%3A%23006515%22%20fill-rule%3D%22evenodd%22%20opacity%3D%221%22%20points%3D%227%2010%2012%2015%2017%2010%22%3E%3C%2Fpolygon%3E%0A%3C%2Fsvg%3E) no-repeat center !important;
+}
 
 /* Let the hero portion overflow the top app bar so the background is
    the primary color when it overflows.
@@ -294,4 +300,8 @@ hr {
   border-top: none;
   border-left: none;
   border-right: none;
+}
+
+.vertical-align-middle {
+  vertical-align: middle;
 }
