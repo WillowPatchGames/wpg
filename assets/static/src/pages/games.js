@@ -539,43 +539,77 @@ class PreGameAdminPage extends React.Component {
           >
             <CreateGameForm {...this.props} editable={ false } />
           </l.CollapsibleList>
+        </l.List>
+      </div>
+    </c.Card>;
+
+    let players = this.state.waitlist.filter(user => user.admitted && user.playing);
+    let spectators = this.state.waitlist.filter(user => user.admitted && !user.playing);
+    let waiting = this.state.waitlist;
+
+    let userContent = <c.Card>
+      <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+        <l.List twoLine>
           <l.ListGroup>
             <l.ListItem disabled>
-              <b>Users</b>
+              <h1>Players</h1>
               &nbsp;&nbsp;
               <Switch checked={ this.state.order } label="Order manually" onChange={ () => this.setState(state => Object.assign(state, { order: !state.order })) } />
               &nbsp;&nbsp;
               <Switch checked={ this.state.teams } label="Put into teams" onChange={ () => this.setState(state => Object.assign(state, { teams: !state.teams })) } />
             </l.ListItem>
-            { this.state.waitlist.map((user, i) =>
+            { players.map((user, i) =>
                 <l.ListItem key={user.id} disabled>
                   <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
-                    <Checkbox checked={user.admitted} label="Admitted" onChange={ () => this.toggleAdmitted(user) } />
-                    {
-                      user.admitted ?
-                        <>
-                          <span className="leftpad"><Switch checked={ user.playing } label={ user.playing ? "Player" : "Spectator" } onChange={ () => this.toggleSpectator(user) } /></span>
-                          { user.playing && this.state.order
-                            ? <>
-                                <IconButton className="vertical-align-middle" icon={{ icon: 'north', size: 'xsmall' }} onClick={ () => this.moveUser(user, true) } />
-                                <IconButton className="vertical-align-middle" icon={{ icon: 'south', size: 'xsmall' }} onClick={ () => this.moveUser(user, false) } />
-                              </>
-                            : null
-                          }
-                          { user.playing && this.state.teams
-                            ? //<Select theme={['secondary']} outlined enhanced label="Team" options={ teams } value={ ''+user.team } onChange={ e => this.setTeam(user, +e.target.value) } />
-                              <TextField style={{ width: "80px" }} type="number" label="Team" min="0" value={ user.team ? ''+user.team : "" } onChange={ e => this.setTeam(user, +e.target.value) } />
-                            : null
-                          }
+                    <Button raised label="Bench" onClick={ () => this.toggleSpectator(user) } />
+                    { this.state.order
+                      ? <>
+                          <IconButton className="vertical-align-middle"
+                            icon={{ icon: 'north', size: 'xsmall' }}
+                            onClick={ () => this.moveUser(user, true) }
+                            disabled={ i === 0 }/>
+                          <IconButton className="vertical-align-middle"
+                            icon={{ icon: 'south', size: 'xsmall' }}
+                            onClick={ () => this.moveUser(user, false) }
+                            disabled={ i === players.length-1 }/>
                         </>
-                        : <></>
+                      : null
                     }
-                    {
-                      this.state.started
-                      ? <Icon icon={ user.connected ? 'check' : 'hourglass_empty' } style={{ 'verticalAlign': 'middle' }} />
-                      : <></>
+                    { this.state.teams
+                      ? //<Select theme={['secondary']} outlined enhanced label="Team" options={ teams } value={ ''+user.team } onChange={ e => this.setTeam(user, +e.target.value) } />
+                        <TextField style={{ width: "80px" }} type="number" label="Team" min="0" value={ user.team ? ''+user.team : "" } onChange={ e => this.setTeam(user, +e.target.value) } />
+                      : null
                     }
+                  </l.ListItemMeta>
+                </l.ListItem>
+            )}
+            <l.ListItem disabled>
+              <h1>Spectators</h1>
+            </l.ListItem>
+            { spectators.map((user, i) =>
+                <l.ListItem key={user.id} disabled>
+                  <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
+                  <l.ListItemMeta>
+                    <span>
+                    { user.id === this.props.user.id
+                      ? <>&nbsp;<Button raised label="Add yourself as player" onClick={ () => this.toggleSpectator(user) } /></>
+                      : <><Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
+                          <Button raised label="Add as player" onClick={ () => this.toggleSpectator(user) } /></>
+                    }
+                    </span>
+                  </l.ListItemMeta>
+                </l.ListItem>
+            )}
+            <l.ListItem disabled>
+              <h1>Waiting Room</h1>
+            </l.ListItem>
+            { waiting.filter(user => !user.admitted).map((user, i) =>
+                <l.ListItem key={user.id} disabled>
+                  <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
+                  <l.ListItemMeta>
+                    &nbsp;
+                    <Button raised label="Admit to room" onClick={ () => this.toggleAdmitted(user) } />
                   </l.ListItemMeta>
                 </l.ListItem>
             )}
@@ -604,6 +638,9 @@ class PreGameAdminPage extends React.Component {
             <g.GridCell align="right" span={6} tablet={8}>
               { content }
             </g.GridCell>
+            <g.GridCell align="right" desktop={12} tablet={8}>
+              { userContent }
+            </g.GridCell>
           </g.Grid>
         </div>
       );
@@ -614,6 +651,8 @@ class PreGameAdminPage extends React.Component {
         { countdown }
         <h1>Game #{ this.props.game.id }</h1>
         { content }
+        <br/>
+        { userContent }
       </div>
     );
   }
