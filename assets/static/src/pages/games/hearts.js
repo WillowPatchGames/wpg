@@ -302,11 +302,11 @@ class HeartsGameSynopsis extends React.Component {
           ? sigil(state.suit.toUnicode() || "♤", state.suit.toColor())
           : state.suit === "waiting"
           ? <CircularProgress size="xsmall" style={{ color: "#558abf" }} />
-          : sigil("♠"),
+          : sigil("♥"),
       },
       "is_dealer":{
         name: "Dealer",
-        printer: a => a ? sigil("♠") : "",
+        printer: a => a ? sigil("♥") : "",
       },
       "tricks":"Tricks",
       "round_score":"Round Score",
