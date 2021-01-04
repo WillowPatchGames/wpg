@@ -843,13 +843,13 @@ class SpadesAfterPartyPage extends React.Component {
           let overtakes = parseInt(this.state.history.scores[round_index][player_index].overtakes);
 
           if (parseInt(round_index) === (this.state.history.scores.length - 1)) {
-            final_scores.push(<td colspan={2} style={{ borderTop: "1px solid #000" }}> { score } / { overtakes } </td>);
+            final_scores.push(<td colspan={2} style={{ whiteSpace: "nowrap", borderTop: "1px solid #000" }}> { score } / { overtakes } </td>);
           }
 
           let entry = '-';
           let incr = !isNaN(round_score) && round_score < 0 ? ""+round_score : "+"+round_score
           entry = <>
-            <td style={{ textAlign: "right", paddingLeft: "10px" }}>{ score } / { overtakes }&nbsp;</td>
+            <td style={{ whiteSpace: "nowrap", textAlign: "right", paddingLeft: "10px" }}>{ score } / { overtakes }&nbsp;</td>
             <td style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>
           </>;
 
