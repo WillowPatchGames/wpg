@@ -128,11 +128,6 @@ class HeartsGame {
     this.data.dealer = message?.dealer;
     this.data.pass_direction = message?.pass_direction;
     this.data.played = message?.played ? CardHand.deserialize(message.played) : null;
-    this.data.who_played = [];
-    for (let uid of message.who_played) {
-      let player = await UserCache.FromId(uid);
-      this.data.who_played.push(player);
-    }
     this.data.hearts_broken = message?.hearts_broken;
     this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
     this.data.crib = message?.crib ? CardHand.deserialize(message.crib) : null;
@@ -140,6 +135,15 @@ class HeartsGame {
       this.data.crib.cardSort(true, true);
     }
     this.data.config = message?.config;
+
+    // We've gotta sync up who_played with our played data.
+    if (!this.data.who_played || (message.who_played && message.played.length == 1 && +this.data.who_played[0].id !== +message.who_played[0])) {
+      this.data.who_played = [];
+      for (let uid of message.who_played) {
+        let player = await UserCache.FromId(uid);
+        this.data.who_played.push(player);
+      }
+    }
 
     this.onChange(this);
   }

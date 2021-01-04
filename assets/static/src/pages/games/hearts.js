@@ -112,6 +112,15 @@ class HeartsGameComponent extends React.Component {
   render() {
     var status = a => <h3>{ a }</h3>;
     var big_status = a => <h2>{ a }</h2>;
+    let annotations = null;
+    if (this.state.game.interface.data.who_played) {
+      annotations = [];
+      for (let who_player of this.state.game.interface.data.who_played) {
+        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> { who_player.display }</>;
+        annotations.push(annotation);
+      }
+    }
+
     if (!this.state.game.interface.started) {
       return status("Waiting for game to start …");
     } else if (this.state.game.interface.finished) {
@@ -182,10 +191,10 @@ class HeartsGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.incoming ? status("Incoming Cards") : null }
                 { this.state.game.interface.data.incoming?.toImage(handProps) }
-                { this.state.game.interface.data.crib?.cards ? status("Crib (First Trick)") : null }
-                { this.state.game.interface.data.crib?.toImage(handProps) }
+                { this.state.game.interface.data?.crib?.cards ? status("Crib (First Trick)") : null }
+                { this.state.game.interface.data?.crib?.toImage(handProps) }
                 {status(leading ? (already_played ? "You took it, lead the next trick!" : "You lead off!") : already_played === 1 ? "This card was led" : "These cards have been played")}
-                { this.state.game.interface.data.played?.toImage() }
+                { this.state.game.interface.data.played?.toImage(null, null, annotations) }
                 {big_status("Your turn to play")}
                 {status("Choose a card")}
                 <Button label={ this.state.selected ? "Play this card" : "Pick a card!" } unelevated ripple={false} disabled={ !this.state.selected }
@@ -209,10 +218,10 @@ class HeartsGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.incoming ? status("Incoming Cards") : null }
                 { this.state.game.interface.data.incoming?.toImage(handProps) }
-                { this.state.game.interface.data.crib?.cards ? status("Crib (First Trick)") : null }
-                { this.state.game.interface.data.crib?.toImage(handProps) }
+                { this.state.game.interface.data?.crib?.cards ? status("Crib (First Trick)") : null }
+                { this.state.game.interface.data?.crib?.toImage(handProps) }
                 { status(this.state.game.interface.data.played.cards.length === num_players ? "Last Trick" : "Current Trick") }
-                { this.state.game.interface.data.played?.toImage() }
+                { this.state.game.interface.data.played?.toImage(null, null, annotations) }
                 {status("Waiting for the other player" + (num_players < 3 ? "" : "s") + " to play …")}
               </div>
             </c.Card>
