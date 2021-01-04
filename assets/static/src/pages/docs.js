@@ -196,7 +196,7 @@ class DocsPage extends React.Component {
               </p>
               <img className= "App-screenshots" src={CreateGames} sizes= "180x180"
               alt="Join Existing Game" />
-              <p> Player Options:
+              <p> Player Options:</p>
               <ul>
                 <li>Open for anyone to join or those invited (default is open)
                 </li>
@@ -206,10 +206,9 @@ class DocsPage extends React.Component {
                 <li>Set the number of players.
                 </li>
               </ul>
-              </p>
               <img className= "App-screenshots" src={CreateGamePlayer} sizes= "180x180"
               alt="Game Player Options" />
-              <p>Game Options:
+              <p>Game Options:</p>
               <ul>
                 <li> Game Mode is set to Rush! (Fast Paced Game)
                 </li>
@@ -219,9 +218,8 @@ class DocsPage extends React.Component {
                 game.
                 </li>
               </ul>
-              </p>
               <img className= "App-screenshots" src={CreateGameGameOptions} sizes= "180x180" alt="Game Options" />
-              <p>Tile options:
+              <p>Tile options:</p>
               <ul>
                 <li> Tile Frequency options are:
                 </li>
@@ -241,7 +239,6 @@ class DocsPage extends React.Component {
                 tile is discarded.
                 </li>
               </ul>
-              </p>
               <img className= "App-screenshots" src={CreateGameTiles} sizes= "180x180"
               alt="Game Tile Options" />
               <p> Share this secret code with your players.  Tip:  The rectangle

@@ -13,7 +13,7 @@ import '@rmwc/button/styles';
 import { TextField } from '@rmwc/textfield';
 import '@rmwc/textfield/styles';
 
-import { loadGame, addEv, notify, killable } from '../games.js';
+import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 import { CardImage } from '../../games/card.js';
 

@@ -149,7 +149,7 @@ class RoomPage extends React.Component {
     let left_panel = [];
     if (this.state.room_owner) {
       left_panel.push(
-        <article className="text">
+        <article key={"joining"} className="text">
           <Typography use="headline3">Joining</Typography>
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
@@ -182,7 +182,7 @@ class RoomPage extends React.Component {
 
     if (!this.props.room.admitted) {
       left_panel.push(
-        <article className="text">
+        <article key={"joining"} className="text">
           <Typography use="headline3">Joining</Typography>
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
@@ -193,7 +193,7 @@ class RoomPage extends React.Component {
       );
     } else if (this.state.members !== undefined && this.state.members !== null && this.state.members.length > 0) {
       left_panel.push(
-        <article className="text">
+        <article key={"members"} className="text">
           <Typography use="headline3">Members</Typography>
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
@@ -228,7 +228,7 @@ class RoomPage extends React.Component {
         if (this.state.playing !== null) {
           for (let game of this.state.playing) {
             playing.push(
-              <>
+              <div key={ game.id }>
                 <br />
                 <c.Card>
                   <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
@@ -247,7 +247,7 @@ class RoomPage extends React.Component {
                     }
                   </c.CardActions>
                 </c.Card>
-              </>
+              </div>
             );
           }
         }
@@ -256,7 +256,7 @@ class RoomPage extends React.Component {
         if (this.state.pending !== null) {
           for (let game of this.state.pending) {
             pending.push(
-              <>
+              <div key={ game.id }>
                 <br />
                 <c.Card>
                   <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
@@ -275,7 +275,7 @@ class RoomPage extends React.Component {
                     }
                   </c.CardActions>
                 </c.Card>
-              </>
+              </div>
             );
           }
         }

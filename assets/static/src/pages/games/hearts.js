@@ -116,7 +116,7 @@ class HeartsGameComponent extends React.Component {
     if (this.state.game.interface.data.who_played) {
       annotations = [];
       for (let who_player of this.state.game.interface.data.who_played) {
-        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> { who_player.display }</>;
+        let annotation = <span key={ who_player.id }><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> { who_player.display }</span>;
         annotations.push(annotation);
       }
     }
@@ -646,7 +646,7 @@ class HeartsAfterPartyPage extends React.Component {
       if (this.state.history.players[round_index]) {
         let round_players = this.state.history.players[round_index];
         let num_players = Object.keys(round_players).length;
-        round_data = [<b>Data for round { round_index + 1}</b>];
+        round_data = [<b key={ null }>Data for round { round_index + 1}</b>];
         let hands_data = [];
         for (let player_index in this.state.history.players[round_index]) {
           let user = this.state.player_mapping[player_index];
@@ -661,7 +661,7 @@ class HeartsAfterPartyPage extends React.Component {
             dealt_hand = played_hand;
           }
           hands_data.push(
-            <div>
+            <div key={ user.id }>
               <b>{ user.display }</b>
               <l.List>
                 <l.CollapsibleList handle={
@@ -699,7 +699,7 @@ class HeartsAfterPartyPage extends React.Component {
           );
         }
         round_data.push(
-          <l.CollapsibleList handle={
+          <l.CollapsibleList key={ round_index+"_hands" } handle={
               <l.SimpleListItem text={ <b>Player Hands</b> } metaIcon="chevron_right" />
             }
           >
@@ -728,16 +728,16 @@ class HeartsAfterPartyPage extends React.Component {
               for (let offset = 0; offset < num_players; offset++) {
                 let annotation_player_index = (trick.leader + offset) % num_players;
                 let annotation_player = this.state.player_mapping[annotation_player_index];
-                let annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> { annotation_player.display }</>;
+                let annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> { annotation_player.display }</span>;
                 if (annotation_player_index === trick.winner) {
-                  annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b>{ annotation_player.display }</b></>;
+                  annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b>{ annotation_player.display }</b></span>;
                 }
                 annotations.push(annotation);
               }
             }
             let cards = trick?.played ? CardHand.deserialize(trick.played).toImage(null, null, annotations) : null;
             tricks_data.push(
-              <l.CollapsibleList handle={
+              <l.CollapsibleList key={ trick_index } handle={
                   <l.SimpleListItem text={ <b>Trick { parseInt(trick_index) + 1 }</b> } metaIcon="chevron_right" />
                 }
               >
@@ -751,7 +751,7 @@ class HeartsAfterPartyPage extends React.Component {
           }
 
           round_data.push(
-            <l.CollapsibleList handle={
+            <l.CollapsibleList key={ round_index+"_tricks" } handle={
                 <l.SimpleListItem text={ <b>Tricks</b> } metaIcon="chevron_right" />
               }
             >
@@ -797,33 +797,32 @@ class HeartsAfterPartyPage extends React.Component {
       var final_scores = [];
       for (let player_index of Object.keys(this.state.player_mapping).sort()) {
         let score_player = this.state.player_mapping[player_index];
-        score_players.push(<td colspan={2} style={{ borderBottom: "1px solid #777", paddingLeft: '25px', paddingRight: '25px' }}><Avatar src={ gravatarify(score_player) } name={ score_player.display } size="medium" /> { score_player.display }</td>);
+        score_players.push(<td key={ player_index } colSpan={2} style={{ borderBottom: "1px solid #777", paddingLeft: '25px', paddingRight: '25px' }}><Avatar src={ gravatarify(score_player) } name={ score_player.display } size="medium" /> { score_player.display }</td>);
       }
       for (let round_index in this.state.history.scores) {
         let round_row = [];
-        round_row.push(<td style={{ borderTop: "10px solid transparent", borderBottom: "10px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
+        round_row.push(<td key={ round_index } style={{ borderTop: "10px solid transparent", borderBottom: "10px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
         for (let player_index of Object.keys(this.state.player_mapping).sort()) {
           let round_score = parseInt(this.state.history.scores[round_index][player_index].round_score);
           let score = parseInt(this.state.history.scores[round_index][player_index].score);
 
           if (parseInt(round_index) === (this.state.history.scores.length - 1)) {
             if (+this.state.player_mapping[player_index].id === +this.state.winner.id) {
-              final_scores.push(<td colspan={2} style={{ borderTop: "1px solid #000" }}> <b> { score } </b> </td>);
+              final_scores.push(<td key={ player_index } colSpan={2} style={{ borderTop: "1px solid #000" }}> <b> { score } </b> </td>);
             } else {
-              final_scores.push(<td colspan={2} style={{ borderTop: "1px solid #000" }}> { score } </td>);
+              final_scores.push(<td key={ player_index } colSpan={2} style={{ borderTop: "1px solid #000" }}> { score } </td>);
             }
           }
 
-          let entry = '-';
           let incr = !isNaN(round_score) && round_score < 0 ? ""+round_score : "+"+round_score
-          entry = <>
-            <td style={{ textAlign: "right", paddingLeft: "10px" }}>{ score }&nbsp;</td>
-            <td style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>
-          </>;
+          let entries = [
+            <td key={ player_index+"_score" } style={{ textAlign: "right", paddingLeft: "10px" }}>{ score }&nbsp;</td>,
+            <td key={ player_index+"_incr" } style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>
+          ];
 
-          round_row.push(entry);
+          round_row.push(...entries);
         }
-        round_scores.push(<tr> { round_row } </tr>);
+        round_scores.push(<tr key={ round_index }>{ round_row }</tr>);
       }
 
       scoreboard_data = <div className="fit-content" style={{ margin: "0 auto 0.5em auto", maxWidth: "90%" }}>

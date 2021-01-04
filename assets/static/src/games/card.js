@@ -144,7 +144,7 @@ class CardRank {
 class Card {
   constructor(id, suit, rank) {
     if (id instanceof Card) {
-      var { id, suit, rank } = id;
+      ({ id, suit, rank } = id);
     }
 
     if (id !== undefined && id !== null && suit !== undefined && suit !== null && (rank === undefined || rank === null)) {
@@ -253,7 +253,9 @@ class Card {
 
     var scale = props.scale || 0.5;
     var x_part = props.x_part || 1;
-    return <div style={{ display: "inline-block", width: card_dim[0]*scale*Math.abs(x_part) }}>
+
+    var { key, ...props } = props; // eslint-disable-line no-redeclare
+    return <div key={ key } style={{ display: "inline-block", width: card_dim[0]*scale*Math.abs(x_part) }}>
       <div style={{ marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         { annotation }
       </div>
@@ -380,7 +382,7 @@ class CardHand {
         cards[i] = mapper(c,i,vs)||c;
       });
     }
-    var { overlap, curve, scale, ...props } = (props || {});
+    var { overlap, curve, scale, ...props } = (props || {}); // eslint-disable-line no-redeclare
     scale = scale || 0.5;
     if (typeof overlap !== 'number') overlap = overlap ? 0.75 : 0;
     if (typeof curve !== 'number') curve = curve ? 3*cards.length : 0;

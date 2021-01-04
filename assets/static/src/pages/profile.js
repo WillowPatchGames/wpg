@@ -410,7 +410,7 @@ class UserPlansTab extends React.Component {
         var num_rooms = String( user_plan.rooms().length);
         var total_rooms = plan.max_total_rooms !== -1 ? String(plan.max_total_rooms) : "Unlimited";
         rendered_plans.push(
-          <>
+          <div key={ user_plan.plan_id }>
             <c.Card style={{ padding: '1rem 1rem 1rem 1rem' }}>
               <Typography tag="h3">
                 { plan.name }
@@ -431,7 +431,7 @@ class UserPlansTab extends React.Component {
               }
             </c.Card>
             <br /><br />
-          </>
+          </div>
         );
       }
     }
