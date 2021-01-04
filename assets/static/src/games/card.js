@@ -310,6 +310,7 @@ class CardImage extends React.Component {
     var x_part = this.props.x_part || 1; delete props.x_part;
     var y_part = this.props.y_part || 1; delete props.y_part;
     var name = this.props.suit + "_" + this.props.rank;
+    delete props.suit; delete props.rank;
     var x = 0; var y = 0;
     if (ranks[this.props.rank] !== undefined && suits[this.props.suit] !== undefined) {
       x = ranks[this.props.rank] * -card_dim[0];
@@ -332,7 +333,7 @@ class CardImage extends React.Component {
       card_dim[0]*Math.abs(x_part),
       card_dim[1]*Math.abs(y_part),
     ];
-    return <svg width={ card_dim[0]*scale*Math.abs(x_part) } height={ card_dim[1]*scale*Math.abs(y_part) } viewBox={ viewBox } {...props}>
+    return <svg className="card" width={ card_dim[0]*scale*Math.abs(x_part) } height={ card_dim[1]*scale*Math.abs(y_part) } viewBox={ viewBox } {...props}>
       <use href={ cards+"#"+name} x={ x } y={ y }/>
     </svg>
   }
@@ -389,13 +390,31 @@ class CardHand {
     var marginTop = 0;
     var marginBottom = 0;
     var padding = 0;
-    var select_dist = 40*scale;
-    if (selectable) marginTop += select_dist*1.2;
-    if (curve) {
-      marginBottom += cards.length*50*scale*curve_norm*(1-overlap);
-      padding += card_dim[1]*curve_norm/10;
+    var select_dist = selectable ? 40*scale : 0;
+    var cardSelectableTop = 0;
+    var cardCurveBottom = 0;
+    var cardCurvePadding = 0;
+    var cardOverlapPadding = 0;
+    if (selectable) {
+      cardSelectableTop = select_dist*1.2;
+      marginTop += cardSelectableTop;
     }
-    if (overlap) padding += overlap*card_dim[0]*scale/2;
+    if (curve) {
+      cardCurveBottom = cards.length*50*scale*curve_norm*(1-overlap);
+      marginBottom += cardCurveBottom;
+      cardCurvePadding = (card_dim[1]+select_dist*1.2)*curve_norm/6;
+      padding += cardCurvePadding;
+    }
+    if (overlap) {
+      cardOverlapPadding = overlap*card_dim[0]*scale/2;
+      padding += cardOverlapPadding;
+    }
+    Object.assign(myProps.style, {
+      "--card-selectable-top": cardSelectableTop+"px",
+      "--card-curve-bottom": cardCurveBottom+"px",
+      "--card-curve-padding": cardCurvePadding+"px",
+      "--card-overlap-padding": cardOverlapPadding+"px",
+    });
 
     if (marginTop) myProps.style.marginTop = marginTop + "px";
     if (marginBottom) myProps.style.marginBottom = marginBottom + "px";
@@ -416,7 +435,7 @@ class CardHand {
       if (!tr) return "translate(0,0)"; // push a transform to avoid z-index issues
       return tr;
     };
-    return (<div {...mergeProps(myProps, props)}>
+    return (<div className="card-hand" {...mergeProps(myProps, props)}>
       {cards.map((card,i) =>
         card.toImage({
           key: card.id,

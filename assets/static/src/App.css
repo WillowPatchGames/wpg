@@ -128,6 +128,17 @@ p {
   }
 }
 
+@media (max-width: 600px) {
+  .card-hand {
+    padding-left: var(--card-overlap-padding) !important;
+    padding-right: var(--card-overlap-padding) !important;
+  }
+  .card-hand .card {
+    transform: none !important;
+    margin-bottom: calc(var(--card-curve-bottom) * -1);
+  }
+}
+
 
 /* TODO: upstream??? */
 .mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust {
