@@ -191,7 +191,7 @@ class HeartsGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.incoming ? status("Incoming Cards") : null }
                 { this.state.game.interface.data.incoming?.toImage(handProps) }
-                { this.state.game.interface.data?.crib?.cards ? status("Crib (First Trick)") : null }
+                { this.state.game.interface.data?.crib?.cards?.length > 0 ? status("Crib (First Trick)") : null }
                 { this.state.game.interface.data?.crib?.toImage(handProps) }
                 {status(leading ? (already_played ? "You took it, lead the next trick!" : "You lead off!") : already_played === 1 ? "This card was led" : "These cards have been played")}
                 { this.state.game.interface.data.played?.toImage(null, null, annotations) }
@@ -218,7 +218,7 @@ class HeartsGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 { this.state.game.interface.data.incoming ? status("Incoming Cards") : null }
                 { this.state.game.interface.data.incoming?.toImage(handProps) }
-                { this.state.game.interface.data?.crib?.cards ? status("Crib (First Trick)") : null }
+                { this.state.game.interface.data?.crib?.cards?.length > 0 ? status("Crib (First Trick)") : null }
                 { this.state.game.interface.data?.crib?.toImage(handProps) }
                 { status(this.state.game.interface.data.played.cards.length === num_players ? "Last Trick" : "Current Trick") }
                 { this.state.game.interface.data.played?.toImage(null, null, annotations) }

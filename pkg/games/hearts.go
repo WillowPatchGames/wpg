@@ -635,7 +635,6 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 		// First put the passed cards into the hand...
 		for player_index, indexed_player := range hs.Players {
 			hs.Players[player_index].Hand = append(hs.Players[player_index].Hand, indexed_player.Incoming...)
-			hs.Players[player_index].Incoming = make([]Card, 0)
 		}
 
 		// Then copy off their hands again...
@@ -749,6 +748,12 @@ func (hs *HeartsState) PlayCard(player int, card int) error {
 		history.Tricks = append(history.Tricks, HeartsTrick{})
 		this_trick = &history.Tricks[trick_index]
 		this_trick.Leader = hs.Leader
+
+		// Also clear out everyone's incoming cards -- they should've seen them
+		// all by now.
+		for player_index := range hs.Players {
+			hs.Players[player_index].Incoming = make([]Card, 0)
+		}
 	} else {
 		// Got an existing trick
 		this_trick = &history.Tricks[len(history.Tricks)-1]
