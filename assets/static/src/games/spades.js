@@ -55,7 +55,7 @@ class SpadesController {
 
   async peek() {
     return await this.wsController.sendAndWait({
-      'message_type': 'peek',
+      'message_type': 'look',
     });
   }
 
