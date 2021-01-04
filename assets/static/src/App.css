@@ -134,8 +134,11 @@ p {
     padding-right: var(--card-overlap-padding) !important;
   }
   .card-hand .card {
-    transform: none !important;
+    transform: translate(0,0) !important;
     margin-bottom: calc(var(--card-curve-bottom) * -1);
+  }
+  .card-hand .card.selected {
+    transform: translateY(calc(var(--card-select-dist) * -1)) !important;
   }
 }
 
