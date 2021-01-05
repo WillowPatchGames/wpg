@@ -16,8 +16,6 @@ import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
 import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
-import { Select } from '@rmwc/select';
-import '@rmwc/select/styles';
 import { Switch } from '@rmwc/switch';
 import '@rmwc/switch/styles';
 
@@ -724,7 +722,7 @@ class HeartsAfterPartyPage extends React.Component {
           state.historical_player = len-1;
         return state;
       });
-    } else console.log("Unknown amount: ", amt);
+    } else throw new Error("Unknown amount: ", amt);
   }
 
   render() {
@@ -893,20 +891,16 @@ class HeartsAfterPartyPage extends React.Component {
           thistory = <b>No data for this trick.</b>;
         } else {
           let num_players = Object.keys(this.state.player_mapping).length;
-          let leader = this.state.player_mapping[trick.leader];
-          let winner = this.state.player_mapping[trick.winner];
-          let played = trick.played ? CardHand.deserialize(trick.played) : null;
+          let played = trick.played ? CardHand.deserialize(trick.played).cardSort(true, true) : null;
           let annotations = [];
-          if (leader) {
-            for (let offset = 0; offset < num_players; offset++) {
-              let annotation_player_index = (trick.leader + offset) % num_players;
-              let annotation_player = this.state.player_mapping[annotation_player_index];
-              let annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> { annotation_player.display }</span>;
-              if (annotation_player_index === trick.winner) {
-                annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b>{ annotation_player.display }</b></span>;
-              }
-              annotations.push(annotation);
+          for (let offset = 0; offset < num_players; offset++) {
+            let annotation_player_index = (trick.leader + offset) % num_players;
+            let annotation_player = this.state.player_mapping[annotation_player_index];
+            let annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> { annotation_player.display }</span>;
+            if (annotation_player_index === trick.winner) {
+              annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b>{ annotation_player.display }</b></span>;
             }
+            annotations.push(annotation);
           }
           let players = this.state.history.players[this.state.historical_round];
           let player = players && players[this.state.historical_player];
@@ -919,8 +913,7 @@ class HeartsAfterPartyPage extends React.Component {
               card.selected = played.cards.findIndex(c => c.id === card.id) >= 0;
               return card;
             };
-            console.log(CardHand.deserialize(player_trick));
-            thand = CardHand.deserialize(player_trick).toImage(playing, handProps);
+            thand = CardHand.deserialize(player_trick).cardSort(true, true).toImage(playing, handProps);
           }
           let cards = played?.toImage(null, null, annotations);
           thistory = <>

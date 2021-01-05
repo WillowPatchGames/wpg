@@ -182,7 +182,7 @@ class RoomPage extends React.Component {
 
     if (!this.props.room.admitted) {
       left_panel.push(
-        <article key={"joining"} className="text">
+        <article key={"joining2"} className="text">
           <Typography use="headline3">Joining</Typography>
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >

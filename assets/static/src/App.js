@@ -101,7 +101,6 @@ class App extends React.Component {
     if (try_game) {
       var game = await GameModel.FromCode(this.state.user, code);
       if ((game.error === undefined || game.error === null) && game.lifecycle !== 'deleted') {
-        console.log(game.lifecycle, window.location.pathname);
         if (game.lifecycle !== 'finished' || window.location.pathname === '/afterparty') {
           this.setGame(game);
           return;
