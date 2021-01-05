@@ -15,9 +15,10 @@ import (
 
 type EightJacksAssignMsg struct {
 	MessageHeader
-	Dealer          int     `json:"dealer"`
-	NumPlayers      int     `json:"num_players"`
-	TeamAssignments [][]int `json:"team_assignments"`
+	Dealer          int      `json:"dealer"`
+	NumPlayers      int      `json:"num_players"`
+	PlayerMaps      []uint64 `json:"player_map"`
+	TeamAssignments [][]int  `json:"team_assignments"`
 }
 
 type EightJacksDiscardMsg struct {
