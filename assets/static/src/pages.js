@@ -20,6 +20,7 @@ import { SignupPage } from './pages/signup.js';
 import { PricingPage } from './pages/pricing.js';
 import { PrivacyPage } from './pages/privacy.js';
 import { TestGamePage } from './pages/test.js';
+import { DemoGamePage } from './pages/demo.js';
 
 class RouteWithAuth extends React.Component {
   render() {
@@ -123,6 +124,9 @@ class Page extends React.Component {
         </Route>
         <Route path="/test">
           <TestGamePage {...this_props} key="path-test" />
+        </Route>
+        <Route path="/demo">
+          <DemoGamePage {...this_props} key="path-demo" />
         </Route>
         <Route exact path="/">
           <HomePage {...this_props} key="home" />
