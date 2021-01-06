@@ -276,7 +276,7 @@ func (gs *GinSolver) isKind(hand []Card, cards []int) bool {
 
 	// Thirdly, process AllWildGroups: if all the cards are wild, we know we have
 	// a valid grouping.
-	if num_wild == len(cards) && (!gs.AllWildGroups && !gs.WildAsRank) {
+	if num_wild == len(cards) && (gs.AllWildGroups || (!gs.AllWildGroups && !gs.WildAsRank)) {
 		return gs.AllWildGroups
 	}
 
@@ -298,7 +298,8 @@ func (gs *GinSolver) isKind(hand []Card, cards []int) bool {
 	}
 
 	// Having made that adjustment, now apply MostlyWildGroups. We first need to
-	//
+	// compute what the majority is. After that, if we are under the majority, or
+	// if we have enabled the right config option, we can return true.
 	var majority = len(cards) / 2
 	if majority+majority == len(cards) {
 		majority += 1
@@ -384,7 +385,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 		// cards we could slot in. But, we definitely need to handle this
 		// differently.
 		//
-		// We might end up droping this conditional and handling range expansion
+		// We might end up dropping this conditional and handling range expansion
 		// later.
 		return gs.MostlyWildGroups
 	}
@@ -475,16 +476,74 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	// Now we need to slot wild cards into missing gaps. If we run out of wild
 	// cards, we can safely exit early.
 	//
-	// XXX -- TODO.
+	// This is a little clever. We start at the minimum index (which we know
+	// can't be empty, and stop as soon as we hit the max entry, which we also
+	// know can't be empty.
+	for index := min_rank; index != max_rank; index = (min_rank + 1) {
+		if run_map[index] == -1 {
+			// If we don't have any wild cards, we can exit early: our range has
+			// holes in it.
+			if len(wild_cards) == 0 {
+				return false
+			}
 
-	// Now we can try slotting in extra wild cards at any other adjacent place in
-	// the run.
-	//
-	// XXX -- TODO.
+			// To slot in a wild card, we first try to slot in a wild card with
+			// this rank. This helps in case we're able to use WildAsRank, but
+			// otherwise doesn't matter.
+			for wild_index, hand_index := range wild_cards {
+				card := hand[hand_index]
+				if card.Rank == index {
+					// Found a match, slot it in.
+					run_map[index] = hand_index
+					wild_cards = append(wild_cards[:wild_index], wild_cards[wild_index+1:]...)
+					break
+				}
+			}
+		}
+	}
 
-	// Now we check bounds & wild card usage constraints.
+	// Try again, but this time with Jokers.
+	for index := min_rank; index != max_rank; index = (min_rank + 1) {
+		if run_map[index] == -1 {
+			// If we don't have any wild cards, we can exit early: our range has
+			// holes in it.
+			if len(wild_cards) == 0 {
+				return false
+			}
+
+			for wild_index, hand_index := range wild_cards {
+				card := hand[hand_index]
+				if card.Rank == JokerRank {
+					run_map[index] = hand_index
+					wild_cards = append(wild_cards[:wild_index], wild_cards[wild_index+1:]...)
+					break
+				}
+			}
+		}
+	}
+
+	// Finally, slot literally anything in the remaining slots.
+	for index := min_rank; index != max_rank; index = (min_rank + 1) {
+		if run_map[index] == -1 {
+			// If we don't have any wild cards, we can exit early: our range has
+			// holes in it.
+			if len(wild_cards) == 0 {
+				return false
+			}
+
+			run_map[index] = wild_cards[0]
+			wild_cards = wild_cards[1:]
+		}
+	}
+
+	// Note that we don't need to try slotting in extra wild cards at any
+	// other adjacent place in the run. We can safely assume there are fewer
+	// than 13 cards in this group and we can build a group with any extra
+	// wild cards.
 	//
-	// XXX -- TODO.
+	// However, we still need to ensure we have the right wild card usage.
+	//
+	// XXX -- TODO: Implement this.
 
 	return true
 }
