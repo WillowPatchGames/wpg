@@ -416,7 +416,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 				}
 
 				new_max_index := new_min_index
-				for run_map[new_min_index] == -1 {
+				for run_map[new_max_index] == -1 {
 					new_max_index++
 					// Guaranteed to terminate: we started at the Two and we know for
 					// sure there's a King above us.
@@ -546,6 +546,217 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	// XXX -- TODO: Implement this.
 
 	return true
+}
+
+const flag int = -1
+
+type Interval struct {
+	min int
+	more int
+}
+
+var none Interval = Interval{flag, flag}
+
+func orInterval(l Interval, r Interval) Interval {
+	if l.min == flag {
+		return r
+	}
+	if r.min == flag {
+		return l
+	}
+	// Semi-arbitrarily prefer matches with fewer required wildcards
+	// (since excess wildcards probably can be accounted for,
+	// except maybe in extreme edge cases)
+	if l.min < r.min {
+		return l
+	}
+	if r.min < l.min {
+		return r
+	}
+	// Since they both require the same amount of wildcards,
+	// return the one that allows a greater number of extras
+	if l.more == flag || l.more > r.more {
+		return l
+	}
+	return r
+}
+func andInterval(l Interval, r Interval) Interval {
+	if l.min == flag {
+		return none
+	}
+	if r.min == flag {
+		return none
+	}
+	more := l.more + r.more
+	if l.more == flag || r.more == flag {
+		more = flag
+	}
+	return Interval{l.min+r.min, more}
+}
+
+func (gs *GinSolver) wcValidGroup(hand []Card, cards []int) Interval {
+	if len(cards) == 0 {
+		return none
+	}
+	return orInterval(gs.wcKind(hand, cards), gs.wcRun(hand, cards))
+}
+
+// This function assumes that the cards being passed as analyzed as their rank
+// (i.e. don't worry about WildAsRank here, that is handled at a higher level),
+// and returns the Interval of wildcards needed to make the match happen
+func (gs *GinSolver) wcKind(hand []Card, cards []int) Interval {
+	if len(cards) == 0 {
+		return none
+	}
+
+	rank := NoneRank
+
+	for _, hand_index := range cards {
+		card := hand[hand_index]
+		if rank == NoneRank {
+			rank = card.Rank
+		} else if rank != card.Rank {
+			return none
+		}
+	}
+
+	min := 3-len(cards)
+	if min < 0 {
+		min = 0
+	}
+
+	// If gs.MostlyWildGroups is false, we can only accept len(cards)-min extra
+	// wildcards (and if we only have one card we can't form a group)
+	if !gs.MostlyWildGroups {
+		if len(cards) <= 1 {
+			return none
+		}
+		return Interval{min, len(cards)-min}
+	}
+
+	// Otherwise, we accept mostly wild groups, so we can accept any number of
+	// wildcards here and just need to ensure that there are at least 3 cards
+	return Interval{min, flag}
+}
+
+// This function assumes that the cards being passed as analyzed as their rank
+// (i.e. don't worry about WildAsRank here, that is handled at a higher level),
+// and returns the Interval of wildcards needed to make the match happen
+//
+// TODO: handle WildJokerRanked
+func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
+	if len(cards) == 0 {
+		return none
+	}
+	if len(cards) == 1 {
+		if !gs.MostlyWildGroups {
+			return none
+		}
+		return Interval{2, 11}
+	}
+
+	// A group of cards is a run IFF they have a designated start and end value,
+	// where all ranks in the range are assigned, and optionally, follow a single
+	// suit. To do so, we slot cards into a mapping, starting with non-wild cards.
+	// Using the upper and lower bound on this mapping, we see if we can add in
+	// wild cards to complete a valid range. Notably, unless WildJokerRanked is
+	// set to true, the maximum value is a run is King, not Joker. Additionally,
+	// we know that if two cards have the same rank, they cannot form a valid
+	// run.
+	var run_map map[CardRank]int
+	var min_rank CardRank = NoneRank
+	var max_rank CardRank = NoneRank
+	var run_suit CardSuit = NoneSuit
+
+	for index := NoneRank; index <= JokerRank; index++ {
+		run_map[index] = -1
+	}
+
+	// Populate run_map and verify we have something that could be made into
+	// a run with wildcards.
+	for _, hand_index := range cards {
+		card := hand[hand_index]
+		if card.Rank < AceRank || card.Rank > KingRank {
+			return none
+		}
+		if run_map[card.Rank] == -1 {
+			run_map[card.Rank] = hand_index
+			if min_rank == NoneRank || card.Rank < min_rank {
+				min_rank = card.Rank
+			}
+			if max_rank == NoneRank || card.Rank > max_rank {
+				max_rank = card.Rank
+			}
+			if run_suit == NoneSuit {
+				run_suit = card.Suit
+			} else if run_suit != card.Suit && gs.SameSuitRuns {
+				// Here we found two ranked cards of different suits; this cannot be
+				// a run due to config, so we can exit early.
+				return none
+			}
+		} else {
+			// The given card is ranked (not wild) and we know its rank is already
+			// represented in the solver. This is more like a Kind than a Run: no
+			// duplicates are allowed.
+			return none
+		}
+	}
+
+	// If we have thirteen cards and got here, they must be ace through king
+	if len(cards) == 13 {
+		// We need no wildcards to complete it, we cannot take any more wildcards
+		return Interval{0,0}
+	}
+
+	// Find largest gap
+	// By default it is the initial gap and final gap
+	// But we can do a sliding window
+	// max_gap_size := 13 - int(max_rank - min_rank)
+	max_gap_size := int((min_rank - AceRank) + (KingRank - max_rank))
+	if gs.RunsWrap || gs.AceHigh {
+		// Find the largest congruent gap.
+		// Start at TwoRank, since we already accounted for AceRank above
+		new_min_index := TwoRank
+		// We will end at KingRank if RunsWrap, else just check TwoRank
+		check_rank = gs.RunsWrap ? KingRank : TwoRank
+		for new_min_index <= check_rank {
+			if run_map[new_min_index] != -1 {
+				continue
+			}
+			// new_min_index now points at the start of a gap
+
+			new_max_index := new_min_index+1
+			for run_map[AceRank + (new_max_index % (1 + KingRank - AceRank))] == -1 {
+				new_max_index++
+			}
+			// new_max_index now points right after the end of the gap
+
+			new_gap := int(new_max_index - new_min_index)
+			if new_gap > max_gap_size {
+				max_gap_size = new_gap
+			}
+
+			// now we look starting from two after the end of the gap
+			// (because a subset of the gap we already found will be smaller,
+			// and new_min_index points at a populated element which will
+			// not be the start of a gap)
+			new_min_index = new_max_index+1
+		}
+	}
+
+	// The spread of cards in the run
+	spread := 13 - max_gap_size
+	// The number of wildcards to fill in the internal gaps
+	min := spread - len(cards)
+
+	// We can keep adding wildcards until we reach a full 13-card run
+	more := 13-len(cards)
+	// Or until we have more wildcards than non-wildcards
+	if !gs.MostlyWildGroups && (len(cards)-min < more) {
+		more = len(cards)-min
+	}
+
+	return Interval{min,more}
 }
 
 // Checks whether the given hand can make the score entered by the user. This
