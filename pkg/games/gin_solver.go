@@ -718,7 +718,10 @@ func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
 		// Start at TwoRank, since we already accounted for AceRank above
 		new_min_index := TwoRank
 		// We will end at KingRank if RunsWrap, else just check TwoRank
-		check_rank = gs.RunsWrap ? KingRank : TwoRank
+		check_rank := TwoRank
+		if gs.RunsWrap {
+			check_rank = KingRank
+		}
 		for new_min_index <= check_rank {
 			if run_map[new_min_index] != -1 {
 				continue
