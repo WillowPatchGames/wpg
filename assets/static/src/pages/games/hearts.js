@@ -891,7 +891,7 @@ class HeartsAfterPartyPage extends React.Component {
           thistory = <b>No data for this trick.</b>;
         } else {
           let num_players = Object.keys(this.state.player_mapping).length;
-          let played = trick.played ? CardHand.deserialize(trick.played).cardSort(true, true) : null;
+          let played = trick.played ? CardHand.deserialize(trick.played) : null;
           let annotations = [];
           for (let offset = 0; offset < num_players; offset++) {
             let annotation_player_index = (trick.leader + offset) % num_players;
