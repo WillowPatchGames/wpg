@@ -246,23 +246,8 @@ class Card {
     }
   }
 
-  toImage(props, annotation) {
-    if (!annotation) {
-      return <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />;
-    }
-
-    var scale = props.scale || 0.5;
-    var x_part = props.x_part || 1;
-
-    var { key, ...props } = props; // eslint-disable-line no-redeclare
-    return <div key={ key } style={{ display: "inline-block", width: card_dim[0]*scale*Math.abs(x_part) }}>
-      <div style={{ marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        { annotation }
-      </div>
-      <div style={{}}>
-        <CardImage suit={ this.suit.toImage() } rank={ this.rank.toImage() } {...props} />
-      </div>
-    </div>
+  toImage(props) {
+    return <CardImage card={ this } {...props}/>;
   }
 
   serialize() {
@@ -309,38 +294,62 @@ var card_dim = [202.5,315];
 
 class CardImage extends React.Component {
   render() {
-    var props = Object.assign({}, this.props);
-    var className = props.className || ""; delete props.className;
-    var scale = this.props.scale || 0.5; delete props.scale;
-    var x_part = this.props.x_part || 1; delete props.x_part;
-    var y_part = this.props.y_part || 1; delete props.y_part;
-    var name = this.props.suit + "_" + this.props.rank;
-    delete props.suit; delete props.rank;
+    var {
+      scale,
+      card, suit, rank,
+      overlay, annotation,
+      className, ...props } = this.props;
+    if (className) {
+      className = " " + className;
+    } else {
+      className = "";
+    }
+    if (!scale) scale = 0.5;
+    if (card) {
+      suit = card.suit?.toImage() || card.suit || suit;
+      rank = card.rank?.toImage() || card.rank || rank;
+    }
+    var name = suit + "_" + rank;
+
     var x = 0; var y = 0;
-    if (ranks[this.props.rank] !== undefined && suits[this.props.suit] !== undefined) {
-      x = ranks[this.props.rank] * -card_dim[0];
-      y = suits[this.props.suit] * -card_dim[1];
-    } else if (this.props.rank === "joker" && ["black","red","none","fancy", null].includes(this.props.suit)) {
-      var joker_suit = ["red","fancy"].includes(this.props.suit) ? "red" : "black";
-      name = this.props.rank + "_" + joker_suit;
+    if (ranks[rank] !== undefined && suits[suit] !== undefined) {
+      x = ranks[rank] * -card_dim[0];
+      y = suits[suit] * -card_dim[1];
+    } else if (rank === "joker" && ["black","red","none","fancy", null].includes(suit)) {
+      var joker_suit = ["red","fancy"].includes(suit) ? "red" : "black";
+      name = rank + "_" + joker_suit;
       x = (joker_suit === "red" ? 1 : 0) * -card_dim[0];
       y = 4 * -card_dim[1];
-    } else if (this.props.rank === "blank") {
+    } else if (rank === "blank" || (rank !== "back" && overlay)) {
       name = "rect9340";
     } else {
       name = "back";
       x = 2 * -card_dim[0];
       y = 4 * -card_dim[1];
     }
-    var viewBox = [
-      card_dim[0]*(x_part < 0 ? 1+x_part : 0),
-      card_dim[1]*(y_part < 0 ? 1+y_part : 0),
-      card_dim[0]*Math.abs(x_part),
-      card_dim[1]*Math.abs(y_part),
-    ];
-    return <svg className={ "card " + className } width={ card_dim[0]*scale*Math.abs(x_part) } height={ card_dim[1]*scale*Math.abs(y_part) } viewBox={ viewBox } {...props}>
-      <use href={ cards+"#"+name} x={ x } y={ y }/>
-    </svg>
+
+    if (overlay) {
+      overlay = <div className="card-overlay centered">{ overlay }</div>;
+    } else {
+      overlay = <></>;
+    }
+    if (annotation) {
+      className += " annotated";
+      annotation = <div className="card-overlay card-annotation">{ annotation }</div>;
+    } else {
+      annotation = <></>;
+    }
+
+    var viewBox = [ 0, 0, card_dim[0], card_dim[1] ];
+    return <div className={ "card" + className }>
+      { annotation }
+      <svg className="card-image"
+        width={ card_dim[0]*scale } height={ card_dim[1]*scale }
+        viewBox={ viewBox } {...props}>
+        <use href={ cards+"#"+name} x={ x } y={ y }/>
+      </svg>
+      { overlay }
+    </div>;
   }
 }
 
@@ -375,6 +384,14 @@ class CardHand {
       props = mapper;
       mapper = props.mapper;
     }
+    if (annotations) {
+      var oldMapper = mapper || (c => c);
+      mapper = (c,i,vs) => {
+        var r = oldMapper(c,i,vs);
+        if (r) r.annotation = annotations[i];
+        return r;
+      };
+    }
     if (mapper) {
       cards = [];
       this.cards.forEach((v,i,vs) => {
@@ -382,83 +399,7 @@ class CardHand {
         cards[i] = mapper(c,i,vs)||c;
       });
     }
-    var { overlap, curve, scale, ...props } = (props || {}); // eslint-disable-line no-redeclare
-    scale = scale || 0.5;
-    if (typeof overlap !== 'number') overlap = overlap ? 0.75 : 0;
-    if (typeof curve !== 'number') curve = curve ? 3*cards.length : 0;
-    var curve_norm = curve ? Math.sin(curve*Math.PI/180) : 0;
-    var selectable = cards.some(card => card.selected !== undefined && card.selected !== null);
-    var myProps = {
-      style: {
-      },
-    };
-    var marginTop = 0;
-    var marginBottom = 0;
-    var padding = 0;
-    var cardSelectDist = selectable ? 40*scale : 0;
-    var cardSelectableTop = 0;
-    var cardCurveBottom = 0;
-    var cardCurvePadding = 0;
-    var cardOverlapPadding = 0;
-    if (selectable) {
-      cardSelectableTop = cardSelectDist*1.2;
-      marginTop += cardSelectableTop;
-    }
-    if (curve) {
-      cardCurveBottom = cards.length*50*scale*curve_norm*(1-overlap);
-      marginBottom += cardCurveBottom;
-      cardCurvePadding = (card_dim[1]+cardSelectDist*1.2)*curve_norm/6;
-      padding += cardCurvePadding;
-    }
-    if (overlap) {
-      cardOverlapPadding = overlap*card_dim[0]*scale/2;
-      padding += cardOverlapPadding;
-    }
-    Object.assign(myProps.style, {
-      "--card-selectable-top": cardSelectableTop+"px",
-      "--card-curve-bottom": cardCurveBottom+"px",
-      "--card-curve-padding": cardCurvePadding+"px",
-      "--card-overlap-padding": cardOverlapPadding+"px",
-      "--card-select-dist": cardSelectDist+"px",
-    });
-
-    if (marginTop) myProps.style.marginTop = marginTop + "px";
-    if (marginBottom) myProps.style.marginBottom = marginBottom + "px";
-    if (padding) {
-      myProps.style.paddingLeft = padding + "px";
-      myProps.style.paddingRight = padding + "px";
-    }
-    var transform = (card,i) => {
-      if (!curve && !selectable) return "";
-      var tr = "";
-      if (curve && cards.length > 1) {
-        var mid = (cards.length-1)/2;
-        var j = i/mid - 1;
-        tr += "translateY(" + ((1-Math.cos(j)) * cards.length*1.6*curve*scale*(1-overlap)) + "px) ";
-        tr += "rotate(" + (j * curve) + "deg) ";
-      }
-      if (card.selected) tr += "translateY(-" + cardSelectDist + "px) ";
-      if (!tr) return "translate(0,0)"; // push a transform to avoid z-index issues
-      return tr;
-    };
-    return (<div className="card-hand" {...mergeProps(myProps, props)}>
-      {cards.map((card,i) =>
-        card.toImage({
-          key: card.id,
-          //x_part: i<cards.length-1 ? 0.55 : 1,
-          //y_part: 0.5,
-          scale: scale,
-          style: {
-            transform: transform(card,i),
-            marginLeft: overlap ? -overlap*card_dim[0]*scale/2 : 0,
-            marginRight: overlap ? -overlap*card_dim[0]*scale/2 : 0,
-          },
-          onClick: card.onClick,
-          className: card.selected ? "selected" : "",
-        },
-        annotations ? annotations[i] : null)
-      )}
-    </div>);
+    return <CardHandImage cards={ cards } { ...props }/>
   }
 
   cardSort(by_suit, ace_high) {
@@ -497,8 +438,99 @@ class CardHand {
   }
 }
 
+class CardHandImage extends React.Component {
+  render() {
+    var { cards, children, overlap, curve, scale, ...props } = (this.props || {});
+    scale = scale || 0.5;
+    var length = cards?.length || children?.length || 0;
+    if (typeof overlap !== 'number') overlap = overlap ? 0.75 : 0;
+    if (typeof curve !== 'number') curve = curve ? 3*length : 0;
+    var curve_norm = curve ? Math.sin(curve*Math.PI/180) : 0;
+    var selectable =
+      (cards && cards.some(card => card.selected !== undefined && card.selected !== null))
+      || (children && children.some(card => card.props.selected !== undefined && card.props.selected !== null));
+    var myProps = {
+      style: {
+      },
+    };
+    var marginTop = 0;
+    var marginBottom = 0;
+    var padding = 0;
+    var cardSelectDist = selectable ? 40*scale : 0;
+    var cardSelectableTop = 0;
+    var cardCurveBottom = 0;
+    var cardCurvePadding = 0;
+    var cardOverlapPadding = 0;
+    if (selectable) {
+      cardSelectableTop = cardSelectDist*1.2;
+      marginTop += cardSelectableTop;
+    }
+    if (curve) {
+      cardCurveBottom = length*50*scale*curve_norm*(1-overlap);
+      marginBottom += cardCurveBottom;
+      cardCurvePadding = (card_dim[1]+cardSelectDist*1.2)*curve_norm/6;
+      padding += cardCurvePadding;
+    }
+    if (overlap) {
+      cardOverlapPadding = overlap*card_dim[0]*scale/2;
+      padding += cardOverlapPadding;
+    }
+    Object.assign(myProps.style, {
+      "--card-selectable-top": cardSelectableTop+"px",
+      "--card-curve-bottom": cardCurveBottom+"px",
+      "--card-curve-padding": cardCurvePadding+"px",
+      "--card-overlap-padding": cardOverlapPadding+"px",
+      "--card-select-dist": cardSelectDist+"px",
+    });
+
+    if (marginTop) myProps.style.marginTop = marginTop + "px";
+    if (marginBottom) myProps.style.marginBottom = marginBottom + "px";
+    if (padding) {
+      myProps.style.paddingLeft = padding + "px";
+      myProps.style.paddingRight = padding + "px";
+    }
+
+    var transform = (card,i) => {
+      if (!curve && !selectable) return "";
+      var tr = "";
+      if (curve && length > 1) {
+        var mid = (length-1)/2;
+        var j = i/mid - 1;
+        tr += "translateY(" + ((1-Math.cos(j)) * length*1.6*curve*scale*(1-overlap)) + "px) ";
+        tr += "rotate(" + (j * curve) + "deg) ";
+      }
+      if (card.selected) tr += "translateY(-" + cardSelectDist + "px) ";
+      if (!tr) return "translate(0,0)"; // push a transform to avoid z-index issues
+      return tr;
+    };
+
+    if (!children) {
+      children = cards.map((card,i) => card.toImage({
+        card: card,
+        scale: scale,
+        onClick: card.onClick,
+        annotation: card.annotation,
+        selected: card.selected,
+      }));
+    }
+
+    return (<div className="card-hand" {...mergeProps(myProps, props)}>
+      {children.map((child,i) =>
+        <div key={ child.props.card?.id ? "card"+child.props.card?.id : "idx"+i }
+          className={ "card-holder"+(child.props.selected ? " selected" : "") }
+          style={{
+            transform: transform(child.props,i),
+            marginLeft: overlap ? -overlap*card_dim[0]*scale/2 : 0,
+            marginRight: overlap ? -overlap*card_dim[0]*scale/2 : 0,
+          }}>{ child }</div>
+      )}
+    </div>);
+  }
+}
+
 export {
   CardHand,
+  CardHandImage,
   CardImage,
   Card,
   CardSuit,

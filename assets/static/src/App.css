@@ -128,16 +128,47 @@ p {
   }
 }
 
+.card-holder, .card {
+  display: inline-block;
+}
+.card {
+  position: relative;
+}
+.card.annotated {
+  --annotation-size: 1.5em;
+  --annotation-margin: 2px;
+  margin-top: calc(var(--annotation-size) + var(--annotation-margin));
+}
+.card .card-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.card .card-overlay.centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.card .card-overlay.card-annotation {
+  pointer-events: inherit;
+  top: calc(-1 * (var(--annotation-size) + var(--annotation-margin)));
+  height: var(--annotation-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 600px) {
   .card-hand {
     padding-left: var(--card-overlap-padding) !important;
     padding-right: var(--card-overlap-padding) !important;
   }
-  .card-hand .card {
+  .card-hand .card-holder {
     transform: translate(0,0) !important;
     margin-bottom: calc(var(--card-curve-bottom) * -1);
   }
-  .card-hand .card.selected {
+  .card-hand .card-holder.selected {
     transform: translateY(calc(var(--card-select-dist) * -1)) !important;
   }
 }

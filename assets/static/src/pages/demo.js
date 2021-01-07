@@ -7,12 +7,7 @@ import '@rmwc/select/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
 
-import { Button } from '@rmwc/button';
-import { Checkbox } from '@rmwc/checkbox';
-import { Select } from '@rmwc/select';
-import { TextField } from '@rmwc/textfield';
-
-import { Card, CardHand, CardRank, CardSuit } from '../games/card.js';
+import { Card, CardHand, CardHandImage, CardImage } from '../games/card.js';
 
 function adj(val, adj, len, min) {
   if (!adj) return val;
@@ -96,7 +91,11 @@ class DemoGamePage extends React.Component {
     case "Enter":
       update = state => {
         var sel = state.hand.cards[state.selected];
-        state.hand.cardSort(true,true)
+        state.hand.cardSort(true,true);
+        state.hand.cards.forEach((card,i) => {
+          if (card === sel)
+            state.selected = i;
+        });
       };
       break;
     case "~":
@@ -147,11 +146,20 @@ class DemoGamePage extends React.Component {
   render() {
     return <div>
       <h1>Demo</h1>
-      { this.state.hand.toImage((card,i) => {
-        card.selected = i === this.state.selected;
-        card.onClick = () => this.setState(state => Object.assign(state, {selected:i}));
-        return card;
-      }) }
+      <CardHandImage curve overlap>
+        { this.state.hand.cards.map((card,i) =>
+          <CardImage card={ card } key={ card.id }
+            selected={ i === this.state.selected }
+            onClick={() => this.setState(state => Object.assign(state, {selected:i}))}
+            />
+        ).concat([
+          <CardImage key={ null } overlay={ <h3>Add card</h3> }
+            onClick={() => this.setState(state => {
+              state.hand.cards.push(new Card(state.id+=1,1+Math.floor(Math.random() * 4),1+Math.floor(Math.random() * 13)));
+              return state;
+            })}/>
+        ])}
+      </CardHandImage>
       <p>Select cards with Left and Right arrows.</p>
       <p>Number keys 1 (ace) through 0 (10) and (j)ack, (q)ueen, (k)ing to set rank. Increment with Shift+D and decrement with Shift+A</p>
       <p>Set suit of (c)lubs, (h)earts, (s)pades, (d)iamonds, or use Shift+W/Shift+S or Up and Down.</p>
