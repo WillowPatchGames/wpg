@@ -69,7 +69,7 @@ class ThreeThirteenController {
   }
 
   async score(amount) {
-    return await this.wsController.send({
+    return await this.wsController.sendAndWait({
       'message_type': 'score',
       'score': +amount,
     });
@@ -188,9 +188,7 @@ class ThreeThirteenGame {
   }
 
   async score(amount) {
-    if (amount !== null && amount !== undefined) {
-      return this.controller.score(amount);
-    }
+    return this.controller.score(amount);
   }
 
   close() {

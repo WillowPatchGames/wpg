@@ -306,8 +306,8 @@ class CardImage extends React.Component {
     }
     if (!scale) scale = 0.5;
     if (card) {
-      suit = card.suit?.toImage() || card.suit || suit;
-      rank = card.rank?.toImage() || card.rank || rank;
+      suit = card.suit?.toImage() || suit;
+      rank = card.rank?.toImage() || rank;
     }
     var name = suit + "_" + rank;
 
@@ -315,7 +315,7 @@ class CardImage extends React.Component {
     if (ranks[rank] !== undefined && suits[suit] !== undefined) {
       x = ranks[rank] * -card_dim[0];
       y = suits[suit] * -card_dim[1];
-    } else if (rank === "joker" && ["black","red","none","fancy", null].includes(suit)) {
+    } else if (rank === "joker" && ["black","red","none","fancy", null, undefined].includes(suit)) {
       var joker_suit = ["red","fancy"].includes(suit) ? "red" : "black";
       name = rank + "_" + joker_suit;
       x = (joker_suit === "red" ? 1 : 0) * -card_dim[0];

@@ -15,7 +15,7 @@ import '@rmwc/textfield/styles';
 
 import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
-import { CardImage } from '../../games/card.js';
+import { CardHandImage, CardImage } from '../../games/card.js';
 
 class ThreeThirteenGameComponent extends React.Component {
   constructor(props) {
@@ -24,6 +24,8 @@ class ThreeThirteenGameComponent extends React.Component {
     this.state.game = props.game;
     this.state.selected = null;
     this.state.round_score = 0;
+    this.state.groupings = [];
+    this.state.grouping_selected = [];
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -59,6 +61,19 @@ class ThreeThirteenGameComponent extends React.Component {
     let v = e.target.value;
     this.setState(state => Object.assign({}, state, { "round_score": v }));
   }
+  async sendScore() {
+    var resp = await this.state.game.interface.score(this.state.round_score);
+    if (resp && resp.type !== "error" && !resp.error) {
+      this.setState(state => {
+        state.round_score = 0;
+        state.groupings = [];
+        state.grouping_selected = [];
+        return state;
+      })
+    } else {
+      console.log(resp);
+    }
+  }
   render() {
     var num_players = this.state.game.config.num_players;
 
@@ -88,10 +103,10 @@ class ThreeThirteenGameComponent extends React.Component {
         var player = this.state.game.interface.synopsis.players[index_mapping[game_index]];
         if (player && player.hand && player.user && player.user.display) {
           previous_round_hands.push(
-            <>
+            <div key={ player.user.id }>
               <h3>{ player.user.display }{ player.round_score !== -1 ? " - " + player.round_score + " point" + ( player.round_score === 1 ? "" : "s" ): null }</h3>
               { player.hand.toImage(handProps) }
-            </>
+            </div>
           );
         }
       }
@@ -201,6 +216,10 @@ class ThreeThirteenGameComponent extends React.Component {
           </div>;
         }
 
+        var ungrouped = this.state.game.interface.data.hand.cards.filter(
+          card => !this.state.groupings.some(g => g.includes(card))
+        );
+
         return <div>
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
@@ -218,7 +237,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 </div>
                 <h3>Score Your Hand</h3>
                 <TextField fullwidth type="number" label="Score" name="score" value={ this.state.round_score } onChange={ this.inputHandler.bind(this) } min="0" max="250" step="1" />
-                <Button label="Submit" unelevated ripple={false} onClick={ () => { this.state.game.interface.score(this.state.round_score) ; this.inputHandler({ target: { value: 0 } }) } } />
+                <Button label="Submit" unelevated ripple={false} onClick={ this.sendScore.bind(this) } />
               </div>
             </c.Card>
           </div>
@@ -226,7 +245,76 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Your Hand</h3>
-                { this.state.game.interface.data.hand?.toImage(handProps) }
+                <CardHandImage {...handProps}>
+                  { ungrouped.map(card =>
+                      <CardImage key={ card.id } card={ card } scale={ handProps.scale }
+                        selected={ this.state.grouping_selected.includes(card.id) }
+                        onClick={ () => this.setState(state => {
+                          var i = state.grouping_selected.indexOf(card.id);
+                          if (i !== -1) {
+                            state.grouping_selected.splice(i, 1);
+                          } else {
+                            state.grouping_selected.push(card.id);
+                          }
+                          return state;
+                        }) }/>
+                  )}
+                </CardHandImage>
+              </div>
+            </c.Card>
+          </div>
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Your Groupings</h3>
+                { this.state.groupings.map((g,i) =>
+                    <CardHandImage key={ i } overlap cards={ g } style={{ display: "inline-block", marginRight: "1.5em" }}>
+                      {g.map((card,j) => (
+                        <CardImage key={ card.id } card={ card }
+                          onClick={() => this.setState(state => {
+                            state.groupings[i].splice(j, 1);
+                            if (!state.groupings[i].length) {
+                              state.groupings.splice(i, 1);
+                            }
+                            return state;
+                          })}/>
+                      )).concat(!ungrouped.length ? [] : [
+                        <CardImage key={ null } overlay={ <h3>Add selected cards to this group</h3> }
+                          onClick={() => this.setState(state => {
+                            var grouping = state.grouping_selected.map(id => {
+                              for (let card of this.state.game.interface.data.hand.cards) {
+                                if (card.id === id) return card;
+                              }
+                            }).filter(c => c);
+                            if (grouping.length) {
+                              state.groupings[i].push(...grouping);
+                              state.grouping_selected = [];
+                            }
+                            return state;
+                          })}
+                        />
+                      ])}
+                    </CardHandImage>
+                ).concat(!ungrouped.length ? [] : [
+                  <CardHandImage key={ null } style={{ display: "inline-block" }}>
+                    {[
+                      <CardImage key={ null } overlay={ <h3>New group of selected cards</h3> }
+                        onClick={() => this.setState(state => {
+                          var grouping = state.grouping_selected.map(id => {
+                            for (let card of this.state.game.interface.data.hand.cards) {
+                              if (card.id === id) return card;
+                            }
+                          }).filter(c => c);
+                          if (grouping.length) {
+                            state.groupings.push(grouping);
+                            state.grouping_selected = [];
+                          }
+                          return state;
+                        })}
+                      />
+                    ]}
+                  </CardHandImage>
+                ]) }
               </div>
             </c.Card>
           </div>
@@ -345,7 +433,7 @@ class ThreeThirteenGameComponent extends React.Component {
                         },
                         style: { transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" }
                       },
-                      handProps
+                      { scale: handProps.scale }
                     )
                   )
                 } <br />
