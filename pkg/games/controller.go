@@ -314,6 +314,15 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 		}
 
 		game.State = state
+	} else if mode == ThreeThirteenGame {
+		var asserted *ThreeThirteenConfig = config.(*ThreeThirteenConfig)
+		var state *ThreeThirteenState = new(ThreeThirteenState)
+
+		if err := state.Init(*asserted); err != nil {
+			return err
+		}
+
+		game.State = state
 	} else {
 		panic("Valid but unsupported game mode: " + modeRepr)
 	}
