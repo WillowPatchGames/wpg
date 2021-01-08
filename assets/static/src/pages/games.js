@@ -338,6 +338,8 @@ class PreGameAdminPage extends React.Component {
     this.game = this.props.game || {};
     this.props.setGame(loadGame(this.game));
 
+    this.state.teams = !!this.game.interface.hasTeams;
+
     let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     let userNotification = data => {
       var this_id = data.joined;
@@ -481,9 +483,53 @@ class PreGameAdminPage extends React.Component {
       }
     }
   }
+  async assignTeams(verify) {
+    if (!this.state.teams) return false;
+    var team_data = {};
+    team_data.dealer = 0; // TODO
+    var players = this.state.waitlist.filter(user => user.playing);
+    team_data.num_players = players.length;
+    team_data.player_map = players.map(user => user.id);
+    var teams = []; var team_by_index = {};
+    var assigned = false; var unassigned = false;
+    players.forEach((user,i) => {
+      if (!user.team) {
+        teams.push([i]);
+        unassigned = user;
+      } else {
+        assigned = true;
+        if (!team_by_index[user.team]) {
+          team_by_index[user.team] = [i];
+        } else {
+          team_by_index[user.team].push(i);
+        }
+      }
+    });
+    for (let t in team_by_index) {
+      teams.push(team_by_index[t]);
+    }
+    team_data.team_assignments = teams;
+    console.log(team_data);
+    if (verify && assigned && unassigned) {
+      notify(this.props.snackbar, "Must assign user " + user.display + " to a team", "error");
+      this.setState(state => Object.assign({}, state, { started: false }));
+      return false;
+    }
+    var ret1 = await this.game.interface.controller.assignTeams(team_data);
+    if (verify && ret1 && ret1.message_type && ret1.message_type === "error") {
+      notify(this.props.snackbar, ret1.error, "error");
+      this.setState(state => Object.assign({}, state, { started: false }));
+      return false;
+    }
+    return true;
+  }
   async start() {
     this.setState(state => Object.assign({}, state, { started: true }));
 
+    if (!await this.assignTeams(true)) {
+      this.setState(state => Object.assign({}, state, { started: false }));
+      return;
+    }
     var ret = await this.game.interface.controller.startGame();
     if (ret && ret.message_type && ret.message_type === "error") {
       notify(this.props.snackbar, ret.error, "error");
@@ -552,7 +598,7 @@ class PreGameAdminPage extends React.Component {
               &nbsp;&nbsp;
               <Switch checked={ this.state.order } label="Order manually" onChange={ () => this.setState(state => Object.assign(state, { order: !state.order })) } />
               &nbsp;&nbsp;
-              <Switch checked={ this.state.teams } label="Put into teams" onChange={ () => this.setState(state => Object.assign(state, { teams: !state.teams })) } />
+              {/*<Switch checked={ this.state.teams } label="Put into teams" onChange={ () => this.setState(state => Object.assign(state, { teams: !state.teams })) } />*/}
             </l.ListItem>
             { players.map((user, i) =>
                 <l.ListItem key={user.id} disabled>

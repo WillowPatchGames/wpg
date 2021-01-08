@@ -113,6 +113,8 @@ class SpadesGame {
     this.finished = false;
 
     this.onChange = () => {};
+
+    this.hasTeams = true;
   }
 
   async handleNewState(message) {
