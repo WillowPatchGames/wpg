@@ -565,6 +565,7 @@ class SpadesAfterPartyPage extends React.Component {
     super(props);
     this.game = loadGame(this.props.game);
     this.state = {
+      game: props.game,
       player_mapping: null,
       history: null,
       historical_round: "0",
@@ -572,10 +573,9 @@ class SpadesAfterPartyPage extends React.Component {
         turn: null,
         leader: null,
         dealer: null,
-        pass_direction: null,
         played: null,
         who_played: null,
-        Spades_broken: false,
+        spades_broken: false,
         played_history: null,
       },
       winners: this.game?.winners,
@@ -645,6 +645,24 @@ class SpadesAfterPartyPage extends React.Component {
           }
         }
 
+        let turn = await UserCache.FromId(data.turn);
+        let leader = await UserCache.FromId(data.leader);
+        let dealer = await UserCache.FromId(data.dealer);
+
+        let played = null;
+        if (data.played) {
+          played = CardHand.deserialize(data.played);
+        }
+
+        let who_played = this.state.who_played;
+        if (!this.state.who_played || (played && data.who_played && played.length === 1 && +this.state.who_played[0].id !== +data.who_played[0])) {
+          who_played = [];
+          for (let uid of data.who_played) {
+            let player = await UserCache.FromId(uid);
+            who_played.push(player);
+          }
+        }
+
         // HACK: When refreshData() is called from the button, we don't redraw
         // the screen even though new data is sent. Use snapshots to send only
         // the data we care about.
@@ -656,6 +674,15 @@ class SpadesAfterPartyPage extends React.Component {
           dealt: data.dealt,
           passed: data.passed,
           finished: data.finished,
+          active: {
+            turn: turn,
+            leader: leader,
+            dealer: dealer,
+            played: played,
+            who_played: who_played,
+            spades_broken: data.spades_broken,
+            played_history: data.history ? data.history.map(CardHand.deserialize) : null,
+          }
         }));
 
         if (data.finished) {
@@ -709,10 +736,33 @@ class SpadesAfterPartyPage extends React.Component {
   }
 
   render() {
+    var current_round = null;
+    var num_players = +this.state.game.config.num_players;
+    var status = a => <h3>{ a }</h3>;
+
+    console.log(this.state.active);
+    if (this.state.active.played) {
+      var annotations = [];
+      for (let who_player of this.state.active.who_played) {
+        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></>;
+        annotations.push(annotation);
+      }
+
+      current_round = <div>
+        <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+          <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+            <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+              { this.state.active.played?.toImage(null, null, annotations) }
+            </div>
+          </c.Card>
+        </div>
+      </div>;
+    }
+
     var historical_data = null;
     var scoreboard_data = null;
 
-    if (this.state.history) {
+    if (this.state.history && this.state.history.length > 0) {
       let round_index = parseInt(this.state.historical_round);
       let round_data = <b>No data found for round { round_index + 1 }!</b>;
       if (this.state.history.players[round_index]) {
@@ -945,9 +995,15 @@ class SpadesAfterPartyPage extends React.Component {
 
     return (
       <div>
+        {
+          !this.state.finished
+          ? <SpadesGameSynopsis game={ this.game } {...this.props} />
+          : null
+        }
         <h1 style={{ color: "#000000" }}>Spades</h1>
         <div>
           { winner_info }
+          { current_round }
           { scoreboard_data }
           { historical_data }
           <g.Grid fixedColumnWidth={ true }>
