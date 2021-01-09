@@ -628,7 +628,7 @@ class PreGameAdminPage extends React.Component {
                     }
                     { this.state.teams
                       ? //<Select theme={['secondary']} outlined enhanced label="Team" options={ teams } value={ ''+user.team } onChange={ e => this.setTeam(user, +e.target.value) } />
-                        <TextField style={{ width: "80px" }} type="number" label="Team" min="0" value={ user.team ? ''+user.team : "" } onChange={ e => this.setTeam(user, +e.target.value) } />
+                        <TextField style={{ width: "100px" }} type="number" label="Team" min="0" value={ user.team ? ''+user.team : "" } onChange={ e => this.setTeam(user, +e.target.value) } />
                       : null
                     }
                   </l.ListItemMeta>
@@ -643,23 +643,26 @@ class PreGameAdminPage extends React.Component {
                   <l.ListItemMeta>
                     <span>
                     { user.id === this.props.user.id
-                      ? <>&nbsp;<Button raised label="Add yourself as player" onClick={ () => this.toggleSpectator(user) } /></>
-                      : <><Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
-                          <Button raised label="Add as player" onClick={ () => this.toggleSpectator(user) } /></>
+                      ? <>&nbsp;<Button raised label="Promote" onClick={ () => this.toggleSpectator(user) } /></>
+                      : <>
+                          <Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
+                          &nbsp;
+                          <Button raised label="Promote" onClick={ () => this.toggleSpectator(user) } />
+                        </>
                     }
                     </span>
                   </l.ListItemMeta>
                 </l.ListItem>
             )}
             <l.ListItem disabled>
-              <h1>Waiting Room</h1>
+              <h1>Waiting</h1>
             </l.ListItem>
             { waiting.filter(user => !user.admitted).map((user, i) =>
                 <l.ListItem key={user.id} disabled>
                   <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
                     &nbsp;
-                    <Button raised label="Admit to room" onClick={ () => this.toggleAdmitted(user) } />
+                    <Button raised label="Admit" onClick={ () => this.toggleAdmitted(user) } />
                   </l.ListItemMeta>
                 </l.ListItem>
             )}
