@@ -385,7 +385,8 @@ func (ejs *EightJacksState) StartRound() error {
 		for _, target := range StandardCardRanks {
 			have_card := false
 			for _, square := range ejs.Board.Squares {
-				if square.Value.Rank == JackRank {
+				if target == JackRank {
+					have_card = true
 					continue
 				}
 
