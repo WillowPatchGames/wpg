@@ -51,7 +51,7 @@ type GinSolver struct {
 
 // Add step to current while wrapping in the range [min,max]
 func addwrap(current CardRank, step CardRank, min CardRank, max CardRank) CardRank {
-	return min + (current + step - min) % (1 + max - min)
+	return min + (current+step-min)%(1+max-min)
 }
 
 // Maps a hand of cards to their face values.
@@ -554,7 +554,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 const flag int = -1
 
 type Interval struct {
-	min int
+	min  int
 	more int
 }
 
@@ -594,7 +594,7 @@ func andInterval(l Interval, r Interval) Interval {
 	if l.more == flag || r.more == flag {
 		more = flag
 	}
-	return Interval{l.min+r.min, more}
+	return Interval{l.min + r.min, more}
 }
 
 func (gs *GinSolver) wcValidGroup(hand []Card, cards []int) Interval {
@@ -623,7 +623,7 @@ func (gs *GinSolver) wcKind(hand []Card, cards []int) Interval {
 		}
 	}
 
-	min := 3-len(cards)
+	min := 3 - len(cards)
 	if min < 0 {
 		min = 0
 	}
@@ -634,7 +634,7 @@ func (gs *GinSolver) wcKind(hand []Card, cards []int) Interval {
 		if len(cards) <= 1 {
 			return none
 		}
-		return Interval{min, len(cards)-min}
+		return Interval{min, len(cards) - min}
 	}
 
 	// Otherwise, we accept mostly wild groups, so we can accept any number of
@@ -708,7 +708,7 @@ func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
 	// If we have thirteen cards and got here, they must be ace through king
 	if len(cards) == 13 {
 		// We need no wildcards to complete it, we cannot take any more wildcards
-		return Interval{0,0}
+		return Interval{0, 0}
 	}
 
 	// Find largest gap
@@ -731,7 +731,7 @@ func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
 			}
 			// new_min_index now points at the start of a gap
 
-			new_max_index := new_min_index+1
+			new_max_index := new_min_index + 1
 			for run_map[addwrap(new_max_index, 0, AceRank, KingRank)] == -1 {
 				new_max_index++
 			}
@@ -746,7 +746,7 @@ func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
 			// (because a subset of the gap we already found will be smaller,
 			// and new_min_index points at a populated element which will
 			// not be the start of a gap)
-			new_min_index = new_max_index+1
+			new_min_index = new_max_index + 1
 		}
 	}
 
@@ -756,13 +756,13 @@ func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
 	min := spread - len(cards)
 
 	// We can keep adding wildcards until we reach a full 13-card run
-	more := 13-len(cards)
+	more := 13 - len(cards)
 	// Or until we have more wildcards than non-wildcards
 	if !gs.MostlyWildGroups && (len(cards)-min < more) {
-		more = len(cards)-min
+		more = len(cards) - min
 	}
 
-	return Interval{min,more}
+	return Interval{min, more}
 }
 
 // Checks whether the given hand can make the score entered by the user. This

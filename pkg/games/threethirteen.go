@@ -540,18 +540,18 @@ func (tts *ThreeThirteenState) GinSolver() GinSolver {
 	wc := []CardRank{CardRank(tts.Round), JokerRank}
 
 	return GinSolver{
-		PointValue: pv,
-		WildCards: wc,
-		AnyWildGroup: false,
-		WildAsRank: true,
-		AllWildGroups: tts.Config.AllowAllWildCards,
+		PointValue:       pv,
+		WildCards:        wc,
+		AnyWildGroup:     false,
+		WildAsRank:       true,
+		AllWildGroups:    tts.Config.AllowAllWildCards,
 		MostlyWildGroups: tts.Config.AllowMostlyWild,
 
 		WildJokerRanked: false,
-		SameSuitRuns: tts.Config.SameSuitRuns,
-		AceHigh: true,
-		AceLow: true,
-		RunsWrap: false,
+		SameSuitRuns:    tts.Config.SameSuitRuns,
+		AceHigh:         true,
+		AceLow:          true,
+		RunsWrap:        false,
 	}
 }
 
