@@ -562,7 +562,7 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 
 	gs := tts.GinSolver()
 
-	cards := make(map[int]bool, 0)
+	cards := make(map[int]bool)
 	ncards := 0
 
 	for _, group := range groups {
