@@ -7,6 +7,7 @@ import (
 
 // Spades message types:
 //
+// 0. Assign Players
 // 1. Start -> StartRound(), which handles card assignments &c.
 //    (Two player only:
 //     1.a. Peek (top card)
@@ -17,6 +18,14 @@ import (
 //    )
 // 2. Bid
 // 3. Play Card
+
+type SpadesAssignMsg struct {
+	MessageHeader
+	Dealer          int      `json:"dealer"`
+	NumPlayers      int      `json:"num_players"`
+	PlayerMaps      []uint64 `json:"player_map"`
+	TeamAssignments [][]int  `json:"team_assignments"`
+}
 
 type SpadesDecideMsg struct {
 	MessageHeader
@@ -45,6 +54,34 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 	var send_state = false
 
 	switch header.MessageType {
+	case "assign":
+		if player.UID != game.Owner {
+			return errors.New("unable to assign players to game that you're not the owner of")
+		}
+
+		var data SpadesAssignMsg
+		if err = json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		if data.NumPlayers != len(data.PlayerMaps) {
+			return errors.New("incorrect number of players compared to player map")
+		}
+
+		err = state.AssignTeams(data.Dealer, data.NumPlayers, data.TeamAssignments)
+		if err == nil {
+			for i, playerID := range data.PlayerMaps {
+				player, ok := game.ToPlayer[playerID]
+
+				if !ok {
+					return errors.New("unknown player")
+				}
+
+				player.Index = i
+			}
+		}
+
+		send_state = err == nil
 	case "start":
 		if player.UID != game.Owner {
 			return errors.New("unable to start game that you're not the owner of")
@@ -61,7 +98,10 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			}
 		}
 
-		state.Config.NumPlayers = players
+		if players != state.Config.NumPlayers || !state.Assigned {
+			return errors.New("must finish configuring assignments for this game")
+		}
+
 		if err = state.Config.Validate(); err != nil {
 			return err
 		}
@@ -216,18 +256,13 @@ func (c *Controller) doSpadesStart(game *GameData, state *SpadesState) error {
 		}
 	}
 
-	// Then start the underlying Spades game to populate game data.
-	if err := state.Start(players); err != nil {
-		return err
+	if players != state.Config.NumPlayers || !state.Assigned {
+		return errors.New("must finish configuring assignments for this game")
 	}
 
-	// Assign indices to players before sending notifications.
-	var player_index int = 0
-	for _, indexed_player := range game.ToPlayer {
-		if indexed_player.Admitted && indexed_player.Playing {
-			indexed_player.Index = player_index
-			player_index++
-		}
+	// Then start the underlying Spades game to populate game data.
+	if err := state.Start(); err != nil {
+		return err
 	}
 
 	// Send out initial state data to individuals who are playing. Also notify

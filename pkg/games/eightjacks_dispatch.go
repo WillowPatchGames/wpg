@@ -51,7 +51,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 	switch header.MessageType {
 	case "assign":
 		if player.UID != game.Owner {
-			return errors.New("unable to start game that you're not the owner of")
+			return errors.New("unable to assign players to game that you're not the owner of")
 		}
 
 		var data EightJacksAssignMsg
@@ -59,17 +59,21 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			return err
 		}
 
+		if data.NumPlayers != len(data.PlayerMaps) {
+			return errors.New("incorrect number of players compared to player map")
+		}
+
 		err = state.AssignTeams(data.Dealer, data.NumPlayers, data.TeamAssignments)
+		if err == nil {
+			for i, playerID := range data.PlayerMaps {
+				player, ok := game.ToPlayer[playerID]
 
-		// XXX Make sure this actually has all the players
-		for i, playerID := range data.PlayerMaps {
-			player, ok := game.ToPlayer[playerID]
+				if !ok {
+					return errors.New("unknown player")
+				}
 
-			if !ok {
-				return errors.New("unknown player")
+				player.Index = i
 			}
-
-			player.Index = i
 		}
 
 		send_state = err == nil

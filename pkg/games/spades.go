@@ -49,6 +49,7 @@ type SpadesPlayer struct {
 	Bid    SpadesBid `json:"bid"`
 	Tricks int       `json:"tricks"`
 
+	Team      int `json:"team"`
 	Score     int `json:"score"`
 	Overtakes int `json:"overtakes"`
 }
@@ -311,6 +312,7 @@ type SpadesRoundPlayer struct {
 	Bid    SpadesBid `json:"bid"`
 	Tricks int       `json:"tricks"`
 
+	Team       int `json:"team"`
 	RoundScore int `json:"round_score"`
 	Score      int `json:"score"`
 	Overtakes  int `json:"overtakes"`
@@ -330,6 +332,7 @@ type SpadesState struct {
 	Dealer int `json:"dealer"`
 
 	Deck           Deck           `json:"deck"`
+	Teams          int            `json:"teams"`
 	Players        []SpadesPlayer `json:"players"`         // Left of dealer is found by incrementing one.
 	Played         []Card         `json:"played"`          // Currently played cards in this round.
 	SpadesBroken   bool           `json:"spades_broken"`   // Whether or not spades have been broken.
@@ -338,10 +341,11 @@ type SpadesState struct {
 
 	Config SpadesConfig `json:"config"`
 
-	Started bool `json:"started"`
-	Dealt   bool `json:"dealt"`
-	Split   bool `json:"split"`
-	Bid     bool `json:"bid"`
+	Assigned bool `json:"assigned"`
+	Started  bool `json:"started"`
+	Dealt    bool `json:"dealt"`
+	Split    bool `json:"split"`
+	Bid      bool `json:"bid"`
 
 	Finished bool `json:"finished"`
 	Winner   int  `json:"winner"`
@@ -357,6 +361,7 @@ func (ss *SpadesState) Init(cfg SpadesConfig) error {
 	ss.Config = cfg
 	ss.Turn = -1
 	ss.Dealer = -1
+	ss.Assigned = false
 	ss.Started = false
 	ss.Finished = false
 	ss.Winner = -1
@@ -372,25 +377,22 @@ func (ss *SpadesState) ReInit() error {
 	return nil
 }
 
-func (ss *SpadesState) Start(players int) error {
+func (ss *SpadesState) Start() error {
 	var err error
+
+	if !ss.Assigned {
+		return errors.New("must assign players prior to starting")
+	}
 
 	if ss.Started {
 		log.Println("Error! Double start occurred...", err)
 		return errors.New("double start occurred")
 	}
 
-	ss.Config.NumPlayers = players
 	err = ss.Config.Validate()
 	if err != nil {
 		log.Println("Err with SpadesConfig after starting: ", err)
 		return err
-	}
-
-	// Create all of the players.
-	ss.Players = make([]SpadesPlayer, ss.Config.NumPlayers)
-	for _, player := range ss.Players {
-		player.Init()
 	}
 
 	// Force us to call StartRound() next.
@@ -411,7 +413,67 @@ func (ss *SpadesState) Start(players int) error {
 	return nil
 }
 
+func (ss *SpadesState) AssignTeams(dealer int, num_players int, player_assignments [][]int) error {
+	var err error
+
+	if ss.Started {
+		return errors.New("cannot assign teams after already started")
+	}
+
+	if ss.Dealt {
+		return errors.New("cannot assign teams after cards are dealt")
+	}
+
+	if dealer < 0 || dealer >= num_players {
+		return errors.New("cannot assign dealer out of bounds of number of players")
+	}
+
+	// First create players so we can assign them teams.
+	ss.Config.NumPlayers = num_players
+	err = ss.Config.Validate()
+	if err != nil {
+		log.Println("Error with SpadesConfig after starting: ", err)
+		return err
+	}
+
+	// Create all of the players
+	ss.Players = make([]SpadesPlayer, ss.Config.NumPlayers)
+	for index := range ss.Players {
+		ss.Players[index].Init()
+	}
+
+	// Take the assigned mapping and apply it to the players.
+	ss.Assigned = true
+	ss.Teams = len(player_assignments)
+	for index, players := range player_assignments {
+		if len(players) < 0 {
+			return errors.New("unable to have an empty team: " + strconv.Itoa(index) + " has no players")
+		}
+
+		if len(players) > 2 {
+			// As Spades is currently coded, we only allow up to two
+			// people on a team. We can't handle more without changing
+			// the definition of double nil &c.
+			return errors.New("unable to have more than two players on a team: team " + strconv.Itoa(index) + " has " + strconv.Itoa(len(players)) + " players")
+		}
+
+		for _, player := range players {
+			if player < 0 || player >= len(ss.Players) {
+				return errors.New("not a valid player identifier: " + strconv.Itoa(player))
+			}
+
+			ss.Players[player].Team = index
+		}
+	}
+
+	return nil
+}
+
 func (ss *SpadesState) StartRound() error {
+	if !ss.Assigned {
+		return errors.New("must assign players prior to starting")
+	}
+
 	if ss.Dealt {
 		return errors.New("unable to call StartRound while existing round in progress")
 	}
@@ -521,8 +583,9 @@ func (ss *SpadesState) StartRound() error {
 			}
 		}
 
-		// Save the initial draw pile assignments.
+		// Save the initial draw pile and team assignments.
 		for player_index := 0; player_index < len(ss.Players); player_index++ {
+			history.Players[player_index].Team = ss.Players[player_index].Team
 			history.Players[player_index].DrawPile = make([]*Card, len(ss.Players[player_index].DrawPile))
 			copy(history.Players[player_index].DrawPile, ss.Players[player_index].DrawPile)
 		}

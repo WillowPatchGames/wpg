@@ -35,8 +35,6 @@ class SpadesController {
   }
 
   async assignTeams(team_data) {
-    // FIXME
-    return {};
     return await this.wsController.sendAndWait({
       'message_type': 'assign',
       ...team_data,
