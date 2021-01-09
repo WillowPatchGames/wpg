@@ -685,18 +685,22 @@ func (ejs *EightJacksState) MarkRun(run []int) error {
 		}
 
 		if last_tile.X+1 != this_tile.X || last_tile.Y+1 != this_tile.Y {
+			log.Println("[eight jacks mark]", this_tile, last_tile, "not diagonal se")
 			is_diagonal_se = false
 		}
 
-		if last_tile.X-1 != this_tile.X || last_tile.Y+1 != this_tile.Y {
+		if last_tile.X+1 != this_tile.X || last_tile.Y-1 != this_tile.Y {
+			log.Println("[eight jacks mark]", this_tile, last_tile, "not diagonal sw")
 			is_diagonal_sw = false
 		}
 
 		if last_tile.X != this_tile.X || last_tile.Y+1 != this_tile.Y {
+			log.Println("[eight jacks mark]", this_tile, last_tile, "not up-down")
 			is_down = false
 		}
 
 		if last_tile.X+1 != this_tile.X || last_tile.Y != this_tile.Y {
+			log.Println("[eight jacks mark]", this_tile, last_tile, "not left-right")
 			is_right = false
 		}
 	}

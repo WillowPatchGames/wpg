@@ -144,8 +144,8 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 		}
 
 		err = state.DiscardDuplicate(player.Index, data.CardID)
-		send_synopsis = err == nil
-		send_state = err == nil
+		send_synopsis = true
+		send_state = true
 	case "play":
 		var data EightJacksPlayMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -153,8 +153,8 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 		}
 
 		err = state.PlayCard(player.Index, data.CardID, data.SquareID)
-		send_synopsis = err == nil
-		send_state = err == nil
+		send_synopsis = true
+		send_state = true
 	case "mark":
 		var data EightJacksMarkMsg
 		if err = json.Unmarshal(message, &data); err != nil {
@@ -162,8 +162,8 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 		}
 
 		err = state.MarkRun(data.Squares)
-		send_synopsis = err == nil
-		send_state = err == nil
+		send_synopsis = true
+		send_state = true
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}

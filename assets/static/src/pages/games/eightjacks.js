@@ -128,7 +128,7 @@ class EightJacksGameComponent extends React.Component {
   }
   drawBoard() {
     var boardProps = {
-      scale: 0.2,
+      scale: 0.3,
     };
     var game = this.state.game || this.game;
     var board = Object.assign([], game.interface.data?.board?.xy_mapped || {});
