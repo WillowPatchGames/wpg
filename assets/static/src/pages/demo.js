@@ -99,7 +99,7 @@ class DemoGamePage extends React.Component {
       };
       break;
     case "~":
-      update = state => {state.hand.cards.map(card => {
+      update = state => {state.hand.cards.forEach(card => {
         card.rank.value = 1+Math.floor(Math.random() * 13);
         card.suit.value = 1+Math.floor(Math.random() * 4);
       });};

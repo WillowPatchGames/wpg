@@ -10,8 +10,6 @@ import { Button } from '@rmwc/button';
 import '@rmwc/card/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
-import { TextField } from '@rmwc/textfield';
-import '@rmwc/textfield/styles';
 
 import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
@@ -205,7 +203,7 @@ class ThreeThirteenGameComponent extends React.Component {
                         },
                         style: { transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" }
                       },
-                      handProps
+                      { scale: handProps.scale }
                     )
                   )
                 } <br />

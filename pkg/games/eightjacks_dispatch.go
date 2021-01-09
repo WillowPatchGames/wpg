@@ -60,6 +60,19 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 		}
 
 		err = state.AssignTeams(data.Dealer, data.NumPlayers, data.TeamAssignments)
+
+		// XXX Make sure this actually has all the players
+		for i, playerID := range data.PlayerMaps {
+			player, ok := game.ToPlayer[playerID]
+
+			if !ok {
+				return errors.New("unknown player")
+			}
+
+			player.Index = i
+		}
+
+		send_state = err == nil
 	case "start":
 		if player.UID != game.Owner {
 			return errors.New("unable to start game that you're not the owner of")

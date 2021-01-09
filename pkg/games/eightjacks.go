@@ -309,10 +309,6 @@ func (ejs *EightJacksState) Start(players int) error {
 		return errors.New("double start occurred")
 	}
 
-	// Force us to call AssignTeams() next.
-	ejs.Assigned = false
-	ejs.Started = false
-	ejs.Dealt = false
 	return nil
 }
 

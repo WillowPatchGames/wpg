@@ -40,6 +40,8 @@ import { ThreeThirteenGame } from '../games/threethirteen.js';
 import { ThreeThirteenGamePage, ThreeThirteenAfterPartyPage } from './games/threethirteen.js';
 import { HeartsGame } from '../games/hearts.js';
 import { HeartsGamePage, HeartsAfterPartyPage } from './games/hearts.js';
+import { EightJacksGame } from '../games/eightjacks.js';
+import { EightJacksGamePage, EightJacksAfterPartyPage } from './games/eightjacks.js';
 import { UserCache } from '../utils/cache.js';
 
 function loadGame(game) {
@@ -56,6 +58,8 @@ function loadGame(game) {
       game.interface = new ThreeThirteenGame(game);
     } else if (mode === "hearts") {
       game.interface = new HeartsGame(game);
+    } else if (mode === "eight jacks") {
+      game.interface = new EightJacksGame(game);
     } else {
       console.log("Unknown game mode:", mode);
     }
@@ -119,6 +123,8 @@ class GamePage extends React.Component {
       return <ThreeThirteenGamePage {...this.props}/>
     } else if (mode === 'hearts') {
       return <HeartsGamePage {...this.props}/>
+    } else if (mode === 'eight jacks') {
+      return <EightJacksGamePage {...this.props}/>
     } else {
       return "Unrecognized game mode: " + mode;
     }
@@ -156,6 +162,8 @@ class AfterPartyPage extends React.Component {
       return <ThreeThirteenAfterPartyPage {...this.props}/>
     } else if (mode === 'hearts') {
       return <HeartsAfterPartyPage {...this.props}/>
+    } else if (mode === 'eight jacks') {
+      return <EightJacksAfterPartyPage {...this.props}/>
     } else {
       return "Unrecognized game mode: " + mode;
     }
@@ -826,9 +834,7 @@ class CreateGameForm extends React.Component {
     }
 
     if (additional_state !== null) {
-      if (this.state.initialized) {
-        this.setState(state => Object.assign({}, state, additional_state));
-      }
+      console.log(additional_state);
       return additional_state;
     }
 
@@ -996,7 +1002,7 @@ class CreateGameForm extends React.Component {
 
     return (e) => {
       var v = checky ? e.target.checked : e.target.value;
-      return this.newState(() => ({ [name]: v, "config": this.createGameConfig(v) }));
+      return this.newState(() => ({ [name]: v, ...this.createGameConfig(v) }));
     };
   }
 
@@ -1237,7 +1243,7 @@ class CreateGameForm extends React.Component {
         </l.ListItem>
         <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
         <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Early End Score" name="num_players" value={ this.state.to_point_limit } onChange={ this.inputHandler("to_point_limit") } disabled={ !this.state.editable } />
+          <TextField fullwidth type="number" label="Early End Score" name="to_point_limit" value={ this.state.to_point_limit } onChange={ this.inputHandler("to_point_limit") } disabled={ !this.state.editable } />
         </l.ListItem>
         <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("golf_scoring") } disabled={ !this.state.editable }>
           <Switch label={ this.state.golf_scoring ? "Count Points Against Yourself" : "Give Points to Player Laying Down" } name="golf_scoring" checked={ this.state.golf_scoring } onChange={ () => this.toggle("golf_scoring", true) } disabled={ !this.state.editable } />
@@ -1767,7 +1773,7 @@ class JoinGamePage extends React.Component {
               <l.List twoLine>
                 <l.ListGroup>
                   <l.ListGroupSubheader>Join game</l.ListGroupSubheader>
-                  <l.ListItem disabled><TextField fullwidth placeholder="Secret Passcode" name="num_players" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
+                  <l.ListItem disabled><TextField fullwidth placeholder="Secret Passcode" name="code" value={ this.state.code } onChange={ this.inputHandler("code") } /></l.ListItem>
                 </l.ListGroup>
               </l.List>
 

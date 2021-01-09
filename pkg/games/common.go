@@ -18,7 +18,7 @@ const (
 )
 
 func (gm GameMode) String() string {
-	return []string{"rush", "spades", "three thirteen", "eigth jacks", "hearts"}[gm]
+	return []string{"rush", "spades", "three thirteen", "eight jacks", "hearts"}[gm]
 }
 
 // Convert the representation of a GameMode to a string.
