@@ -470,9 +470,10 @@ func (ejs *EightJacksState) CreateBoard() error {
 
 			piece.Marker = -1
 
-			ejs.Board.Squares = append(ejs.Board.Squares, &piece)
-			ejs.Board.XYMapped[x][y] = &piece
-			ejs.Board.IDMapped[piece.ID] = &piece
+			ref_piece := &piece
+			ejs.Board.Squares = append(ejs.Board.Squares, ref_piece)
+			ejs.Board.XYMapped[x][y] = ref_piece
+			ejs.Board.IDMapped[piece.ID] = ref_piece
 		}
 	}
 
