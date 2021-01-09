@@ -16,6 +16,8 @@ import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
 import { Select } from '@rmwc/select';
 import '@rmwc/select/styles';
+import { Slider } from '@rmwc/slider';
+import '@rmwc/slider/styles';
 
 import { EightJacksGame } from '../../games/eightjacks.js';
 import { CardSuit, CardRank, CardImage, CardHand } from '../../games/card.js';
@@ -47,6 +49,7 @@ class EightJacksGameComponent extends React.Component {
     this.state.selected = null;
     this.state.last_hand = null;
     this.state.marking = null;
+    this.state.scale = 0.3;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -128,7 +131,7 @@ class EightJacksGameComponent extends React.Component {
   }
   drawBoard() {
     var boardProps = {
-      scale: 0.3,
+      scale: this.state.scale || 0.3,
     };
     var game = this.state.game || this.game;
     var board = Object.assign([], game.interface.data?.board?.xy_mapped || {});
@@ -187,11 +190,11 @@ class EightJacksGameComponent extends React.Component {
       }
       rows.push(<tr key={ rows.length-1 }>{ col }</tr>);
     }
-    return <table style={{ margin: "auto", borderSpacing: 0, lineHeight: 0 }}>
-      <tbody>
-        { rows }
-      </tbody>
-    </table>;
+    return <div style={{ overflow: "auto", maxWidth: "100%" }}>
+      <table style={{ margin: "auto", borderSpacing: 0, lineHeight: 0 }}>
+        <tbody>{ rows }</tbody>
+      </table>
+    </div>;
   }
   render() {
     var status = a => <h3>{ a }</h3>;
@@ -217,18 +220,24 @@ class EightJacksGameComponent extends React.Component {
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
             <h3>Board</h3>
-            { this.drawBoard() }
+            <Slider
+                value={this.state.scale}
+                onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
+                min={0.1}
+                max={0.35}
+              />
+            { this.drawBoard(true) }
             {this.state.game.interface.my_turn()
               ? <>
                 {big_status("Your turn to play")}
                 <Button label={ this.state.board_selected ? "Play here" : "Pick a spot!" } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected }
                   onClick={this.clearSelectAnd(() => this.state.game.interface.play(this.state.selected, this.state.board_selected)) } />
+                <hr/>
                 </>
               : <>
                 {status("Waiting for other player(s) …")}
                 </>
             }
-            <hr/>
             {this.state.marking ?
               (this.state.marking.length === this.state.game.interface.data.config.run_length
               ? <Button label={ "Mark complete sequence" } unelevated ripple={false}
@@ -238,9 +247,6 @@ class EightJacksGameComponent extends React.Component {
             : <Button label={ "Mark complete sequence" } unelevated ripple={false}
                 onClick={() => {this.setState(state => Object.assign(state, {marking:[]}))}} />
             }
-            <br/><br/>
-            <Button label={ "Discard" } unelevated ripple={false} disabled={ !this.state.selected }
-              onClick={this.clearSelectAnd(() => this.state.game.interface.discard(this.state.selected))}/>
           </div>
         </c.Card>
       </div>
@@ -249,6 +255,8 @@ class EightJacksGameComponent extends React.Component {
           <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
             <h3>Hand</h3>
             { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this), handProps) }
+            <Button label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.selected }
+              onClick={this.clearSelectAnd(() => this.state.game.interface.discard(this.state.selected))}/>
           </div>
         </c.Card>
       </div>
