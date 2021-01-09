@@ -163,7 +163,7 @@ class EightJacksGameComponent extends React.Component {
         var suit = new CardSuit(spot.value.suit).toImage();
         var rank = new CardRank(spot.value.rank).toImage();
         var mark = spot.marker === -1 ? null : ""+(+spot.marker+1);
-        var sel_card = selected_card
+        var sel_card = false && selected_card
           && selected_card.suit.value === spot.value.suit
           && selected_card.rank.value === spot.value.rank;
         var sel = this.state.marking
@@ -174,17 +174,32 @@ class EightJacksGameComponent extends React.Component {
         var color = sel ? "lawngreen" : sel_card ? "yellow" :
           (mark || run) ? team_colors[mark || run] : "";
         var text = mark || <>&nbsp;</>;
-        var overlay = !selected && !mark && !run ? null :
-          <span
-            className={"marker" + (selected ? " selection" : "")}
-            style={{
-              backgroundColor: color,
-              border: run ? "2px solid #2060a2" : null,
-            }}>{ text }</span>;
+        var overlay = <>
+          { !mark && !run ? null :
+            <span
+              className={"marker"}
+              style={{
+                backgroundColor: team_colors[mark || run],
+                border: run ? "2px solid #2060a2" : null,
+              }}>{ text }</span>
+          }
+          { !sel ? null :
+            <span
+              style={{
+                backgroundColor: "lawngreen",
+                opacity: 0.5,
+                borderRadius: (4*boardProps.scale/0.3)+"px",
+                width: "100%", height: "100%",
+                position: "absolute",
+              }}>&nbsp;</span>
+          }
+        </>;
         col.push(
           <td key={ spot.id } style={{ padding: 0 }}>
             <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
-              onClick={ this.handleClick(spot) }/>
+              onClick={ this.handleClick(spot) }>
+
+            </CardImage>
           </td>
         );
       }
