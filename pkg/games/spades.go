@@ -87,7 +87,7 @@ func (sp *SpadesPlayer) RemoveCard(cardID int) bool {
 type SpadesConfig struct {
 	NumPlayers      int  `json:"num_players"`       // 2 <= n <= 6; best with four.
 	Overtakes       bool `json:"overtakes"`         // No overtakes at all.
-	OvertakeLimit   int  `json:"overtake_limit"`    // 2 <= n <= 15. Number of overtakes before a penalty.
+	OvertakeLimit   int  `json:"overtake_limit"`    // 2 <= n <= 20. Number of overtakes before a penalty.
 	MustBreakSpades bool `json:"must_break_spades"` // Whether spades need to be broken before they can be lead.
 	AddJokers       bool `json:"add_jokers"`        // For three or six players: add jokers to round off the number of cards. Otherwise, one card will be left in the deck with three players, or the twos will be removed with six.
 	FirstWins       bool `json:"first_wins"`        // For six players: whether the first or the last card played wins in case of a tie in value.
@@ -115,11 +115,29 @@ func (cfg SpadesConfig) Validate() error {
 		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 6"}
 	}
 
+	if cfg.OvertakeLimit < 2 || cfg.OvertakeLimit > 20 {
+		return GameConfigError{"overtake limit", strconv.Itoa(cfg.OvertakeLimit), "between 2 and 20"}
+	}
+
 	if cfg.WinAmount < 50 || cfg.WinAmount > 1000 {
 		return GameConfigError{"winning score", strconv.Itoa(cfg.WinAmount), "between 50 and 1000"}
 	}
 
-	// XXX: Validate more configuration options.
+	if cfg.OvertakePenalty != 50 && cfg.OvertakePenalty != 100 && cfg.OvertakePenalty != 150 && cfg.OvertakePenalty != 200 {
+		return GameConfigError{"overtake penalty", strconv.Itoa(cfg.OvertakePenalty), "50, 100, 150, or 200"}
+	}
+
+	if cfg.TrickMultipler != 5 && cfg.TrickMultipler != 10 {
+		return GameConfigError{"trick multiplier", strconv.Itoa(cfg.TrickMultipler), "5 or 10"}
+	}
+
+	if !cfg.BlindBidding && cfg.WithTripleNil {
+		return GameConfigError{"triple nil", "true", "false when blind bidding is false"}
+	}
+
+	if cfg.WithTripleNil {
+		return GameConfigError{"triple nil", "true", "false"}
+	}
 
 	return nil
 }

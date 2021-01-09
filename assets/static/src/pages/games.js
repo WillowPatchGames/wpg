@@ -1131,9 +1131,6 @@ class CreateGameForm extends React.Component {
         <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_break_bonus") } disabled={ !this.state.editable }>
           <Switch label={ this.state.with_break_bonus ? "Give a Bonus for Breaking Both Partners in Double Nil" : "No Bonus for Breaking Both Partners Nil Bids" } name="with_break_bonus" checked={ this.state.with_break_bonus } onChange={ () => this.toggle("with_break_bonus", true) } disabled={ !this.state.editable } />
         </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_triple_nil") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.with_triple_nil ? "Allow Triple Nil Bids (Blind Nil Play -- Chose Played Suit Only)" : "Forbid Triple Nil Bids" } name="with_triple_nil" checked={ this.state.with_triple_nil } onChange={ () => this.toggle("with_triple_nil", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
         <l.ListGroupSubheader>
           Scoring Options
         </l.ListGroupSubheader>
