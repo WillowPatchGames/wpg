@@ -173,6 +173,16 @@ p {
   }
 }
 
+.card .card-overlay .marker {
+  background: yellow;
+  position: relative;
+  border-radius: 50%;
+  width: 80%;
+  height: auto;
+  padding-top: 40%;
+  padding-bottom: 40%;
+  font-weight: bolder;
+}
 
 /* TODO: upstream??? */
 .mdc-top-app-bar--short + .mdc-top-app-bar--fixed-adjust {

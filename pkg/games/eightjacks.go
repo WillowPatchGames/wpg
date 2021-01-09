@@ -301,7 +301,7 @@ func (ejs *EightJacksState) ReInit() error {
 	return nil
 }
 
-func (ejs *EightJacksState) Start(players int) error {
+func (ejs *EightJacksState) Start() error {
 	var err error
 
 	if ejs.Started {
@@ -309,7 +309,7 @@ func (ejs *EightJacksState) Start(players int) error {
 		return errors.New("double start occurred")
 	}
 
-	return nil
+	return ejs.StartRound()
 }
 
 func (ejs *EightJacksState) AssignTeams(dealer int, num_players int, player_assignments [][]int) error {
@@ -323,7 +323,7 @@ func (ejs *EightJacksState) AssignTeams(dealer int, num_players int, player_assi
 		return errors.New("cannot assign teams after cards are dealt")
 	}
 
-	if dealer >= num_players {
+	if dealer < 0 || dealer >= num_players {
 		return errors.New("cannot assign dealer higher than number of players")
 	}
 
@@ -585,7 +585,9 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 	}
 
 	// Mark the square.
-	if IsOneEyedJack(played) {
+	// FIXME: this doesn't seem to update the squares and xy_mapped
+	// that's sent over the wire??
+	if IsOneEyedJack(played) && square.Marker != -1 {
 		square.Marker = -1
 	} else {
 		square.Marker = ejs.Players[player].Team
@@ -665,6 +667,8 @@ func (ejs *EightJacksState) MarkRun(run []int) error {
 			if marker == -1 {
 				marker = last_tile.Marker
 			}
+		} else if last_tile.Value.Rank != JokerRank {
+			return errors.New("square was not marked")
 		}
 
 		if this_tile.Marker != -1 {
@@ -672,6 +676,8 @@ func (ejs *EightJacksState) MarkRun(run []int) error {
 			if marker == -1 {
 				marker = this_tile.Marker
 			}
+		} else if this_tile.Value.Rank != JokerRank {
+			return errors.New("square was not marked")
 		}
 
 		if marker != -1 && this_tile.Marker != -1 && this_tile.Marker != marker {
@@ -726,10 +732,11 @@ func (ejs *EightJacksState) MarkRun(run []int) error {
 	}
 
 	finished := false
-	for _, indexed_player := range ejs.Players {
+	for idx, indexed_player := range ejs.Players {
 		if indexed_player.Team == marker {
-			indexed_player.Runs = append(indexed_player.Runs, run)
-			if len(indexed_player.Runs) >= ejs.Config.WinLimit {
+			// Update by index, because indexed_player is not a reference
+			ejs.Players[idx].Runs = append(indexed_player.Runs, run)
+			if len(ejs.Players[idx].Runs) >= ejs.Config.WinLimit {
 				finished = true
 			}
 		}

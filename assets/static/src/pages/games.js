@@ -802,8 +802,8 @@ class CreateGameForm extends React.Component {
         num_players: have_game ? config.num_players : 4,
         run_length: have_game ? config.run_length : 4,
         win_limit: have_game ? config.win_limit : 3,
-        board_width: have_game ? config.board_width : 9,
-        board_height: have_game ? config.board_height : 9,
+        board_width: have_game ? config.board_width : 10,
+        board_height: have_game ? config.board_height : 10,
         remove_unused: have_game ? config.remove_unused : true,
         wild_corners: have_game ? config.wild_corners : true,
         hand_size: have_game ? config.hand_size : 5,
@@ -834,7 +834,6 @@ class CreateGameForm extends React.Component {
     }
 
     if (additional_state !== null) {
-      console.log(additional_state);
       return additional_state;
     }
 

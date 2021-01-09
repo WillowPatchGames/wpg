@@ -125,6 +125,13 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 				}
 			}
 
+			if player.Admitted && player.Playing {
+				var response EightJacksStateNotification
+				response.LoadData(game, state, player)
+
+				c.undispatch(game, player, response.MessageID, 0, response)
+			}
+
 			var finished EightJacksFinishedNotification
 			finished.LoadFromController(game, player, winner)
 			finished.ReplyTo = header.MessageID
@@ -216,7 +223,7 @@ func (c *Controller) doEightJacksStart(game *GameData, state *EightJacksState) e
 	}
 
 	// Then start the underlying EightJacks game to populate game data.
-	if err := state.Start(players); err != nil {
+	if err := state.Start(); err != nil {
 		return err
 	}
 
