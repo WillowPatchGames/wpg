@@ -267,7 +267,7 @@ class HeartsGameSynopsis extends React.Component {
     }
     if (this.props.game.interface.data && this.props.game.interface.data.played) {
       var i = this.props.game.interface;
-      if (i.passded && i.dealt && !i.finished) {
+      if (i.passed && i.dealt && !i.finished) {
         var num_played = this.props.game.interface.data.played.cards.length;
         var num_players = this.props.game.interface.data.config.num_players;
         if (num_played > 0 && num_played < num_players) {
