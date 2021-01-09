@@ -297,7 +297,7 @@ class CardImage extends React.Component {
     var {
       scale,
       card, suit, rank,
-      overlay, annotation,
+      overlay, annotation, badge,
       className, ...props } = this.props;
     if (className) {
       className = " " + className;
@@ -339,6 +339,11 @@ class CardImage extends React.Component {
     } else {
       annotation = <></>;
     }
+    if (badge) {
+      badge = <div className="card-overlay card-badge">{ badge }</div>;
+    } else {
+      badge = <></>;
+    }
 
     var viewBox = [ 0, 0, card_dim[0], card_dim[1] ];
     return <div className={ "card" + className }>
@@ -349,6 +354,7 @@ class CardImage extends React.Component {
         <use href={ cards+"#"+name} x={ x } y={ y }/>
       </svg>
       { overlay }
+      { badge }
     </div>;
   }
 }
@@ -439,6 +445,12 @@ class CardHand {
 }
 
 class CardHandImage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      action_open: false,
+    };
+  }
   render() {
     var { cards, children, overlap, curve, scale, ...props } = (this.props || {});
     scale = scale || 0.5;

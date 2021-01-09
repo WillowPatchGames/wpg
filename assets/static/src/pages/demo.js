@@ -34,6 +34,7 @@ class DemoGamePage extends React.Component {
         curve: 3,
         overlap: 0.75,
       },
+      sorting: null,
     };
     this.move = this.move.bind(this);
     this.unlisten = [];
@@ -150,7 +151,77 @@ class DemoGamePage extends React.Component {
       console.log(e.key);
     }
   }
+  sort() {
+    this.setState(state => {
+      if (!state.sorting) {
+        state.sorting = [];
+      } else {
+        var sel = state.hand.cards[state.selected];
+        var sorted = state.sorting.map(c => state.hand.cards[c]);
+        for (let c of state.sorting.sort((a,b) => b-a)) {
+          state.hand.cards.splice(c, 1);
+        }
+        state.hand.cards.splice(0, 0, ...sorted);
+        state.sorting = null;
+        state.hand.cards.forEach((card,i) => {
+          if (card === sel)
+            state.selected = i;
+        });
+      }
+      return state;
+    });
+  }
+  select(card,idx) {
+    this.setState(state => {
+      if (!state.sorting) return Object.assign(state, {selected:idx});
+      var i = state.sorting.findIndex(jdx => jdx === idx);
+      if (i >= 0) {
+        state.sorting.splice(i, 1);
+      } else {
+        state.sorting.push(idx);
+      }
+      return state;
+    });
+  }
+  selected(card,idx) {
+    if (!this.state.sorting) return idx === this.state.selected;
+    return this.state.sorting.includes(idx);
+  }
+  badger(card,idx) {
+    if (!this.state.sorting) return;
+    var i = this.state.sorting.findIndex(jdx => jdx === idx);
+    if (i >= 0) return +i+1;
+    return null;
+  }
   render() {
+    var sideStyle = {
+      writingMode: "vertical-rl",
+      textOrientation: "mixed",
+      textAlign: "end",
+      fontWeight: 600,
+      height: "calc(100% - 1em)",
+      marginRight: "auto",
+      paddingBottom: "0.5em",
+    };
+    var modeStyle = {
+      alignSelf: "start",
+      fontWeight: 800,
+      marginRight: "0.5em",
+      fontSize: "1.2em",
+    };
+    var sortMessage =
+      this.state.sorting
+      ? this.state.sorting.length
+        ? this.state.sorting.length === 1
+          ? "Put card here"
+          : "Put cards here"
+        : "Select cards to put here"
+      : "Sort cards here";
+    var sortMode = this.state.sorting ? "Sorting" : null;
+    var sortOverlay = <>
+      { <span style={sideStyle}>{ sortMessage }</span> }
+      { <span style={modeStyle}>{ sortMode }</span> }
+    </>;
     return <div>
       <h1>Demo</h1>
       <div>
@@ -163,11 +234,16 @@ class DemoGamePage extends React.Component {
       </div>
       <div style={{ border: "1px dotted gray", width: "fit-content", margin: "auto" }}>
       <CardHandImage {...this.state.props}>
-        { this.state.hand.cards.map((card,i) =>
+        { [
+          <CardImage key={ "action" } overlay={ sortOverlay }
+            scale={this.state.props.scale} selected={this.state.sorting}
+            onClick={() => this.sort()}/>
+        ].concat(this.state.hand.cards.map((card,i) =>
           <CardImage card={ card } key={ card.id }
             scale={this.state.props.scale}
-            selected={ i === this.state.selected }
-            onClick={() => this.setState(state => Object.assign(state, {selected:i}))}
+            selected={ this.selected(card,i) }
+            badge={ this.badger(card,i) }
+            onClick={() => this.select(card,i)}
             />
         ).concat([
           <CardImage key={ null } overlay={ <h3>Add card</h3> }
@@ -176,7 +252,7 @@ class DemoGamePage extends React.Component {
               state.hand.cards.push(new Card(state.id+=1,1+Math.floor(Math.random() * 4),1+Math.floor(Math.random() * 13)));
               return state;
             })}/>
-        ])}
+        ]))}
       </CardHandImage>
       </div>
       <p>Select cards with Left and Right arrows.</p>
