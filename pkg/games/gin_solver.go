@@ -293,7 +293,7 @@ func (gs *GinSolver) isKind(hand []Card, cards []int) bool {
 		most_wild_rank := NoneRank
 		most_wild_count := 0
 		for wild_rank, count := range wild_ranks {
-			if count > most_wild_count && (wild_rank != JokerRank || !wild_jokers || gs.WildJokerRanked) {
+			if count >= most_wild_count && (wild_rank != JokerRank || !wild_jokers || gs.WildJokerRanked) {
 				most_wild_rank = wild_rank
 				most_wild_count = count
 			}
@@ -312,7 +312,7 @@ func (gs *GinSolver) isKind(hand []Card, cards []int) bool {
 	// We've tried all possible tricks up our sleeves to get some number of wild
 	// cards wrangled into a single allowed, valid group. Sadly it just wasn't
 	// possible.
-	return false
+	return rank == NoneRank
 }
 
 func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
@@ -324,7 +324,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	// set to true, the maximum value is a run is King, not Joker. Additionally,
 	// we know that if two cards have the same rank, they cannot form a valid
 	// run.
-	run_map := make(map[CardRank]int, 0)
+	run_map := make(map[CardRank]int)
 	var wild_cards []int
 	var min_rank CardRank = NoneRank
 	var max_rank CardRank = NoneRank
@@ -471,10 +471,11 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 			// Update max_rank to be AceRank so we know we have a high ace.
 			stop_rank = AceRank
 		}
-	} else {
-		// We have a fairly traditional, middle of the road (or, only touching one
-		// end) run. We can ignore the indices as they already make sense.
 	}
+	// } else {
+	//	// We have a fairly traditional, middle of the road (or, only touching one
+	//	// end) run. We can ignore the indices as they already make sense.
+	// }
 
 	// Now we need to slot wild cards into missing gaps. If we run out of wild
 	// cards, we can safely exit early.
@@ -583,7 +584,7 @@ func orInterval(l Interval, r Interval) Interval {
 	}
 	return r
 }
-func andInterval(l Interval, r Interval) Interval {
+func AndInterval(l Interval, r Interval) Interval {
 	if l.min == flag {
 		return none
 	}
@@ -597,17 +598,17 @@ func andInterval(l Interval, r Interval) Interval {
 	return Interval{l.min + r.min, more}
 }
 
-func (gs *GinSolver) wcValidGroup(hand []Card, cards []int) Interval {
+func (gs *GinSolver) WcValidGroup(hand []Card, cards []int) Interval {
 	if len(cards) == 0 {
 		return none
 	}
-	return orInterval(gs.wcKind(hand, cards), gs.wcRun(hand, cards))
+	return orInterval(gs.WcKind(hand, cards), gs.WcRun(hand, cards))
 }
 
 // This function assumes that the cards being passed as analyzed as their rank
 // (i.e. don't worry about WildAsRank here, that is handled at a higher level),
 // and returns the Interval of wildcards needed to make the match happen
-func (gs *GinSolver) wcKind(hand []Card, cards []int) Interval {
+func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 	if len(cards) == 0 {
 		return none
 	}
@@ -647,7 +648,7 @@ func (gs *GinSolver) wcKind(hand []Card, cards []int) Interval {
 // and returns the Interval of wildcards needed to make the match happen
 //
 // TODO: handle WildJokerRanked
-func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
+func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 	if len(cards) == 0 {
 		return none
 	}
@@ -829,7 +830,7 @@ func (gs *GinSolver) canMakeScore(hand []Card, ranked []Card, ranked_partitions 
 	return false
 }
 
-func (gs *GinSolver) groupValueSum(hand []Card, groups []int) int {
+func (gs *GinSolver) GroupValueSum(hand []Card, groups []int) int {
 	return 0
 }
 
