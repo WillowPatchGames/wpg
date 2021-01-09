@@ -225,16 +225,16 @@ func (gs *GinSolver) DivideHand(hand []Card) []int {
 // we have only five cards (6 5 5 5 4 3) whereby either a run or a kind could
 // be formed, we can do either. Because the logic in isKind is less expensive,
 // we do it ahead of isRun.
-func (gs *GinSolver) isValidGroup(hand []Card, cards []int) bool {
+func (gs *GinSolver) IsValidGroup(hand []Card, cards []int) bool {
 	// No valid group can only have 1 or 2 cards.
 	if len(cards) < 3 {
 		return false
 	}
 
-	return gs.isKind(hand, cards) || gs.isRun(hand, cards)
+	return gs.IsKind(hand, cards) || gs.IsRun(hand, cards)
 }
 
-func (gs *GinSolver) isKind(hand []Card, cards []int) bool {
+func (gs *GinSolver) IsKind(hand []Card, cards []int) bool {
 	// A grouping of a kind is valid IFF you have a single fixed point value
 	// (here, `rank`), and other wild cards interspersed. We initialize it to
 	// NoneRank to signify that a rank hasn't been found yet. The first visited
@@ -315,7 +315,7 @@ func (gs *GinSolver) isKind(hand []Card, cards []int) bool {
 	return rank == NoneRank
 }
 
-func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
+func (gs *GinSolver) IsRun(hand []Card, cards []int) bool {
 	// A group of cards is a run IFF they have a designated start and end value,
 	// where all ranks in the range are assigned, and optionally, follow a single
 	// suit. To do so, we slot cards into a mapping, starting with non-wild cards.

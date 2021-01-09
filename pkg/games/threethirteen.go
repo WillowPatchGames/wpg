@@ -579,7 +579,7 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 			group_index = append(group_index, index)
 			ncards += 1
 		}
-		if !gs.isValidGroup(tts.Players[player].Hand, group_index) {
+		if !gs.IsValidGroup(tts.Players[player].Hand, group_index) {
 			// XXX better error message: stringify the cards?
 			return errors.New("not a valid grouping")
 		}
