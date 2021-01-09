@@ -270,6 +270,7 @@ class EightJacksGameComponent extends React.Component {
           <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
             <h3>Hand</h3>
             { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this), handProps) }
+            <br/>
             <Button label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.selected }
               onClick={this.clearSelectAnd(() => this.state.game.interface.discard(this.state.selected))}/>
           </div>
