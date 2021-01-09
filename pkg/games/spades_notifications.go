@@ -230,9 +230,9 @@ type SpadesFinishedNotification struct {
 	Winner uint64 `json:"winner"`
 }
 
-func (swn *SpadesFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
-	swn.LoadHeader(data, player)
-	swn.MessageType = "finished"
+func (sfn *SpadesFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+	sfn.LoadHeader(data, player)
+	sfn.MessageType = "finished"
 
-	swn.Winner = winner
+	sfn.Winner = winner
 }
