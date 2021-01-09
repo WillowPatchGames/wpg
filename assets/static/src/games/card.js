@@ -444,7 +444,8 @@ class CardHandImage extends React.Component {
     scale = scale || 0.5;
     var length = cards?.length || children?.length || 0;
     if (typeof overlap !== 'number') overlap = overlap ? 0.75 : 0;
-    if (typeof curve !== 'number') curve = curve ? 3*length : 0;
+    if (typeof curve !== 'number') curve = curve ? 3 : 0;
+    curve *= length;
     var curve_norm = curve ? Math.sin(curve*Math.PI/180) : 0;
     var selectable =
       (cards && cards.some(card => card.selected !== undefined && card.selected !== null))
@@ -466,9 +467,9 @@ class CardHandImage extends React.Component {
       marginTop += cardSelectableTop;
     }
     if (curve) {
-      cardCurveBottom = length*50*scale*curve_norm*(1-overlap);
+      cardCurveBottom = (length+4)*35*scale*curve_norm*(1.1-overlap);
       marginBottom += cardCurveBottom;
-      cardCurvePadding = (card_dim[1]+cardSelectDist*1.2)*curve_norm/6;
+      cardCurvePadding = (card_dim[1]+cardSelectDist*1.2)*scale*curve_norm/2;
       padding += cardCurvePadding;
     }
     if (overlap) {

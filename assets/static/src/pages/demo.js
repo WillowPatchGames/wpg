@@ -6,6 +6,8 @@ import '@rmwc/checkbox/styles';
 import '@rmwc/select/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
+import { Slider } from '@rmwc/slider';
+import '@rmwc/slider/styles';
 
 import { Card, CardHand, CardHandImage, CardImage } from '../games/card.js';
 
@@ -25,8 +27,13 @@ class DemoGamePage extends React.Component {
     super(props);
     this.state = {
       hand: new CardHand(Array.from(Array(13)).map((_,i) => new Card(i,1,+i+1))),
-      selected: 0,
+      selected: 5,
       id: 13,
+      props: {
+        scale: 0.5,
+        curve: 3,
+        overlap: 0.75,
+      },
     };
     this.move = this.move.bind(this);
     this.unlisten = [];
@@ -146,20 +153,32 @@ class DemoGamePage extends React.Component {
   render() {
     return <div>
       <h1>Demo</h1>
-      <CardHandImage curve overlap>
+      <div>
+        <Slider min={0.1} max={1} value={this.state.props.scale} onInput={e => {let scale=e.detail.value;
+          this.setState(state => {Object.assign(state.props, {scale});return state})}}/>
+        <Slider min={0} max={1} value={1-this.state.props.overlap} onInput={e => {let overlap=1-e.detail.value;
+          this.setState(state => {Object.assign(state.props, {overlap});return state})}}/>
+        <Slider min={0} max={5} value={this.state.props.curve} onInput={e => {let curve=e.detail.value;
+          this.setState(state => {Object.assign(state.props, {curve});return state})}}/>
+      </div>
+      <div style={{ border: "1px dotted gray", width: "fit-content", margin: "auto" }}>
+      <CardHandImage {...this.state.props}>
         { this.state.hand.cards.map((card,i) =>
           <CardImage card={ card } key={ card.id }
+            scale={this.state.props.scale}
             selected={ i === this.state.selected }
             onClick={() => this.setState(state => Object.assign(state, {selected:i}))}
             />
         ).concat([
           <CardImage key={ null } overlay={ <h3>Add card</h3> }
+            scale={this.state.props.scale}
             onClick={() => this.setState(state => {
               state.hand.cards.push(new Card(state.id+=1,1+Math.floor(Math.random() * 4),1+Math.floor(Math.random() * 13)));
               return state;
             })}/>
         ])}
       </CardHandImage>
+      </div>
       <p>Select cards with Left and Right arrows.</p>
       <p>Number keys 1 (ace) through 0 (10) and (j)ack, (q)ueen, (k)ing to set rank. Increment with Shift+D and decrement with Shift+A</p>
       <p>Set suit of (c)lubs, (h)earts, (s)pades, (d)iamonds, or use Shift+W/Shift+S or Up and Down.</p>
