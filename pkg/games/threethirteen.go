@@ -527,6 +527,87 @@ func (tts *ThreeThirteenState) HandleLayDown(player int) {
 	}
 }
 
+func (tts *ThreeThirteenState) GinSolver() GinSolver {
+	pv := make(map[CardRank]int, 14)
+	for r := AceRank; r <= KingRank; r++ {
+		pv[r] = int(r)
+		if pv[r] > 10 {
+			pv[r] = 10
+		}
+	}
+	pv[JokerRank] = 20
+
+	wc := []CardRank{CardRank(tts.Round), JokerRank}
+
+	return GinSolver{
+		PointValue: pv,
+		WildCards: wc,
+		AnyWildGroup: false,
+		WildAsRank: true,
+		AllWildGroups: tts.Config.AllowAllWildCards,
+		MostlyWildGroups: tts.Config.AllowMostlyWild,
+
+		WildJokerRanked: false,
+		SameSuitRuns: tts.Config.SameSuitRuns,
+		AceHigh: true,
+		AceLow: true,
+		RunsWrap: false,
+	}
+}
+
+func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftover []int) error {
+	if player < 0 || player >= len(tts.Players) {
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
+	}
+
+	gs := tts.GinSolver()
+
+	cards := make(map[int]bool, 0)
+	ncards := 0
+
+	for _, group := range groups {
+		group_index := make([]int, 0)
+		for _, cardID := range group {
+			if _, ok := cards[cardID]; ok {
+				return errors.New("card was used twice")
+			}
+			index, found := tts.Players[player].FindCard(cardID)
+			if !found {
+				return errors.New("unable to find card with specified identifier")
+			}
+			cards[cardID] = true
+			group_index = append(group_index, index)
+			ncards += 1
+		}
+		if !gs.isValidGroup(tts.Players[player].Hand, group_index) {
+			// XXX better error message: stringify the cards?
+			return errors.New("not a valid grouping")
+		}
+	}
+
+	score := 0
+
+	for _, cardID := range leftover {
+		if _, ok := cards[cardID]; ok {
+			return errors.New("card was used twice")
+		}
+		index, found := tts.Players[player].FindCard(cardID)
+		if !found {
+			return errors.New("unable to find card with specified identifier")
+		}
+		cards[cardID] = true
+		card := tts.Players[player].Hand[index]
+		score += gs.PointValue[card.Rank]
+		ncards += 1
+	}
+
+	if ncards != len(tts.Players[player].Hand) {
+		return errors.New("some cards were missing from scoring")
+	}
+
+	return tts.ReportScore(player, score)
+}
+
 func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 	if !tts.Started {
 		return errors.New("game hasn't started yet")

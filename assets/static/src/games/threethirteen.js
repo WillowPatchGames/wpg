@@ -75,6 +75,14 @@ class ThreeThirteenController {
     });
   }
 
+  async score_by_groups(groups, leftover) {
+    return await this.wsController.sendAndWait({
+      'message_type': 'score_by_groups',
+      'groups': groups,
+      'leftover': leftover,
+    });
+  }
+
   onMessage(type, handler) {
     return this.wsController.onMessage(type, handler);
   }
@@ -189,6 +197,10 @@ class ThreeThirteenGame {
 
   async score(amount) {
     return this.controller.score(amount);
+  }
+
+  async score_by_groups(groups, leftover) {
+    return this.controller.score_by_groups(groups, leftover);
   }
 
   close() {

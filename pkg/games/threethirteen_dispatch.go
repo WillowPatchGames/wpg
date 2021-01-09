@@ -28,6 +28,12 @@ type ThreeThirteenScoreMsg struct {
 	Score int `json:"score"`
 }
 
+type ThreeThirteenScoreByGroupsMsg struct {
+	MessageHeader
+	Groups   [][]int `json:"groups"`
+	Leftover []int   `json:"leftover"`
+}
+
 func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
 	var err error
 	var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
@@ -132,6 +138,15 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 		}
 
 		err = state.ReportScore(player.Index, data.Score)
+		send_synopsis = true
+		send_state = true
+	case "score_by_groups":
+		var data ThreeThirteenScoreByGroupsMsg
+		if err = json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		err = state.ScoreByGroups(player.Index, data.Groups, data.Leftover)
 		send_synopsis = true
 		send_state = true
 	default:

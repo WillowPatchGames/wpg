@@ -61,6 +61,24 @@ class ThreeThirteenGameComponent extends React.Component {
     let v = e.target.value;
     this.setState(state => Object.assign({}, state, { "round_score": v }));
   }
+  async sendCards() {
+    var groups = this.state.groupings.map(group => group.map(c => c.id));
+    var leftover = this.state.game.interface.data.hand.cards.filter(
+      card => !this.state.groupings.some(g => g.includes(card))
+    ).map(c => c.id);
+
+    var resp = await this.state.game.interface.score_by_groups(groups, leftover);
+    if (resp && resp.type !== "error" && !resp.error) {
+      this.setState(state => {
+        state.round_score = 0;
+        state.groupings = [];
+        state.grouping_selected = [];
+        return state;
+      })
+    } else {
+      console.log(resp);
+    }
+  }
   async sendScore() {
     var resp = await this.state.game.interface.score(this.state.round_score);
     if (resp && resp.type !== "error" && !resp.error) {
@@ -221,7 +239,7 @@ class ThreeThirteenGameComponent extends React.Component {
         );
 
         return <div>
-          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+          {/*<div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
@@ -238,6 +256,66 @@ class ThreeThirteenGameComponent extends React.Component {
                 <h3>Score Your Hand</h3>
                 <TextField fullwidth type="number" label="Score" name="score" value={ this.state.round_score } onChange={ this.inputHandler.bind(this) } min="0" max="250" step="1" />
                 <Button label="Submit" unelevated ripple={false} onClick={ this.sendScore.bind(this) } />
+              </div>
+            </c.Card>
+          </div>*/}
+          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h3>Group your hand so it can be scored!</h3>
+                <p>Any leftover cards will be counted against your score this round.</p>
+                <div><Button label="Submit" unelevated ripple={false} onClick={ this.sendCards.bind(this) } /></div>
+                <br/><br/>
+                { this.state.groupings.map((g,i) =>
+                    <CardHandImage key={ i } overlap cards={ g } style={{ display: "inline-block", marginRight: "1.5em" }}>
+                      {g.map((card,j) => (
+                        <CardImage key={ card.id } card={ card }
+                          onClick={() => this.setState(state => {
+                            state.groupings[i].splice(j, 1);
+                            if (!state.groupings[i].length) {
+                              state.groupings.splice(i, 1);
+                            }
+                            return state;
+                          })}/>
+                      )).concat(!ungrouped.length ? [] : [
+                        <CardImage key={ null } overlay={ <h3>Add selected cards to this group</h3> }
+                          onClick={() => this.setState(state => {
+                            var grouping = state.grouping_selected.map(id => {
+                              for (let card of this.state.game.interface.data.hand.cards) {
+                                if (card.id === id) return card;
+                              }
+                              return null;
+                            }).filter(c => c);
+                            if (grouping.length) {
+                              state.groupings[i].push(...grouping);
+                              state.grouping_selected = [];
+                            }
+                            return state;
+                          })}
+                        />
+                      ])}
+                    </CardHandImage>
+                ).concat(!ungrouped.length ? [] : [
+                  <CardHandImage key={ null } style={{ display: "inline-block" }}>
+                    {[
+                      <CardImage key={ null } overlay={ <h3>New group of selected cards</h3> }
+                        onClick={() => this.setState(state => {
+                          var grouping = state.grouping_selected.map(id => {
+                            for (let card of this.state.game.interface.data.hand.cards) {
+                              if (card.id === id) return card;
+                            }
+                            return null;
+                          }).filter(c => c);
+                          if (grouping.length) {
+                            state.groupings.push(grouping);
+                            state.grouping_selected = [];
+                          }
+                          return state;
+                        })}
+                      />
+                    ]}
+                  </CardHandImage>
+                ]) }
               </div>
             </c.Card>
           </div>
@@ -260,61 +338,6 @@ class ThreeThirteenGameComponent extends React.Component {
                         }) }/>
                   )}
                 </CardHandImage>
-              </div>
-            </c.Card>
-          </div>
-          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
-            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h3>Your Groupings</h3>
-                { this.state.groupings.map((g,i) =>
-                    <CardHandImage key={ i } overlap cards={ g } style={{ display: "inline-block", marginRight: "1.5em" }}>
-                      {g.map((card,j) => (
-                        <CardImage key={ card.id } card={ card }
-                          onClick={() => this.setState(state => {
-                            state.groupings[i].splice(j, 1);
-                            if (!state.groupings[i].length) {
-                              state.groupings.splice(i, 1);
-                            }
-                            return state;
-                          })}/>
-                      )).concat(!ungrouped.length ? [] : [
-                        <CardImage key={ null } overlay={ <h3>Add selected cards to this group</h3> }
-                          onClick={() => this.setState(state => {
-                            var grouping = state.grouping_selected.map(id => {
-                              for (let card of this.state.game.interface.data.hand.cards) {
-                                if (card.id === id) return card;
-                              }
-                            }).filter(c => c);
-                            if (grouping.length) {
-                              state.groupings[i].push(...grouping);
-                              state.grouping_selected = [];
-                            }
-                            return state;
-                          })}
-                        />
-                      ])}
-                    </CardHandImage>
-                ).concat(!ungrouped.length ? [] : [
-                  <CardHandImage key={ null } style={{ display: "inline-block" }}>
-                    {[
-                      <CardImage key={ null } overlay={ <h3>New group of selected cards</h3> }
-                        onClick={() => this.setState(state => {
-                          var grouping = state.grouping_selected.map(id => {
-                            for (let card of this.state.game.interface.data.hand.cards) {
-                              if (card.id === id) return card;
-                            }
-                          }).filter(c => c);
-                          if (grouping.length) {
-                            state.groupings.push(grouping);
-                            state.grouping_selected = [];
-                          }
-                          return state;
-                        })}
-                      />
-                    ]}
-                  </CardHandImage>
-                ]) }
               </div>
             </c.Card>
           </div>

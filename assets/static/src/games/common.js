@@ -213,7 +213,6 @@ class WebSocketController {
     return this.wsPromise(resolve => ({ data: buf }) => {
       var data = JSON.parse(buf);
       if (data.reply_to === message_id) {
-        console.log(data);
         resolve(data);
       }
     });

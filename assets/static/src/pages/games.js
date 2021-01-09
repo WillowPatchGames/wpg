@@ -484,7 +484,7 @@ class PreGameAdminPage extends React.Component {
     }
   }
   async assignTeams(verify) {
-    if (!this.state.teams) return false;
+    if (!this.state.teams) return true;
     var team_data = {};
     team_data.dealer = 0; // TODO
     var players = this.state.waitlist.filter(user => user.playing);
@@ -511,7 +511,7 @@ class PreGameAdminPage extends React.Component {
     team_data.team_assignments = teams;
     console.log(team_data);
     if (verify && assigned && unassigned) {
-      notify(this.props.snackbar, "Must assign user " + user.display + " to a team", "error");
+      notify(this.props.snackbar, "Must assign user " + unassigned.display + " to a team", "error");
       this.setState(state => Object.assign({}, state, { started: false }));
       return false;
     }

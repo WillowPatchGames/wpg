@@ -49,6 +49,11 @@ type GinSolver struct {
 	RunsWrap        bool `json:"runs_wrap"`
 }
 
+// Add step to current while wrapping in the range [min,max]
+func addwrap(current CardRank, step CardRank, min CardRank, max CardRank) CardRank {
+	return min + (current + step - min) % (1 + max - min)
+}
+
 // Maps a hand of cards to their face values.
 func (gs *GinSolver) HandToValues(hand []Card) []int {
 	var result = make([]int, len(hand))
@@ -300,11 +305,7 @@ func (gs *GinSolver) isKind(hand []Card, cards []int) bool {
 	// Having made that adjustment, now apply MostlyWildGroups. We first need to
 	// compute what the majority is. After that, if we are under the majority, or
 	// if we have enabled the right config option, we can return true.
-	var majority = len(cards) / 2
-	if majority+majority == len(cards) {
-		majority += 1
-	}
-	if num_wild < majority || gs.MostlyWildGroups {
+	if 2*num_wild <= len(cards) || gs.MostlyWildGroups {
 		return true
 	}
 
@@ -323,7 +324,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	// set to true, the maximum value is a run is King, not Joker. Additionally,
 	// we know that if two cards have the same rank, they cannot form a valid
 	// run.
-	var run_map map[CardRank]int
+	run_map := make(map[CardRank]int, 0)
 	var wild_cards []int
 	var min_rank CardRank = NoneRank
 	var max_rank CardRank = NoneRank
@@ -394,6 +395,8 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	// that is represented in our group. However, we don't know whether the range
 	// actually starts at min_rank and goes all the way to max_rank: it could be
 	// that we have a wrapped range, or ace could be a high card.
+	start_rank := min_rank
+	stop_rank := max_rank
 	if min_rank == AceRank && max_rank == KingRank {
 		if !gs.AceHigh || !gs.RunsWrap {
 			// Because aces can't be high, and runs can't wrap, we can exit early.
@@ -443,8 +446,8 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 			// that cards on either side can now be populated. new_max_index above
 			// must be a populated card (see above) and will be treated as the upper
 			// bound on a wrapped range. This makes min_rank > max_rank. :)
-			max_rank = max_gap_index
-			min_rank = max_gap_index + CardRank(max_gap_size)
+			stop_rank = max_gap_index
+			start_rank = max_gap_index + CardRank(max_gap_size)
 
 			if run_map[max_rank] == -1 {
 				panic("Expected max_index to be a populated index!")
@@ -460,13 +463,13 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 			// towards the Two, we can safely bump our minimum index.
 			for index := min_rank + 1; index < max_rank; index++ {
 				if run_map[index] != -1 {
-					min_rank = index
+					start_rank = index
 					break
 				}
 			}
 
 			// Update max_rank to be AceRank so we know we have a high ace.
-			max_rank = AceRank
+			stop_rank = AceRank
 		}
 	} else {
 		// We have a fairly traditional, middle of the road (or, only touching one
@@ -479,7 +482,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	// This is a little clever. We start at the minimum index (which we know
 	// can't be empty, and stop as soon as we hit the max entry, which we also
 	// know can't be empty.
-	for index := min_rank; index != max_rank; index = (min_rank + 1) {
+	for index := start_rank; index != stop_rank; index = addwrap(index, 1, min_rank, max_rank) {
 		if run_map[index] == -1 {
 			// If we don't have any wild cards, we can exit early: our range has
 			// holes in it.
@@ -503,7 +506,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	}
 
 	// Try again, but this time with Jokers.
-	for index := min_rank; index != max_rank; index = (min_rank + 1) {
+	for index := start_rank; index != stop_rank; index = addwrap(index, 1, min_rank, max_rank) {
 		if run_map[index] == -1 {
 			// If we don't have any wild cards, we can exit early: our range has
 			// holes in it.
@@ -523,7 +526,7 @@ func (gs *GinSolver) isRun(hand []Card, cards []int) bool {
 	}
 
 	// Finally, slot literally anything in the remaining slots.
-	for index := min_rank; index != max_rank; index = (min_rank + 1) {
+	for index := start_rank; index != stop_rank; index = addwrap(index, 1, min_rank, max_rank) {
 		if run_map[index] == -1 {
 			// If we don't have any wild cards, we can exit early: our range has
 			// holes in it.
@@ -729,7 +732,7 @@ func (gs *GinSolver) wcRun(hand []Card, cards []int) Interval {
 			// new_min_index now points at the start of a gap
 
 			new_max_index := new_min_index+1
-			for run_map[AceRank + (new_max_index % (1 + KingRank - AceRank))] == -1 {
+			for run_map[addwrap(new_max_index, 0, AceRank, KingRank)] == -1 {
 				new_max_index++
 			}
 			// new_max_index now points right after the end of the gap
