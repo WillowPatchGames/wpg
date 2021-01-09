@@ -92,7 +92,6 @@ type SpadesConfig struct {
 	MustBreakSpades bool `json:"must_break_spades"` // Whether spades need to be broken before they can be lead.
 	AddJokers       bool `json:"add_jokers"`        // For three or six players: add jokers to round off the number of cards. Otherwise, one card will be left in the deck with three players, or the twos will be removed with six.
 	FirstWins       bool `json:"first_wins"`        // For six players: whether the first or the last card played wins in case of a tie in value.
-	WithPartners    bool `json:"with_partners"`     // For four or six players: whether to play with partners.
 	FullHistory     bool `json:"full_history"`      // Whether or not to allow peeking at past rounds.
 
 	// Nil
@@ -189,14 +188,6 @@ func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
 			cfg.FirstWins = first_wins
 		} else {
 			return errors.New("unable to parse value for first_wins as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["with_partners"]; ok {
-		if with_partners, ok := wire_value.(bool); ok {
-			cfg.WithPartners = with_partners
-		} else {
-			return errors.New("unable to parse value for with_partners as boolean: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
@@ -1017,15 +1008,21 @@ func (ss *SpadesState) determineTrickWinner() error {
 func (ss *SpadesState) tabulateRoundScore() error {
 	history := ss.RoundHistory[len(ss.RoundHistory)-1]
 
-	var max_count = ss.Config.NumPlayers
-	if ss.Config.WithPartners && (ss.Config.NumPlayers == 4 || ss.Config.NumPlayers == 6) {
-		max_count = ss.Config.NumPlayers / 2
-	}
-
 	// Update everyone's scores first.
-	for player := 0; player < max_count; player++ {
-		partner := (player + max_count) % ss.Config.NumPlayers
-		have_partner := partner != player && ss.Config.WithPartners
+	for player := 0; player < len(ss.Players); player++ {
+		// Find a partner if one exists.
+		var partner = player
+		var have_partner = false
+		for partner = 0; partner < len(ss.Players); partner++ {
+			if partner == player {
+				continue
+			}
+
+			if ss.Players[player].Team == ss.Players[partner].Team {
+				have_partner = true
+				break
+			}
+		}
 
 		if have_partner && partner < player {
 			break
@@ -1063,17 +1060,25 @@ func (ss *SpadesState) tabulateRoundScore() error {
 
 	var winner_offset = -1
 	var winner_score = -1
-	for player := 0; player < max_count; player++ {
+	var winning_team = -1
+	for player := 0; player < len(ss.Players); player++ {
 		if ss.Players[player].Score >= ss.Config.WinAmount {
-			if ss.Players[player].Score >= winner_score {
+			if ss.Players[player].Score > winner_score {
 				winner_score = ss.Players[player].Score
 				winner_offset = player
+				winning_team = ss.Players[player].Team
+			} else if ss.Players[player].Score == winner_score {
+				// If we have two teams who are tied for the winning score,
+				// we need to play another round until they break apart.
+				if winning_team == ss.Players[player].Team {
+					winning_team = -1
+				}
 			}
 		}
 	}
 
-	// If we have a winner, exit the game.
-	if winner_offset != -1 {
+	// If we have only a single winner, exit the game.
+	if winner_offset != -1 && winning_team != -1 {
 		ss.Finished = true
 		ss.Dealt = true
 		ss.Bid = true

@@ -770,7 +770,6 @@ class CreateGameForm extends React.Component {
         must_break_spades: have_game ? config.must_break_spades : true,
         add_jokers: have_game ? config.add_jokers : false,
         first_wins: have_game ? config.first_wins : false,
-        with_partners: have_game ? config.with_partners : true,
         full_history: have_game ? config.full_history : false,
         with_nil: have_game ? config.with_nil : true,
         overtakes_nil: have_game ? config.overtakes_nil : true,
@@ -879,7 +878,6 @@ class CreateGameForm extends React.Component {
       'must_break_spades': this.state.must_break_spades,
       'add_jokers': this.state.add_jokers,
       'first_wins': this.state.first_wins,
-      'with_partners': this.state.with_partners,
       'full_history': this.state.full_history,
       'with_nil': this.state.with_nil,
       'overtakes_nil': this.state.overtakes_nil,
@@ -1109,9 +1107,6 @@ class CreateGameForm extends React.Component {
         </l.ListItem>
         <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("first_wins") } disabled={ !this.state.editable }>
           <Switch label={ this.state.first_wins ? "First Highest Played Card Wins (Six Players Only)" : "Last Highest Played Card Wins (Six Players Only)" } name="first_wins" checked={ this.state.first_wins } onChange={ () => this.toggle("first_wins", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_partners") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.with_partners ? "Play With Partners (Four and Six Players Only)" : "Play Individually" } name="with_partners" checked={ this.state.with_partners } onChange={ () => this.toggle("with_partners", true) } disabled={ !this.state.editable } />
         </l.ListItem>
         <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("full_history") } disabled={ !this.state.editable }>
           <Switch label={ this.state.full_history ? "Allow Peeking at Previous Tricks" : "Only See Final Card in the Previous Trick" } name="full_history" checked={ this.state.full_history } onChange={ () => this.toggle("full_history", true) } disabled={ !this.state.editable } />
