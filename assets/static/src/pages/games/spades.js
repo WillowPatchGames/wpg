@@ -755,6 +755,16 @@ class SpadesAfterPartyPage extends React.Component {
           </c.Card>
         </div>
       </div>;
+    } else if (!this.state.finished) {
+      current_round = <div>
+        <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+          <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+            <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+              Please wait for the round to begin...
+            </div>
+          </c.Card>
+        </div>
+      </div>;
     }
 
     var historical_data = null;
