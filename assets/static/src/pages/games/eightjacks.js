@@ -38,6 +38,9 @@ var team_colors = {
   "3": "limegreen",
   "4": "mediumpurple",
   "5": "orange",
+  "6": "blue",
+  "7": "green",
+  "8": "pink",
 };
 
 class EightJacksGameComponent extends React.Component {
@@ -846,6 +849,7 @@ class EightJacksAfterPartyPage extends React.Component {
 
     return (
       <div>
+        <EightJacksGameSynopsis game={ this.game } {...this.props} />
         <h1 style={{ color: "#000000" }}>Eight Jacks</h1>
         <div>
           { winner_info }
