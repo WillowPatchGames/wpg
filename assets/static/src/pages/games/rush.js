@@ -327,7 +327,7 @@ class RushAfterPartyPage extends React.Component {
     this.props.game.interface = null;
 
     this.props.setGame(null);
-    this.props.setPage("room");
+    this.props.setPage("room", true);
   }
   render() {
     return (

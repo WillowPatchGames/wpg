@@ -647,7 +647,7 @@ class HeartsAfterPartyPage extends React.Component {
     this.props.game.interface = null;
 
     this.props.setGame(null);
-    this.props.setPage("room");
+    this.props.setPage("room", true);
   }
   skip(amt) {
     if (amt === 1) {

@@ -382,7 +382,7 @@ class EightJacksGameSynopsis extends React.Component {
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left scrollable-x">
-            <b>Eight Jacks</b>
+            <b>Eight Jacks</b> - Jack of Clubs and Diamonds play anywhere; Jack of Hearts and Spades remove; Jokers do both.
             { player_view }
           </div>
         </c.Card>
@@ -609,7 +609,7 @@ class EightJacksAfterPartyPage extends React.Component {
     this.props.game.interface = null;
 
     this.props.setGame(null);
-    this.props.setPage("room");
+    this.props.setPage("room", true);
   }
 
   render() {
