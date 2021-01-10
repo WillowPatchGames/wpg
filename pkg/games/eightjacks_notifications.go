@@ -143,5 +143,5 @@ func (ejwn *EightJacksFinishedNotification) LoadFromController(data *GameData, p
 	ejwn.LoadHeader(data, player)
 	ejwn.MessageType = "finished"
 
-	ejwn.Winner = winner
+	ejwn.Winner, _ = data.ToUserID(winner)
 }

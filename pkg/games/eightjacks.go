@@ -744,6 +744,7 @@ func (ejs *EightJacksState) MarkRun(run []int) error {
 			ejs.Players[idx].Runs = append(indexed_player.Runs, run)
 			if len(ejs.Players[idx].Runs) >= ejs.Config.WinLimit {
 				finished = true
+				ejs.Winner = idx
 			}
 		}
 	}
