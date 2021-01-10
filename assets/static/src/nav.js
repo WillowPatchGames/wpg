@@ -104,9 +104,9 @@ class Navigation extends React.Component {
 
   render() {
     return (<>
-      <bar.TopAppBar fixed short shortCollapsed={ this.props.immersive }>
-        <bar.TopAppBarRow>
-          <bar.TopAppBarSection>
+      <bar.TopAppBar fixed short shortCollapsed={ this.props.immersive } style={{ marginTop: '0px', 'borderTop': '0', 'paddingTop': '0px' }}>
+        <bar.TopAppBarRow style={{ marginTop: '0px', 'borderTop': '0', 'paddingTop': '0px' }}>
+          <bar.TopAppBarSection style={{ marginTop: '0px', 'borderTop': '0', 'paddingTop': '0px' }}>
             <IconButton icon="menu" onClick={() => this.setOpen(!this.state.navVisible) } />
             <Button className="App-Title" onClick={() => this.props.setPage('') } style={{ color: 'black' }}>Willow Patch Games</Button>
           </bar.TopAppBarSection>

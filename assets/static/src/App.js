@@ -181,7 +181,7 @@ class App extends React.Component {
 
   render() {
     return (
-      <div className={ "App" + (this.state.immersive ? " immersive" : "")}>
+      <div className={ "App" + (this.state.immersive ? " immersive" : "")} style={{ marginTop: '0px', 'borderTop': '0', 'paddingTop': '0px' }}>
         <RMWCProvider
           typography={{
             headline1: 'h1',
@@ -210,6 +210,7 @@ class App extends React.Component {
               textPrimaryOnBackground: 'black',
               textHintOnBackground: 'black'
             }}
+            style={{ marginTop: '0px', 'borderTop': '0', 'paddingTop': '0px' }}
           >
             <Navigation user={ this.state.user } immersive={ this.state.immersive } setPage={ this.setPage.bind(this) } setUser={ this.setUser.bind(this) } />
             <SnackbarQueue messages={ this.snackbar.messages } />

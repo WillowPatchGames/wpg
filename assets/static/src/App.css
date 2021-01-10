@@ -3,6 +3,14 @@
   --mdc-theme-on-secondary: black;
 }
 
+html, head, body, div#root {
+  position: static;
+  margin: 0px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  top: 0px;
+}
+
 body {
   overscroll-behavior-y: contain;
 }

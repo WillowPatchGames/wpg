@@ -15,7 +15,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
-  <BrowserRouter>
+  <BrowserRouter style={{ 'marginTop': "0px", 'borderTop': '0', 'paddingTop': '0px' }}>
     <App />
   </BrowserRouter>,
   document.getElementById('root')
