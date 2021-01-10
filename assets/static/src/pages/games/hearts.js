@@ -474,6 +474,7 @@ class HeartsAfterPartyPage extends React.Component {
       historical_round: 0,
       historical_trick: -1,
       historical_player: 0,
+      set_historical_player: false,
       show_dealt: false,
       active: {
         turn: null,
@@ -510,8 +511,11 @@ class HeartsAfterPartyPage extends React.Component {
         var myplayerindex = 0;
         for (let index in data.player_mapping) {
           mapping[index] = await UserCache.FromId(data.player_mapping[index]);
-          if (mapping[index].id === this.props.user.id)
-            myplayerindex = index;
+          if (!this.state.set_historical_player) {
+            if (mapping[index].id === this.props.user.id) {
+              myplayerindex = index;
+            }
+          }
         }
 
         var history = null;
@@ -615,7 +619,8 @@ class HeartsAfterPartyPage extends React.Component {
           dealt: data.dealt,
           passed: data.passed,
           finished: data.finished,
-          historical_player: myplayerindex,
+          historical_player: !this.state.set_historical_player ? myplayerindex : this.state.historical_player,
+          set_historical_player: true,
           active: {
             turn: turn,
             leader: leader,
@@ -773,12 +778,22 @@ class HeartsAfterPartyPage extends React.Component {
           </c.Card>
         </div>
       </div>;
+    } else if (!this.state.finished) {
+      current_round = <div>
+        <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+          <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+            <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+              Please wait for the round to begin...
+            </div>
+          </c.Card>
+        </div>
+      </div>;
     }
 
     var historical_data = null;
     var scoreboard_data = null;
 
-    if (this.state.history) {
+    if (this.state.history && this.state.history.scores) {
       let round_index = parseInt(this.state.historical_round);
       let round_data = <b>No data found for round { round_index + 1 }!</b>;
       if (this.state.history.players[round_index]) {
@@ -1089,6 +1104,11 @@ class HeartsAfterPartyPage extends React.Component {
 
     return (
       <div>
+        {
+          !this.state.finished
+          ? <HeartsGameSynopsis game={ this.game } {...this.props} />
+          : null
+        }
         <h1 style={{ color: "#bd2525" }}>Hearts</h1>
         <div>
           {
