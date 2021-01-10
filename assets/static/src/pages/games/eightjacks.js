@@ -849,6 +849,9 @@ class EightJacksAfterPartyPage extends React.Component {
         <h1 style={{ color: "#000000" }}>Eight Jacks</h1>
         <div>
           { winner_info }
+          {
+            this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+          }
           { scoreboard_data }
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>

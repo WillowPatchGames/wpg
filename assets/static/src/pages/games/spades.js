@@ -1004,6 +1004,9 @@ class SpadesAfterPartyPage extends React.Component {
         <div>
           { winner_info }
           { current_round }
+          {
+            this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+          }
           { scoreboard_data }
           { historical_data }
           <g.Grid fixedColumnWidth={ true }>

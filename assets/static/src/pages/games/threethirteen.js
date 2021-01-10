@@ -725,6 +725,9 @@ class ThreeThirteenAfterPartyPage extends React.Component {
     return (
       <div>
         <ThreeThirteenGameSynopsis game={ this.game } {...this.props} />
+        {
+          this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+        }
       </div>
     );
   }

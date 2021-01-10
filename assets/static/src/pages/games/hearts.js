@@ -1047,6 +1047,9 @@ class HeartsAfterPartyPage extends React.Component {
             ? <h1 style={{ color: "#249724" }}>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
             : <h1>Please wait while the game finishes...</h1>
           }
+          {
+            this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+          }
           { scoreboard_data }
           { historical_data }
           <g.Grid fixedColumnWidth={ true }>
