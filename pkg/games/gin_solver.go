@@ -425,7 +425,7 @@ func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 //
 // TODO: handle WildJokerRanked
 func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
-	if len(cards) == 0 {
+	if len(cards) == 0 || len(cards) > 13 {
 		return none
 	}
 	if len(cards) == 1 {
@@ -504,6 +504,7 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 		}
 		for new_min_index <= check_rank {
 			if run_map[new_min_index] != -1 {
+				new_min_index = new_min_index + 1
 				continue
 			}
 			// new_min_index now points at the start of a gap
@@ -533,7 +534,7 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 	min := spread - len(cards)
 
 	// We can keep adding wildcards until we reach a full 13-card run
-	more := 13 - len(cards)
+	more := 13 - len(cards) - min
 	// Or until we have more wildcards than non-wildcards
 	if !gs.MostlyWildGroups && (len(cards)-min < more) {
 		more = len(cards) - min

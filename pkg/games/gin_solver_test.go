@@ -308,6 +308,64 @@ var TestCases = []ValidGroupEntry{
 			},
 		},
 	},
+	ValidGroupEntry{
+		Solver: GinSolver{
+			PointValue:       DefaultPointValue,
+			WildCards:        []CardRank{JokerRank},
+			AnyWildGroup:     false,
+			WildAsRank:       true,
+			AllWildGroups:    false,
+			MostlyWildGroups: false,
+			WildJokerRanked:  false,
+			SameSuitRuns:     true,
+			AceHigh:          true,
+			AceLow:           true,
+			RunsWrap:         false,
+		},
+		Entries: []HandEntry{
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, ClubsSuit, FourRank},
+					Card{0, HeartsSuit, ThreeRank},
+				},
+				IsGroup: false,
+				IsRun:   false,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, SpadesSuit, FourRank},
+					Card{0, SpadesSuit, ThreeRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, AceRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, AceRank},
+					Card{0, SpadesSuit, TwoRank},
+				},
+				IsGroup: false,
+				IsRun:   false,
+				IsKind:  false,
+			},
+		},
+	},
 }
 
 func TestIsValidGroup(t *testing.T) {
