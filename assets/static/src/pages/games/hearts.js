@@ -586,6 +586,24 @@ class HeartsAfterPartyPage extends React.Component {
           }
         }
 
+        let turn = await UserCache.FromId(data.turn);
+        let leader = await UserCache.FromId(data.leader);
+        let dealer = await UserCache.FromId(data.dealer);
+
+        let played = null;
+        if (data.played) {
+          played = CardHand.deserialize(data.played);
+        }
+
+        let who_played = this.state.who_played;
+        if (!this.state.who_played || (played && data.who_played && played.length === 1 && +this.state.who_played[0].id !== +data.who_played[0])) {
+          who_played = [];
+          for (let uid of data.who_played) {
+            let player = await UserCache.FromId(uid);
+            who_played.push(player);
+          }
+        }
+
         // HACK: When refreshData() is called from the button, we don't redraw
         // the screen even though new data is sent. Use snapshots to send only
         // the data we care about.
@@ -598,6 +616,16 @@ class HeartsAfterPartyPage extends React.Component {
           passed: data.passed,
           finished: data.finished,
           historical_player: myplayerindex,
+          active: {
+            turn: turn,
+            leader: leader,
+            dealer: dealer,
+            played: played,
+            pass_direction: data.pass_direction,
+            who_played: who_played,
+            hearts_broken: data.hearts_broken,
+            played_history: data.history ? data.history.map(CardHand.deserialize) : null,
+          },
         }));
 
         if (data.finished) {
@@ -726,6 +754,27 @@ class HeartsAfterPartyPage extends React.Component {
   }
 
   render() {
+    var current_round = null;
+
+    console.log(this.state.active);
+    if (this.state.active.played) {
+      var annotations = [];
+      for (let who_player of this.state.active.who_played) {
+        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></>;
+        annotations.push(annotation);
+      }
+
+      current_round = <div>
+        <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+          <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+            <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+              { this.state.active.played?.toImage(null, null, annotations) }
+            </div>
+          </c.Card>
+        </div>
+      </div>;
+    }
+
     var historical_data = null;
     var scoreboard_data = null;
 
@@ -1050,6 +1099,7 @@ class HeartsAfterPartyPage extends React.Component {
           {
             this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
           }
+          { current_round }
           { scoreboard_data }
           { historical_data }
           <g.Grid fixedColumnWidth={ true }>

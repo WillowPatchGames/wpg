@@ -682,7 +682,7 @@ class SpadesAfterPartyPage extends React.Component {
             who_played: who_played,
             spades_broken: data.spades_broken,
             played_history: data.history ? data.history.map(CardHand.deserialize) : null,
-          }
+          },
         }));
 
         if (data.finished) {
@@ -737,8 +737,6 @@ class SpadesAfterPartyPage extends React.Component {
 
   render() {
     var current_round = null;
-    var num_players = +this.state.game.config.num_players;
-    var status = a => <h3>{ a }</h3>;
 
     console.log(this.state.active);
     if (this.state.active.played) {
@@ -1003,10 +1001,10 @@ class SpadesAfterPartyPage extends React.Component {
         <h1 style={{ color: "#000000" }}>Spades</h1>
         <div>
           { winner_info }
-          { current_round }
           {
             this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
           }
+          { current_round }
           { scoreboard_data }
           { historical_data }
           <g.Grid fixedColumnWidth={ true }>
