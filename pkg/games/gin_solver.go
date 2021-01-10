@@ -234,6 +234,12 @@ func subsets(items []int) [][]int {
 }
 
 func inRange(have int, expect Interval) bool {
+	if expect.min == flag {
+		return false
+	}
+	if expect.more == flag {
+		return expect.min <= have
+	}
 	return expect.min <= have && have <= expect.min+expect.more
 }
 
