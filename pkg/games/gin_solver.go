@@ -234,7 +234,7 @@ func subsets(items []int) [][]int {
 }
 
 func inRange(have int, expect Interval) bool {
-	return expect.min <= have && have <= expect.min + expect.more
+	return expect.min <= have && have <= expect.min+expect.more
 }
 
 func (gs *GinSolver) TryWildCards(hand []Card, cards []int) [][]int {
@@ -437,7 +437,7 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 	// set to true, the maximum value is a run is King, not Joker. Additionally,
 	// we know that if two cards have the same rank, they cannot form a valid
 	// run.
-	var run_map map[CardRank]int
+	var run_map = make(map[CardRank]int)
 	var min_rank CardRank = NoneRank
 	var max_rank CardRank = NoneRank
 	var run_suit CardSuit = NoneSuit

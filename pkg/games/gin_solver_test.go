@@ -80,6 +80,26 @@ var TestCases = []ValidGroupEntry{
 				IsRun:   false,
 				IsKind:  true,
 			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, HeartsSuit, ThreeRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, HeartsSuit, FiveRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: true,
+				IsRun:   false,
+				IsKind:  true,
+			},
 		},
 	},
 }
