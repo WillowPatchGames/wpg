@@ -265,7 +265,7 @@ class ThreeThirteenGameComponent extends React.Component {
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Group your hand so it can be scored!</h3>
                 <p>Any leftover cards will be counted against your score this round.</p>
-                <div><Button label="Submit" unelevated ripple={false} onClick={ this.sendCards.bind(this) } /></div>
+                <div><Button label="Submit Score" unelevated ripple={false} onClick={ this.sendCards.bind(this) } /></div>
                 <br/><br/>
                 { groupings.map((g,i) =>
                     <CardHandImage key={ i } overlap cards={ g } style={{ display: "inline-block", marginRight: "1.5em" }}>
