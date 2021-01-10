@@ -134,7 +134,7 @@ func (ejp *EightJacksPlayer) RemoveCard(cardID int) bool {
 type EightJacksConfig struct {
 	NumPlayers int `json:"num_players"` // 2 <= n <= 8; best with two to four or six.
 
-	RunLength int `json:"run_length"` // 4 <= n <= 6 -- length of a run for it to count.
+	RunLength int `json:"run_length"` // 3 <= n <= 6 -- length of a run for it to count.
 	WinLimit  int `json:"win_limit"`  // 1 <= n <= 5 -- number of runs to win.
 
 	BoardWidth   int  `json:"board_width"`   // 8 <= n <= 10
@@ -142,8 +142,8 @@ type EightJacksConfig struct {
 	RemoveUnused bool `json:"remove_unused"` // Whether to remove cards not used on the board.
 	WildCorners  bool `json:"wild_corners"`  // Whether corners are wild (free for everyone to play on).
 
-	HandSize   int `json:"hand_size"`   // 4 <= n <= 10 -- number of cards in the hand.
-	JokerCount int `json:"joker_count"` // 0 <= n <= 8 -- "dual-use jacks".
+	HandSize   int `json:"hand_size"`   // 2 <= n <= 15 -- number of cards in the hand.
+	JokerCount int `json:"joker_count"` // 0 <= n <= 16 -- "dual-use jacks".
 }
 
 func (cfg EightJacksConfig) Validate() error {
@@ -151,8 +151,8 @@ func (cfg EightJacksConfig) Validate() error {
 		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 8"}
 	}
 
-	if cfg.RunLength < 4 || cfg.RunLength > 6 {
-		return GameConfigError{"run length", strconv.Itoa(cfg.RunLength), "between 4 and 6"}
+	if cfg.RunLength < 3 || cfg.RunLength > 6 {
+		return GameConfigError{"run length", strconv.Itoa(cfg.RunLength), "between 3 and 6"}
 	}
 
 	if cfg.WinLimit < 1 || cfg.WinLimit > 5 {
@@ -167,12 +167,12 @@ func (cfg EightJacksConfig) Validate() error {
 		return GameConfigError{"board height", strconv.Itoa(cfg.BoardHeight), "between 8 and 10"}
 	}
 
-	if cfg.HandSize < 4 || cfg.HandSize > 10 {
-		return GameConfigError{"size of hand", strconv.Itoa(cfg.HandSize), "between 4 and 10"}
+	if cfg.HandSize < 2 || cfg.HandSize > 15 {
+		return GameConfigError{"size of hand", strconv.Itoa(cfg.HandSize), "between 2 and 15"}
 	}
 
-	if cfg.JokerCount < 0 || cfg.JokerCount > 8 {
-		return GameConfigError{"number of jokers", strconv.Itoa(cfg.JokerCount), "between 0 and 8"}
+	if cfg.JokerCount < 0 || cfg.JokerCount > 16 {
+		return GameConfigError{"number of jokers", strconv.Itoa(cfg.JokerCount), "between 0 and 16"}
 	}
 
 	if cfg.BoardWidth == 10 && cfg.BoardHeight == 10 && !cfg.WildCorners {

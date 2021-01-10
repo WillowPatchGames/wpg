@@ -76,16 +76,12 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 	ssn.Bidded = game.Bid
 	ssn.Finished = game.Finished
 
-	if game.Config.FullHistory {
-		ssn.History = game.PreviousTricks
-	} else {
-		if len(game.PreviousTricks) >= 1 {
-			last_trick := game.PreviousTricks[len(game.PreviousTricks)-1]
-			if len(last_trick) >= 1 {
-				last_card := last_trick[len(last_trick)-1]
-				ssn.History = make([][]Card, 1)
-				ssn.History[0] = append(ssn.History[0], last_card)
-			}
+	if len(game.PreviousTricks) >= 1 {
+		last_trick := game.PreviousTricks[len(game.PreviousTricks)-1]
+		if len(last_trick) >= 1 {
+			last_card := last_trick[len(last_trick)-1]
+			ssn.History = make([][]Card, 1)
+			ssn.History[0] = append(ssn.History[0], last_card)
 		}
 	}
 }

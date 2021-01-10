@@ -92,7 +92,6 @@ type SpadesConfig struct {
 	MustBreakSpades bool `json:"must_break_spades"` // Whether spades need to be broken before they can be lead.
 	AddJokers       bool `json:"add_jokers"`        // For three or six players: add jokers to round off the number of cards. Otherwise, one card will be left in the deck with three players, or the twos will be removed with six.
 	FirstWins       bool `json:"first_wins"`        // For six players: whether the first or the last card played wins in case of a tie in value.
-	FullHistory     bool `json:"full_history"`      // Whether or not to allow peeking at past rounds.
 
 	// Nil
 	WithNil        bool `json:"with_nil"`         // Allow nil bids.
@@ -188,14 +187,6 @@ func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
 			cfg.FirstWins = first_wins
 		} else {
 			return errors.New("unable to parse value for first_wins as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["full_history"]; ok {
-		if full_history, ok := wire_value.(bool); ok {
-			cfg.FullHistory = full_history
-		} else {
-			return errors.New("unable to parse value for full_history as boolean: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 

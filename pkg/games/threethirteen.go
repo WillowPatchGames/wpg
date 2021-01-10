@@ -57,16 +57,15 @@ type ThreeThirteenConfig struct {
 	MinDrawSize int  `json:"min_draw_size"` // 13 <= n <= 40; minimum card count overhead per player -- used when calculating number of decks to use. Best with 7ish.
 	AddJokers   bool `json:"add_jokers"`    // Add jokers as a permanent wild cards, two per deck used.
 
-	WildAsRank bool `json:"wilds_as_rank"` // Whether to allow wild cards to become their rank.
+	WildAsRank        bool `json:"wilds_as_rank"`        // Whether to allow wild cards to become their rank.
 	AllowMostlyWild   bool `json:"allow_mostly_wild"`    // Allow groupings to have more wild cards than non-wild cards.
 	AllowAllWildCards bool `json:"allow_all_wild_cards"` // Whether or not to allow a grouping of all wild cards.
 	SameSuitRuns      bool `json:"same_suit_runs"`       // Whether runs have to be of the same suit.
-	AceHigh bool `json:"ace_high"` // Whether ace is high or low.
+	AceHigh           bool `json:"ace_high"`             // Whether ace is high or low.
 
 	LayingDownLimit     int  `json:"laying_down_limit"`     // 0 <= n <= 20. Number of points remaining in hand to lay down.
-	AllowBigGin         bool `json:"allow_big_gin"`         // Whether to allow laying down without discarding.
 	WithFourteenthRound bool `json:"with_fourteenth_round"` // Whether to add an additional round without numbered wilds.
-	AllowLastDraw bool `json:"allow_last_draw"` // Whether to give every player one last draw after someone lays down.
+	AllowLastDraw       bool `json:"allow_last_draw"`       // Whether to give every player one last draw after someone lays down.
 
 	ToPointLimit int  `json:"to_point_limit"` // -1 or 50 <= n <= 250. Whether to have a point limit to end the game early.
 	GolfScoring  bool `json:"golf_scoring"`   // Whether least points win or most points win (different scoring mechanism).
@@ -162,14 +161,6 @@ func (cfg *ThreeThirteenConfig) LoadConfig(wire map[string]interface{}) error {
 			cfg.LayingDownLimit = int(laying_down_limit)
 		} else {
 			return errors.New("unable to parse value for laying_down_limit as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["allow_big_gin"]; ok {
-		if allow_big_gin, ok := wire_value.(bool); ok {
-			cfg.AllowBigGin = allow_big_gin
-		} else {
-			return errors.New("unable to parse value for allow_big_gin as boolean: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
