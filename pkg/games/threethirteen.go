@@ -57,13 +57,16 @@ type ThreeThirteenConfig struct {
 	MinDrawSize int  `json:"min_draw_size"` // 13 <= n <= 40; minimum card count overhead per player -- used when calculating number of decks to use. Best with 7ish.
 	AddJokers   bool `json:"add_jokers"`    // Add jokers as a permanent wild cards, two per deck used.
 
+	WildAsRank bool `json:"wilds_as_rank"` // Whether to allow wild cards to become their rank.
 	AllowMostlyWild   bool `json:"allow_mostly_wild"`    // Allow groupings to have more wild cards than non-wild cards.
 	AllowAllWildCards bool `json:"allow_all_wild_cards"` // Whether or not to allow a grouping of all wild cards.
 	SameSuitRuns      bool `json:"same_suit_runs"`       // Whether runs have to be of the same suit.
+	AceHigh bool `json:"ace_high"` // Whether ace is high or low.
 
 	LayingDownLimit     int  `json:"laying_down_limit"`     // 0 <= n <= 20. Number of points remaining in hand to lay down.
 	AllowBigGin         bool `json:"allow_big_gin"`         // Whether to allow laying down without discarding.
 	WithFourteenthRound bool `json:"with_fourteenth_round"` // Whether to add an additional round without numbered wilds.
+	AllowLastDraw bool `json:"allow_last_draw"` // Whether to give every player one last draw after someone lays down.
 
 	ToPointLimit int  `json:"to_point_limit"` // -1 or 50 <= n <= 250. Whether to have a point limit to end the game early.
 	GolfScoring  bool `json:"golf_scoring"`   // Whether least points win or most points win (different scoring mechanism).
@@ -114,6 +117,14 @@ func (cfg *ThreeThirteenConfig) LoadConfig(wire map[string]interface{}) error {
 		}
 	}
 
+	if wire_value, ok := wire["wilds_as_rank"]; ok {
+		if wilds_as_rank, ok := wire_value.(bool); ok {
+			cfg.WildAsRank = wilds_as_rank
+		} else {
+			return errors.New("unable to parse value for wilds_as_rank as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
 	if wire_value, ok := wire["allow_mostly_wild"]; ok {
 		if allow_mostly_wild, ok := wire_value.(bool); ok {
 			cfg.AllowMostlyWild = allow_mostly_wild
@@ -138,6 +149,14 @@ func (cfg *ThreeThirteenConfig) LoadConfig(wire map[string]interface{}) error {
 		}
 	}
 
+	if wire_value, ok := wire["ace_high"]; ok {
+		if ace_high, ok := wire_value.(bool); ok {
+			cfg.AceHigh = ace_high
+		} else {
+			return errors.New("unable to parse value for ace_high as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
 	if wire_value, ok := wire["laying_down_limit"]; ok {
 		if laying_down_limit, ok := wire_value.(float64); ok {
 			cfg.LayingDownLimit = int(laying_down_limit)
@@ -159,6 +178,14 @@ func (cfg *ThreeThirteenConfig) LoadConfig(wire map[string]interface{}) error {
 			cfg.WithFourteenthRound = with_fourteenth_round
 		} else {
 			return errors.New("unable to parse value for with_fourteenth_round as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["allow_last_draw"]; ok {
+		if allow_last_draw, ok := wire_value.(bool); ok {
+			cfg.AllowLastDraw = allow_last_draw
+		} else {
+			return errors.New("unable to parse value for allow_last_draw as boolean: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
@@ -517,7 +544,7 @@ func (tts *ThreeThirteenState) HandleLayDown(player int) {
 		tts.Players[index].RoundScore = -1
 	}
 
-	if len(tts.Deck.Cards) >= len(tts.Players)-1 {
+	if tts.Config.AllowLastDraw && len(tts.Deck.Cards) >= len(tts.Players)-1 {
 		for player_offset := 1; player_offset < len(tts.Players); player_offset++ {
 			player_index := (player + player_offset) % len(tts.Players)
 			tts.Players[player_index].Drawn = tts.Deck.Cards[0]
@@ -537,20 +564,24 @@ func (tts *ThreeThirteenState) GinSolver() GinSolver {
 	}
 	pv[JokerRank] = 20
 
+	if tts.Config.AceHigh {
+		pv[AceRank] = 15
+	}
+
 	wc := []CardRank{CardRank(tts.Round), JokerRank}
 
 	return GinSolver{
 		PointValue:       pv,
 		WildCards:        wc,
 		AnyWildGroup:     false,
-		WildAsRank:       true,
+		WildAsRank:       tts.Config.WildAsRank,
 		AllWildGroups:    tts.Config.AllowAllWildCards,
 		MostlyWildGroups: tts.Config.AllowMostlyWild,
 
 		WildJokerRanked: false,
 		SameSuitRuns:    tts.Config.SameSuitRuns,
-		AceHigh:         true,
-		AceLow:          true,
+		AceHigh:         tts.Config.AceHigh,
+		AceLow:          !tts.Config.AceHigh,
 		RunsWrap:        false,
 	}
 }
@@ -586,7 +617,6 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 	}
 
 	score := 0
-
 	for _, cardID := range leftover {
 		if _, ok := cards[cardID]; ok {
 			return errors.New("card was used twice")
