@@ -286,7 +286,7 @@ func (gs *GinSolver) IsValidGroup(hand []Card, cards []int) bool {
 	tries := gs.TryWildCards(hand, cards)
 
 	for _, try := range tries {
-		if inRange(len(cards)-len(try), gs.WcValidGroup(hand, cards)) {
+		if inRange(len(cards)-len(try), gs.WcValidGroup(hand, try)) {
 			return true
 		}
 	}
@@ -303,7 +303,7 @@ func (gs *GinSolver) IsKind(hand []Card, cards []int) bool {
 	tries := gs.TryWildCards(hand, cards)
 
 	for _, try := range tries {
-		if inRange(len(cards)-len(try), gs.WcKind(hand, cards)) {
+		if inRange(len(cards)-len(try), gs.WcKind(hand, try)) {
 			return true
 		}
 	}
@@ -320,7 +320,7 @@ func (gs *GinSolver) IsRun(hand []Card, cards []int) bool {
 	tries := gs.TryWildCards(hand, cards)
 
 	for _, try := range tries {
-		if inRange(len(cards)-len(try), gs.WcRun(hand, cards)) {
+		if inRange(len(cards)-len(try), gs.WcRun(hand, try)) {
 			return true
 		}
 	}
