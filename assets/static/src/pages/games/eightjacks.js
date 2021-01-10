@@ -27,8 +27,6 @@ import { gravatarify } from '../../utils/gravatar.js';
 
 // Properties used for display card hands
 var handProps = {
-  overlap: true,
-  curve: true,
   scale: 0.50,
 };
 
