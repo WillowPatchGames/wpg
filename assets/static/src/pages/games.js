@@ -42,6 +42,7 @@ import { HeartsGame } from '../games/hearts.js';
 import { HeartsGamePage, HeartsAfterPartyPage } from './games/hearts.js';
 import { EightJacksGame } from '../games/eightjacks.js';
 import { EightJacksGamePage, EightJacksAfterPartyPage } from './games/eightjacks.js';
+import { GameConfig } from './games/config.js';
 import { UserCache } from '../utils/cache.js';
 
 function loadGame(game) {
@@ -750,89 +751,12 @@ class CreateGameForm extends React.Component {
                 : (
                   have_state ? this.state.mode : game.style
                 );
-    if (style === 'rush') {
-      additional_state = {
-        initialized: true,
-        num_players: have_game ? config.num_players : 4,
-        num_tiles: have_game ? config.num_tiles : 75,
-        tiles_per_player: have_game ? config.tiles_per_player : false,
-        start_size: have_game ? config.start_size : 12,
-        draw_size: have_game ? config.draw_size : 1,
-        discard_penalty: have_game ? config.discard_penalty : 3,
-        frequency: have_game ? config.frequency : 1,
+    if (style && GameConfig[style]) {
+      for (let option of GameConfig[style].options) {
+        additional_state[option.name] = option.values.value(have_game ? config[option.name] : option.values.default);
       }
-    } else if (style === 'spades') {
-      additional_state = {
-        initialized: true,
-        num_players: have_game ? config.num_players : 4,
-        overtakes: have_game ? config.overtakes : true,
-        overtake_limit: have_game ? config.overtake_limit : 10,
-        must_break_spades: have_game ? config.must_break_spades : true,
-        add_jokers: have_game ? config.add_jokers : false,
-        first_wins: have_game ? config.first_wins : false,
-        full_history: have_game ? config.full_history : false,
-        with_nil: have_game ? config.with_nil : true,
-        overtakes_nil: have_game ? config.overtakes_nil : true,
-        blind_bidding: have_game ? config.blind_bidding : true,
-        with_double_nil: have_game ? config.with_double_nil : true,
-        with_break_bonus: have_game ? config.with_break_bonus : false,
-        with_triple_nil: have_game ? config.with_triple_nil : false,
-        win_amount: have_game ? config.win_amount : 500,
-        overtake_penalty: have_game ? +config.overtake_penalty : 100,
-        trick_multipler: have_game ? config.trick_multipler : 10,
-        perfect_round: have_game ? config.perfect_round : false,
-        nil_score: have_game ? config.nil_score : 100,
-      };
-    } else if (style === 'three thirteen') {
-      additional_state = {
-        initialized: true,
-        num_players: have_game ? config.num_players : 4,
-        min_draw_size: have_game ? config.min_draw_size : 14,
-        add_jokers: have_game ? config.add_jokers : true,
-        allow_mostly_wild: have_game ? config.allow_mostly_wild : false,
-        allow_all_wild_cards: have_game ? config.allow_all_wild_cards : true,
-        same_suit_runs: have_game ? config.same_suit_runs : true,
-        laying_down_limit: have_game ? config.laying_down_limit : 0,
-        allow_big_gin: have_game ? config.allow_big_gin : false,
-        with_fourteenth_round: have_game ? config.with_fourteenth_round : false,
-        to_point_limit: have_game ? config.to_point_limit : -1,
-        golf_scoring: have_game ? config.golf_scoring : true,
-      };
-    } else if (style === 'eight jacks') {
-      additional_state = {
-        initialized: true,
-        num_players: have_game ? config.num_players : 4,
-        run_length: have_game ? config.run_length : 4,
-        win_limit: have_game ? config.win_limit : 3,
-        board_width: have_game ? config.board_width : 10,
-        board_height: have_game ? config.board_height : 10,
-        remove_unused: have_game ? config.remove_unused : true,
-        wild_corners: have_game ? config.wild_corners : true,
-        hand_size: have_game ? config.hand_size : 5,
-        joker_count: have_game ? config.joker_count : 4,
-      };
-    } else if (style === 'hearts') {
-      additional_state = {
-        initialized: true,
-        num_players: have_game ? config.num_players : 4,
-        number_to_pass: have_game ? config.number_to_pass : 3,
-        hold_round: have_game ? config.hold_round : true,
-        must_break_hearts: have_game ? config.must_break_hearts : true,
-        black_widow_breaks: have_game ? config.black_widow_breaks : false,
-        first_trick_hearts: have_game ? config.first_trick_hearts : false,
-        with_crib: have_game ? config.with_crib : false,
-        win_amount: have_game ? config.win_amount : 100,
-        shoot_moon_reduces: have_game ? config.shoot_moon_reduces : true,
-        shoot_the_sun: have_game ? config.shoot_the_sun : true,
-        jack_of_dimaonds: have_game ? config.jack_of_dimaonds : false,
-        ten_of_clubs: have_game ? config.ten_of_clubs : false,
-        black_widow_for_five: have_game ? config.black_widow_for_five : false,
-        ace_of_hearts: have_game ? config.ace_of_hearts : false,
-        no_trick_bonus: have_game ? config.no_trick_bonus : false,
-        hundred_to_half: have_game ? config.hundred_to_half : false,
-      };
     } else {
-      console.log("Unknown game style: " + style, game, this.state, this.props);
+      console.log("Unknown game style: " + style, game, this.state, this.props, GameConfig);
     }
 
     if (additional_state !== null) {
@@ -843,105 +767,11 @@ class CreateGameForm extends React.Component {
   }
 
   toObject() {
-    if (this.state.mode === 'rush') {
-      return this.rushToObject();
-    } else if (this.state.mode === 'spades') {
-      return this.spadesToObject();
-    } else if (this.state.mode === 'three thirteen') {
-      return this.threethirteenToObject();
-    } else if (this.state.mode === 'eight jacks') {
-      return this.eightjacksToObject();
-    } else if (this.state.mode === 'hearts') {
-      return this.heartsToObject();
-    } else {
-      console.log("Unknown game style: " + this.state.mode, this.state);
+    var obj = {};
+    for (let option of GameConfig[this.state.mode].options) {
+      obj[option.name] = option.values.value(this.state[option.name]);
     }
-  }
-
-  rushToObject() {
-    return {
-      'num_players': +this.state.num_players,
-      'num_tiles': +this.state.num_tiles,
-      'tiles_per_player': this.state.tiles_per_player,
-      'start_size': +this.state.start_size,
-      'draw_size': +this.state.draw_size,
-      'discard_penalty': +this.state.discard_penalty,
-      'frequency': +this.state.frequency,
-    };
-  }
-
-  spadesToObject() {
-    return {
-      'num_players': +this.state.num_players,
-      'overtakes': this.state.overtakes,
-      'overtake_limit': +this.state.overtake_limit,
-      'must_break_spades': this.state.must_break_spades,
-      'add_jokers': this.state.add_jokers,
-      'first_wins': this.state.first_wins,
-      'full_history': this.state.full_history,
-      'with_nil': this.state.with_nil,
-      'overtakes_nil': this.state.overtakes_nil,
-      'blind_bidding': this.state.blind_bidding,
-      'with_double_nil': this.state.with_double_nil,
-      'with_break_bonus': this.state.with_break_bonus,
-      'with_triple_nil': this.state.with_triple_nil,
-      'win_amount': +this.state.win_amount,
-      'overtake_penalty': +this.state.overtake_penalty,
-      'trick_multipler': +this.state.trick_multipler,
-      'perfect_round': this.state.perfect_round,
-      'nil_score': +this.state.nil_score,
-    };
-  }
-
-  threethirteenToObject() {
-    return {
-      'num_players': +this.state.num_players,
-      'min_draw_size': +this.state.min_draw_size,
-      'add_jokers': this.state.add_jokers,
-      'allow_mostly_wild': this.state.allow_mostly_wild,
-      'allow_all_wild_cards': this.state.allow_all_wild_cards,
-      'same_suit_runs': this.state.same_suit_runs,
-      'laying_down_limit': +this.state.laying_down_limit,
-      'allow_big_gin': this.state.allow_big_gin,
-      'with_fourteenth_round': this.state.with_fourteenth_round,
-      'to_point_limit': +this.state.to_point_limit,
-      'golf_scoring': this.state.golf_scoring,
-    };
-  }
-
-  eightjacksToObject() {
-    return {
-      'num_players': +this.state.num_players,
-      'run_length': +this.state.run_length,
-      'win_limit': +this.state.win_limit,
-      'board_width': +this.state.board_width,
-      'board_height': +this.state.board_height,
-      'remove_unused': this.state.remove_unused,
-      'wild_corners': this.state.wild_corners,
-      'hand_size': +this.state.hand_size,
-      'joker_count': +this.state.joker_count,
-    };
-  }
-
-  heartsToObject() {
-    return {
-      'num_players': +this.state.num_players,
-      'number_to_pass': +this.state.number_to_pass,
-      'hold_round': this.state.hold_round,
-      'must_break_hearts': this.state.must_break_hearts,
-      'black_widow_breaks': this.state.black_widow_breaks,
-      'first_trick_hearts': this.state.first_trick_hearts,
-      'with_crib': this.state.with_crib,
-      'win_amount': +this.state.win_amount,
-      'shoot_moon_reduces': this.state.shoot_moon_reduces,
-      'shoot_the_sun': this.state.shoot_the_sun,
-      'jack_of_dimaonds': this.state.jack_of_dimaonds,
-      'ten_of_clubs': this.state.ten_of_clubs,
-      'black_widow_for_five': this.state.black_widow_for_five,
-      'ace_of_hearts': this.state.ace_of_hearts,
-      'no_trick_bonus': this.state.no_trick_bonus,
-      'hundred_to_half': this.state.hundred_to_half,
-    };
+    return obj;
   }
 
   async handleSubmit(event) {
@@ -1014,43 +844,102 @@ class CreateGameForm extends React.Component {
     this.setState(state => Object.assign({}, state, { error: message }));
   }
 
+  renderTextField(option) {
+    var props = {};
+    if (option.values.type === 'int') {
+      if (option.values.min !== undefined) {
+        props['min'] = option.values.min;
+      }
+      if (option.values.max !== undefined) {
+        props['max'] = option.values.max;
+      }
+      if (option.values.step !== undefined) {
+        props['step'] = option.values.step;
+      }
+    }
+
+    return (
+      <l.ListItem disabled>
+        <TextField fullwidth
+          type={ option.values.type === 'int' ? 'number' : 'text' }
+          label={ option.label }
+          name={ option.name }
+          value={ this.state[option.name] }
+          onChange={ this.inputHandler(option.name) }
+          disabled={ !this.state.editable }
+          { ...props }
+        />
+      </l.ListItem>
+    );
+  }
+
+  renderSwitch(option) {
+    if (!option || option.values.type !== 'bool') {
+      console.log(option);
+      return null;
+    }
+    return (
+      <l.ListItem
+        onClick={ (e) => e.target === e.currentTarget && this.toggle(option.name) }
+        disabled={ !this.state.editable }
+      >
+        <Switch
+          label={ this.state[option.name] ? option.label.true : option.label.false }
+          name={ option.name }
+          checked={ this.state[option.name] }
+          onChange={ () => this.toggle(option.name, true) }
+          disabled={ !this.state.editable }
+        />
+      </l.ListItem>
+    );
+  }
+
+  renderSelect(option) {
+    return (
+      <Select
+        label={ option.label } enhanced
+        value={ "" + this.state[option.name] }
+        onChange={ this.inputHandler(option.name) }
+        disabled={ !this.state.editable }
+        options={ option.values.options }
+      />
+    );
+  }
+
+  renderField(option) {
+    if (!option || !option.values || !option.values.type) {
+      console.log("Bad option:", option);
+      return null;
+    }
+
+    if (option.values.type === 'select') {
+      return this.renderSelect(option);
+    }
+
+    if (option.values.type === 'bool') {
+      return this.renderSwitch(option);
+    }
+
+    return this.renderTextField(option);
+  }
+
   renderRush() {
     var pl = (num, name) => (""+num+" "+name+(+num === 1 ? "" : "s"));
+    var cfg = GameConfig['rush'];
 
     return (
       <>
         <l.ListGroupSubheader>Rush Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Number of Tiles" name="num_tiles" value={ this.state.num_tiles } onChange={ this.inputHandler("num_tiles") } min="10" max="200" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("tiles_per_player") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.tiles_per_player ? "Tiles per Player" : "Total Number of Tiles" } name="tiles_per_player" checked={ this.state.tiles_per_player } onChange={ () => this.toggle("tiles_per_player", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[0]) }
+        { this.renderField(cfg.options[1]) }
+        { this.renderField(cfg.options[2]) }
         {
           this.state.tiles_per_player
           ? <p>There will be { this.state.num_tiles } tiles per player</p>
           : <p>There will be { this.state.num_tiles } tiles overall</p>
         }
         <br />
-        <Select label="Tile Frequency" enhanced value={ "" + this.state.frequency } onChange={ this.inputHandler("frequency") }  disabled={ !this.state.editable } options={
-          [
-            {
-              label: 'Standard US English Letter Frequencies',
-              value: '1',
-            },
-            {
-              label: 'Bananagrams Tile Frequency',
-              value: '2',
-            },
-            {
-              label: 'Scrabble Tile Frequency',
-              value: '3',
-            }
-          ]
-        } />
+        { this.renderField(cfg.options[3]) }
         <br/>
         {
           +this.state.frequency === 1 ?
@@ -1063,16 +952,9 @@ class CreateGameForm extends React.Component {
           )
         }
         <br />
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Player Tile Start Size" name="start_size" value={ this.state.start_size } onChange={ this.inputHandler("start_size") } min="7" max="25" step="1" disabled={ !this.state.editable } />
-          <p></p>
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Player Tile Draw Size" name="draw_size" value={ this.state.draw_size } onChange={ this.inputHandler("draw_size") } min="1" max="10" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Player Tile Discard Penalty" name="discard_penalty" value={ this.state.discard_penalty } onChange={ this.inputHandler("discard_penalty") } min="1" max="5" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[4]) }
+        { this.renderField(cfg.options[5]) }
+        { this.renderField(cfg.options[6]) }
         <p>Each player will start with { pl(this.state.start_size, "tile") }. Each draw will be { pl(this.state.draw_size, "tile") }, and players who discard a tile will need to draw { this.state.discard_penalty } back.</p>
         <br/>
       </>
@@ -1080,271 +962,126 @@ class CreateGameForm extends React.Component {
   }
 
   renderSpades() {
+    var cfg = GameConfig.spades;
+
     return (
       <>
         <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="15" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[0]) }
         <l.ListGroupSubheader>
           Trick Options
         </l.ListGroupSubheader>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("overtakes") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.overtakes ? "Overtakes Counted" : "No Overtakes" } name="overtakes" checked={ this.state.overtakes } onChange={ () => this.toggle("overtakes", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[1]) }
         {
           this.state.overtakes
-          ? <l.ListItem disabled>
-              <TextField fullwidth type="number" label="Overtake Penalty Limit" name="overtake_limit" value={ this.state.overtake_limit } onChange={ this.inputHandler("overtake_limit") } min="2" max="15" step="1" disabled={ !this.state.editable || !this.state.overtakes } />
-            </l.ListItem>
+          ? this.renderField(cfg.options[2])
           : null
         }
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("must_break_spades") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.must_break_spades ? "Must Wait for Spades to be Sluffed Before Leading Spades" : "Can Play Spades at Any Time" } name="must_break_spades" checked={ this.state.must_break_spades } onChange={ () => this.toggle("must_break_spades", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("add_jokers") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.add_jokers ? "Add Jokers for Three or Six Players" : "Leave Jokers Out" } name="add_jokers" checked={ this.state.add_jokers } onChange={ () => this.toggle("add_jokers", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("first_wins") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.first_wins ? "First Highest Played Card Wins (Six Players Only)" : "Last Highest Played Card Wins (Six Players Only)" } name="first_wins" checked={ this.state.first_wins } onChange={ () => this.toggle("first_wins", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("full_history") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.full_history ? "Allow Peeking at Previous Tricks" : "Only See Final Card in the Previous Trick" } name="full_history" checked={ this.state.full_history } onChange={ () => this.toggle("full_history", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[3]) }
+        { this.renderField(cfg.options[4]) }
+        { this.renderField(cfg.options[5]) }
         <l.ListGroupSubheader>
           Nil Options
         </l.ListGroupSubheader>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_nil") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.with_nil ? "Allow Nil Builds" : "Forbid Nil and Zero Bids" } name="with_nil" checked={ this.state.with_nil } onChange={ () => this.toggle("with_nil", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("overtakes_nil") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.overtakes_nil ? "Score Overtakes with Nil Bids" : "Ignore Overtakes with Nil Bids" } name="overtakes_nil" checked={ this.state.overtakes_nil } onChange={ () => this.toggle("overtakes_nil", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("blind_bidding") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.blind_bidding ? "Enable Blind Bidding" : "Always Look at Cards First" } name="blind_bidding" checked={ this.state.blind_bidding } onChange={ () => this.toggle("blind_bidding", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_double_nil") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.with_double_nil ? "Require Both Partners Make Nil if Both Bid Nil (Double Nil)" : "Score Partners Bidding Nil Separately" } name="with_double_nil" checked={ this.state.with_double_nil } onChange={ () => this.toggle("with_double_nil", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_break_bonus") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.with_break_bonus ? "Give a Bonus for Breaking Both Partners in Double Nil" : "No Bonus for Breaking Both Partners Nil Bids" } name="with_break_bonus" checked={ this.state.with_break_bonus } onChange={ () => this.toggle("with_break_bonus", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[6]) }
+        { this.renderField(cfg.options[7]) }
+        { this.renderField(cfg.options[8]) }
+        { this.renderField(cfg.options[9]) }
+        { this.renderField(cfg.options[10]) }
         <l.ListGroupSubheader>
           Scoring Options
         </l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Winning Point Threshhold" name="win_amount" value={ this.state.win_amount } onChange={ this.inputHandler("win_amount") } min="50" max="1000" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <Select label="Overtake Penalty" enhanced value={ ""+this.state.overtake_penalty+"" } onChange={ this.inputHandler("overtake_penalty") }  disabled={ !this.state.editable } options={
-          [
-            {
-              label: '50 Points',
-              value: "50",
-            },
-            {
-              label: '100 Points',
-              value: "100",
-            },
-            {
-              label: '150 Points',
-              value: "150",
-            },
-            {
-              label: '200 Points',
-              value: "200",
-            },
-          ]
-        } />
-        <Select label="Trick Multiplier" enhanced value={ ""+this.state.trick_multipler+"" } onChange={ this.inputHandler("trick_multipler") }  disabled={ !this.state.editable } options={
-          [
-            {
-              label: '5x',
-              value: "5",
-            },
-            {
-              label: '10x',
-              value: "10",
-            },
-          ]
-        } />
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("perfect_round") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.perfect_round ? "Score Half of Winning Amount for a Perfect Round (Moon or Boston; taking all 13 tricks)" : "Score No Additional Points for a Perfect Round" } name="perfect_round" checked={ this.state.perfect_round } onChange={ () => this.toggle("perfect_round", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <Select label="Single Nil Score" enhanced value={ ""+this.state.nil_score+"" } onChange={ this.inputHandler("nil_score") }  disabled={ !this.state.editable } options={
-          [
-            {
-              label: '50 Points',
-              value: "50",
-            },
-            {
-              label: '75 Points',
-              value: "75",
-            },
-            {
-              label: '100 Points',
-              value: "100",
-            },
-            {
-              label: '125 Points',
-              value: "125",
-            },
-            {
-              label: '150 Points',
-              value: "150",
-            },
-            {
-              label: '200 Points',
-              value: "200",
-            },
-          ]
-        } />
+        { this.renderField(cfg.options[11]) }
+        { this.renderField(cfg.options[12]) }
+        { this.renderField(cfg.options[13]) }
+        { this.renderField(cfg.options[14]) }
+        { this.renderField(cfg.options[15]) }
       </>
     );
   }
 
   renderThreeThirteen() {
+    var cfg = GameConfig['three thirteen'];
+
     return (
       <>
         <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="1" max="15" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Minimum Extra Cards (Per Player)" name="min_draw_size" value={ this.state.min_draw_size } onChange={ this.inputHandler("min_draw_size") } min="8" max="20" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("add_jokers") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.add_jokers ? "Add Jokers as Permanent Wild Cards" : "Leave Jokers Out" } name="add_jokers" checked={ this.state.add_jokers } onChange={ () => this.toggle("add_jokers", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[0]) }
+        { this.renderField(cfg.options[1]) }
+        { this.renderField(cfg.options[2]) }
         <l.ListGroupSubheader>Set (Grouping) Options</l.ListGroupSubheader>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("allow_mostly_wild") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.allow_mostly_wild ? "Allow Sets with More Wild Cards" : "Require Fewer or Equal Wild Cards in a Set" } name="allow_mostly_wild" checked={ this.state.allow_mostly_wild } onChange={ () => this.toggle("allow_mostly_wild", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("allow_all_wild_cards") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.allow_all_wild_cards ? "Allow Sets with Only Wild Cards" : "Require at Least One Non-Wild Card in a Set" } name="allow_all_wild_cards" checked={ this.state.allow_all_wild_cards } onChange={ () => this.toggle("allow_all_wild_cards", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("same_suit_runs") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.same_suit_runs ? "Require Runs to be of the Same Suit" : "Allow Mixed-Suit Runs" } name="same_suit_runs" checked={ this.state.same_suit_runs } onChange={ () => this.toggle("same_suit_runs", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[3]) }
+        { this.renderField(cfg.options[4]) }
+        { this.renderField(cfg.options[5]) }
+        { this.renderField(cfg.options[6]) }
+        { this.renderField(cfg.options[7]) }
         <l.ListGroupSubheader>Laying Down Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Laying Down Limit" name="laying_down_limit" value={ this.state.laying_down_limit } onChange={ this.inputHandler("laying_down_limit") } min="0" max="20" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("allow_big_gin") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.allow_big_gin ? "Allow Laying Down Without Discarding" : "Always Discard Before Going Out" } name="allow_big_gin" checked={ this.state.allow_big_gin } onChange={ () => this.toggle("allow_big_gin", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_fourteenth_round") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.with_fourteenth_round ? "Play an Extra Round with No Extra Wild Cards" : "Stick to Thirteen Rounds (Kings Wild)" } name="with_fourteenth_round" checked={ this.state.with_fourteenth_round } onChange={ () => this.toggle("with_fourteenth_round", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[8]) }
+        { this.renderField(cfg.options[9]) }
+        { this.renderField(cfg.options[10]) }
         <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Early End Score" name="to_point_limit" value={ this.state.to_point_limit } onChange={ this.inputHandler("to_point_limit") } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("golf_scoring") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.golf_scoring ? "Count Points Against Yourself" : "Give Points to Player Laying Down" } name="golf_scoring" checked={ this.state.golf_scoring } onChange={ () => this.toggle("golf_scoring", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[11]) }
+        { this.renderField(cfg.options[12]) }
       </>
     );
   }
 
   renderEightJacks() {
+    var cfg = GameConfig['eight jacks'];
+
     return (
       <>
         <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="2" max="8" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Run Length" name="run_length" value={ this.state.run_length } onChange={ this.inputHandler("run_length") } min="4" max="6" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Win Limit" name="win_limit" value={ this.state.win_limit } onChange={ this.inputHandler("win_limit") } min="1" max="5" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[0]) }
+        { this.renderField(cfg.options[1]) }
+        { this.renderField(cfg.options[2]) }
         <l.ListGroupSubheader>Board Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Board Width" name="board_width" value={ this.state.board_width } onChange={ this.inputHandler("board_width") } min="8" max="10" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Board Height" name="board_height" value={ this.state.board_height } onChange={ this.inputHandler("board_height") } min="8" max="10" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("remove_unused") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.remove_unused ? "Remove Cards not Used on the Board from the Deck" : "Keep All Cards (Even Those Not Present on the Board)" } name="remove_unused" checked={ this.state.remove_unused } onChange={ () => this.toggle("remove_unused", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("wild_corners") } disabled={ !this.state.editable }>
-          <Switch label={ this.state.wild_corners ? "Add Wild Cards in the Corners" : "Don't Fill In Corners with Wild Cards" } name="wild_corners" checked={ this.state.wild_corners } onChange={ () => this.toggle("wild_corners", true) } disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[3]) }
+        { this.renderField(cfg.options[4]) }
+        { this.renderField(cfg.options[5]) }
+        { this.renderField(cfg.options[6]) }
         <l.ListGroupSubheader>Hand Options</l.ListGroupSubheader>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Hand Size" name="hand_size" value={ this.state.hand_size } onChange={ this.inputHandler("hand_size") } min="4" max="10" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
-        <l.ListItem disabled>
-          <TextField fullwidth type="number" label="Joker Count" name="joker_count" value={ this.state.joker_count } onChange={ this.inputHandler("joker_count") } min="0" max="10" step="1" disabled={ !this.state.editable } />
-        </l.ListItem>
+        { this.renderField(cfg.options[7]) }
+        { this.renderField(cfg.options[8]) }
       </>
     );
   }
 
     renderHearts() {
+      var cfg = GameConfig.hearts;
+
       return (
         <>
           <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-          <l.ListItem disabled>
-            <TextField fullwidth type="number" label="Number of Players" name="num_players" value={ this.state.num_players } onChange={ this.inputHandler("num_players") } min="3" max="7" step="1" disabled={ !this.state.editable } />
-          </l.ListItem>
+          { this.renderField(cfg.options[0]) }
           <l.ListGroupSubheader>Playing Options</l.ListGroupSubheader>
-          <l.ListItem disabled>
-            <TextField fullwidth type="number" label="Number of Cards to Pass" name="number_to_pass" value={ this.state.number_to_pass } onChange={ this.inputHandler("number_to_pass") } min="1" max="8" step="1" disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("hold_round") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.hold_round ? "Pass Left, Right, then Hold (non-Four Players Only)" : "Only Pass Left and Right (non-Four Players Only)" } name="hold_round" checked={ this.state.hold_round } onChange={ () => this.toggle("hold_round", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("must_break_hearts") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.must_break_hearts ? "Hearts Must be Broken Before Being Lead" : "Can Lead Hearts at Any Time" } name="must_break_hearts" checked={ this.state.must_break_hearts } onChange={ () => this.toggle("must_break_hearts", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("black_widow_breaks") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.black_widow_breaks ? "Black Widow (Queen of Spades) Breaks Hearts" : "Black Widow Doesn't Break Hearts" } name="black_widow_breaks" checked={ this.state.black_widow_breaks } onChange={ () => this.toggle("black_widow_breaks", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("first_trick_hearts") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.first_trick_hearts ? "Can Sluff Points on the First Trick" : "Can't Play Points on the First Trick" } name="first_trick_hearts" checked={ this.state.first_trick_hearts } onChange={ () => this.toggle("first_trick_hearts", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("with_crib") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.with_crib ? "Put Extra Cards in a Crib (Taken with First Trick)" : "Remove Cards To Deal Evenly" } name="with_crib" checked={ this.state.with_crib } onChange={ () => this.toggle("with_crib", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
+          { this.renderField(cfg.options[1]) }
+          { this.renderField(cfg.options[2]) }
+          { this.renderField(cfg.options[3]) }
+          { this.renderField(cfg.options[4]) }
+          { this.renderField(cfg.options[5]) }
+          { this.renderField(cfg.options[6]) }
           <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
-          <l.ListItem disabled>
-            <TextField fullwidth type="number" label="Ending Amount" name="win_amount" value={ this.state.win_amount } onChange={ this.inputHandler("win_amount") } min="50" max="250" step="1" disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("shoot_moon_reduces") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.shoot_moon_reduces ? "Shooting the Moon Reduces Your Score" : "Shooting the Moon Increases Other Players' Scores" } name="shoot_moon_reduces" checked={ this.state.shoot_moon_reduces } onChange={ () => this.toggle("shoot_moon_reduces", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("shoot_the_sun") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.shoot_the_sun ? "Score Double for Shooting the Sun (Taking All Tricks)" : "No Bonus for Shooting the Sun" } name="shoot_the_sun" checked={ this.state.shoot_the_sun } onChange={ () => this.toggle("shoot_the_sun", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("jack_of_dimaonds") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.jack_of_dimaonds ? "Taking the Jack of Diamonds Reduces Your Score by 11" : "No Bonus For Taking the Jack of Diamonds" } name="jack_of_dimaonds" checked={ this.state.jack_of_dimaonds } onChange={ () => this.toggle("jack_of_dimaonds", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("ten_of_clubs") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.ten_of_clubs ? "Taking the Ten of Clubs Doubles Your Score for the Round" : "Ten of Clubs Doesn't Double Your Score for the Round" } name="ten_of_clubs" checked={ this.state.ten_of_clubs } onChange={ () => this.toggle("ten_of_clubs", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("black_widow_for_five") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.black_widow_for_five ? "Black Widow Counts as 5" : "Black Widow Counts as 13" } name="black_widow_for_five" checked={ this.state.black_widow_for_five } onChange={ () => this.toggle("black_widow_for_five", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("ace_of_hearts") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.ace_of_hearts ? "Ace of Hearts Counts as 5" : "Ace of Hearts Counts as 1" } name="ace_of_hearts" checked={ this.state.ace_of_hearts } onChange={ () => this.toggle("ace_of_hearts", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("no_trick_bonus") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.no_trick_bonus ? "Taking No Tricks Reduces Your Score By 5" : "No Bonus for Taking No Tricks" } name="no_trick_bonus" checked={ this.state.no_trick_bonus } onChange={ () => this.toggle("no_trick_bonus", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
-          <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("hundred_to_half") } disabled={ !this.state.editable }>
-            <Switch label={ this.state.hundred_to_half ? "Hitting Exactly The Ending Amount Halves Your Score" : "No Prize for Hitting Exactly the End Amount" } name="hundred_to_half" checked={ this.state.hundred_to_half } onChange={ () => this.toggle("hundred_to_half", true) } disabled={ !this.state.editable } />
-          </l.ListItem>
+          { this.renderField(cfg.options[7]) }
+          { this.renderField(cfg.options[8]) }
+          { this.renderField(cfg.options[9]) }
+          { this.renderField(cfg.options[10]) }
+          { this.renderField(cfg.options[11]) }
+          { this.renderField(cfg.options[12]) }
+          { this.renderField(cfg.options[13]) }
+          { this.renderField(cfg.options[14]) }
+          { this.renderField(cfg.options[15]) }
         </>
       );
   }
 
   render() {
-    var messages = {
-      'rush': "In Rush, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!",
-      'spades': "In Spades, players bid how many tricks they will take. If they make their bid, they get more points. First to a set amount wins!"
+    var known_modes = [];
+    for (let value of Object.keys(GameConfig)) {
+      known_modes.push({
+        'label': GameConfig[value].name,
+        'value': value,
+      });
     }
 
     var config = null;
@@ -1380,33 +1117,18 @@ class CreateGameForm extends React.Component {
               <br />
               <l.ListGroup>
                 <l.ListGroupSubheader>Game Mode</l.ListGroupSubheader>
-                <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") }  disabled={ !this.state.editable } options={
-                  [
-                    {
-                      label: 'Rush (Fast-Paced Word Game)',
-                      value: 'rush',
-                    },
-                    {
-                      label: 'Spades (Card Game)',
-                      value: 'spades',
-                    },
-                    {
-                      label: 'Hearts (Card Game)',
-                      value: 'hearts',
-                    },
-                    {
-                      label: 'Three Thirteen (Card Game)',
-                      value: 'three thirteen',
-                    },
-                    {
-                      label: 'Eight Jacks (Card Game)',
-                      value: 'eight jacks',
-                    },
-                  ]
-                } />
+                <Select
+                  label="Game Mode" enhanced
+                  value={ this.state.mode }
+                  onChange={ this.inputHandler("mode") }
+                  disabled={ !this.state.editable }
+                  options={ known_modes }
+                />
                 <br/>
                 {
-                  this.state.mode in messages ? <p> { messages[this.state.mode] } </p> : null
+                  GameConfig[this.state.mode] && GameConfig[this.state.mode].description
+                  ? <p> { GameConfig[this.state.mode].description } </p>
+                  : null
                 }
               </l.ListGroup>
               <br />
