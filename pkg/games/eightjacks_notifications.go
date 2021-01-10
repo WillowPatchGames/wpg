@@ -139,9 +139,9 @@ type EightJacksFinishedNotification struct {
 	Winner uint64 `json:"winner"`
 }
 
-func (ejwn *EightJacksFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+func (ejwn *EightJacksFinishedNotification) LoadData(data *GameData, state *EightJacksState, player *PlayerData) {
 	ejwn.LoadHeader(data, player)
 	ejwn.MessageType = "finished"
 
-	ejwn.Winner, _ = data.ToUserID(winner)
+	ejwn.Winner, _ = data.ToUserID(state.Winner)
 }

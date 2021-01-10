@@ -121,14 +121,6 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 				send_synopsis = true
 			}
 		} else if state.Finished {
-			var winner uint64 = 0
-			for _, indexed_player := range game.ToPlayer {
-				if state.Winner == indexed_player.Index {
-					winner = indexed_player.UID
-					break
-				}
-			}
-
 			if player.Admitted && player.Playing {
 				var response EightJacksStateNotification
 				response.LoadData(game, state, player)
@@ -137,7 +129,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			}
 
 			var finished EightJacksFinishedNotification
-			finished.LoadFromController(game, player, winner)
+			finished.LoadData(game, state, player)
 			finished.ReplyTo = header.MessageID
 			c.undispatch(game, player, finished.MessageID, finished.ReplyTo, finished)
 		}
@@ -177,7 +169,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 		// Notify everyone that the game ended and that this active player won.
 		for _, indexed_player := range game.ToPlayer {
 			var finished EightJacksFinishedNotification
-			finished.LoadFromController(game, indexed_player, player.UID)
+			finished.LoadData(game, state, indexed_player)
 			c.undispatch(game, indexed_player, finished.MessageID, 0, finished)
 		}
 	}
