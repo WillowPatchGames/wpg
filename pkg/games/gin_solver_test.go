@@ -366,6 +366,79 @@ var TestCases = []ValidGroupEntry{
 			},
 		},
 	},
+	ValidGroupEntry{
+		Solver: GinSolver{
+			PointValue:       DefaultPointValue,
+			WildCards:        []CardRank{JokerRank},
+			AnyWildGroup:     false,
+			WildAsRank:       true,
+			AllWildGroups:    false,
+			MostlyWildGroups: false,
+			WildJokerRanked:  false,
+			SameSuitRuns:     false,
+			AceHigh:          true,
+			AceLow:           true,
+			RunsWrap:         true,
+		},
+		Entries: []HandEntry{
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, AceRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, AceRank},
+					Card{0, SpadesSuit, TwoRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, AceRank},
+					Card{0, SpadesSuit, TwoRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, TwoRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, AceRank},
+					Card{0, SpadesSuit, TwoRank},
+				},
+				IsGroup: false,
+				IsRun:   false,
+				IsKind:  false,
+			},
+		},
+	},
 }
 
 func TestIsValidGroup(t *testing.T) {
