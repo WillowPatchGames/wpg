@@ -306,6 +306,74 @@ var TestCases = []ValidGroupEntry{
 				IsRun:   false,
 				IsKind:  false,
 			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: false,
+				IsRun:   false,
+				IsKind:  false,
+			},
+		},
+	},
+	ValidGroupEntry{
+		Solver: GinSolver{
+			PointValue:       DefaultPointValue,
+			WildCards:        []CardRank{JokerRank, SevenRank},
+			AnyWildGroup:     false,
+			WildAsRank:       true,
+			AllWildGroups:    true,
+			MostlyWildGroups: false,
+			WildJokerRanked:  false,
+			SameSuitRuns:     true,
+			AceHigh:          false,
+			AceLow:           true,
+			RunsWrap:         false,
+		},
+		Entries: []HandEntry{
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, ClubsSuit, FourRank},
+					Card{0, HeartsSuit, ThreeRank},
+				},
+				IsGroup: false,
+				IsRun:   false,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, SpadesSuit, FourRank},
+					Card{0, SpadesSuit, ThreeRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, SevenRank},
+					Card{0, HeartsSuit, SevenRank},
+					Card{0, DiamondsSuit, SevenRank},
+					Card{0, SpadesSuit, SevenRank},
+				},
+				IsGroup: true,
+				IsRun:   false,
+				IsKind:  true,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, SevenRank},
+					Card{0, HeartsSuit, SevenRank},
+					Card{0, SpadesSuit, EightRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
 		},
 	},
 	ValidGroupEntry{
@@ -435,6 +503,33 @@ var TestCases = []ValidGroupEntry{
 				},
 				IsGroup: false,
 				IsRun:   false,
+				IsKind:  false,
+			},
+		},
+	},
+	ValidGroupEntry{
+		Solver: GinSolver{
+			PointValue:       DefaultPointValue,
+			WildCards:        []CardRank{JokerRank, SevenRank},
+			AnyWildGroup:     false,
+			WildAsRank:       true,
+			AllWildGroups:    true,
+			MostlyWildGroups: true,
+			WildJokerRanked:  false,
+			SameSuitRuns:     true,
+			AceHigh:          true,
+			AceLow:           true,
+			RunsWrap:         true,
+		},
+		Entries: []HandEntry{
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, AceRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
 				IsKind:  false,
 			},
 		},
