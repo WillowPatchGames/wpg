@@ -93,6 +93,60 @@ var TestCases = []ValidGroupEntry{
 			HandEntry{
 				Hand: []Card{
 					Card{0, SpadesSuit, FiveRank},
+					Card{0, HeartsSuit, FourRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, HeartsSuit, FourRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, ThreeRank},
+					Card{0, HeartsSuit, TwoRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, HeartsSuit, FourRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: false,
+				IsRun:   false,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
+					Card{0, SpadesSuit, ThreeRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				IsGroup: true,
+				IsRun:   true,
+				IsKind:  false,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, FiveRank},
 					Card{0, NoneSuit, JokerRank},
 				},
