@@ -219,6 +219,52 @@ func (gs *GinSolver) DivideHand(hand []Card) []int {
 	return partitions
 }
 
+func subsets(items []int) [][]int {
+	if len(items) == 0 {
+		return [][]int{[]int{}}
+	}
+	without := subsets(items[1:])
+	with := make([][]int, len(without))
+	copy(with, without)
+	for i, v := range with {
+		with[i] = append(v[:], items[0])
+	}
+
+	return append(with, without...)
+}
+
+func inRange(have int, expect Interval) bool {
+	return expect.min <= have && have <= expect.min + expect.more
+}
+
+func (gs *GinSolver) TryWildCards(hand []Card, cards []int) [][]int {
+	regular := make([]int, 0)
+	wilds := make([]int, 0)
+
+	for _, hand_index := range cards {
+		card := hand[hand_index]
+		if gs.IsWildCard(card) {
+			if card.Rank != JokerRank || gs.WildJokerRanked {
+				wilds = append(wilds, hand_index)
+			}
+		} else {
+			regular = append(regular, hand_index)
+		}
+	}
+
+	// In this case, trying wildcards as their rank is not allowed/will not produce benefits
+	if gs.AnyWildGroup || !gs.WildAsRank || (gs.MostlyWildGroups && gs.AllWildGroups) {
+		return [][]int{regular}
+	}
+
+	// Otherwise, take all subsets of wild cards, and add them back in as regular cards
+	ret := subsets(wilds)
+	for i, r := range ret {
+		ret[i] = append(r, regular...)
+	}
+	return ret
+}
+
 // Whether or not a group of cards (defined as a set of indices in the hand
 // array) are valid. Notably, we assume in our solver that it doesn't matter
 // _how_ groups are counted, only that they are counted. This means that, if
@@ -231,325 +277,49 @@ func (gs *GinSolver) IsValidGroup(hand []Card, cards []int) bool {
 		return false
 	}
 
-	return gs.IsKind(hand, cards) || gs.IsRun(hand, cards)
+	tries := gs.TryWildCards(hand, cards)
+
+	for _, try := range tries {
+		if inRange(len(cards)-len(try), gs.WcValidGroup(hand, cards)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (gs *GinSolver) IsKind(hand []Card, cards []int) bool {
-	// A grouping of a kind is valid IFF you have a single fixed point value
-	// (here, `rank`), and other wild cards interspersed. We initialize it to
-	// NoneRank to signify that a rank hasn't been found yet. The first visited
-	// non-wild rank thus becomes a wild card. Additional conditions are
-	// validated later, but if we encounter two non-wild cards of different
-	// ranks, we can safely conclude that it is not a valid same-value grouping.
-	rank := NoneRank
-	num_wild := 0
-	wild_ranks := make(map[CardRank]int)
+	// No valid group can only have 1 or 2 cards.
+	if len(cards) < 3 {
+		return false
+	}
 
-	for _, hand_index := range cards {
-		card := hand[hand_index]
-		if gs.IsWildCard(card) {
-			num_wild++
-			wild_ranks[card.Rank] += 1
-		} else if rank == NoneRank {
-			// Update this because card isn't wild.
-			rank = card.Rank
-		} else if rank != card.Rank {
-			// Because we only assign rank when the card isn't a wild card, and we've
-			// already checked whether or not this card is a wild card, we know that
-			// this card breaks a valid kind: it isn't the same rank as another
-			// non-wild card.
-			return false
+	tries := gs.TryWildCards(hand, cards)
+
+	for _, try := range tries {
+		if inRange(len(cards)-len(try), gs.WcKind(hand, cards)) {
+			return true
 		}
 	}
 
-	// We now have a single-rank (either NoneRank or a fixed value) and zero or
-	// more wild cards. Order of operations thus matters here: if we don't allow
-	// all-wild groups, we can't exit if we could allow it as a mostly-wild
-	// group. So, check most restrictive to least-restrictive first.
-
-	// First, we can exit early if we know we don't have any wild cards. This is
-	// a trivial grouping. Second, we can exit early if any grouping of wild
-	// cards is allowed.
-	if num_wild == 0 || gs.AnyWildGroup {
-		return true
-	}
-
-	// Notably, beyond this point, we now know we have at most one value for
-	// ranked cards, plus a number of wild cards we're trying to coerce into
-	// ranked cards. We're trying to do so without violating any other
-	// mechanisms for organizing cards.
-
-	// Thirdly, process AllWildGroups: if all the cards are wild, we know we have
-	// a valid grouping.
-	if num_wild == len(cards) && (gs.AllWildGroups || (!gs.AllWildGroups && !gs.WildAsRank)) {
-		return gs.AllWildGroups
-	}
-
-	// Fourthly, if we have WildAsRank, we should look and see if we can reduce
-	// the number of wild cards by using a non-Joker wild card as a ranked
-	// card.
-	if gs.WildAsRank && rank == NoneRank {
-		wild_jokers := gs.IsWildRank(JokerRank)
-		most_wild_rank := NoneRank
-		most_wild_count := 0
-		for wild_rank, count := range wild_ranks {
-			if count >= most_wild_count && (wild_rank != JokerRank || !wild_jokers || gs.WildJokerRanked) {
-				most_wild_rank = wild_rank
-				most_wild_count = count
-			}
-		}
-		rank = most_wild_rank
-		num_wild -= most_wild_count
-	}
-
-	// Having made that adjustment, now apply MostlyWildGroups. We first need to
-	// compute what the majority is. After that, if we are under the majority, or
-	// if we have enabled the right config option, we can return true.
-	if 2*num_wild <= len(cards) || gs.MostlyWildGroups {
-		return true
-	}
-
-	// We've tried all possible tricks up our sleeves to get some number of wild
-	// cards wrangled into a single allowed, valid group. Sadly it just wasn't
-	// possible.
-	return rank == NoneRank
+	return false
 }
 
 func (gs *GinSolver) IsRun(hand []Card, cards []int) bool {
-	// A group of cards is a run IFF they have a designated start and end value,
-	// where all ranks in the range are assigned, and optionally, follow a single
-	// suit. To do so, we slot cards into a mapping, starting with non-wild cards.
-	// Using the upper and lower bound on this mapping, we see if we can add in
-	// wild cards to complete a valid range. Notably, unless WildJokerRanked is
-	// set to true, the maximum value is a run is King, not Joker. Additionally,
-	// we know that if two cards have the same rank, they cannot form a valid
-	// run.
-	run_map := make(map[CardRank]int)
-	var wild_cards []int
-	var min_rank CardRank = NoneRank
-	var max_rank CardRank = NoneRank
-	var run_suit CardSuit = NoneSuit
-
-	for index := NoneRank; index <= JokerRank; index++ {
-		run_map[index] = -1
+	// No valid group can only have 1 or 2 cards.
+	if len(cards) < 3 {
+		return false
 	}
 
-	// Split off wild cards. Then slot in ranked cards, updating min and max
-	// rank as appropriate.
-	for _, hand_index := range cards {
-		card := hand[hand_index]
-		if gs.IsWildCard(card) {
-			wild_cards = append(wild_cards, hand_index)
-		} else if run_map[card.Rank] == -1 {
-			run_map[card.Rank] = hand_index
-			if min_rank == NoneRank || card.Rank < min_rank {
-				min_rank = card.Rank
-			}
-			if max_rank == NoneRank || card.Rank > max_rank {
-				max_rank = card.Rank
-			}
-			if run_suit == NoneSuit {
-				run_suit = card.Suit
-			} else if run_suit != card.Suit && gs.SameSuitRuns {
-				// Here we found two ranked cards of different suits; this cannot be
-				// a run due to config, so we can exit early.
-				return false
-			}
-		} else {
-			// The given card is ranked (not wild) and we know its rank is already
-			// represented in the solver. This is more like a Kind than a Run: no
-			// duplicates are allowed.
-			return false
+	tries := gs.TryWildCards(hand, cards)
+
+	for _, try := range tries {
+		if inRange(len(cards)-len(try), gs.WcRun(hand, cards)) {
+			return true
 		}
 	}
 
-	// Before continuing, check if our bounds are useful. Notably, the following
-	// are equivalent:
-	//
-	// 1. min_rank == NoneRank
-	// 2. max_rank == NoneRank
-	// 3. len(wild_cards) == len(cards)
-	//
-	// We put them into an or conditional to avoid any of them breaking later
-	// assumptions.
-	if min_rank == NoneRank || len(wild_cards) == len(cards) || max_rank == NoneRank {
-		return gs.AnyWildGroup || gs.AllWildGroups
-	}
-
-	// If we have a single card and a bunch of wild cards, we can only be a valid
-	// group IFF MostlyWildGroups is true, because we always have at least three
-	// cards in a group.
-	if min_rank == max_rank {
-		// XXX: edge case: WildAsRank, of the same suit as this one card, group of
-		// three. This edge case exists because unlike IsKind, we can't just take
-		// the most numerous rank -- we might have multiple, different ranked Wild
-		// cards we could slot in. But, we definitely need to handle this
-		// differently.
-		//
-		// We might end up dropping this conditional and handling range expansion
-		// later.
-		return gs.MostlyWildGroups
-	}
-
-	// Now we have a range (from min_rank to max_rank, distinct but inclusive)
-	// that is represented in our group. However, we don't know whether the range
-	// actually starts at min_rank and goes all the way to max_rank: it could be
-	// that we have a wrapped range, or ace could be a high card.
-	start_rank := min_rank
-	stop_rank := max_rank
-	if min_rank == AceRank && max_rank == KingRank {
-		if !gs.AceHigh || !gs.RunsWrap {
-			// Because aces can't be high, and runs can't wrap, we can exit early.
-			return false
-		}
-
-		// Do RunsWrap before AceHigh: AceHigh can be viewed as a restriction of
-		// RunsWrap, where the two can't also be played. This affects wild slotting
-		// strategy.
-		if gs.RunsWrap {
-			// Our strategy here is to first find the largest congruent section and
-			// then update our indices around it. We swap min and max index though.
-			// We know we only need to look from Two to Queen for a gap: Ace and King
-			// are already slotted.
-			max_gap_size := 0
-			max_gap_index := NoneRank
-			for new_min_index := TwoRank; new_min_index < QueenRank; new_min_index++ {
-				if run_map[new_min_index] != -1 {
-					continue
-				}
-
-				new_max_index := new_min_index
-				for run_map[new_max_index] == -1 {
-					new_max_index++
-					// Guaranteed to terminate: we started at the Two and we know for
-					// sure there's a King above us.
-				}
-
-				new_gap := int(new_max_index - new_min_index)
-				if new_gap > max_gap_size {
-					max_gap_size = new_gap
-
-					// Tricky: set max_gap_index equal to new_min_index minus one. Why?
-					// because this will become our new UPPER bound on the rank. This
-					// means that min_rank and max_rank are swapped -- but using modular
-					// arithmetic this kinda makes sense as bounds on a single wrapped
-					// run. It also guarantees that we know later that we have a wrapped
-					// run. Because the maximum gap must not neighbor any other missing
-					// cards (and new_max_index above is chosen to be non-empty), we make
-					// new_min_index non-empty as well by subtracting one.
-					max_gap_index = new_min_index - 1
-				}
-			}
-
-			// Tricky: here we swap the indices intentionally. Above, we looked for
-			// an empty range of cards. We found the largest such index. We're hoping
-			// that cards on either side can now be populated. new_max_index above
-			// must be a populated card (see above) and will be treated as the upper
-			// bound on a wrapped range. This makes min_rank > max_rank. :)
-			stop_rank = max_gap_index
-			start_rank = max_gap_index + CardRank(max_gap_size)
-
-			if run_map[max_rank] == -1 {
-				panic("Expected max_index to be a populated index!")
-			}
-			if run_map[min_rank] == -1 {
-				panic("Expected min_index to be a populated index!")
-			}
-		} else if gs.AceHigh {
-			// Ignore the ace on the bottom. Find a new minimum and start over. This
-			// is the easier case: if we "miss" the top and start over too early, we
-			// know this wouldn't be a valid run (e.g,. 2 clubs, ace) even after
-			// slotting in aces. Because we can have to expand any wrapped run down,
-			// towards the Two, we can safely bump our minimum index.
-			for index := min_rank + 1; index < max_rank; index++ {
-				if run_map[index] != -1 {
-					start_rank = index
-					break
-				}
-			}
-
-			// Update max_rank to be AceRank so we know we have a high ace.
-			stop_rank = AceRank
-		}
-	}
-	// } else {
-	//	// We have a fairly traditional, middle of the road (or, only touching one
-	//	// end) run. We can ignore the indices as they already make sense.
-	// }
-
-	// Now we need to slot wild cards into missing gaps. If we run out of wild
-	// cards, we can safely exit early.
-	//
-	// This is a little clever. We start at the minimum index (which we know
-	// can't be empty, and stop as soon as we hit the max entry, which we also
-	// know can't be empty.
-	for index := start_rank; index != stop_rank; index = addwrap(index, 1, min_rank, max_rank) {
-		if run_map[index] == -1 {
-			// If we don't have any wild cards, we can exit early: our range has
-			// holes in it.
-			if len(wild_cards) == 0 {
-				return false
-			}
-
-			// To slot in a wild card, we first try to slot in a wild card with
-			// this rank. This helps in case we're able to use WildAsRank, but
-			// otherwise doesn't matter.
-			for wild_index, hand_index := range wild_cards {
-				card := hand[hand_index]
-				if card.Rank == index {
-					// Found a match, slot it in.
-					run_map[index] = hand_index
-					wild_cards = append(wild_cards[:wild_index], wild_cards[wild_index+1:]...)
-					break
-				}
-			}
-		}
-	}
-
-	// Try again, but this time with Jokers.
-	for index := start_rank; index != stop_rank; index = addwrap(index, 1, min_rank, max_rank) {
-		if run_map[index] == -1 {
-			// If we don't have any wild cards, we can exit early: our range has
-			// holes in it.
-			if len(wild_cards) == 0 {
-				return false
-			}
-
-			for wild_index, hand_index := range wild_cards {
-				card := hand[hand_index]
-				if card.Rank == JokerRank {
-					run_map[index] = hand_index
-					wild_cards = append(wild_cards[:wild_index], wild_cards[wild_index+1:]...)
-					break
-				}
-			}
-		}
-	}
-
-	// Finally, slot literally anything in the remaining slots.
-	for index := start_rank; index != stop_rank; index = addwrap(index, 1, min_rank, max_rank) {
-		if run_map[index] == -1 {
-			// If we don't have any wild cards, we can exit early: our range has
-			// holes in it.
-			if len(wild_cards) == 0 {
-				return false
-			}
-
-			run_map[index] = wild_cards[0]
-			wild_cards = wild_cards[1:]
-		}
-	}
-
-	// Note that we don't need to try slotting in extra wild cards at any
-	// other adjacent place in the run. We can safely assume there are fewer
-	// than 13 cards in this group and we can build a group with any extra
-	// wild cards.
-	//
-	// However, we still need to ensure we have the right wild card usage.
-	//
-	// XXX -- TODO: Implement this.
-
-	return true
+	return false
 }
 
 const flag int = -1
