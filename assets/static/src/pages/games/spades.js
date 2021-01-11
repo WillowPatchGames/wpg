@@ -415,7 +415,7 @@ class SpadesGameSynopsis extends React.Component {
           : state.suit instanceof CardSuit
           ? sigil(state.suit.toUnicode() || "♤", state.suit.toColor())
           : state.suit === "waiting"
-          ? <CircularProgress size="xsmall" style={{ color: "#558abf" }} />
+          ? "…"
           : sigil("♠"),
       },
       "is_dealer":{
