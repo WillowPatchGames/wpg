@@ -353,8 +353,29 @@ class CardImage extends React.Component {
       card_dim[0]*Math.abs(x_part),
       card_dim[1]*Math.abs(y_part),
     ];
+    var borders = {};
+    if (y_part < 1 && y_part > -1) {
+      if (y_part >= 0) {
+        borders.borderBottomLeftRadius = 0;
+        borders.borderBottomRightRadius = 0;
+      }
+      if (y_part <= 0) {
+        borders.borderTopLeftRadius = 0;
+        borders.borderTopRightRadius = 0;
+      }
+    }
+    if (x_part < 1 && x_part > -1) {
+      if (x_part >= 0) {
+        borders.borderTopLeftRadius = 0;
+        borders.borderBottomLeftRadius = 0;
+      }
+      if (x_part <= 0) {
+        borders.borderTopRightRadius = 0;
+        borders.borderBottomRightRadius = 0;
+      }
+    }
 
-    return <div className={ "card" + className }>
+    return <div className={ "card" + className } style={ borders }>
       { annotation }
       <svg className="card-image"
         width={ card_dim[0]*scale*Math.abs(x_part) }
