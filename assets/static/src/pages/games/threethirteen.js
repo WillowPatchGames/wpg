@@ -347,7 +347,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 <div>
                   <Button label={ "Submit Score of " + ungrouped_score }
                     raised={ !ungrouped_score }
-                    unelevated ripple={false} onClick={ () => this.setState(state => Object.assign(state, {confirming:true})) } />
+                    unelevated ripple={false} onClick={ this.state.grouping_selected.length ? this.sendCards.bind(this) : () => this.setState(state => Object.assign(state, {confirming:true})) } />
                   <d.Dialog
                     open={this.state.confirming}
                     onClose={evt => {
@@ -358,7 +358,7 @@ class ThreeThirteenGameComponent extends React.Component {
                     }}
                   >
                     <d.DialogTitle>Confirm score</d.DialogTitle>
-                    <d.DialogContent>Are you sure you want to submit a score of { ungrouped_score + " point"+(ungrouped_score===1?"":"s")}?</d.DialogContent>
+                    <d.DialogContent>You have no groups. Are you sure you want to submit a score of { ungrouped_score + " point"+(ungrouped_score===1?"":"s")}?</d.DialogContent>
                     <d.DialogActions>
                       <Theme use={['secondary']}>
                         <d.DialogButton theme={['secondary']} action="close">Cancel</d.DialogButton>
