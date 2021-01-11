@@ -606,12 +606,14 @@ class HeartsAfterPartyPage extends React.Component {
           played = CardHand.deserialize(data.played);
         }
 
-        let who_played = this.state.who_played;
-        if (!this.state.who_played || (played && data.who_played && played.length === 1 && +this.state.who_played[0].id !== +data.who_played[0])) {
+        let who_played = this.state.active.who_played;
+        if (!this.state.active.who_played || (played && data.who_played && played.length === 1 && +this.state.who_played[0].id !== +data.who_played[0])) {
           who_played = [];
-          for (let uid of data.who_played) {
-            let player = await UserCache.FromId(uid);
-            who_played.push(player);
+          if (data.who_played) {
+            for (let uid of data.who_played) {
+              let player = await UserCache.FromId(uid);
+              who_played.push(player);
+            }
           }
         }
 

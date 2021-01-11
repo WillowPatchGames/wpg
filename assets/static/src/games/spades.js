@@ -155,7 +155,7 @@ class SpadesGame {
     this.data.config = message?.config;
 
     // We've gotta sync up who_played with our played data.
-    if (!this.data.who_played || (message.who_played && message.who_played.length === 1 && +this.data.who_played[0].id !== +message.who_played[0])) {
+    if (!this.data.who_played || (message.who_played && message.played?.length === 1 && +this.data.who_played[0].id !== +message.who_played[0])) {
       this.data.who_played = [];
       for (let uid of message.who_played) {
         let player = await UserCache.FromId(uid);

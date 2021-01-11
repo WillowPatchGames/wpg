@@ -575,7 +575,10 @@ class SpadesAfterPartyPage extends React.Component {
       game: props.game,
       player_mapping: null,
       history: null,
-      historical_round: "0",
+      historical_round: 0,
+      historical_trick: 0,
+      historical_player: 0,
+      set_historical_player: false,
       active: {
         turn: null,
         leader: null,
@@ -634,7 +637,7 @@ class SpadesAfterPartyPage extends React.Component {
                 'tricks': player.tricks,
               };
               if (num_players === 2) {
-                info.draw_pile = player?.draw_pile;
+                info[player_index].draw_pile = player?.draw_pile;
               }
               if (+round_scores[player_index].score > +max_score) {
                 winners = [];
@@ -643,6 +646,13 @@ class SpadesAfterPartyPage extends React.Component {
               } else if (+round_scores[player_index].score === +max_score) {
                 winners.push(mapping[player_index]);
               }
+              let last_hand = player.hand;
+              let hand_by_trick = [last_hand];
+              for (let trick of round.tricks) {
+                last_hand = last_hand.filter(card => !trick.played.some(c => c.id === card.id));
+                hand_by_trick.push(last_hand);
+              }
+              info[player_index].hand_by_trick = player.hand_by_trick || hand_by_trick;
             }
 
             history.scores.push(round_scores);
@@ -661,12 +671,14 @@ class SpadesAfterPartyPage extends React.Component {
           played = CardHand.deserialize(data.played);
         }
 
-        let who_played = this.state.who_played;
-        if (!this.state.who_played || (played && data.who_played && played.length === 1 && +this.state.who_played[0].id !== +data.who_played[0])) {
+        let who_played = this.state.active.who_played;
+        if (!this.state.active.who_played || (played && data.who_played && played.length === 1 && +this.state.who_played[0].id !== +data.who_played[0])) {
           who_played = [];
-          for (let uid of data.who_played) {
-            let player = await UserCache.FromId(uid);
-            who_played.push(player);
+          if (data.who_played) {
+            for (let uid of data.who_played) {
+              let player = await UserCache.FromId(uid);
+              who_played.push(player);
+            }
           }
         }
 
@@ -777,7 +789,7 @@ class SpadesAfterPartyPage extends React.Component {
     var historical_data = null;
     var scoreboard_data = null;
 
-    if (this.state.history && this.state.history.length > 0) {
+    if (this.state.history && this.state.history.tricks.length > 0) {
       let round_index = parseInt(this.state.historical_round);
       let round_data = <b>No data found for round { round_index + 1 }!</b>;
       if (this.state.history.players[round_index]) {
