@@ -347,7 +347,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 <div>
                   <Button label={ "Submit Score of " + ungrouped_score }
                     raised={ !ungrouped_score }
-                    unelevated ripple={false} onClick={ this.state.grouping_selected.length ? this.sendCards.bind(this) : () => this.setState(state => Object.assign(state, {confirming:true})) } />
+                    unelevated ripple={false} onClick={ this.state.groupings.length ? this.sendCards.bind(this) : () => this.setState(state => Object.assign(state, {confirming:true})) } />
                   <d.Dialog
                     open={this.state.confirming}
                     onClose={evt => {
