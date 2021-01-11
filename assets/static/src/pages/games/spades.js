@@ -5,9 +5,11 @@ import '../../main.scss';
 import { Avatar } from '@rmwc/avatar';
 import '@rmwc/avatar/styles';
 import { Button } from '@rmwc/button';
-import '@rmwc/card/styles';
-import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
+import { IconButton } from '@rmwc/icon-button';
+import '@rmwc/icon-button/styles';
+import * as c from '@rmwc/card';
+import '@rmwc/card/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
 import * as l from '@rmwc/list';
@@ -753,6 +755,81 @@ class SpadesAfterPartyPage extends React.Component {
     this.props.setGame(null);
     this.props.setPage("room", true);
   }
+  skip(amt) {
+    if (amt === 1) {
+      this.setState(state => {
+        var tricks = state.history.tricks[state.historical_round];
+        if (!tricks) return state;
+        if (+state.historical_trick === tricks.length-1) {
+          if (+state.historical_round === state.history.tricks.length-1) {
+            return state;
+          } else {
+            state.historical_round = +state.historical_round+1;
+            state.historical_trick = 0;
+          }
+        } else {
+          state.historical_trick = +state.historical_trick+1;
+        }
+        return state;
+      });
+    } else if (amt === 10) {
+      this.setState(state => {
+        if (+state.historical_round === state.history.tricks.length-1) {
+          return state;
+        } else {
+          state.historical_trick = 0;
+          state.historical_round = +state.historical_round+1;
+        }
+        return state;
+      });
+    } else if (amt === -1) {
+      this.setState(state => {
+        var tricks = state.history.tricks[state.historical_round];
+        if (!tricks) return state;
+        if (+state.historical_trick === 0) {
+          if (+state.historical_round === 0) {
+            return state;
+          } else {
+            state.historical_round = +state.historical_round-1;
+            state.historical_trick = state.history.tricks[state.historical_round].length-1;
+          }
+        } else {
+          state.historical_trick = +state.historical_trick-1;
+        }
+        return state;
+      });
+    } else if (amt === -10) {
+      this.setState(state => {
+        var tricks = state.history.tricks[state.historical_round];
+        if (!tricks) return state;
+        if (+state.historical_trick === 0) {
+          if (+state.historical_round === 0) {
+            return state;
+          } else {
+            state.historical_round = +state.historical_round-1;
+            state.historical_trick = 0;
+          }
+        } else {
+          state.historical_trick = 0;
+        }
+        return state;
+      });
+    } else if (amt === 5) {
+      this.setState(state => {
+        var len = Object.assign([], state.player_mapping).length;
+        state.historical_player = (+state.historical_player+1) % len;
+        return state;
+      });
+    } else if (amt === -5) {
+      this.setState(state => {
+        var len = Object.assign([], state.player_mapping).length;
+        state.historical_player = +state.historical_player-1;
+        if (state.historical_player < 0)
+          state.historical_player = len-1;
+        return state;
+      });
+    } else throw new Error("Unknown amount: ", amt);
+  }
 
   render() {
     var current_round = null;
@@ -883,23 +960,101 @@ class SpadesAfterPartyPage extends React.Component {
         }
       }
 
+      let thistory = null;
+      if (this.state.historical_trick === -1) {
+        let players = this.state.history.players[this.state.historical_round];
+        let player = players && players[this.state.historical_player];
+        if (!player) {
+          thistory = <b>No data for this player.</b>;
+        } else {
+          let show_dealt = this.state.show_dealt;
+          let played_hand = player.played_hand ? CardHand.deserialize(player.played_hand).cardSort(true, true) : null;
+          let dealt_hand = player.dealt_hand ? CardHand.deserialize(player.dealt_hand).cardSort(true, true) : null;
+          let passed = player.passed ? CardHand.deserialize(player.passed).cardSort(true, true) : null;
+          let got_passed = player.got_passed ? CardHand.deserialize(player.got_passed).cardSort(true, true) : null;
+          let was_passed = !(show_dealt ? passed : got_passed) ? _ => false :
+                card => (show_dealt ? passed : got_passed).cards.findIndex(c => c.id === card.id) >= 0;
+          thistory = <>
+            { !(show_dealt ? got_passed : passed)
+              ? <></> :
+              <>
+                <h2>{ show_dealt ? "Received" : "Passed" }</h2>
+                { (show_dealt ? got_passed : passed)?.toImage(handProps) }
+              </>
+            }
+            <h2>{ show_dealt ? (passed ? "Passing" : "Hand") : (got_passed ? "Receiving" : "Hand") }</h2>
+            { (show_dealt ? dealt_hand : (played_hand || dealt_hand))?.toImage(card => {
+                card.selected = was_passed(card);
+                return card;
+              }, handProps)
+            }
+          </>;
+        }
+      } else {
+        let tricks = this.state.history.tricks[this.state.historical_round];
+        let trick = tricks && tricks[this.state.historical_trick];
+        if (!trick) {
+          thistory = <b>No data for this trick.</b>;
+        } else {
+          let num_players = Object.keys(this.state.player_mapping).length;
+          let played = trick.played ? CardHand.deserialize(trick.played) : null;
+          let annotations = [];
+          for (let offset = 0; offset < num_players; offset++) {
+            let annotation_player_index = (trick.leader + offset) % num_players;
+            let annotation_player = this.state.player_mapping[annotation_player_index];
+            let annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> { annotation_player.display }</span>;
+            if (annotation_player_index === trick.winner) {
+              annotation = <span key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b>{ annotation_player.display }</b></span>;
+            }
+            annotations.push(annotation);
+          }
+          let players = this.state.history.players[this.state.historical_round];
+          let player = players && players[this.state.historical_player];
+          let player_trick = player && player.hand_by_trick[this.state.historical_trick];
+          let thand = null;
+          if (!player_trick) {
+            thand = <b>No data for this player/trick.</b>;
+          } else {
+            let playing = card => {
+              card.selected = played.cards.findIndex(c => c.id === card.id) >= 0;
+              return card;
+            };
+            thand = CardHand.deserialize(player_trick).cardSort(true, true).toImage(playing, handProps);
+          }
+          let cards = played?.toImage(null, null, annotations);
+          thistory = <>
+            <h2>Trick</h2>
+            { cards }
+            <h2>Hand</h2>
+            { thand }
+          </>;
+        }
+      }
+
       historical_data = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-          <div className="text-left">
+          <div>
             <h3>Game Analysis</h3>
-            <l.List style={{ maxWidth: "15em" }}>
-              <l.ListGroup>
-                <Select
-                  label="Choose a Round" enhanced
-                  value={ this.state.historical_round }
-                  onChange={ (e) => this.setState(Object.assign({}, this.state, { historical_round: e.target.value })) }
-                  options={ Object.keys(this.state.history.players).map(x => ({ label: 'Round ' + (parseInt(x) + 1), value: x })) }
-                />
-              </l.ListGroup>
-            </l.List>
-            <l.List>
-              { round_data }
-            </l.List>
+            <div style={{ margin: "auto" }}>
+              <IconButton icon="skip_previous" size="xsmall" onClick={ () => this.skip(-10) }/>
+              <IconButton icon="fast_rewind" size="xsmall" onClick={ () => this.skip(-1) }/>
+              <div style={{ display: "inline-flex", flexDirection: "column", verticalAlign: "text-bottom" }}>
+                <h2 style={{ margin: 0 }}>Round {+this.state.historical_round+1}</h2>
+                <h3 style={{ margin: 0 }}>{ +this.state.historical_trick === -1 ? "Cards" : "Trick "+(+this.state.historical_trick+1) }</h3>
+              </div>
+              <IconButton icon="fast_forward" size="xsmall" onClick={ () => this.skip(1) }/>
+              <IconButton icon="skip_next" size="xsmall" onClick={ () => this.skip(10) }/>
+            </div>
+            <div>
+              { thistory }
+            </div>
+            <div style={{ margin: "auto" }}>
+              <IconButton icon="rotate_left" size="xsmall" onClick={ () => this.skip(-5) }/>
+              <div style={{ display: "inline-flex", flexDirection: "column", verticalAlign: "super" }}>
+                <h2 style={{ margin: 0 }}>{this.state.player_mapping[this.state.historical_player].display}</h2>
+              </div>
+              <IconButton icon="rotate_right" size="xsmall" onClick={ () => this.skip(5) }/>
+            </div>
           </div>
         </c.Card>
       </div>;
