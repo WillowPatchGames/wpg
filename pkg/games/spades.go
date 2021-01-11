@@ -104,7 +104,7 @@ type SpadesConfig struct {
 	// Scoring
 	WinAmount       int  `json:"win_amount"`       // 50 <= n <= 1000.
 	OvertakePenalty int  `json:"overtake_penalty"` // n in {50, 100, 150, 200}.
-	TrickMultipler  int  `json:"trick_multipler"`  // n in {5, 10}.
+	TrickMultiplier int  `json:"trick_multiplier"` // n in {5, 10}.
 	MoonOrBoston    bool `json:"perfect_round"`    // Score half of the win amount for a perfect round (taking all tricks tricks).
 	NilScore        int  `json:"nil_score"`        // n in {50, 75. 100, 125, 150, 200}.
 }
@@ -126,8 +126,8 @@ func (cfg SpadesConfig) Validate() error {
 		return GameConfigError{"overtake penalty", strconv.Itoa(cfg.OvertakePenalty), "50, 100, 150, or 200"}
 	}
 
-	if cfg.TrickMultipler != 5 && cfg.TrickMultipler != 10 {
-		return GameConfigError{"trick multiplier", strconv.Itoa(cfg.TrickMultipler), "5 or 10"}
+	if cfg.TrickMultiplier != 5 && cfg.TrickMultiplier != 10 {
+		return GameConfigError{"trick multiplier", strconv.Itoa(cfg.TrickMultiplier), "5 or 10"}
 	}
 
 	if !cfg.BlindBidding && cfg.WithTripleNil {
@@ -254,11 +254,11 @@ func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
 		}
 	}
 
-	if wire_value, ok := wire["trick_multipler"]; ok {
-		if trick_multipler, ok := wire_value.(float64); ok {
-			cfg.TrickMultipler = int(trick_multipler)
+	if wire_value, ok := wire["trick_multiplier"]; ok {
+		if trick_multiplier, ok := wire_value.(float64); ok {
+			cfg.TrickMultiplier = int(trick_multiplier)
 		} else {
-			return errors.New("unable to parse value for trick_multipler as integer: " + reflect.TypeOf(wire_value).String())
+			return errors.New("unable to parse value for trick_multiplier as integer: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
@@ -1103,10 +1103,10 @@ func (ss *SpadesState) scoreSingle(player int) (int, int) {
 				overtake_penalty = ss.Config.OvertakePenalty
 			}
 
-			return (int(bid) * ss.Config.TrickMultipler) - overtake_penalty, new_overtakes
+			return (int(bid) * ss.Config.TrickMultiplier) - overtake_penalty, new_overtakes
 		}
 
-		return -1 * int(bid) * ss.Config.TrickMultipler, overtakes
+		return -1 * int(bid) * ss.Config.TrickMultiplier, overtakes
 	} else if bid >= NilBidSpades && bid <= TripleNilBidSpades {
 		nil_multiplier := 1
 		if bid == BlindNilBidSpades {
@@ -1170,10 +1170,10 @@ func (ss *SpadesState) scorePartnership(player int, partner int) (int, int) {
 				overtake_penalty = ss.Config.OvertakePenalty
 			}
 
-			return (int(bid) * ss.Config.TrickMultipler) - overtake_penalty, next_overtakes
+			return (int(bid) * ss.Config.TrickMultiplier) - overtake_penalty, next_overtakes
 		}
 
-		return -1 * int(bid) * ss.Config.TrickMultipler, overtakes
+		return -1 * int(bid) * ss.Config.TrickMultiplier, overtakes
 	} else if (our_bid >= NilBidSpades && our_bid <= TripleNilBidSpades) && (partner_bid >= OneBidSpades && partner_bid <= EighteenBidSpades) {
 		// Single player bid nil.
 		nil_multiplier := 1
@@ -1206,10 +1206,10 @@ func (ss *SpadesState) scorePartnership(player int, partner int) (int, int) {
 				}
 			}
 
-			score_offset += (int(bid) * ss.Config.TrickMultipler) - overtake_penalty
+			score_offset += (int(bid) * ss.Config.TrickMultiplier) - overtake_penalty
 		} else {
 			// Partner didn't make their bid.
-			score_offset -= int(bid) * ss.Config.TrickMultipler
+			score_offset -= int(bid) * ss.Config.TrickMultiplier
 		}
 
 		return score_offset, new_overtakes

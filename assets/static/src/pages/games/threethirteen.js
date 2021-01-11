@@ -10,10 +10,13 @@ import { Button } from '@rmwc/button';
 import '@rmwc/card/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
+import { CircularProgress } from '@rmwc/circular-progress';
+import '@rmwc/circular-progress/styles';
 
 import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 import { CardHandImage, CardImage } from '../../games/card.js';
+import { team_colors } from './team_colors.js';
 
 class ThreeThirteenGameComponent extends React.Component {
   constructor(props) {
@@ -538,9 +541,15 @@ class ThreeThirteenGameSynopsis extends React.Component {
       "user":{
         name: "User",
         printer: (user,player) =>
-          <Avatar src={ gravatarify(user) } name={ user.display }
-            style={{ border: "2px solid "+(player.is_turn ? "#2acc0c" : "#FFFFFF00") }}
-            size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
+          <div className={"avatar-progress avatar-progress--"+(user.id === this.props.user.id ? "xlarge" : "large")} style={{ display: "inline-block" }}>
+            <Avatar src={ gravatarify(user) } name={ user.display }
+              size={ user.id === this.props.user.id ? "xlarge" : "large" } />
+            { !player.is_turn ? null :
+              <CircularProgress size={ user.id === this.props.user.id ? "xlarge" : "large" } style={{
+                "--stroke-color": team_colors[+player.team+1],
+              }} />
+            }
+          </div>,
       },
       "is_dealer":{
         name: "Dealing",

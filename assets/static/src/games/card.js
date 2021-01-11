@@ -295,7 +295,7 @@ var card_dim = [202.5,315];
 class CardImage extends React.Component {
   render() {
     var {
-      scale,
+      scale, x_part, y_part,
       card, suit, rank,
       overlay, annotation, badge,
       className, ...props } = this.props;
@@ -305,6 +305,8 @@ class CardImage extends React.Component {
       className = "";
     }
     if (!scale) scale = 0.5;
+    if (!x_part) x_part = 1;
+    if (!y_part) y_part = 1;
     if (card) {
       suit = card.suit?.toImage() || suit;
       rank = card.rank?.toImage() || rank;
@@ -345,11 +347,18 @@ class CardImage extends React.Component {
       badge = <></>;
     }
 
-    var viewBox = [ 0, 0, card_dim[0], card_dim[1] ];
+    var viewBox = [
+      card_dim[0]*(x_part < 0 ? 1+x_part : 0),
+      card_dim[1]*(y_part < 0 ? 1+y_part : 0),
+      card_dim[0]*Math.abs(x_part),
+      card_dim[1]*Math.abs(y_part),
+    ];
+
     return <div className={ "card" + className }>
       { annotation }
       <svg className="card-image"
-        width={ card_dim[0]*scale } height={ card_dim[1]*scale }
+        width={ card_dim[0]*scale*Math.abs(x_part) }
+        height={ card_dim[1]*scale*Math.abs(y_part) }
         viewBox={ viewBox } {...props}>
         <use href={ cards+"#"+name} x={ x } y={ y }/>
       </svg>

@@ -16,29 +16,22 @@ import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
 import { Select } from '@rmwc/select';
 import '@rmwc/select/styles';
+import { Switch } from '@rmwc/switch';
+import '@rmwc/switch/styles';
 import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
-import { EightJacksGame } from '../../games/eightjacks.js';
 import { CardSuit, CardRank, CardImage, CardHand } from '../../games/card.js';
-import { loadGame, addEv, notify, killable, CreateGameForm } from '../games.js';
+import { loadGame, addEv, notify, CreateGameForm } from '../games.js';
 import { UserCache, GameCache } from '../../utils/cache.js';
 import { gravatarify } from '../../utils/gravatar.js';
+import { team_colors } from './team_colors.js';
 
 // Properties used for display card hands
 var handProps = {
   scale: 0.50,
-};
-
-var team_colors = {
-  "1": "red",
-  "2": "lightskyblue",
-  "3": "limegreen",
-  "4": "mediumpurple",
-  "5": "orange",
-  "6": "blue",
-  "7": "green",
-  "8": "pink",
+  overlap: true,
+  curve: true,
 };
 
 class EightJacksGameComponent extends React.Component {
@@ -51,6 +44,7 @@ class EightJacksGameComponent extends React.Component {
     this.state.last_hand = null;
     this.state.marking = null;
     this.state.scale = 0.3;
+    this.state.overlap = true;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -150,7 +144,8 @@ class EightJacksGameComponent extends React.Component {
       if (player.runs) {
         for (let run of player.runs) {
           for (let spot_id of run) {
-            runs[spot_id] = player.team;
+            if (runs[spot_id]) runs[spot_id] = true;
+            else runs[spot_id] = +player.team+1;
           }
         }
       }
@@ -164,50 +159,37 @@ class EightJacksGameComponent extends React.Component {
         var suit = new CardSuit(spot.value.suit).toImage();
         var rank = new CardRank(spot.value.rank).toImage();
         var mark = spot.marker === -1 ? null : ""+(+spot.marker+1);
-        var sel_card = false && selected_card
-          && selected_card.suit.value === spot.value.suit
-          && selected_card.rank.value === spot.value.rank;
         var sel = this.state.marking
           ? this.state.marking.includes(spot.id)
           : this.state.board_selected === spot.id;
-        var run = spot.id in runs ? ""+(+runs[spot.id]+1) : null;
-        var selected = sel ? 2 : sel_card ? 1 : 0;
-        var color = sel ? "lawngreen" : sel_card ? "yellow" :
-          (mark || run) ? team_colors[mark || run] : "";
+        var run = spot.id in runs ? (runs[spot.id] === true ? "*" : ""+(runs[spot.id])) : null;
         var text = mark || <>&nbsp;</>;
         var overlay = <>
           { !mark && !run ? null :
             <span
               className={"marker"}
               style={{
-                backgroundColor: team_colors[mark || run],
-                border: run ? "2px solid #2060a2" : null,
+                backgroundColor: mark || run ? team_colors[mark || run] || "lightgray" : null,
+                border: run ? "2px solid #333" : null,
+                fontWeight: run ? "900" : "600",
               }}>{ text }</span>
-          }
-          { !sel ? null :
-            <span
-              style={{
-                backgroundColor: "lawngreen",
-                opacity: 0.5,
-                borderRadius: (4*boardProps.scale/0.3)+"px",
-                width: "100%", height: "100%",
-                position: "absolute",
-              }}>&nbsp;</span>
           }
         </>;
         col.push(
           <td key={ spot.id } style={{ padding: 0 }}>
             <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
-              onClick={ this.handleClick(spot) }>
-
-            </CardImage>
+              onClick={ this.handleClick(spot) }
+              style={{
+                backgroundColor: sel ? "rgb(251 255 2 / 63%)" : null,
+              }} />
           </td>
         );
       }
       rows.push(<tr key={ rows.length-1 }>{ col }</tr>);
     }
-    return <div style={{ overflow: "auto", maxWidth: "100%" }}>
-      <table style={{ margin: "auto", borderSpacing: 0, lineHeight: 0 }}>
+    // overflow-y: hidden prevents unwanted vertical scrolling on iOS
+    return <div className="scrollable-x" style={{ maxWidth: "100%" }}>
+      <table style={{ margin: "auto", borderSpacing: 0, lineHeight: 0, padding: "4px" }}>
         <tbody>{ rows }</tbody>
       </table>
     </div>;
@@ -222,6 +204,31 @@ class EightJacksGameComponent extends React.Component {
         let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></>;
         annotations.push(annotation);
       }
+    }
+    var indexed_players = {}; var player_status = null;
+    if (this.state.game.interface.synopsis.players) {
+      player_status = [];
+      for (let player of this.state.game.interface.synopsis.players) {
+        if (player.player_index !== -1) {
+          indexed_players[player.player_index] = player;
+        }
+      }
+      for (let player_index of Object.keys(indexed_players).sort()) {
+        let player = indexed_players[player_index];
+        let user = player.user;
+        player_status.push(
+          <div key={ user.id } className={"avatar-progress avatar-progress--"+(user.id === this.props.user.id ? "xlarge" : "large")} style={{ display: "inline-block" }}>
+            <Avatar src={ gravatarify(user) } name={ user.display }
+              size={ user.id === this.props.user.id ? "xlarge" : "large" } />
+            { !player.is_turn ? null :
+              <CircularProgress size={ user.id === this.props.user.id ? "xlarge" : "large" } style={{
+                "--stroke-color": team_colors[+player.team+1],
+              }} />
+            }
+          </div>
+        );
+      }
+      player_status = <div className="player-status">{ player_status }</div>;
     }
 
     if (!this.state.game.interface.started) {
@@ -245,12 +252,14 @@ class EightJacksGameComponent extends React.Component {
             { this.drawBoard(true) }
             {this.state.game.interface.my_turn()
               ? <>
+                { player_status }
                 {big_status("Your turn to play")}
                 <Button label={ this.state.board_selected ? "Play here" : "Pick a spot!" } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected }
                   onClick={this.clearSelectAnd(() => this.state.game.interface.play(this.state.selected, this.state.board_selected)) } />
                 <hr/>
                 </>
               : <>
+                { player_status }
                 {status("Waiting for other player(s) …")}
                 </>
             }
@@ -270,10 +279,46 @@ class EightJacksGameComponent extends React.Component {
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
             <h3>Hand</h3>
-            { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this), handProps) }
+            { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this), {...handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap }) }
             <br/>
             <Button label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.selected }
               onClick={this.clearSelectAnd(() => this.state.game.interface.discard(this.state.selected))}/>
+            <br/><br/>
+            <Switch label={ "Show cards individually" } value={!this.state.overlap}
+              onChange={e => {let overlap=!e.currentTarget.checked;this.setState(state => Object.assign(state, {overlap}))}}/>
+          </div>
+        </c.Card>
+      </div>
+      <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+        <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+          <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+            <h3>Rules</h3>
+            <div style={{ display: "grid", width: "fit-content", margin: "auto" }}>
+              <div style={{ gridColumn: 1, gridRow: 1, textAlign: "right" }}>Play these jacks anywhere,</div>
+              <label style={{ gridColumn: 1, gridRow: 2, marginLeft: "auto" }} className="rotate-card">
+                <input type="checkbox" className="rotate-card-checkbox"/>
+                <div className="rotate-card-inner" style={{ display: "flex", flexDirection: "column" }}>
+                  <CardImage suit="diamond" rank="jack" y_part={0.5} scale={0.4}/>
+                  <CardImage suit="club" rank="jack" y_part={-0.5} scale={0.4}/>
+                </div>
+              </label>
+              <label style={{ gridColumn: 2, gridRow: 2, margin: "auto" }} className="flip-card">
+                <input type="checkbox" className="flip-card-checkbox"/>
+                <div className="flip-card-inner">
+                  <CardImage suit="black" rank="joker" scale={0.4}/>
+                  <CardImage suit="red" rank="joker" scale={0.4}/>
+                </div>
+              </label>
+              <div style={{ gridColumn: 3, gridRow: 1, textAlign: "left" }}>remove markers with these …</div>
+              <div style={{ gridColumn: 2, gridRow: 3, textAlign: "center" }}>… and do either with jokers!</div>
+              <label style={{ gridColumn: 3, gridRow: 2, marginRight: "auto" }} className="rotate-card">
+                <input type="checkbox" className="rotate-card-checkbox"/>
+                <div className="rotate-card-inner" style={{ display: "flex", flexDirection: "column" }}>
+                  <CardImage suit="heart" rank="jack" y_part={0.5} scale={0.4}/>
+                  <CardImage suit="spade" rank="jack" y_part={-0.5} scale={0.4}/>
+                </div>
+              </label>
+            </div>
           </div>
         </c.Card>
       </div>
@@ -311,22 +356,23 @@ class EightJacksGameSynopsis extends React.Component {
   }
 
   render() {
-    var sigil = (t,c) => <span style={{ fontSize: "170%", color: c }}>{ t }</span>
     var synopsis_columns = {
       "user":{
         name: "User",
         printer: (user,player) =>
-          <Avatar src={ gravatarify(user) } name={ user.display }
-            style={{ border: "2px solid "+(player.is_turn ? "#2acc0c" : "#FFFFFF00") }}
-            size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
+          <div className={"avatar-progress avatar-progress--"+(user.id === this.props.user.id ? "xlarge" : "large")} style={{ display: "inline-block" }}>
+            <Avatar src={ gravatarify(user) } name={ user.display }
+              size={ user.id === this.props.user.id ? "xlarge" : "large" } />
+            { !player.is_turn ? null :
+              <CircularProgress size={ user.id === this.props.user.id ? "xlarge" : "large" } style={{
+                "--stroke-color": team_colors[+player.team+1],
+              }} />
+            }
+          </div>,
       },
       "team":{
         name: "Team",
         printer: a => +a+1,
-      },
-      "is_dealer":{
-        name: "Dealer",
-        printer: a => a ? sigil("♠") : "",
       },
       "score":"Score",
     };
@@ -379,8 +425,9 @@ class EightJacksGameSynopsis extends React.Component {
     return (
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-          <div className="text-left scrollable-x">
-            <b>Eight Jacks</b> - Jack of Clubs and Diamonds play anywhere; Jack of Hearts and Spades remove; Jokers do both.
+          <div className="text scrollable-x">
+            <h1 style={{ marginBottom: 0 }}><span style={{ color: "#bd2525" }}>Eight</span> Jacks</h1>
+            <span style={{ whiteSpace: "normal" }}>Jack of Clubs and Diamonds play anywhere; Jack of Hearts and Spades remove; Jokers do both.</span>
             { player_view }
           </div>
         </c.Card>
@@ -459,8 +506,8 @@ class EightJacksGamePage extends React.Component {
     return (
       <div>
         { countdown }
-        <EightJacksGameSynopsis game={ this.game } {...this.props} />
-        <EightJacksGameComponent game={ this.game } interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
+        <EightJacksGameSynopsis {...this.props} game={ this.game } />
+        <EightJacksGameComponent {...this.props} game={ this.game } interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
       </div>
     );
   }
@@ -487,6 +534,7 @@ class EightJacksAfterPartyPage extends React.Component {
       passed: false,
       finished: false,
       message: "Loading results...",
+      scale: 0.3,
     };
 
     GameCache.Invalidate(this.props.game.id);
@@ -848,7 +896,7 @@ class EightJacksAfterPartyPage extends React.Component {
     return (
       <div>
         <EightJacksGameSynopsis game={ this.game } {...this.props} />
-        <h1 style={{ color: "#000000" }}>Eight Jacks</h1>
+        <h1 style={{ color: "#000000" }}><span style={{ color: "#bd2525" }}>Eight</span> Jacks</h1>
         <div>
           { winner_info }
           {
@@ -859,6 +907,12 @@ class EightJacksAfterPartyPage extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Board</h3>
+                <Slider
+                    value={this.state.scale}
+                    onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
+                    min={0.1}
+                    max={0.35}
+                  />
                 { this.drawBoard() }
               </div>
             </c.Card>
