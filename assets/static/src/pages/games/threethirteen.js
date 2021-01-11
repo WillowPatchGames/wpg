@@ -12,10 +12,14 @@ import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
+import { Theme } from '@rmwc/theme';
+import '@rmwc/theme/styles';
+import * as d from '@rmwc/dialog';
+import '@rmwc/dialog/styles';
 
 import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
-import { CardHandImage, CardImage } from '../../games/card.js';
+import { CardRank, CardHandImage, CardImage } from '../../games/card.js';
 import { team_colors } from './team_colors.js';
 
 class ThreeThirteenGameComponent extends React.Component {
@@ -27,6 +31,7 @@ class ThreeThirteenGameComponent extends React.Component {
     this.state.round_score = 0;
     this.state.groupings = [];
     this.state.grouping_selected = [];
+    this.state.confirming = false;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -238,6 +243,18 @@ class ThreeThirteenGameComponent extends React.Component {
         var ungrouped = this.state.game.interface.data.hand.cards.filter(
           card => !this.state.groupings.some(g => g.includes(card.id))
         );
+        var ungrouped_score = 0;
+        for (let c of ungrouped) {
+          var sc = c.rank.value;
+          if (sc > 10) {
+            if (c.rank.value === CardRank.JOKER) {
+              sc = 20;
+            } else {
+              sc = 10;
+            }
+          }
+          ungrouped_score += sc;
+        }
         var groupings = this.state.groupings.map(group => group.map(g =>
           this.state.game.interface.data.hand.cards.find(c => c.id === g)
         ));
@@ -266,10 +283,28 @@ class ThreeThirteenGameComponent extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h3>Group your hand so it can be scored!</h3>
-                <p>Any leftover cards will be counted against your score this round.</p>
-                <div><Button label="Submit Score" unelevated ripple={false} onClick={ this.sendCards.bind(this) } /></div>
+                <h3>Your Hand</h3>
+                <h4>Points: { ungrouped_score }</h4>
+                <CardHandImage {...handProps}>
+                  { ungrouped.map(card =>
+                      <CardImage key={ card.id } card={ card } scale={ handProps.scale }
+                        selected={ this.state.grouping_selected.includes(card.id) }
+                        onClick={ () => this.setState(state => {
+                          var i = state.grouping_selected.indexOf(card.id);
+                          if (i !== -1) {
+                            state.grouping_selected.splice(i, 1);
+                          } else {
+                            state.grouping_selected.push(card.id);
+                          }
+                          return state;
+                        }) }/>
+                  )}
+                </CardHandImage>
                 <br/><br/>
+                <h3>Group your hand so it can be scored!</h3>
+                <p>Make runs of three or more cards or groups of three or more of the same rank.</p>
+                <p>Any leftover cards will be counted against your score this round.</p>
+                <br/>
                 { groupings.map((g,i) =>
                     <CardHandImage key={ i } overlap cards={ g } style={{ display: "inline-block", marginRight: "1.5em" }}>
                       {g.map((card,j) => (
@@ -308,28 +343,32 @@ class ThreeThirteenGameComponent extends React.Component {
                     ]}
                   </CardHandImage>
                 ]) }
-              </div>
-            </c.Card>
-          </div>
-          <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
-            <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-              <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h3>Your Hand</h3>
-                <CardHandImage {...handProps}>
-                  { ungrouped.map(card =>
-                      <CardImage key={ card.id } card={ card } scale={ handProps.scale }
-                        selected={ this.state.grouping_selected.includes(card.id) }
-                        onClick={ () => this.setState(state => {
-                          var i = state.grouping_selected.indexOf(card.id);
-                          if (i !== -1) {
-                            state.grouping_selected.splice(i, 1);
-                          } else {
-                            state.grouping_selected.push(card.id);
-                          }
-                          return state;
-                        }) }/>
-                  )}
-                </CardHandImage>
+                <br/><br/>
+                <div>
+                  <Button label={ "Submit Score of " + ungrouped_score }
+                    raised={ !ungrouped_score }
+                    unelevated ripple={false} onClick={ () => this.setState(state => Object.assign(state, {confirming:true})) } />
+                  <d.Dialog
+                    open={this.state.confirming}
+                    onClose={evt => {
+                      this.setState(state => Object.assign(state, {confirming:false}));
+                      if (evt.detail.action === "accept") {
+                        this.sendCards();
+                      }
+                    }}
+                  >
+                    <d.DialogTitle>Confirm score</d.DialogTitle>
+                    <d.DialogContent>Are you sure you want to submit a score of { ungrouped_score + " point"+(ungrouped_score===1?"":"s")}?</d.DialogContent>
+                    <d.DialogActions>
+                      <Theme use={['secondary']}>
+                        <d.DialogButton theme={['secondary']} action="close">Cancel</d.DialogButton>
+                        <d.DialogButton theme={['secondary']} action="accept" isDefaultAction>
+                          Yes, I am sure
+                        </d.DialogButton>
+                      </Theme>
+                    </d.DialogActions>
+                  </d.Dialog>
+                </div>
               </div>
             </c.Card>
           </div>
