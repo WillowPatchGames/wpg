@@ -144,8 +144,9 @@ class EightJacksGameComponent extends React.Component {
       if (player.runs) {
         for (let run of player.runs) {
           for (let spot_id of run) {
-            if (runs[spot_id]) runs[spot_id] = true;
-            else runs[spot_id] = +player.team+1;
+            var t = +player.team+1;
+            if (runs[spot_id] && runs[spot_id] !== t) runs[spot_id] = true;
+            else runs[spot_id] = t;
           }
         }
       }
