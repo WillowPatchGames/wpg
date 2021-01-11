@@ -610,7 +610,7 @@ class PreGameAdminPage extends React.Component {
               {/*<Switch checked={ this.state.teams } label="Put into teams" onChange={ () => this.setState(state => Object.assign(state, { teams: !state.teams })) } />*/}
             </l.ListItem>
             { players.map((user, i) =>
-                <l.ListItem key={user.id} disabled>
+                <l.ListItem key={user.id} disabled style={{ height: "auto", minHeight: "72px" }}>
                   <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
                     <Button raised label="Bench" onClick={ () => this.toggleSpectator(user) } />
