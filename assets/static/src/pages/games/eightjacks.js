@@ -252,14 +252,12 @@ class EightJacksGameComponent extends React.Component {
             { this.drawBoard(true) }
             {this.state.game.interface.my_turn()
               ? <>
-                { player_status }
                 {big_status("Your turn to play")}
                 <Button label={ this.state.board_selected ? "Play here" : "Pick a spot!" } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected }
                   onClick={this.clearSelectAnd(() => this.state.game.interface.play(this.state.selected, this.state.board_selected)) } />
                 <hr/>
                 </>
               : <>
-                { player_status }
                 {status("Waiting for other player(s) …")}
                 </>
             }
