@@ -26,10 +26,10 @@ const (
 	writeWait = 8 * time.Second
 
 	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
+	pongWait = 30 * 60 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 1) / 4
+	pingPeriod = (pongWait * 1) / 128
 
 	// Waiting period for notification channel to be created.
 	notificationCreateWaitPeriod = 1 * time.Second
