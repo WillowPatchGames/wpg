@@ -232,6 +232,13 @@ func (c *Client) writePump() {
 				return
 			}
 
+			// Try to ping the client to keep the WebSocket alive. This will allow
+			// us to try to keep the connection alive.
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Println("Got error writing ping message to client:", c.String())
+				return
+			}
+
 			// Since we just wrote to this WebSocket, we don't need to ping the peer
 			// again. Reset the ticker so we don't prematurely trigger.
 			//
