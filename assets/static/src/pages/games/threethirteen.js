@@ -773,6 +773,16 @@ class ThreeThirteenAfterPartyPage extends React.Component {
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
   }
+  returnToRoom() {
+    if (this.props.game.interface) {
+      this.props.game.interface.close();
+    }
+
+    this.props.game.interface = null;
+
+    this.props.setGame(null);
+    this.props.setPage("room", true);
+  }
 
   render() {
     return (
