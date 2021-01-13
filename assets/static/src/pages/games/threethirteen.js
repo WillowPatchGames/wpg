@@ -111,6 +111,7 @@ class ThreeThirteenGameComponent extends React.Component {
       overlap: true,
     };
 
+    var show_yourself = this.state.game.interface.laid_down && !this.state.game.interface.drawn;
     var previous_round_hands = [];
     if ((!this.state.game.interface.dealt || this.state.game.interface.laid_down) && this.state.game.interface.synopsis && this.state.game.interface.synopsis.players) {
       var index_mapping = {};
@@ -125,6 +126,10 @@ class ThreeThirteenGameComponent extends React.Component {
 
       for (let game_index in Object.keys(index_mapping).sort()) {
         var player = this.state.game.interface.synopsis.players[index_mapping[game_index]];
+        if (+player.user.id === this.props.user.id && !show_yourself) {
+          continue
+        }
+
         if (player && player.hand && player.user && player.user.display) {
           previous_round_hands.push(
             <div key={ player.user.id }>
