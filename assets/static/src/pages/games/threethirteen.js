@@ -583,7 +583,7 @@ class ThreeThirteenGameSynopsis extends React.Component {
           <div className={"avatar-progress avatar-progress--"+(user.id === this.props.user.id ? "xlarge" : "large")} style={{ display: "inline-block" }}>
             <Avatar src={ gravatarify(user) } name={ user.display }
               size={ user.id === this.props.user.id ? "xlarge" : "large" } />
-            { !player.is_turn ? null :
+            { !player.is_turn || this.state.game.interface.laid_down ? null :
               <CircularProgress size={ user.id === this.props.user.id ? "xlarge" : "large" } style={{
                 "--stroke-color": team_colors[+player.team+1],
               }} />
