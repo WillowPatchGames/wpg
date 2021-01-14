@@ -161,8 +161,8 @@ class EightJacksGameComponent extends React.Component {
         var rank = new CardRank(spot.value.rank).toImage();
         var mark = spot.marker === -1 ? null : ""+(+spot.marker+1);
         var sel = this.state.marking
-          ? this.state.marking.includes(spot.id)
-          : this.state.board_selected === spot.id;
+          ? this.state.marking.includes(spot.id) && 2
+          : this.state.board_selected === spot.id && 1;
         var run = spot.id in runs ? (runs[spot.id] === true ? "*" : ""+(runs[spot.id])) : null;
         var text = mark || <>&nbsp;</>;
         var overlay = <>
@@ -181,7 +181,7 @@ class EightJacksGameComponent extends React.Component {
             <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
               onClick={ this.handleClick(spot) }
               style={{
-                "--card-color": sel ? "rgb(251 255 2 / 63%)" : null,
+                "--card-color": sel === 2 ? "rgb(67 255 134 / 53%)" : sel ? "rgb(251 255 2 / 63%)" : null,
               }} />
           </td>
         );
@@ -254,7 +254,7 @@ class EightJacksGameComponent extends React.Component {
             {this.state.game.interface.my_turn()
               ? <>
                 {big_status("Your turn to play")}
-                <Button label={ this.state.board_selected ? "Play here" : "Pick a spot!" } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected }
+                <Button label={ this.state.marking ? "Finish or cancel marking sequence before playing" : (this.state.board_selected ? "Play here" : "Pick a spot!") } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected || this.state.marking }
                   onClick={this.clearSelectAnd(() => this.state.game.interface.play(this.state.selected, this.state.board_selected)) } />
                 <hr/>
                 </>
@@ -264,11 +264,11 @@ class EightJacksGameComponent extends React.Component {
             }
             {this.state.marking ?
               (this.state.marking.length === this.state.game.interface.data.config.run_length
-              ? <Button label={ "Mark complete sequence" } unelevated ripple={false}
+              ? <Button label={ "Mark complete sequence" } raised ripple={false}
                   onClick={this.cancelMarksAnd(() => this.state.game.interface.mark(this.state.marking))} />
               : <Button label={ "Cancel marking" } unelevated ripple={false}
                   onClick={this.cancelMarksAnd()} />)
-            : <Button label={ "Mark complete sequence" } unelevated ripple={false}
+            : <Button label={ "Mark sequence of " + this.state.game.interface.data.config.run_length } unelevated ripple={false}
                 onClick={() => {this.setState(state => Object.assign(state, {marking:[]}))}} />
             }
           </div>
