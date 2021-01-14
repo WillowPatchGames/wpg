@@ -12,6 +12,8 @@ import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
+import { Tooltip } from '@rmwc/tooltip';
+import '@rmwc/tooltip/styles';
 import { Theme } from '@rmwc/theme';
 import '@rmwc/theme/styles';
 import * as d from '@rmwc/dialog';
@@ -585,15 +587,17 @@ class ThreeThirteenGameSynopsis extends React.Component {
       "user":{
         name: "User",
         printer: (user,player) =>
+        <Tooltip align="right" content={ user.display } activateOn={['click']} leaveDelay={ 300 }>
           <div className={"avatar-progress avatar-progress--"+(user.id === this.props.user.id ? "xlarge" : "large")} style={{ display: "inline-block" }}>
             <Avatar src={ gravatarify(user) } name={ user.display }
               size={ user.id === this.props.user.id ? "xlarge" : "large" } />
-            { !player.is_turn || this.state.game.interface.laid_down || !this.state.game.interface.dealt ? null :
+            { !player.is_turn || this.props.game.interface.laid_down || !this.props.game.interface.dealt ? null :
               <CircularProgress size={ user.id === this.props.user.id ? "xlarge" : "large" } style={{
                 "--stroke-color": team_colors[+player.team+1],
               }} />
             }
-          </div>,
+          </div>
+        </Tooltip>,
       },
       "is_dealer":{
         name: "Dealing",

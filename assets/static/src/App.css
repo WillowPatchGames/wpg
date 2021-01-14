@@ -234,6 +234,10 @@ p {
   stroke-width: 0.2rem;
 }
 
+.rmwc-tooltip {
+  font-size: 1rem !important;
+}
+
 /* Adapted from w3schools :P */
 .flip-card {
   position: relative;
