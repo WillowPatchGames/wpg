@@ -323,7 +323,7 @@ class CardImage extends React.Component {
       x = (joker_suit === "red" ? 1 : 0) * -card_dim[0];
       y = 4 * -card_dim[1];
     } else if (rank === "blank" || (rank !== "back" && overlay)) {
-      name = "rect9340";
+      name = "card_border";
     } else {
       name = "back";
       x = 2 * -card_dim[0];

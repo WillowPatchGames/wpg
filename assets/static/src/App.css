@@ -209,9 +209,8 @@ p {
   font-weight: bolder;
 }
 
-.card {
-  background: white;
-  border-radius: 3%;
+.card-image > use {
+  fill: var(--card-color, white);
 }
 
 .avatar-progress {

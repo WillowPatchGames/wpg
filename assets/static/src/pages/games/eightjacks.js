@@ -181,7 +181,7 @@ class EightJacksGameComponent extends React.Component {
             <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
               onClick={ this.handleClick(spot) }
               style={{
-                backgroundColor: sel ? "rgb(251 255 2 / 63%)" : null,
+                "--card-color": sel ? "rgb(251 255 2 / 63%)" : null,
               }} />
           </td>
         );

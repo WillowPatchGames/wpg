@@ -31,8 +31,8 @@ class DemoGamePage extends React.Component {
       id: 13,
       props: {
         scale: 0.5,
-        curve: 3,
-        overlap: 0.75,
+        curve: 0,
+        overlap: 0,
       },
       sorting: null,
     };
@@ -58,16 +58,16 @@ class DemoGamePage extends React.Component {
       update = state => {state.selected = adj(state.selected,+1,state.hand.cards)};
       break;
     case "ArrowUp":
-      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,+1,3,1)};
+      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,+1,4,1)};
       break;
     case "ArrowDown":
-      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,-1,3,1)};
+      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,-1,4,1)};
       break;
     case "W":
-      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,+1,3,1)};
+      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,+1,4,1)};
       break;
     case "S":
-      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,-1,3,1)};
+      update = state => {state.hand.cards[state.selected].suit.value = adj(state.hand.cards[state.selected].suit.value,-1,4,1)};
       break;
     case "A":
       update = state => {state.hand.cards[state.selected].rank.value = adj(state.hand.cards[state.selected].rank.value,-1,13,1)};
