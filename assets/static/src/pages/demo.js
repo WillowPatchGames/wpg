@@ -31,8 +31,8 @@ class DemoGamePage extends React.Component {
       id: 13,
       props: {
         scale: 0.5,
-        curve: 0,
-        overlap: 0,
+        curve: 3,
+        overlap: 0.75,
       },
       sorting: null,
     };

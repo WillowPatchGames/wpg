@@ -12,6 +12,8 @@ import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
+import { Switch } from '@rmwc/switch';
+import '@rmwc/switch/styles';
 import { Tooltip } from '@rmwc/tooltip';
 import '@rmwc/tooltip/styles';
 import { Theme } from '@rmwc/theme';
@@ -24,6 +26,8 @@ import { UserCache } from '../../utils/cache.js';
 import { CardRank, CardHandImage, CardImage } from '../../games/card.js';
 import { team_colors } from './team_colors.js';
 
+var autosort_persistent = true;
+
 class ThreeThirteenGameComponent extends React.Component {
   constructor(props) {
     super(props);
@@ -34,11 +38,16 @@ class ThreeThirteenGameComponent extends React.Component {
     this.state.groupings = [];
     this.state.grouping_selected = [];
     this.state.confirming = false;
+    this.state.autosort = true;
+    this.state.sorting = null;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
       old_handler();
       this.setState(state => {
+        if (autosort_persistent && state.autosort) {
+          this.state.game.interface.data.hand.cardSort(false, false);
+        }
         // Jinx
         return state;
       });
@@ -100,14 +109,120 @@ class ThreeThirteenGameComponent extends React.Component {
       console.log(resp);
     }
   }
-  render() {
-    var num_players = this.state.game.config.num_players;
-
+  setAutosort(autosort) {
+    this.setState(state => {
+      state.autosort = autosort;
+      if (autosort_persistent && autosort) {
+        this.state.game.interface.data.hand.cardSort(false, false);
+      }
+      return state;
+    });
+  }
+  sort() {
+    this.setState(state => {
+      if (!state.sorting) {
+        state.sorting = [];
+      } else {
+        state.autosort = false;
+        state.game.interface.data.hand.sortToFront(state.sorting);
+        state.sorting = null;
+      }
+      return state;
+    });
+  }
+  renderHand(selecting) {
     var handProps = {
       overlap: true,
       curve: true,
       scale: 0.50,
     };
+
+    var selected = card => {
+      if (!this.state.sorting) {
+        if (!selecting) return;
+        return card.id === this.state.selected;
+      }
+      return this.state.sorting.includes(card.id);
+    };
+    var select = card => {
+      this.setState(state => {
+        if (!state.sorting) {
+          if (!selecting) return state;
+          return Object.assign(state, {selected:card.id});
+        }
+        var i = state.sorting.findIndex(id => id === card.id);
+        if (i >= 0) {
+          state.sorting.splice(i, 1);
+        } else {
+          state.sorting.push(card.id);
+        }
+        return state;
+      });
+    };
+    var badger = card => {
+      if (!this.state.sorting) return;
+      var i = this.state.sorting.findIndex(id => id === card.id);
+      if (i >= 0) return +i+1;
+      return null;
+    }
+
+    var sideStyle = {
+      writingMode: "vertical-rl",
+      textOrientation: "mixed",
+      textAlign: "end",
+      fontWeight: 600,
+      height: "calc(100% - 1em)",
+      marginRight: "auto",
+      paddingBottom: "0.5em",
+    };
+    var modeStyle = {
+      alignSelf: "start",
+      fontWeight: 800,
+      marginRight: "0.5em",
+      fontSize: "1.2em",
+    };
+    var sortMessage =
+      this.state.sorting
+      ? this.state.sorting.length
+        ? this.state.sorting.length === 1
+          ? "Put card here"
+          : "Put cards here"
+        : "Select cards to put here"
+      : "Sort cards here";
+    var sortMode = this.state.sorting ? "Sorting" : null;
+    var sortOverlay = <>
+      { <span style={sideStyle}>{ sortMessage }</span> }
+      { <span style={modeStyle}>{ sortMode }</span> }
+    </>;
+
+    var cards = this.state.game.interface.data.hand
+      .cardSortIf(this.state.autosort)(false,false).cards;
+
+    return (
+      <CardHandImage {...handProps}>
+        { [
+          <CardImage key={ "action" } overlay={ sortOverlay }
+            scale={handProps.scale} selected={!!this.state.sorting}
+            onClick={() => this.sort()}/>
+        ].concat(cards.map((card,i) =>
+          <CardImage card={ card } key={ card.id }
+            scale={handProps.scale}
+            selected={ selected(card) }
+            badge={ badger(card) }
+            onClick={() => select(card)}
+            />
+        ))}
+      </CardHandImage>
+    );
+  }
+  render() {
+    var handProps = {
+      overlap: true,
+      curve: true,
+      scale: 0.50,
+    };
+
+    var num_players = this.state.game.config.num_players;
 
     var discardProps = {
       overlap: true,
@@ -230,7 +345,10 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Hand</h3>
-                { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this), handProps) }
+                { this.renderHand(true) }
+                <br/><br/>
+                <Switch label={ "Autosort" } checked={this.state.autosort}
+                  onChange={e => {let autosort=e.currentTarget.checked;this.setState(state => Object.assign(state, {autosort}))}}/>
               </div>
             </c.Card>
           </div>
@@ -247,9 +365,11 @@ class ThreeThirteenGameComponent extends React.Component {
           </div>;
         }
 
-        var ungrouped = this.state.game.interface.data.hand.cards.filter(
-          card => !this.state.groupings.some(g => g.includes(card.id))
-        );
+        var ungrouped = this.state.game.interface.data.hand
+          .cardSortIf(this.state.autosort)(false,false)
+          .cards.filter(
+            card => !this.state.groupings.some(g => g.includes(card.id))
+          );
         var ungrouped_score = 0;
         for (let c of ungrouped) {
           var sc = c.rank.value;
@@ -386,7 +506,7 @@ class ThreeThirteenGameComponent extends React.Component {
           <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
             <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
               <h3>Hand</h3>
-              { this.state.game.interface.data.hand?.toImage(handProps) }
+              { this.renderHand(false) }
             </div>
           </c.Card>
         </div>;
@@ -461,7 +581,10 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Hand</h3>
-                { this.state.game.interface.data.hand?.toImage(handProps) }
+                { this.renderHand(false) }
+                <br/><br/>
+                <Switch label={ "Autosort" } checked={this.state.autosort}
+                  onChange={e => this.setAutosort(e.currentTarget.checked)}/>
               </div>
             </c.Card>
           </div>
@@ -508,7 +631,10 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Hand</h3>
-                { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this), handProps) }
+                { this.renderHand(true) }
+                <br/><br/>
+                <Switch label={ "Autosort" } checked={this.state.autosort}
+                  onChange={e => {let autosort=e.currentTarget.checked;this.setState(state => Object.assign(state, {autosort}))}}/>
               </div>
             </c.Card>
           </div>
@@ -537,7 +663,10 @@ class ThreeThirteenGameComponent extends React.Component {
           <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
             <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
               <h3>Hand</h3>
-              { this.state.game.interface.data.hand?.toImage(handProps) }
+              { this.renderHand(false) }
+              <br/><br/>
+              <Switch label={ "Autosort" } checked={this.state.autosort}
+                onChange={e => {let autosort=e.currentTarget.checked;this.setState(state => Object.assign(state, {autosort}))}}/>
             </div>
           </c.Card>
         </div>

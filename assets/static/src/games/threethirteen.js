@@ -100,6 +100,7 @@ class ThreeThirteenController {
 class ThreeThirteenData {
   constructor(game) {
     this.game = game;
+    this.hand = new CardHand([]);
   }
 }
 
@@ -142,10 +143,8 @@ class ThreeThirteenGame {
     }
 
     // Then update the main data object.
-    this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
-    if (this.data.hand != null) {
-      this.data.hand.cardSort(false, false);
-    }
+    var newHand = message.hand && CardHand.deserialize(message.hand);
+    this.data.hand.setCardsTo(newHand);
     this.data.drawn = message?.drawn ? Card.deserialize(message.drawn) : null;
     this.data.picked_up_discard = message?.picked_up_discard;
     this.data.round_score = message?.round_score;

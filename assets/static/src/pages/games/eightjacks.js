@@ -283,7 +283,7 @@ class EightJacksGameComponent extends React.Component {
             <Button label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.selected }
               onClick={this.clearSelectAnd(() => this.state.game.interface.discard(this.state.selected))}/>
             <br/><br/>
-            <Switch label={ "Show cards individually" } value={!this.state.overlap}
+            <Switch label={ "Show cards individually" } checked={!this.state.overlap}
               onChange={e => {let overlap=!e.currentTarget.checked;this.setState(state => Object.assign(state, {overlap}))}}/>
           </div>
         </c.Card>

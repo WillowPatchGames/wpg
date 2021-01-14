@@ -393,6 +393,9 @@ class CardHand {
   constructor(cards) {
     this.cards = [...cards];
   }
+  copy() {
+    return new CardHand(this.cards);
+  }
 
   findCardIndex(id) {
     for (let index in this.cards) {
@@ -438,6 +441,9 @@ class CardHand {
     return <CardHandImage cards={ cards } { ...props }/>
   }
 
+  cardSortIf(cond) {
+    return cond ? ((...arg) => this.copy().cardSort(...arg)) : (() => this);
+  }
   cardSort(by_suit, ace_high) {
     let sorted = [];
 
@@ -471,6 +477,65 @@ class CardHand {
     }
 
     return new CardHand(our_cards);
+  }
+
+  // Sort specified cards/ids to front of hand.
+  sortToFront(cards) {
+    // List of {c,i} = cards c with their indices i
+    var indexed = this.cards.map((c,i) => ({c,i}));
+    // Find the cards we are going to sort to front
+    // in their requested order
+    var sorted = cards.flatMap(card =>
+      indexed.filter(({c}) => c === card || c.id === card)
+    );
+    // Dedupe (just in case)
+    sorted = sorted.filter((c,i,cs) => cs.indexOf(c) === i);
+    var added = sorted.map(({c}) => c);
+    var removed = sorted.map(({i}) => i);
+    // Sort by decreasing index and remove
+    for (let i of removed.sort((a,b) => b-a)) {
+      this.cards.splice(i, 1);
+    }
+    // Add them back in
+    this.cards.splice(0, 0, ...added);
+    return this;
+  }
+
+  setCardsTo(goal) {
+    if (!goal) {
+      this.cards.splice(0, this.cards.length);
+      return this;
+    }
+    if (!(goal instanceof CardHand)) {
+      throw new Error("deserialize cards first!");
+    }
+    // Shallow copy since we will be removing elements as we see them
+    var added = goal.cards.slice();
+    // Record of removed indices
+    var removed = [];
+    for (let [j, card] of this.cards.entries()) {
+      // Look up by id
+      var i = added.findIndex(c => c.id === card.id);
+      if (i >= 0) {
+        // Reset suit and rank, just in case
+        card.suit.value = added[i].suit.value;
+        card.rank.value = added[i].rank.value;
+        // Remove from added, since it already exists in the hand
+        added.splice(i, 1);
+      } else {
+        // Add index to record of removed cards
+        // (unshift means it occurs in descending order)
+        removed.unshift(j);
+      }
+    }
+    // Since these are descending, we can just remove them without worrying
+    // about indices shifting
+    for (let j of removed) {
+      this.cards.splice(j, 1);
+    }
+    // Finally we add the new cards at the end of the hand
+    this.cards.push(...added);
+    return this;
   }
 }
 
