@@ -214,7 +214,7 @@ p {
 }
 
 .card-image > use {
-  fill: var(--card-color, white);
+  fill: var(--card-fill, white);
 }
 
 .avatar-progress {

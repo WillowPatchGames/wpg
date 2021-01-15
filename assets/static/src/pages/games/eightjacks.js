@@ -139,7 +139,7 @@ class EightJacksGameComponent extends React.Component {
     if (selected_card && ["jack","joker"].includes(selected_card.toString())) {
       selected_card = null;
     }
-    var runs = {};
+    var runs = {}; var user_team = null;
     for (let player of game.interface.data.players) {
       if (player.runs) {
         for (let run of player.runs) {
@@ -149,6 +149,9 @@ class EightJacksGameComponent extends React.Component {
             else runs[spot_id] = t;
           }
         }
+      }
+      if (+player.user_id === +this.props.user.id) {
+        user_team = +player.team+1;
       }
     }
     var rows = [];
@@ -181,7 +184,8 @@ class EightJacksGameComponent extends React.Component {
             <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
               onClick={ this.handleClick(spot) }
               style={{
-                "--card-color": sel === 2 ? "rgb(67 255 134 / 53%)" : sel ? "rgb(251 255 2 / 63%)" : null,
+                "--card-fill": sel === 2 ? (team_colors[user_team] || "#82fff3") : sel ? "rgb(251 255 2)" : null,
+                "--card-fill-opacity": sel ? 0.5 : 1,
               }} />
           </td>
         );
