@@ -203,7 +203,7 @@ class ThreeThirteenGame {
 
   async sort(order) {
     this.data.hand.sortToFront(order);
-    return this.controller.sort(order);
+    return this.controller.sort(this.data.hand.cards.map(card => card.id));
   }
 
   async score(amount) {

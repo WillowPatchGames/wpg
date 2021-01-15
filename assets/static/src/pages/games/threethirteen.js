@@ -230,7 +230,11 @@ class ThreeThirteenGameComponent extends React.Component {
       overlap: true,
     };
 
-    var show_yourself = !this.state.game.interface.dealt;
+    var show_yourself =
+      !this.state.game.interface.dealt
+      || (this.state.game.interface.laid_down
+        && !this.state.game.interface.data.drawn
+        && this.state.game.interface.data.round_score !== -1);
     var previous_round_hands = [];
     if ((!this.state.game.interface.dealt || this.state.game.interface.laid_down) && this.state.game.interface.synopsis && this.state.game.interface.synopsis.players) {
       var index_mapping = {};
@@ -283,7 +287,7 @@ class ThreeThirteenGameComponent extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <Button label="Deal!" unelevated ripple={false} onClick={() => this.state.game.interface.deal()} />
+                <Button label="Deal!" style={{ fontSize: "1.25em" }} unelevated ripple={false} onClick={() => this.state.game.interface.deal()} />
               </div>
             </c.Card>
           </div>
@@ -322,7 +326,7 @@ class ThreeThirteenGameComponent extends React.Component {
                     { this.state.game.interface.data.discard?.toImage(discardProps) }
                   </div>
                 </div>
-                <h3>Picked Up</h3>
+                <h3>Final chance!</h3>
                 {
                   this.state.game.interface.data.drawn.toImage(
                     Object.assign(
@@ -333,7 +337,7 @@ class ThreeThirteenGameComponent extends React.Component {
                             return state;
                           });
                         },
-                        style: { transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" }
+                        style: { marginTop: "20px", transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" }
                       },
                       { scale: handProps.scale }
                     )
@@ -418,6 +422,7 @@ class ThreeThirteenGameComponent extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
                 <h3>Your Hand</h3>
                 <h4>Points: { ungrouped_score }</h4>
                 <CardHandImage {...handProps}>
@@ -437,7 +442,8 @@ class ThreeThirteenGameComponent extends React.Component {
                 </CardHandImage>
                 <br/><br/>
                 <h3>Group your hand so it can be scored!</h3>
-                <p>Make runs of three or more cards or groups of three or more of the same rank.</p>
+                <p>Make runs of three or more consecutive cards{this.state.game.interface.data.config.same_suit_runs ? " of the same suit" : ""}, or groups of three or more of a kind.</p>
+                <p>These groups will be verified when you submit your score.</p>
                 <p>Any leftover cards will be counted against your score this round.</p>
                 <br/>
                 { groupings.map((g,i) =>
@@ -581,6 +587,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 <h2>Your turn! Which card would you like to pick up?</h2>
                 <Button label="From Deck" unelevated ripple={false} onClick={() => this.state.game.interface.takeTop()} />
                 &nbsp;&nbsp;
+                &nbsp;&nbsp;
                 <Button label="From Discard" unelevated ripple={false} onClick={() => this.state.game.interface.takeDiscard()} />
               </div>
             </c.Card>
@@ -623,13 +630,15 @@ class ThreeThirteenGameComponent extends React.Component {
                             return state;
                           });
                         },
-                        style: { transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" }
+                        style: { marginTop: "20px", transform: this.state.selected === this.state.game.interface.data.drawn.id ? "translateY(-20px)" : "" }
                       },
                       { scale: handProps.scale }
                     )
                   )
                 } <br />
                 <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
+                &nbsp;&nbsp;
+                &nbsp;&nbsp;
                 &nbsp;&nbsp;
                 <Button label="Go Out" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.clearSelected() }} />
               </div>
@@ -642,7 +651,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 { this.renderHand(true) }
                 <br/><br/>
                 <Switch label={ "Autosort" } checked={this.state.autosort}
-                  onChange={e => {let autosort=e.currentTarget.checked;this.setState(state => Object.assign(state, {autosort}))}}/>
+                  onChange={e => this.setAutosort(e.currentTarget.checked)}/>
               </div>
             </c.Card>
           </div>
@@ -674,7 +683,7 @@ class ThreeThirteenGameComponent extends React.Component {
               { this.renderHand(false) }
               <br/><br/>
               <Switch label={ "Autosort" } checked={this.state.autosort}
-                onChange={e => {let autosort=e.currentTarget.checked;this.setState(state => Object.assign(state, {autosort}))}}/>
+                onChange={e => this.setAutosort(e.currentTarget.checked)}/>
             </div>
           </c.Card>
         </div>
