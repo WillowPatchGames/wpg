@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"reflect"
+	"sort"
 	"strconv"
 )
 
@@ -437,6 +438,38 @@ func (tts *ThreeThirteenState) TakeCard(player int, FromDiscard bool) error {
 		tts.Deck.Cards = tts.Deck.Cards[1:]
 	}
 	tts.Players[player].PickedUpDiscard = FromDiscard
+
+	return nil
+}
+
+func (tts *ThreeThirteenState) Order(player int, order []int) error {
+	if !tts.Started {
+		return errors.New("game hasn't started yet")
+	}
+
+	if tts.Finished {
+		return errors.New("game has already finished")
+	}
+
+	if player < 0 || player >= len(tts.Players) {
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
+	}
+
+	by_id := make(map[int]int)
+	for i, id := range order {
+		by_id[id] = i
+	}
+	sort.SliceStable(tts.Players[player].Hand, func(i, j int) bool {
+		ii, ok := by_id[tts.Players[player].Hand[i].ID]
+		if !ok {
+			ii = len(order)
+		}
+		jj, ok := by_id[tts.Players[player].Hand[j].ID]
+		if !ok {
+			jj = len(order)
+		}
+		return ii < jj
+	})
 
 	return nil
 }

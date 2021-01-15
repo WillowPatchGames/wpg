@@ -28,6 +28,11 @@ type ThreeThirteenScoreMsg struct {
 	Score int `json:"score"`
 }
 
+type ThreeThirteenSortMsg struct {
+	MessageHeader
+	Order []int `json:"order"`
+}
+
 type ThreeThirteenScoreByGroupsMsg struct {
 	MessageHeader
 	Groups   [][]int `json:"groups"`
@@ -148,6 +153,14 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 
 		err = state.ScoreByGroups(player.Index, data.Groups, data.Leftover)
 		send_synopsis = true
+		send_state = true
+	case "sort":
+		var data ThreeThirteenSortMsg
+		if err = json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		err = state.Order(player.Index, data.Order)
 		send_state = true
 	default:
 		return errors.New("unknown message_type issued to ThreeThirteen game: " + header.MessageType)

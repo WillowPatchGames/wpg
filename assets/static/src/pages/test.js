@@ -161,7 +161,7 @@ class TestGamePage extends React.Component {
         <h2>State</h2>
         <pre style={{ textAlign: "left", whiteSpace: "pre" }}>{JSON.stringify(this.state, null, 2)}</pre>
       </details>
-      <Select label="Game Mode" options={['rush','spades']} disabled={ open }
+      <Select label="Game Mode" options={['rush','spades','hearts','three thirteen','eight jacks']} disabled={ open }
         value={ this.state.mode }
         onChange={ e => {var v = e.target.value; this.setState(state => {state.mode = v; return state}) }} />
       <div key="body" style={{ display: "flex", justifyContent: "space-between" }}>

@@ -68,6 +68,13 @@ class ThreeThirteenController {
     });
   }
 
+  async sort(order) {
+    return await this.wsController.sendAndWait({
+      'message_type': 'sort',
+      'order': order,
+    });
+  }
+
   async score(amount) {
     return await this.wsController.sendAndWait({
       'message_type': 'score',
@@ -192,6 +199,11 @@ class ThreeThirteenGame {
 
   async discard(card, out) {
     return this.controller.discard(card, out);
+  }
+
+  async sort(order) {
+    this.data.hand.sortToFront(order);
+    return this.controller.sort(order);
   }
 
   async score(amount) {

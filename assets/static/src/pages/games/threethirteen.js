@@ -38,7 +38,7 @@ class ThreeThirteenGameComponent extends React.Component {
     this.state.groupings = [];
     this.state.grouping_selected = [];
     this.state.confirming = false;
-    this.state.autosort = true;
+    this.state.autosort = false;
     this.state.sorting = null;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
@@ -124,7 +124,7 @@ class ThreeThirteenGameComponent extends React.Component {
         state.sorting = [];
       } else {
         state.autosort = false;
-        state.game.interface.data.hand.sortToFront(state.sorting);
+        state.game.interface.sort(state.sorting);
         state.sorting = null;
       }
       return state;
