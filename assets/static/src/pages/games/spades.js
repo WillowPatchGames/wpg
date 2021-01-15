@@ -213,12 +213,12 @@ class SpadesGameComponent extends React.Component {
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   {status("You got this card:")}
                   <div style={{ display: "inline-flex", flexDirection: "column", width: "min-content" }}>
-                    { this.state.game.interface.data.drawn.toImage() }
+                    { this.state.game.interface.data.drawn.toImage({ onClick: this.captureHandAnd(() => this.state.game.interface.decide(true))}) }
                     <Button style={{ flexShrink: 1, flexGrow: 1, height: "4em" }} label="Keep" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(true))} />
                   </div>
                   &nbsp;&nbsp;&nbsp;&nbsp;
                   <div style={{ display: "inline-flex", flexDirection: "column", width: "min-content" }}>
-                    <CardImage/>
+                    <CardImage onClick={this.captureHandAnd(() => this.state.game.interface.decide(false))}/>
                     <Button style={{ flexShrink: 1, flexGrow: 1, height: "4em" }} label="Take from deck" unelevated ripple={false} onClick={this.captureHandAnd(() => this.state.game.interface.decide(false))} />
                   </div>
                 </div>
@@ -228,7 +228,7 @@ class SpadesGameComponent extends React.Component {
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   <h3>Hand</h3>
-                  { this.state.game.interface.data.hand?.toImage(handProps) }
+                  { this.state.game.interface.data.hand?.toImage(this.showing_new.bind(this), handProps) }
                 </div>
               </c.Card>
             </div>
