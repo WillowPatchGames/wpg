@@ -10,6 +10,8 @@ import { Button } from '@rmwc/button';
 import '@rmwc/card/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
+import * as l from '@rmwc/list';
+import '@rmwc/list/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
 import { Switch } from '@rmwc/switch';
@@ -228,7 +230,7 @@ class ThreeThirteenGameComponent extends React.Component {
       overlap: true,
     };
 
-    var show_yourself = this.state.game.interface.laid_down && !this.state.game.interface.drawn;
+    var show_yourself = !this.state.game.interface.dealt;
     var previous_round_hands = [];
     if ((!this.state.game.interface.dealt || this.state.game.interface.laid_down) && this.state.game.interface.synopsis && this.state.game.interface.synopsis.players) {
       var index_mapping = {};
@@ -358,8 +360,14 @@ class ThreeThirteenGameComponent extends React.Component {
           bottom = <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h2>All Hands</h2>
-                { previous_round_hands }
+                <l.CollapsibleList className="noscroll" handle={
+                  <l.SimpleListItem
+                    text={ <h2 style={{ width: "100%" }}>Other players’ Hands</h2> }
+                    metaIcon="chevron_right"
+                  />
+                }>
+                  { previous_round_hands }
+                </l.CollapsibleList>
               </div>
             </c.Card>
           </div>;
