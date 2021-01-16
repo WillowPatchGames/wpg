@@ -391,7 +391,10 @@ class ThreeThirteenGameComponent extends React.Component {
             } else {
               sc = 10;
             }
+          } else if (sc === 1 && this.state.game.config.ace_high) {
+            sc = 15;
           }
+
           ungrouped_score += sc;
         }
         var groupings = this.state.groupings.map(group => group.map(g =>
