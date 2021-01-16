@@ -29,7 +29,7 @@ class CardSuit {
     '2': "heart",
     '3': "spade",
     '4': "diamond",
-    '5': null,
+    '5': "fancy",
   };
 
   static apiValueToUnicode = {
