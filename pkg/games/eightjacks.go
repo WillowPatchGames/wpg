@@ -590,6 +590,16 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 	// FIXME: this doesn't seem to update the squares and xy_mapped
 	// that's sent over the wire??
 	if IsOneEyedJack(played) && square.Marker != -1 {
+		for _, indexed_player := range ejs.Players {
+			for _, indexed_run := range indexed_player.Runs {
+				for _, indexed_square := range indexed_run {
+					if indexed_square == squareID {
+						return errors.New("cannot remove marker from existing sequence")
+					}
+				}
+			}
+		}
+
 		square.Marker = -1
 	} else {
 		square.Marker = ejs.Players[player].Team
