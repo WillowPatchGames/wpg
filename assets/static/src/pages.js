@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import { AboutPage } from './pages/about.js';
+import { NotFoundPage } from './pages/common.js';
 import { DocsPage } from './pages/docs.js';
 import { Footer } from './pages/footer.js';
 import { AfterPartyPage, CreateGamePage, CreateRoomPage, JoinGamePage, PreGamePage, GamePage } from './pages/games.js';
@@ -130,6 +131,9 @@ class Page extends React.Component {
         </Route>
         <Route exact path="/">
           <HomePage {...this_props} key="home" />
+        </Route>
+        <Route>
+          <NotFoundPage {...this_props} key="not-found" />
         </Route>
       </Switch>
     );
