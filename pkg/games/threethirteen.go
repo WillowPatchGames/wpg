@@ -222,9 +222,11 @@ type ThreeThirteenRoundPlayer struct {
 type ThreeThirteenTurn struct {
 	Player int `json:"player"`
 
+	TopDiscard  Card `json:"top_discard"`
 	Drawn       Card `json:"drawn"`
 	FromDiscard bool `json:"from_discard"`
 	Discarded   Card `json:"discarded"`
+	LaidDown    bool `json:"laid_down"`
 
 	StartingHand []Card `json:"starting_hand"`
 	EndingHand   []Card `json:"ending_hand"`
@@ -233,20 +235,23 @@ type ThreeThirteenTurn struct {
 type ThreeThirteenRound struct {
 	Size   int `json:"size"`
 	Dealer int `json:"dealer"`
-	Leader int `json:"leader"`
 
 	Players []ThreeThirteenRoundPlayer `json:"players"`
 	Turns   []ThreeThirteenTurn        `json:"plays"`
+	Discard []*Card                    `json:"discard"`
+
+	Deck []*Card `json:"deck"`
 }
 
 type ThreeThirteenState struct {
 	Turn   int `json:"turn"`
 	Dealer int `json:"dealer"`
 
-	Deck    Deck                  `json:"deck"`
-	Discard []*Card               `json:"discard"`
-	Players []ThreeThirteenPlayer `json:"players"` // Left of dealer is found by incrementing one.
-	Round   int                   `json:"round"`
+	Deck         Deck                  `json:"deck"`
+	Discard      []*Card               `json:"discard"`
+	Players      []ThreeThirteenPlayer `json:"players"` // Left of dealer is found by incrementing one.
+	Round        int                   `json:"round"`
+	RoundHistory []*ThreeThirteenRound `json:"round_history"`
 
 	Config ThreeThirteenConfig `json:"config"`
 
@@ -336,6 +341,14 @@ func (tts *ThreeThirteenState) StartRound() error {
 	tts.LaidDown = -1
 	tts.Round += 1
 
+	tts.RoundHistory = append(tts.RoundHistory, &ThreeThirteenRound{})
+	history := tts.RoundHistory[len(tts.RoundHistory)-1]
+	history.Dealer = tts.Dealer
+	history.Size = tts.Round
+	history.Players = make([]ThreeThirteenRoundPlayer, len(tts.Players))
+	history.Turns = make([]ThreeThirteenTurn, 0)
+	history.Discard = make([]*Card, 0)
+
 	// Start with a clean deck and shuffle it.
 	tts.Deck.Init()
 
@@ -374,6 +387,10 @@ func (tts *ThreeThirteenState) StartRound() error {
 	// Shuffling the deck.
 	tts.Deck.Shuffle()
 
+	// Save the initial deck.
+	history.Deck = make([]*Card, len(tts.Deck.Cards))
+	copy(history.Deck, tts.Deck.Cards)
+
 	// Clear out all round-specific status before each round.
 	for index := range tts.Players {
 		tts.Players[index].Hand = make([]Card, 0)
@@ -392,6 +409,12 @@ func (tts *ThreeThirteenState) StartRound() error {
 			tts.Players[player_index].Hand = append(tts.Players[player_index].Hand, *tts.Deck.Cards[0])
 			tts.Deck.Cards = tts.Deck.Cards[1:]
 		}
+	}
+
+	// Save the initial hands.
+	for player_index := 0; player_index < len(tts.Players); player_index++ {
+		history.Players[player_index].DealtHand = make([]Card, len(tts.Players[player_index].Hand))
+		copy(history.Players[player_index].DealtHand, tts.Players[player_index].Hand)
 	}
 
 	// Add the top card to the discard stack.
@@ -434,19 +457,32 @@ func (tts *ThreeThirteenState) TakeCard(player int, FromDiscard bool) error {
 		return errors.New("unable to take discard after already having taken card")
 	}
 
-	if FromDiscard {
-		if len(tts.Discard) == 0 {
-			return errors.New("unable to draw with no more cards remaining")
-		}
+	if FromDiscard && len(tts.Discard) == 0 {
+		return errors.New("unable to draw with no more cards remaining")
+	}
 
+	if !FromDiscard && len(tts.Deck.Cards) == 0 {
+		return errors.New("unable to draw with no more cards remaining")
+	}
+
+	history := tts.RoundHistory[len(tts.RoundHistory)-1]
+	history.Turns = append(history.Turns, ThreeThirteenTurn{})
+	turn := &history.Turns[len(history.Turns)-1]
+	turn.Player = player
+	turn.FromDiscard = FromDiscard
+	turn.StartingHand = make([]Card, len(tts.Players[player].Hand))
+	copy(turn.StartingHand, tts.Players[player].Hand)
+	if len(tts.Discard) > 0 {
+		turn.TopDiscard = *tts.Discard[len(tts.Discard)-1]
+	}
+
+	if FromDiscard {
 		tts.Players[player].Drawn = tts.Discard[len(tts.Discard)-1]
+		turn.Drawn = turn.TopDiscard
 		tts.Discard = tts.Discard[:len(tts.Discard)-1]
 	} else {
-		if len(tts.Deck.Cards) == 0 {
-			return errors.New("unable to draw with no more cards remaining")
-		}
-
 		tts.Players[player].Drawn = tts.Deck.Cards[0]
+		turn.Drawn = *tts.Deck.Cards[0]
 		tts.Deck.Cards = tts.Deck.Cards[1:]
 	}
 	tts.Players[player].PickedUpDiscard = FromDiscard
@@ -544,6 +580,14 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		}
 	}
 
+	history := tts.RoundHistory[len(tts.RoundHistory)-1]
+	turn := &history.Turns[len(history.Turns)-1]
+	our_turn := turn.Player == player && tts.LaidDown == -1
+
+	if our_turn {
+		turn.LaidDown = laidDown
+	}
+
 	if cardID == tts.Players[player].Drawn.ID && tts.Players[player].PickedUpDiscard && tts.LaidDown == -1 && !laidDown {
 		// If the player discards the card they picked up from the discard, give
 		// them another change to make a move. Put the discard back and clear their
@@ -559,11 +603,17 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		laidDown = true
 	}
 
-	// Unlike in LayDown, we still advance the turn below. This isn't really
-	// necessary, but simplifies the code.
+	// We still advance the turn below. This isn't really necessary when we've
+	// already had someone lay down, but simplifies the code.
 
 	if cardID == tts.Players[player].Drawn.ID {
 		// They must've taken the top card. Discard it and advance the turn.
+		//
+		// Copy the hand (which wasn't modified) into the turn information.
+		turn.Discarded = *tts.Players[player].Drawn
+		turn.EndingHand = make([]Card, len(tts.Players[player].Hand))
+		copy(turn.EndingHand, tts.Players[player].Hand)
+
 		tts.Discard = append(tts.Discard, tts.Players[player].Drawn)
 		tts.Players[player].Drawn = nil
 		tts.Turn = (tts.Turn + 1) % len(tts.Players)
@@ -580,12 +630,17 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 	}
 
 	// Discard this card and remove it from the hand.
+	turn.Discarded = tts.Players[player].Hand[index]
 	tts.Discard = append(tts.Discard, tts.Players[player].Hand[index].Copy())
 	tts.Players[player].RemoveCard(cardID)
 
 	// Add the drawn card into the hand.
 	tts.Players[player].Hand = append(tts.Players[player].Hand, *tts.Players[player].Drawn)
 	tts.Players[player].Drawn = nil
+
+	// Duplicate the hand for the history.
+	turn.EndingHand = make([]Card, len(tts.Players[player].Hand))
+	copy(turn.EndingHand, tts.Players[player].Hand)
 
 	// Advanced the turn.
 	tts.Turn = (tts.Turn + 1) % len(tts.Players)
@@ -744,6 +799,13 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 
 	tts.Players[player].RoundScore = score
 
+	// Save information for this history.
+	history := tts.RoundHistory[len(tts.RoundHistory)-1]
+	history.Players[player].RoundScore = score
+	history.Players[player].Score = history.Players[player].Score + score
+	history.Players[player].FinalHand = make([]Card, len(tts.Players[player].Hand))
+	copy(history.Players[player].FinalHand, tts.Players[player].Hand)
+
 	all_in := true
 	for _, player := range tts.Players {
 		if player.RoundScore == -1 {
@@ -754,6 +816,9 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 
 	if all_in {
 		max_score := tts.Players[0].Score
+
+		history.Discard = make([]*Card, len(tts.Discard))
+		copy(history.Discard, tts.Discard)
 
 		if tts.Config.GolfScoring {
 			// When golfing, add everyones' score to themselves. Lowest score wins.

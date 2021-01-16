@@ -155,6 +155,19 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 
 		err = state.Order(player.Index, data.Order)
 		send_state = true
+	case "peek":
+		if player.Index != -1 && !state.Finished {
+			return errors.New("can only peek once game is complete")
+		}
+
+		var response ThreeThirteenPeekNotification
+		response.LoadData(game, state, player)
+		response.ReplyTo = header.MessageID
+		c.undispatch(game, player, response.MessageID, header.MessageID, response)
+
+		var synopsis ThreeThirteenSynopsisNotification
+		synopsis.LoadData(game, state, player)
+		c.undispatch(game, player, synopsis.MessageID, 0, synopsis)
 	default:
 		return errors.New("unknown message_type issued to ThreeThirteen game: " + header.MessageType)
 	}

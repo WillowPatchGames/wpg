@@ -127,6 +127,68 @@ func (ttsn *ThreeThirteenSynopsisNotification) LoadData(data *GameData, state *T
 	}
 }
 
+type ThreeThirteenPeekNotification struct {
+	MessageHeader
+
+	PlayerMapping []uint64 `json:"player_mapping"`
+
+	// Info for Ended Games (Everyone)
+	RoundHistory []*ThreeThirteenRound `json:"round_history"`
+
+	// Info for Active Games (Spectators)
+	Turn       uint64 `json:"turn"`
+	LaidDownID uint64 `json:"laid_down_id"`
+	Dealer     uint64 `json:"dealer"`
+
+	Discard []Card `json:"discard,omitempty"`
+
+	Started  bool `json:"started"`
+	Dealt    bool `json:"dealt"`
+	LaidDown bool `json:"laid_down"`
+	Finished bool `json:"finished"`
+
+	Winner uint64 `json:"winner"`
+}
+
+func (ttpn *ThreeThirteenPeekNotification) LoadData(data *GameData, game *ThreeThirteenState, player *PlayerData) {
+	ttpn.LoadHeader(data, player)
+	ttpn.MessageType = "game-state"
+
+	for index := range game.Players {
+		player_uid, _ := data.ToUserID(index)
+		ttpn.PlayerMapping = append(ttpn.PlayerMapping, player_uid)
+	}
+
+	if !game.Finished {
+		ttpn.Turn, _ = data.ToUserID(game.Turn)
+		if game.LaidDown != -1 {
+			ttpn.LaidDownID, _ = data.ToUserID(game.LaidDown)
+		}
+		ttpn.Dealer, _ = data.ToUserID(game.Dealer)
+
+		if len(game.Discard) >= 3 {
+			ttpn.Discard = append(ttpn.Discard, *game.Discard[len(game.Discard)-3])
+		}
+		if len(game.Discard) >= 2 {
+			ttpn.Discard = append(ttpn.Discard, *game.Discard[len(game.Discard)-2])
+		}
+		if len(game.Discard) >= 1 {
+			ttpn.Discard = append(ttpn.Discard, *game.Discard[len(game.Discard)-1])
+		}
+
+		ttpn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+	} else {
+		ttpn.RoundHistory = game.RoundHistory
+	}
+
+	ttpn.Started = game.Started
+	ttpn.Dealt = game.Dealt
+	ttpn.LaidDown = game.LaidDown != -1
+	ttpn.Finished = game.Finished
+
+	ttpn.Winner, _ = data.ToUserID(game.Winner)
+}
+
 type ThreeThirteenFinishedNotification struct {
 	MessageHeader
 
