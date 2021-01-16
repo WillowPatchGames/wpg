@@ -343,7 +343,7 @@ class ThreeThirteenGameComponent extends React.Component {
                     )
                   )
                 } <br />
-              <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
+              <Button label="Discard" unelevated ripple={false} disabled={ this.state.sorting } onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
               </div>
             </c.Card>
           </div>
@@ -423,6 +423,11 @@ class ThreeThirteenGameComponent extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
+                <h3>Group your hand so it can be scored!</h3>
+                <p>Make runs of three or more consecutive cards{this.state.game.interface.data.config.same_suit_runs ? " of the same suit" : ""}, or groups of three or more of a kind.</p>
+                <p>These groups will be verified when you submit your score.</p>
+                <p>Any leftover cards will be counted against your score this round.</p>
+                <br/>
                 <h3>Your Hand</h3>
                 <h4>Points: { ungrouped_score }</h4>
                 <CardHandImage {...handProps}>
@@ -441,11 +446,6 @@ class ThreeThirteenGameComponent extends React.Component {
                   )}
                 </CardHandImage>
                 <br/><br/>
-                <h3>Group your hand so it can be scored!</h3>
-                <p>Make runs of three or more consecutive cards{this.state.game.interface.data.config.same_suit_runs ? " of the same suit" : ""}, or groups of three or more of a kind.</p>
-                <p>These groups will be verified when you submit your score.</p>
-                <p>Any leftover cards will be counted against your score this round.</p>
-                <br/>
                 { groupings.map((g,i) =>
                     <CardHandImage key={ i } overlap cards={ g } style={{ display: "inline-block", marginRight: "1.5em" }}>
                       {g.map((card,j) => (
@@ -636,11 +636,11 @@ class ThreeThirteenGameComponent extends React.Component {
                     )
                   )
                 } <br />
-                <Button label="Discard" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
+                <Button label="Discard" unelevated ripple={false} disabled={ this.state.sorting } onClick={() => { this.state.game.interface.discard(this.state.selected, false) ; this.clearSelected() }} />
                 &nbsp;&nbsp;
                 &nbsp;&nbsp;
                 &nbsp;&nbsp;
-                <Button label="Go Out" unelevated ripple={false} onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.clearSelected() }} />
+                <Button label="Go Out" unelevated ripple={false} disabled={ this.state.sorting } onClick={() => { this.state.game.interface.discard(this.state.selected, true)  ; this.clearSelected() }} />
               </div>
             </c.Card>
           </div>
