@@ -1204,7 +1204,7 @@ class CreateRoomForm extends React.Component {
     } else {
       this.props.setRoom(room);
       this.props.setGame(null);
-      this.props.setPage('room');
+      this.props.setPage('room', '?code=' + room.code);
     }
   }
 
@@ -1319,8 +1319,8 @@ class JoinGamePage extends React.Component {
       return;
     }
 
-    var try_game = this.state.code[0] === "g" && (this.state.code[1] === "c" || this.state.code[1] === "p") && this.state.code[2] === '-';
-    var try_room = this.state.code[0] === "r" && (this.state.code[1] === "c" || this.state.code[1] === "p") && this.state.code[2] === '-';
+    var try_game = this.state.code[0] === "g" && (this.state.code[1] === "c" || this.state.code[1] === "p") && (this.state.code[2] === '-' || this.state.code[2] === ' ');
+    var try_room = this.state.code[0] === "r" && (this.state.code[1] === "c" || this.state.code[1] === "p") && (this.state.code[2] === '-' || this.state.code[2] === ' ');
 
     if (!try_game && !try_room) {
       try_game = true;
@@ -1330,8 +1330,8 @@ class JoinGamePage extends React.Component {
     if (try_game) {
       var game = await GameModel.FromCode(this.props.user, this.state.code);
       if (game.error === undefined || game.error === null) {
-        this.props.setGame(game);
         this.props.setPage('play', '?code=' + game.code);
+        this.props.setGame(game);
         return;
       }
 
@@ -1347,6 +1347,8 @@ class JoinGamePage extends React.Component {
       var room = await RoomModel.FromCode(this.props.user, this.state.code);
       if (room.error === undefined || room.error === null) {
         this.props.setPage('room', '?code=' + room.code);
+        this.props.setRoom(room);
+        return;
       }
 
       if (room.error !== null) {
@@ -1373,7 +1375,7 @@ class JoinGamePage extends React.Component {
       this.setError(user.error.message);
     } else {
       this.props.setUser(user);
-      this.props.setPage('play');
+      this.props.setPage('play', true);
     }
   }
 
