@@ -63,6 +63,10 @@ class RouteWithRoom extends React.Component {
 }
 
 class Page extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    return nextProps.room !== this.props.room || nextProps.game !== this.props.game || nextProps.user !== this.props.user || nextProps.location !== this.props.location;
+  }
+
   render() {
     var this_props = Object.assign({}, this.props, { location: undefined });
 
