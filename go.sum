@@ -152,6 +152,8 @@ github.com/stripe/stripe-go/v72 v72.21.0 h1:kGDL8UyuCPJ8LT3ff2nHZO79TVjYzlyZn9/P
 github.com/stripe/stripe-go/v72 v72.21.0/go.mod h1:QwqJQtduHubZht9mek5sds9CtQcKFdsykV9ZepRWwo0=
 github.com/stripe/stripe-go/v72 v72.28.0 h1:X/TM3QE+SwtadxDHfTlkNmXisj7LYTC1+oywyerbfBY=
 github.com/stripe/stripe-go/v72 v72.28.0/go.mod h1:QwqJQtduHubZht9mek5sds9CtQcKFdsykV9ZepRWwo0=
+github.com/stripe/stripe-go/v72 v72.30.0 h1:RuOlNGVOP7hAwYjT2iQLj4T+3JB6KjIOEKZxMsghTXE=
+github.com/stripe/stripe-go/v72 v72.30.0/go.mod h1:QwqJQtduHubZht9mek5sds9CtQcKFdsykV9ZepRWwo0=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
@@ -245,4 +247,6 @@ gorm.io/gorm v1.20.9 h1:M3aIZKXAC1PtPVu9t3WGwkBTE1le5c2telz3I/qjRNg=
 gorm.io/gorm v1.20.9/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
 gorm.io/gorm v1.20.10 h1:oJDuZyiUVVH1t20aRv439xIhmx5HFqv3iDxwAZ5sBb0=
 gorm.io/gorm v1.20.10/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
+gorm.io/gorm v1.20.11 h1:jYHQ0LLUViV85V8dM1TP9VBBkfzKTnuTXDjYObkI6yc=
+gorm.io/gorm v1.20.11/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
