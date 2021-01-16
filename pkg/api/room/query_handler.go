@@ -3,6 +3,7 @@ package room
 import (
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 
 	"gorm.io/gorm"
@@ -152,6 +153,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			if err := tx.Model(&database.RoomMember{}).Where("room_id = ?", room.ID).Find(&members).Error; err != nil {
 				return err
 			}
+
+			sort.SliceStable(members, func(i, j int) bool {
+				return members[i].CreatedAt.Before(members[j].CreatedAt)
+			})
 
 			for _, member := range members {
 				if handle.user.ID != room.OwnerID && (!member.Admitted || member.Banned) {
