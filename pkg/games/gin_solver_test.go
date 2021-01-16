@@ -5,10 +5,9 @@ import (
 )
 
 type HandEntry struct {
-	Hand    []Card
-	IsGroup bool
-	IsRun   bool
-	IsKind  bool
+	Hand   []Card
+	IsRun  bool
+	IsKind bool
 }
 
 type ValidGroupEntry struct {
@@ -56,9 +55,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, ClubsSuit, FourRank},
 					Card{0, HeartsSuit, ThreeRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -66,9 +64,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, ThreeRank},
 					Card{0, ClubsSuit, AceRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -76,9 +73,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, FiveRank},
 					Card{0, ClubsSuit, FiveRank},
 				},
-				IsGroup: true,
-				IsRun:   false,
-				IsKind:  true,
+				IsRun:  false,
+				IsKind: true,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -86,9 +82,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, ThreeRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -96,9 +91,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, FourRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -107,9 +101,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -118,9 +111,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -130,9 +122,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -140,9 +131,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, ThreeRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -150,9 +140,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, FiveRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   false,
-				IsKind:  true,
+				IsRun:  false,
+				IsKind: true,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -160,9 +149,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, AceRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -170,9 +158,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -180,9 +167,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, JackRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -200,9 +186,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, TwoRank},
 					Card{0, HeartsSuit, AceRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -221,9 +206,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, AceRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -241,9 +225,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, TwoRank},
 					Card{0, HeartsSuit, AceRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -261,9 +244,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, TwoRank},
 					Card{0, HeartsSuit, AceRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -281,9 +263,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -302,9 +283,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -312,9 +292,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 		},
 	},
@@ -339,9 +318,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, ClubsSuit, FourRank},
 					Card{0, HeartsSuit, ThreeRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -349,9 +327,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, FourRank},
 					Card{0, SpadesSuit, ThreeRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -360,9 +337,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, DiamondsSuit, SevenRank},
 					Card{0, SpadesSuit, SevenRank},
 				},
-				IsGroup: true,
-				IsRun:   false,
-				IsKind:  true,
+				IsRun:  false,
+				IsKind: true,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -370,9 +346,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, HeartsSuit, SevenRank},
 					Card{0, SpadesSuit, EightRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 		},
 	},
@@ -397,9 +372,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, ClubsSuit, FourRank},
 					Card{0, HeartsSuit, ThreeRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -407,9 +381,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, FourRank},
 					Card{0, SpadesSuit, ThreeRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -417,9 +390,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, AceRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -428,9 +400,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, AceRank},
 					Card{0, SpadesSuit, TwoRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 		},
 	},
@@ -455,9 +426,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, AceRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -466,9 +436,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, AceRank},
 					Card{0, SpadesSuit, TwoRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -478,9 +447,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, AceRank},
 					Card{0, SpadesSuit, TwoRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -490,9 +458,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, TwoRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 			HandEntry{
 				Hand: []Card{
@@ -501,9 +468,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, AceRank},
 					Card{0, SpadesSuit, TwoRank},
 				},
-				IsGroup: false,
-				IsRun:   false,
-				IsKind:  false,
+				IsRun:  false,
+				IsKind: false,
 			},
 		},
 	},
@@ -528,9 +494,8 @@ var TestCases = []ValidGroupEntry{
 					Card{0, SpadesSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
 				},
-				IsGroup: true,
-				IsRun:   true,
-				IsKind:  false,
+				IsRun:  true,
+				IsKind: false,
 			},
 		},
 	},
@@ -548,8 +513,8 @@ func TestIsValidGroup(t *testing.T) {
 			actual_run := (&tc.Solver).IsRun(hand, cards)
 			actual_kind := (&tc.Solver).IsKind(hand, cards)
 
-			if actual_group != entry.IsGroup || actual_run != entry.IsRun || actual_kind != entry.IsKind {
-				t.Fatal("Test case differs from expectations:", entry.IsGroup, entry.IsRun, entry.IsKind, "versus", actual_group, actual_run, actual_kind, "for hand", hand)
+			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
+				t.Fatal("Test case differs from expectations:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "versus", actual_group, actual_run, actual_kind, "for hand\n", hand)
 			}
 		}
 	}
