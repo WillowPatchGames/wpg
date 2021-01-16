@@ -153,6 +153,9 @@ class SpadesGame {
     this.data.spades_broken = message?.spades_broken;
     this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
     this.data.config = message?.config;
+    if (this.data.config) {
+      this.game.config = this.data.config;
+    }
 
     // We've gotta sync up who_played with our played data.
     if (!this.data.who_played || (message.who_played && message.played?.length === 1 && +this.data.who_played[0].id !== +message.who_played[0])) {

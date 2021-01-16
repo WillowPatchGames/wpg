@@ -161,6 +161,9 @@ class ThreeThirteenGame {
     this.data.discard = message?.discard ? CardHand.deserialize(message.discard) : null;
     this.data.round = message?.round;
     this.data.config = message?.config;
+    if (this.data.config) {
+      this.game.config = this.data.config;
+    }
 
     this.onChange(this);
   }

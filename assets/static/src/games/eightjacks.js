@@ -135,6 +135,9 @@ class EightJacksGame {
     this.data.history = message?.history ? CardHand.deserialize(message.history) : null;
     this.data.discards = message?.discards ? CardHand.deserialize(message.discards) : null;
     this.data.config = message?.config;
+    if (this.data.config) {
+      this.game.config = this.data.config;
+    }
     this.data.board = message?.board;
     this.data.players = message?.players;
 

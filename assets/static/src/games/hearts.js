@@ -135,6 +135,9 @@ class HeartsGame {
       this.data.crib.cardSort(true, true);
     }
     this.data.config = message?.config;
+    if (this.data.config) {
+      this.game.config = this.data.config;
+    }
 
     // We've gotta sync up who_played with our played data.
     if (!this.data.who_played || (message.who_played && message.played?.length === 1 && +this.data.who_played[0].id !== +message.who_played[0])) {
