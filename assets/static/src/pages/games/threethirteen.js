@@ -30,6 +30,13 @@ import { team_colors } from './team_colors.js';
 
 var autosort_persistent = true;
 
+// Properties used for displaying card hands
+var handProps = {
+  scale: 0.50,
+  overlap: true,
+  curve: true,
+};
+
 class ThreeThirteenGameComponent extends React.Component {
   constructor(props) {
     super(props);
@@ -133,12 +140,6 @@ class ThreeThirteenGameComponent extends React.Component {
     });
   }
   renderHand(selecting) {
-    var handProps = {
-      overlap: true,
-      curve: true,
-      scale: 0.50,
-    };
-
     var selected = card => {
       if (!this.state.sorting) {
         if (!selecting) return;
@@ -218,12 +219,6 @@ class ThreeThirteenGameComponent extends React.Component {
     );
   }
   render() {
-    var handProps = {
-      overlap: true,
-      curve: true,
-      scale: 0.50,
-    };
-
     var num_players = this.state.game.config.num_players;
 
     var discardProps = {
@@ -354,7 +349,7 @@ class ThreeThirteenGameComponent extends React.Component {
                 { this.renderHand(true) }
                 <br/><br/>
                 <Switch label={ "Autosort" } checked={this.state.autosort}
-                  onChange={e => {let autosort=e.currentTarget.checked;this.setState(state => Object.assign(state, {autosort}))}}/>
+                  onChange={e => this.setAutosort(e.currentTarget.checked)}/>
               </div>
             </c.Card>
           </div>

@@ -21,13 +21,15 @@ import '@rmwc/switch/styles';
 import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
-import { CardSuit, CardRank, CardImage, CardHand } from '../../games/card.js';
+import { CardSuit, CardRank, CardImage, CardHand, CardHandImage } from '../../games/card.js';
 import { loadGame, addEv, notify, CreateGameForm } from '../games.js';
 import { UserCache, GameCache } from '../../utils/cache.js';
 import { gravatarify } from '../../utils/gravatar.js';
 import { team_colors } from './team_colors.js';
 
-// Properties used for display card hands
+var autosort_persistent = true;
+
+// Properties used for displaying card hands
 var handProps = {
   scale: 0.50,
   overlap: true,
@@ -45,6 +47,8 @@ class EightJacksGameComponent extends React.Component {
     this.state.marking = null;
     this.state.scale = 0.3;
     this.state.overlap = true;
+    this.state.autosort = false;
+    this.state.sorting = null;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -54,20 +58,6 @@ class EightJacksGameComponent extends React.Component {
         return state;
       });
     };
-  }
-  selecting(card) {
-    return Object.assign(card, {
-      selected: this.state.selected === card.id,
-      onClick: () => {
-        this.setState(state => {
-          if (state.selected === card.id)
-            state.selected = null;
-          else
-            state.selected = card.id;
-          return state;
-        });
-      },
-    });
   }
   cancelMarksAnd(then) {
     return (...arg) => {
@@ -94,18 +84,6 @@ class EightJacksGameComponent extends React.Component {
       return then && then(...arg);
     };
   }
-  showing_new(card) {
-    if (!this.state.last_hand) return;
-    return Object.assign(card, {
-      selected: !this.state.last_hand.includes(card.id),
-      onClick: () => {
-        this.setState(state => {
-          state.last_hand = null;
-          return state;
-        });
-      },
-    });
-  }
   handleClick(spot) {
     if (this.state.marking) {
       return () => this.setState(state => {
@@ -123,6 +101,110 @@ class EightJacksGameComponent extends React.Component {
         board_selected:state.board_selected===spot.id?null:spot.id
       }));
     }
+  }
+  setAutosort(autosort) {
+    this.setState(state => {
+      state.autosort = autosort;
+      if (autosort_persistent && autosort) {
+        this.state.game.interface.data.hand.cardSort(true, false);
+      }
+      return state;
+    });
+  }
+  sort() {
+    this.setState(state => {
+      if (!state.sorting) {
+        state.sorting = [];
+      } else {
+        state.autosort = false;
+        state.game.interface.sort(state.sorting);
+        state.sorting = null;
+      }
+      return state;
+    });
+  }
+  renderHand(selecting) {
+    var selected = card => {
+      if (!this.state.sorting) {
+        if (!selecting) return;
+        return card.id === this.state.selected;
+      }
+      return this.state.sorting.includes(card.id);
+    };
+    var select = card => {
+      this.setState(state => {
+        if (!state.sorting) {
+          if (!selecting) return state;
+          if (state.selected === card.id)
+            state.selected = null;
+          else
+            state.selected = card.id;
+          return state;
+        }
+        var i = state.sorting.findIndex(id => id === card.id);
+        if (i >= 0) {
+          state.sorting.splice(i, 1);
+        } else {
+          state.sorting.push(card.id);
+        }
+        return state;
+      });
+    };
+    var badger = card => {
+      if (!this.state.sorting) return;
+      var i = this.state.sorting.findIndex(id => id === card.id);
+      if (i >= 0) return +i+1;
+      return null;
+    }
+
+    var sideStyle = {
+      writingMode: "vertical-rl",
+      textOrientation: "mixed",
+      textAlign: "end",
+      fontWeight: 600,
+      height: "calc(100% - 1em)",
+      marginRight: "auto",
+      paddingBottom: "0.5em",
+    };
+    var modeStyle = {
+      alignSelf: "start",
+      fontWeight: 800,
+      marginRight: "0.5em",
+      fontSize: "1.2em",
+    };
+    var sortMessage =
+      this.state.sorting
+      ? this.state.sorting.length
+        ? this.state.sorting.length === 1
+          ? "Put card here"
+          : "Put cards here"
+        : "Select cards to put here"
+      : "Sort cards here";
+    var sortMode = this.state.sorting ? "Sorting" : null;
+    var sortOverlay = <>
+      { <span style={sideStyle}>{ sortMessage }</span> }
+      { <span style={modeStyle}>{ sortMode }</span> }
+    </>;
+
+    var cards = this.state.game.interface.data.hand
+      .cardSortIf(this.state.autosort)(true, false).cards;
+
+    return (
+      <CardHandImage {...{handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap} }>
+        { [
+          <CardImage key={ "action" } overlay={ sortOverlay }
+            scale={handProps.scale} selected={!!this.state.sorting}
+            onClick={() => this.sort()}/>
+        ].concat(cards.map((card,i) =>
+          <CardImage card={ card } key={ card.id }
+            scale={handProps.scale}
+            selected={ selected(card) }
+            badge={ badger(card) }
+            onClick={() => select(card)}
+            />
+        ))}
+      </CardHandImage>
+    );
   }
   drawBoard() {
     var boardProps = {
@@ -258,7 +340,7 @@ class EightJacksGameComponent extends React.Component {
             {this.state.game.interface.my_turn()
               ? <>
                 {big_status("Your turn to play")}
-                <Button label={ this.state.marking ? "Finish or cancel marking sequence before playing" : (this.state.board_selected ? "Play here" : "Pick a spot!") } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected || this.state.marking }
+                <Button label={ this.state.marking ? "Finish or cancel marking sequence before playing" : (this.state.board_selected ? "Play here" : "Pick a spot!") } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected || this.state.marking || this.state.sorting }
                   onClick={this.clearSelectAnd(() => this.state.game.interface.play(this.state.selected, this.state.board_selected)) } />
                 <hr/>
                 </>
@@ -282,11 +364,14 @@ class EightJacksGameComponent extends React.Component {
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
             <h3>Hand</h3>
-            { this.state.game.interface.data.hand?.toImage(this.selecting.bind(this), {...handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap }) }
+            { this.renderHand(true) }
             <br/>
-            <Button label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.selected }
+            <Button label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.selected || this.state.sorting }
               onClick={this.clearSelectAnd(() => this.state.game.interface.discard(this.state.selected))}/>
             <br/><br/>
+            <Switch label={ "Autosort" } checked={this.state.autosort}
+              onChange={e => this.setAutosort(e.currentTarget.checked)}/>
+            <br/><br/><br/>
             <Switch label={ "Show cards individually" } checked={!this.state.overlap}
               onChange={e => {let overlap=!e.currentTarget.checked;this.setState(state => Object.assign(state, {overlap}))}}/>
           </div>
@@ -676,7 +761,7 @@ class EightJacksAfterPartyPage extends React.Component {
         for (let player_index in this.state.history.players[round_index]) {
           let user = this.state.player_mapping[player_index];
           let player = round_players[player_index];
-          let hand = player?.hand ? CardHand.deserialize(player.hand).cardSort(true, true) : null;
+          let hand = player?.hand ? CardHand.deserialize(player.hand).cardSort(true, false) : null;
           hands_data.push(
             <div>
               <l.List>

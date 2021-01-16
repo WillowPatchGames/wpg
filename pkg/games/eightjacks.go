@@ -480,6 +480,38 @@ func (ejs *EightJacksState) CreateBoard() error {
 	return nil
 }
 
+func (ejs *EightJacksState) Order(player int, order []int) error {
+	if !ejs.Started {
+		return errors.New("game hasn't started yet")
+	}
+
+	if ejs.Finished {
+		return errors.New("game has already finished")
+	}
+
+	if player < 0 || player >= len(ejs.Players) {
+		return errors.New("not a valid player identifier: " + strconv.Itoa(player))
+	}
+
+	by_id := make(map[int]int)
+	for i, id := range order {
+		by_id[id] = i
+	}
+	sort.SliceStable(ejs.Players[player].Hand, func(i, j int) bool {
+		ii, ok := by_id[ejs.Players[player].Hand[i].ID]
+		if !ok {
+			ii = len(order)
+		}
+		jj, ok := by_id[ejs.Players[player].Hand[j].ID]
+		if !ok {
+			jj = len(order)
+		}
+		return ii < jj
+	})
+
+	return nil
+}
+
 func (ejs *EightJacksState) DiscardDuplicate(player int, cardID int) error {
 	if !ejs.Started {
 		return errors.New("game hasn't started yet")

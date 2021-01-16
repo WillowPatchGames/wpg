@@ -75,6 +75,13 @@ class EightJacksController {
     });
   }
 
+  async sort(order) {
+    return await this.wsController.sendAndWait({
+      'message_type': 'sort',
+      'order': order,
+    });
+  }
+
   onMessage(type, handler) {
     return this.wsController.onMessage(type, handler);
   }
@@ -92,6 +99,7 @@ class EightJacksController {
 class EightJacksData {
   constructor(game) {
     this.game = game;
+    this.hand = new CardHand([]);
   }
 }
 
@@ -127,7 +135,8 @@ class EightJacksGame {
     this.finished = message.finished;
 
     // Then update the main data object.
-    this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
+    var newHand = message.hand && CardHand.deserialize(message.hand);
+    this.data.hand.setCardsTo(newHand);
     this.data.score = message?.score;
     this.data.overtakes = message?.overtakes;
     this.data.turn = message?.turn;
@@ -173,6 +182,11 @@ class EightJacksGame {
 
   async mark(squares) {
     return this.controller.mark(squares);
+  }
+
+  async sort(order) {
+    this.data.hand.sortToFront(order);
+    return this.controller.sort(this.data.hand.cards.map(card => card.id));
   }
 
   close() {

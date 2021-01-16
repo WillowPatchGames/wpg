@@ -37,6 +37,11 @@ type EightJacksMarkMsg struct {
 	Squares []int `json:"squares"`
 }
 
+type EightJacksSortMsg struct {
+	MessageHeader
+	Order []int `json:"order"`
+}
+
 func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
 	var err error
 	var state *EightJacksState = game.State.(*EightJacksState)
@@ -159,6 +164,14 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 
 		err = state.MarkRun(data.Squares)
 		send_synopsis = true
+		send_state = true
+	case "sort":
+		var data EightJacksSortMsg
+		if err = json.Unmarshal(message, &data); err != nil {
+
+		}
+
+		err = state.Order(player.Index, data.Order)
 		send_state = true
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
