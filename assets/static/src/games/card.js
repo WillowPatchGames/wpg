@@ -1,6 +1,7 @@
 import React from 'react';
 
 import cards from '../images/cards/anglo.svg';
+import logosrc from '../images/logo.svg';
 
 import mergeProps from 'react-merge-props';
 
@@ -297,7 +298,7 @@ class CardImage extends React.Component {
     var {
       scale, x_part, y_part,
       card, suit, rank,
-      overlay, annotation, badge,
+      underlay, overlay, annotation, badge,
       className, ...props } = this.props;
     if (className) {
       className = " " + className;
@@ -322,7 +323,7 @@ class CardImage extends React.Component {
       name = rank + "_" + joker_suit;
       x = (joker_suit === "red" ? 1 : 0) * -card_dim[0];
       y = 4 * -card_dim[1];
-    } else if (rank === "blank" || (rank !== "back" && overlay)) {
+    } else if (rank === "blank" || rank === "logo" || (rank !== "back" && overlay)) {
       name = "card_border";
     } else {
       name = "back";
@@ -330,6 +331,19 @@ class CardImage extends React.Component {
       y = 4 * -card_dim[1];
     }
 
+    if (rank === "logo") {
+      var logo = <>
+        <img style={{ width: "75%", position: "absolute", top: "10%" }} src={ logosrc }/>
+        <img style={{ width: "75%", transform: "rotate(180deg)", position: "absolute", bottom: "10%" }} src={ logosrc }/>
+      </>;
+      underlay = underlay ? <>{ logo }{ underlay }</> : logo;
+    }
+
+    if (underlay) {
+      underlay = <div className="card-overlay centered">{ underlay }</div>;
+    } else {
+      underlay = <></>;
+    }
     if (overlay) {
       overlay = <div className="card-overlay centered">{ overlay }</div>;
     } else {
@@ -383,6 +397,7 @@ class CardImage extends React.Component {
         viewBox={ viewBox } {...props}>
         <use href={ cards+"#"+name} x={ x } y={ y }/>
       </svg>
+      { underlay }
       { overlay }
       { badge }
     </div>;

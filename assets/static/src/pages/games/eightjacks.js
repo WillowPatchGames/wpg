@@ -190,7 +190,7 @@ class EightJacksGameComponent extends React.Component {
       .cardSortIf(this.state.autosort)(true, false).cards;
 
     return (
-      <CardHandImage {...{handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap} }>
+      <CardHandImage {...{...handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap} }>
         { [
           <CardImage key={ "action" } overlay={ sortOverlay }
             scale={handProps.scale} selected={!!this.state.sorting}
@@ -244,6 +244,9 @@ class EightJacksGameComponent extends React.Component {
         spot = by_id[spot.id];
         var suit = new CardSuit(spot.value.suit).toImage();
         var rank = new CardRank(spot.value.rank).toImage();
+        if (rank === "joker") {
+          suit = ""; rank = "logo";
+        }
         var mark = spot.marker === -1 ? null : ""+(+spot.marker+1);
         var sel = this.state.marking
           ? this.state.marking.includes(spot.id) && 2
