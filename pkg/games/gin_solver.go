@@ -259,7 +259,7 @@ func (gs *GinSolver) TryWildCards(hand []Card, cards []int) [][]int {
 	}
 
 	// In this case, trying wildcards as their rank is not allowed/will not produce benefits
-	if gs.AnyWildGroup || !gs.WildAsRank || (gs.MostlyWildGroups && gs.AllWildGroups) {
+	if gs.AnyWildGroup || !gs.WildAsRank || (gs.MostlyWildGroups && gs.AllWildGroups) || (gs.AllWildGroups && len(regular) == 0) {
 		return [][]int{regular}
 	}
 
@@ -376,6 +376,9 @@ func AndInterval(l Interval, r Interval) Interval {
 
 func (gs *GinSolver) WcValidGroup(hand []Card, cards []int) Interval {
 	if len(cards) == 0 {
+		if gs.AnyWildGroup || gs.AllWildGroups {
+			return Interval{0, flag}
+		}
 		return none
 	}
 	return orInterval(gs.WcKind(hand, cards), gs.WcRun(hand, cards))
@@ -386,6 +389,9 @@ func (gs *GinSolver) WcValidGroup(hand []Card, cards []int) Interval {
 // and returns the Interval of wildcards needed to make the match happen
 func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 	if len(cards) == 0 {
+		if gs.AnyWildGroup || gs.AllWildGroups {
+			return Interval{0, flag}
+		}
 		return none
 	}
 
@@ -407,7 +413,7 @@ func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 
 	// If gs.MostlyWildGroups is false, we can only accept len(cards)-min extra
 	// wildcards (and if we only have one card we can't form a group)
-	if !gs.MostlyWildGroups {
+	if !gs.AnyWildGroup && !gs.MostlyWildGroups {
 		if len(cards) <= 1 {
 			return none
 		}
@@ -425,11 +431,14 @@ func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 //
 // TODO: handle WildJokerRanked
 func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
+	if len(cards) == 0 && (gs.AnyWildGroup || gs.AllWildGroups) {
+		return Interval{0, 13}
+	}
 	if len(cards) == 0 || len(cards) > 13 {
 		return none
 	}
 	if len(cards) == 1 {
-		if !gs.MostlyWildGroups {
+		if !gs.AnyWildGroup && !gs.MostlyWildGroups {
 			return none
 		}
 		return Interval{2, 11}
@@ -494,6 +503,9 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 	// max_gap_size := 13 - int(max_rank - min_rank)
 	max_gap_size := int((min_rank - AceRank) + (KingRank - max_rank))
 	if gs.RunsWrap || gs.AceHigh {
+		// If Ace is only allowed to be high, we force it to take the result from
+		// the first iteration
+		force := gs.AceHigh && !gs.RunsWrap && !gs.AceLow
 		// Find the largest congruent gap.
 		// Start at TwoRank, since we already accounted for AceRank above
 		new_min_index := TwoRank
@@ -503,7 +515,7 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 			check_rank = KingRank
 		}
 		for new_min_index <= check_rank {
-			if run_map[new_min_index] != -1 {
+			if run_map[new_min_index] != -1 && !force {
 				new_min_index = new_min_index + 1
 				continue
 			}
@@ -516,7 +528,7 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 			// new_max_index now points right after the end of the gap
 
 			new_gap := int(new_max_index - new_min_index)
-			if new_gap > max_gap_size {
+			if new_gap > max_gap_size || force {
 				max_gap_size = new_gap
 			}
 
@@ -532,11 +544,15 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 	spread := 13 - max_gap_size
 	// The number of wildcards to fill in the internal gaps
 	min := spread - len(cards)
+	// ... but we need at least 3 cards
+	if len(cards) < 3 && 3-len(cards) > min {
+		min = 3 - len(cards)
+	}
 
 	// We can keep adding wildcards until we reach a full 13-card run
 	more := 13 - len(cards) - min
 	// Or until we have more wildcards than non-wildcards
-	if !gs.MostlyWildGroups && (len(cards)-min < more) {
+	if !gs.AnyWildGroup && !gs.MostlyWildGroups && (len(cards)-min < more) {
 		more = len(cards) - min
 	}
 

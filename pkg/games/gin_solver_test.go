@@ -33,6 +33,216 @@ var DefaultPointValue = map[CardRank]int{
 	JokerRank: 20,
 }
 
+var defaultSolver = GinSolver{
+	PointValue:       DefaultPointValue,
+	WildCards:        []CardRank{JokerRank},
+	AnyWildGroup:     false,
+	WildAsRank:       false,
+	AllWildGroups:    false,
+	MostlyWildGroups: false,
+	WildJokerRanked:  false,
+	SameSuitRuns:     false,
+	AceHigh:          false,
+	AceLow:           true,
+	RunsWrap:         false,
+}
+
+func addWildCard(rank CardRank) func(bool, GinSolver) GinSolver {
+	return func(yes bool, gs GinSolver) GinSolver {
+		if yes {
+			gs.WildCards = append(gs.WildCards, rank)
+		}
+		return gs
+	}
+}
+func setAnyWildGroup(yes bool, gs GinSolver) GinSolver {
+	gs.AnyWildGroup = yes
+	return gs
+}
+func setWildAsRank(yes bool, gs GinSolver) GinSolver {
+	gs.WildAsRank = yes
+	return gs
+}
+func setAllWildGroups(yes bool, gs GinSolver) GinSolver {
+	gs.AllWildGroups = yes
+	return gs
+}
+func setMostlyWildGroups(yes bool, gs GinSolver) GinSolver {
+	gs.MostlyWildGroups = yes
+	return gs
+}
+func setSameSuitRuns(yes bool, gs GinSolver) GinSolver {
+	gs.SameSuitRuns = yes
+	return gs
+}
+func setAceHigh(yes bool, gs GinSolver) GinSolver {
+	gs.AceHigh = yes
+	return gs
+}
+func setAceLow(yes bool, gs GinSolver) GinSolver {
+	gs.AceLow = yes
+	return gs
+}
+func setRunsWrap(yes bool, gs GinSolver) GinSolver {
+	gs.RunsWrap = yes
+	return gs
+}
+
+type GinSetter = func(bool, GinSolver) GinSolver
+
+var allOptions = []GinSetter{
+	setAnyWildGroup,
+	setWildAsRank,
+	setAllWildGroups,
+	setMostlyWildGroups,
+	setSameSuitRuns,
+	setAceHigh,
+	setAceLow,
+	setRunsWrap,
+}
+
+// Return GinSolvers with all permutations of fields set
+// (based on a default GinSolver)
+func across(fields []GinSetter, df GinSolver) []GinSolver {
+	// No fields left: return just the default
+	if len(fields) == 0 {
+		return []GinSolver{df}
+	}
+	// Set one field (to true and then to false)
+	// atop permuting the rest
+	setThis := fields[0]
+	theRest := fields[1:]
+	return append(
+		across(theRest, setThis(false, df)),
+		across(theRest, setThis(true, df))...,
+	)
+}
+
+// Test one hand across multiple GinSolver configurations,
+// providing functions to verify isRun and isRank based on
+// the particular GinSolver
+func handAcross(
+	fields []GinSetter, df GinSolver, hand []Card,
+	isRun func(GinSolver) bool, isRank func(GinSolver) bool,
+) []ValidGroupEntry {
+	ret := make([]ValidGroupEntry, 0)
+	for _, solver := range across(fields, df) {
+		ret = append(ret, ValidGroupEntry{
+			Solver: solver,
+			Entries: []HandEntry{
+				HandEntry{
+					Hand:   hand,
+					IsRun:  isRun(solver),
+					IsKind: isRank(solver),
+				},
+			},
+		})
+	}
+	return ret
+}
+
+// Test multiple hands across GinSolver configurations
+func handsAcross(
+	fields []GinSetter, df GinSolver, hands [][]Card,
+	isRun func([]Card, GinSolver) bool, isRank func([]Card, GinSolver) bool,
+) []ValidGroupEntry {
+	ret := make([]ValidGroupEntry, 0)
+	for _, hand := range hands {
+		ret = append(ret, handAcross(fields,
+			df,
+			hand,
+			func(gs GinSolver) bool {
+				return isRun(hand, gs)
+			},
+			func(gs GinSolver) bool {
+				return isRank(hand, gs)
+			},
+		)...)
+	}
+	return ret
+}
+
+var MoreCases = [][]ValidGroupEntry{
+	handAcross(
+		allOptions, defaultSolver,
+		[]Card{
+			Card{0, SpadesSuit, AceRank},
+			Card{0, SpadesSuit, QueenRank},
+			Card{0, NoneSuit, JokerRank},
+		},
+		func(gs GinSolver) bool {
+			return gs.AceHigh || gs.RunsWrap
+		},
+		func(gs GinSolver) bool {
+			return false
+		},
+	),
+	handAcross(
+		allOptions, defaultSolver,
+		[]Card{
+			Card{0, SpadesSuit, AceRank},
+			Card{0, NoneSuit, JokerRank},
+			Card{0, SpadesSuit, ThreeRank},
+		},
+		func(gs GinSolver) bool {
+			return gs.AceLow || gs.RunsWrap || !gs.AceHigh
+		},
+		func(gs GinSolver) bool {
+			return false
+		},
+	),
+	handAcross(
+		allOptions, defaultSolver,
+		[]Card{
+			Card{0, NoneSuit, JokerRank},
+			Card{0, NoneSuit, JokerRank},
+			Card{0, NoneSuit, JokerRank},
+		},
+		func(gs GinSolver) bool {
+			return gs.AnyWildGroup || gs.AllWildGroups
+		},
+		func(gs GinSolver) bool {
+			return gs.AnyWildGroup || gs.AllWildGroups
+		},
+	),
+	handsAcross(
+		append(allOptions, addWildCard(FourRank)), defaultSolver,
+		[][]Card{
+			[]Card{
+				Card{0, NoneSuit, JokerRank},
+				Card{0, NoneSuit, JokerRank},
+				Card{0, NoneSuit, JokerRank},
+				Card{0, NoneSuit, FourRank},
+			},
+			[]Card{
+				Card{0, NoneSuit, JokerRank},
+				Card{0, NoneSuit, JokerRank},
+				Card{0, NoneSuit, FourRank},
+			},
+			[]Card{
+				Card{0, NoneSuit, JokerRank},
+				Card{0, NoneSuit, FourRank},
+			},
+		},
+		func(hand []Card, gs GinSolver) bool {
+			if len(hand) < 3 {
+				return false
+			}
+			fourWild := len(gs.WildCards) > 1
+			return gs.AnyWildGroup || (gs.AllWildGroups && fourWild) ||
+				(gs.MostlyWildGroups && (!fourWild || gs.WildAsRank))
+		},
+		func(hand []Card, gs GinSolver) bool {
+			if len(hand) < 3 {
+				return false
+			}
+			fourWild := len(gs.WildCards) > 1
+			return gs.AnyWildGroup || (gs.AllWildGroups && fourWild) ||
+				(gs.MostlyWildGroups && (!fourWild || gs.WildAsRank))
+		},
+	),
+}
+
 var TestCases = []ValidGroupEntry{
 	ValidGroupEntry{
 		Solver: GinSolver{
@@ -337,7 +547,7 @@ var TestCases = []ValidGroupEntry{
 					Card{0, DiamondsSuit, SevenRank},
 					Card{0, SpadesSuit, SevenRank},
 				},
-				IsRun:  false,
+				IsRun:  true,
 				IsKind: true,
 			},
 			HandEntry{
@@ -502,6 +712,10 @@ var TestCases = []ValidGroupEntry{
 }
 
 func TestIsValidGroup(t *testing.T) {
+	for _, more := range MoreCases {
+		TestCases = append(TestCases, more...)
+	}
+
 	for _, tc := range TestCases {
 		for _, entry := range tc.Entries {
 			hand := entry.Hand
@@ -514,7 +728,7 @@ func TestIsValidGroup(t *testing.T) {
 			actual_kind := (&tc.Solver).IsKind(hand, cards)
 
 			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
-				t.Fatal("Test case differs from expectations:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "versus", actual_group, actual_run, actual_kind, "for hand\n", hand)
+				t.Fatal("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor hand\n", hand, "\nand solver\n", tc.Solver)
 			}
 		}
 	}
