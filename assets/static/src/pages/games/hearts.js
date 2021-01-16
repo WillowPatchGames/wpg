@@ -255,7 +255,7 @@ class HeartsGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { indexed_players: {}, spectators: {}, suit: undefined };
+    let new_state = { indexed_players: {}, spectators: {}, suit: undefined, broken: this.props.game.interface.data.hearts_broken };
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
@@ -385,7 +385,7 @@ class HeartsGameSynopsis extends React.Component {
         <c.Card className="fit-content" style={{ padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="scrollable-x">
             <h1 style={{ marginBottom: pass_direction ? 0 : null, color: "#bd2525" }}>Hearts</h1>
-            { pass_direction ? <span style={{ fontStyle: "italic" }}>{ pass_direction }</span> : <></> }
+            { pass_direction ? <span style={{ fontStyle: "italic" }}>{ pass_direction }</span> : <></> } { this.state.broken ? "Hearts Broken" : "Hearts Not Broken" }
             { player_view }
           </div>
         </c.Card>

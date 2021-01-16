@@ -364,7 +364,7 @@ class SpadesGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { indexed_players: {}, spectators: {}, suit: undefined };
+    let new_state = { indexed_players: {}, spectators: {}, suit: undefined, broken: this.props.game.interface.data.spades_broken };
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
@@ -482,7 +482,7 @@ class SpadesGameSynopsis extends React.Component {
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-left scrollable-x">
-            <b>Spades</b>
+            <b>Spades</b> { this.state.broken ? "Spades Broken" : "Spades Not Broken" }
             { player_view }
           </div>
         </c.Card>
