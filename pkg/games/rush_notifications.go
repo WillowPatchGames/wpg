@@ -115,11 +115,11 @@ type RushFinishedNotification struct {
 	Winner uint64 `json:"winner"`
 }
 
-func (rwn *RushFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+func (rwn *RushFinishedNotification) LoadData(data *GameData, state *RushState, player *PlayerData) {
 	rwn.LoadHeader(data, player)
 	rwn.MessageType = "finished"
 
-	rwn.Winner = winner
+	rwn.Winner, _ = data.ToUserID(state.Winner)
 }
 
 type RushGameStateNotification struct {

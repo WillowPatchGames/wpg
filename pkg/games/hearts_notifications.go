@@ -224,9 +224,9 @@ type HeartsFinishedNotification struct {
 	Winner uint64 `json:"winner"`
 }
 
-func (hwn *HeartsFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+func (hwn *HeartsFinishedNotification) LoadData(data *GameData, state *HeartsState, player *PlayerData) {
 	hwn.LoadHeader(data, player)
 	hwn.MessageType = "finished"
 
-	hwn.Winner = winner
+	hwn.Winner, _ = data.ToUserID(state.Winner)
 }

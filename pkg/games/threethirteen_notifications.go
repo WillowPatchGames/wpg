@@ -133,9 +133,9 @@ type ThreeThirteenFinishedNotification struct {
 	Winner uint64 `json:"winner"`
 }
 
-func (ttwn *ThreeThirteenFinishedNotification) LoadFromController(data *GameData, player *PlayerData, winner uint64) {
+func (ttwn *ThreeThirteenFinishedNotification) LoadData(data *GameData, state *ThreeThirteenState, player *PlayerData) {
 	ttwn.LoadHeader(data, player)
 	ttwn.MessageType = "finished"
 
-	ttwn.Winner = winner
+	ttwn.Winner, _ = data.ToUserID(state.Winner)
 }

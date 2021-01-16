@@ -125,16 +125,8 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 				send_synopsis = true
 			}
 		} else if state.Finished {
-			var winner uint64 = 0
-			for _, indexed_player := range game.ToPlayer {
-				if state.Winner == indexed_player.Index {
-					winner = indexed_player.UID
-					break
-				}
-			}
-
 			var finished SpadesFinishedNotification
-			finished.LoadFromController(game, player, winner)
+			finished.LoadData(game, state, player)
 			finished.ReplyTo = header.MessageID
 			c.undispatch(game, player, finished.MessageID, finished.ReplyTo, finished)
 		}
@@ -211,7 +203,7 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 		// Notify everyone that the game ended and that this active player won.
 		for _, indexed_player := range game.ToPlayer {
 			var finished SpadesFinishedNotification
-			finished.LoadFromController(game, indexed_player, player.UID)
+			finished.LoadData(game, state, indexed_player)
 			c.undispatch(game, indexed_player, finished.MessageID, 0, finished)
 		}
 	}
