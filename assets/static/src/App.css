@@ -23,6 +23,12 @@ p {
   font-size: 1.1em;
 }
 
+/* Make disabled inputs darker, esp on iOS and Safari */
+input:not([type="checkbox"]):not([type="radio"]):disabled, textarea:disabled {
+  opacity: 1;
+  color: #555;
+}
+
 .fit-content {
   width: fit-content;
   width: -moz-fit-content;
@@ -286,6 +292,8 @@ p {
 .rotate-card-inner {
   transform-origin: center;
   transition: transform 0.8s;
+  /* prevent jitter when mouse does/does not intersect bounding box while rotating */
+  pointer-events: none;
 }
 .rotate-card .rotate-card-checkbox {
   display: none;
