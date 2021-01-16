@@ -314,7 +314,7 @@ class RoomPage extends React.Component {
             <Button label="Refresh Games" raised onClick={() => { this.setCreateGameForm(false) ; this.clearGame() ; this.state.timeout.exec() } } />
             {
               this.state.room_owner
-              ? <Button label="Create Game" raised onClick={() => this.setCreateGameForm(true) } />
+              ? <>&nbsp;&nbsp;<Button label="Create Game" raised onClick={() => this.setCreateGameForm(true) } /></>
               : null
             }
             <br /><br />
