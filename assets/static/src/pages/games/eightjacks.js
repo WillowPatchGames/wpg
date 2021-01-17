@@ -529,16 +529,18 @@ class EightJacksGameSynopsis extends React.Component {
               <div style={{ flex: 0 }}>{ player_view }</div>
               <div style={{ flex: 1, maxWidth: "100%", overflow: "auto" }}>
                 <b>Player discards</b>
-                <div style={{ overflow: "hidden", position: "relative" }}>
+                <div style={{ overflow: "hidden", position: "relative", whiteSpace: "nowrap" }}>
                   { this.state.global_history.toImage(card => {
                     card.selected = this.state.player_history.cards.some(c => c.id === card.id) && 0.3;
+                    return card;
                   }, { scale: 0.25, overlap: true, curve: false, style: { float: "right" } })
                   }
                   <div style={{
                     position: "absolute",
                     left: 0, top: 0,
-                    width: "100%", height: "100%",
-                    background: "linear-gradient(to right, white, white 5%, transparent)",
+                    width: "calc(100% - 60px)", height: "100%",
+                    background: "linear-gradient(to right, white, white calc(5% + 15px), rgba(255, 255, 255, 0.0))",
+                    pointerEvents: "none",
                   }}></div>
                 </div>
               </div>

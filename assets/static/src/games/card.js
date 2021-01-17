@@ -646,6 +646,7 @@ class CardHandImage extends React.Component {
             transform: transform(child.props,i),
             marginLeft: overlap ? -overlap*card_dim[0]*scale/2 : 0,
             marginRight: overlap ? -overlap*card_dim[0]*scale/2 : 0,
+            "--card-select-dist": child.props.selected && child.props.selected !== true ? (child.props.selected * cardSelectDist) + "px" : undefined,
           }}>{ child }</div>
       )}
     </div>);
