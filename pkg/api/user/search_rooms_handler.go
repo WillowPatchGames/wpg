@@ -20,8 +20,8 @@ type SearchRoomsHandlerData struct {
 	UserID    uint64 `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
 	Username  string `json:"username,omitempty" query:"username,omitempty" route:"Username,omitempty"`
 	Email     string `json:"email,omitempty" query:"email,omitempty" route:"Email,omitempty"`
-	APIToken  string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 	Lifecycle string `json:"lifecycle,omitempty" query:"lifecycle,omitempty" route:"Lifecycle,omitempty"`
+	APIToken  string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type SearchRoomsHandlerResponse struct {

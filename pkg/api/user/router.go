@@ -103,6 +103,9 @@ func BuildRouter(router *mux.Router, debug bool) {
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/rooms", parsel.Wrap(searchRoomsFactory, config)).Methods("GET")
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/rooms/{Lifecycle:[a-zA-Z0-9]+}", parsel.Wrap(searchRoomsFactory, config)).Methods("GET")
 
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/rooms/{RoomID:[0-9]+}/games", parsel.Wrap(searchGamesFactory, config)).Methods("GET")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/rooms/{RoomID:[0-9]+}/games/{Lifecycle:[a-zA-Z0-9]+}", parsel.Wrap(searchGamesFactory, config)).Methods("GET")
+
 	router.Handle("/api/v1/user", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/user/plans", parsel.Wrap(planQueryFactory, config)).Methods("GET")
 

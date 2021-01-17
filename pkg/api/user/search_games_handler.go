@@ -20,12 +20,14 @@ type SearchGamesHandlerData struct {
 	UserID    uint64 `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
 	Username  string `json:"username,omitempty" query:"username,omitempty" route:"Username,omitempty"`
 	Email     string `json:"email,omitempty" query:"email,omitempty" route:"Email,omitempty"`
-	APIToken  string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	RoomID    uint64 `json:"room_id,omitempty" query:"room_id,omitempty" route:"RoomID,omitempty"`
 	Lifecycle string `json:"lifecycle,omitempty" query:"lifecycle,omitempty" route:"Lifecycle,omitempty"`
+	APIToken  string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type SearchGamesHandlerResponse struct {
 	OwnerID   uint64    `json:"owner_id"`
+	RoomID    uint64    `json:"room_id"`
 	GameID    uint64    `json:"game_id"`
 	Style     string    `json:"style"`
 	Lifecycle string    `json:"lifecycle"`
@@ -124,7 +126,12 @@ func (handle *SearchGamesHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 		if handle.req.Lifecycle != "" {
 			query = query.Where("games.lifecycle = ?", handle.req.Lifecycle)
 		}
-		query = query.Where("games.room_id IS NULL")
+		if handle.req.RoomID == 0 {
+			query = query.Where("games.room_id IS NULL")
+		} else {
+			query = query.Where("games.room_id = ?", handle.req.RoomID)
+		}
+
 		query = query.Order("games.id DESC")
 		query = query.Select("games.id")
 
@@ -141,6 +148,7 @@ func (handle *SearchGamesHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 
 			handle.resp = append(handle.resp, SearchGamesHandlerResponse{
 				OwnerID:   game.OwnerID,
+				RoomID:    game.RoomID,
 				GameID:    game.ID,
 				Style:     game.Style,
 				Lifecycle: game.Lifecycle,
