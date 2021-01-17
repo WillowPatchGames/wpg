@@ -81,6 +81,9 @@ submod:
 webui:
 	cd assets/static && REACT_EDITOR=none BROWSER=none $(NPM) start
 
+images:
+	cd assets/static/src/images && git pull
+
 distui:
 	cd assets/static && REACT_EDITOR=none BROWSER=none $(NPM) run build
 	cp assets/static/public/csw15.txt assets/static/build/csw15.txt
