@@ -32,6 +32,8 @@ type EightJacksGameState struct {
 	Board  EightJacksBoard  `json:"board"`
 	Config EightJacksConfig `json:"config"`
 
+	GlobalHistory []Card `json:"global_history"`
+
 	Assigned bool `json:"assigned"`
 	Started  bool `json:"started"`
 	Dealt    bool `json:"dealt"`
@@ -65,6 +67,7 @@ func (ejsn *EightJacksStateNotification) LoadData(data *GameData, game *EightJac
 
 	ejsn.Board = game.Board
 	ejsn.Config = game.Config
+	ejsn.GlobalHistory = game.GlobalHistory
 
 	ejsn.Assigned = game.Assigned
 	ejsn.Started = game.Started

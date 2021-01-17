@@ -46,7 +46,7 @@ class EightJacksGameComponent extends React.Component {
     this.state.selected = null;
     this.state.last_hand = null;
     this.state.marking = null;
-    this.state.scale = 0.3;
+    this.state.scale = 0.225;
     this.state.overlap = true;
     this.state.autosort = false;
     this.state.sorting = null;
@@ -432,7 +432,7 @@ class EightJacksGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { indexed_players: {}, spectators: {}, suit: undefined };
+    let new_state = { indexed_players: {}, spectators: {}, suit: undefined, global_history: null, player_history: null };
 
     if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
       for (let player of this.props.game.interface.synopsis.players) {
@@ -442,6 +442,16 @@ class EightJacksGameSynopsis extends React.Component {
           new_state.spectators[player.player_index] = player;
         }
       }
+    }
+    if (this.props.game.interface.data && this.props.game.interface.data.global_history) {
+      new_state.global_history = this.props.game.interface.data.global_history;
+    } else {
+      new_state.global_history = new CardHand([]);
+    }
+    if (this.props.game.interface.data && this.props.game.interface.data.history) {
+      new_state.player_history = this.props.game.interface.data.history;
+    } else {
+      new_state.player_history = new CardHand([]);
     }
 
     return new_state;
@@ -515,7 +525,24 @@ class EightJacksGameSynopsis extends React.Component {
           <div className="text scrollable-x">
             <h1 style={{ marginBottom: 0 }}><span style={{ color: "#bd2525" }}>Eight</span> Jacks</h1>
             <span style={{ whiteSpace: "normal" }}>Jack of Clubs and Diamonds play anywhere; Jack of Hearts and Spades remove; Jokers do both.</span>
-            { player_view }
+            <div style={{ display: "flex", width: "100%" }}>
+              <div style={{ flex: 0 }}>{ player_view }</div>
+              <div style={{ flex: 1, maxWidth: "100%", overflow: "auto" }}>
+                <b>Player discards</b>
+                <div style={{ overflow: "hidden", position: "relative" }}>
+                  { this.state.global_history.toImage(card => {
+                    card.selected = this.state.player_history.cards.some(c => c.id === card.id) && 0.3;
+                  }, { scale: 0.25, overlap: true, curve: false, style: { float: "right" } })
+                  }
+                  <div style={{
+                    position: "absolute",
+                    left: 0, top: 0,
+                    width: "100%", height: "100%",
+                    background: "linear-gradient(to right, white, white 5%, transparent)",
+                  }}></div>
+                </div>
+              </div>
+            </div>
           </div>
         </c.Card>
       </div>
@@ -621,7 +648,7 @@ class EightJacksAfterPartyPage extends React.Component {
       passed: false,
       finished: false,
       message: "Loading results...",
-      scale: 0.3,
+      scale: 0.225,
     };
 
     GameCache.Invalidate(this.props.game.id);

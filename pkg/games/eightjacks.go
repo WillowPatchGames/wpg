@@ -267,6 +267,8 @@ type EightJacksState struct {
 	Teams   int                `json:"teams"`   // Number of teams
 	Players []EightJacksPlayer `json:"players"` // Left of dealer is found by incrementing one.
 
+	GlobalHistory []Card `json:"global_history"`
+
 	Config EightJacksConfig `json:"config"`
 
 	Assigned bool `json:"assigned"`
@@ -640,6 +642,7 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 	// Remove the card from the hand (saving it in the history).
 	ejs.Players[player].RemoveCard(cardID)
 	ejs.Players[player].History = append(ejs.Players[player].History, played)
+	ejs.GlobalHistory = append(ejs.GlobalHistory, played)
 
 	// Draw a replacement if possible.
 	if len(ejs.Deck.Cards) > 0 {

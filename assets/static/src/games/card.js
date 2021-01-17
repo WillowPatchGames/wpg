@@ -619,7 +619,11 @@ class CardHandImage extends React.Component {
         tr += "translateY(" + ((1-Math.cos(j)) * length*1.6*curve*scale*(1-overlap)) + "px) ";
         tr += "rotate(" + (j * curve) + "deg) ";
       }
-      if (card.selected) tr += "translateY(-" + cardSelectDist + "px) ";
+      if (card.selected) {
+        var sel = card.selected;
+        if (card.selected === true) sel = 1;
+        tr += "translateY(-" + (sel*cardSelectDist) + "px) ";
+      }
       if (!tr) return "translate(0,0)"; // push a transform to avoid z-index issues
       return tr;
     };
