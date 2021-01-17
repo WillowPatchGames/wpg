@@ -21,7 +21,6 @@ import { CardSuit, CardHand } from '../../games/card.js';
 import { loadGame, addEv, notify, killable, CreateGameForm } from '../games.js';
 import { UserCache, GameCache } from '../../utils/cache.js';
 import { gravatarify } from '../../utils/gravatar.js';
-import { team_colors } from './team_colors.js';
 import { PlayerAvatar } from '../../utils/player.js';
 
 // Properties used for display card hands
