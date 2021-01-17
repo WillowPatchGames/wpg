@@ -234,8 +234,8 @@ class RoomPage extends React.Component {
                   <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
                     Game #{ game.id }
                   </div>
-                  <c.CardActions>
-                    <c.CardActionButton theme="secondary" onClick={ () => this.joinGame(game) }>
+                  <c.CardActions style={{ justifyContent: "center" }}>
+                    <c.CardActionButton theme={['secondaryBg', 'onSecondary']} raised onClick={ () => this.joinGame(game) }>
                       Resume
                     </c.CardActionButton>
                     {
@@ -262,8 +262,8 @@ class RoomPage extends React.Component {
                   <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
                     Game #{ game.id }
                   </div>
-                  <c.CardActions>
-                    <c.CardActionButton theme="secondary" onClick={ () => this.joinGame(game) }>
+                  <c.CardActions style={{ justifyContent: "center" }}>
+                    <c.CardActionButton theme={['secondaryBg', 'onSecondary']} raised onClick={ () => this.joinGame(game) }>
                       Play
                     </c.CardActionButton>
                     {
