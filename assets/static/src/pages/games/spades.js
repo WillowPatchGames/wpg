@@ -10,8 +10,6 @@ import { IconButton } from '@rmwc/icon-button';
 import '@rmwc/icon-button/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
-import { CircularProgress } from '@rmwc/circular-progress';
-import '@rmwc/circular-progress/styles';
 import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
 import * as g from '@rmwc/grid';
@@ -25,6 +23,7 @@ import { loadGame, addEv, notify, killable, CreateGameForm } from '../games.js';
 import { UserCache, GameCache } from '../../utils/cache.js';
 import { gravatarify } from '../../utils/gravatar.js';
 import { team_colors } from './team_colors.js';
+import { PlayerAvatar } from '../../utils/player.js';
 
 // Properties used for display card hands
 var handProps = {
@@ -399,15 +398,11 @@ class SpadesGameSynopsis extends React.Component {
       "user":{
         name: "User",
         printer: (user,player) =>
-          <div className={"avatar-progress avatar-progress--"+(user.id === this.props.user.id ? "xlarge" : "large")} style={{ display: "inline-block" }}>
-            <Avatar src={ gravatarify(user) } name={ user.display }
-              size={ user.id === this.props.user.id ? "xlarge" : "large" } />
-            { !player.is_turn ? null :
-              <CircularProgress size={ user.id === this.props.user.id ? "xlarge" : "large" } style={{
-                "--stroke-color": team_colors[+player.team+1],
-              }} />
-            }
-          </div>,
+          <PlayerAvatar user={ user }
+            size={ user.id === this.props.user.id ? "xlarge" : "large" }
+            team={ +player.team+1 }
+            loading={ player.is_turn }
+            />,
       },
       "is_leader":{
         name: "Lead",

@@ -8,7 +8,6 @@ import {
 
 import {
   CardHand,
-  Card,
 } from './card.js';
 
 class EightJacksController {

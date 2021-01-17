@@ -12,12 +12,8 @@ import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
 import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
-import { CircularProgress } from '@rmwc/circular-progress';
-import '@rmwc/circular-progress/styles';
 import { Switch } from '@rmwc/switch';
 import '@rmwc/switch/styles';
-import { Tooltip } from '@rmwc/tooltip';
-import '@rmwc/tooltip/styles';
 import { Theme } from '@rmwc/theme';
 import '@rmwc/theme/styles';
 import * as d from '@rmwc/dialog';
@@ -26,7 +22,7 @@ import '@rmwc/dialog/styles';
 import { loadGame, addEv, notify } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 import { CardRank, CardHandImage, CardImage } from '../../games/card.js';
-import { team_colors } from './team_colors.js';
+import { PlayerAvatar } from '../../utils/player.js';
 
 var autosort_persistent = true;
 
@@ -731,17 +727,11 @@ class ThreeThirteenGameSynopsis extends React.Component {
       "user":{
         name: "User",
         printer: (user,player) =>
-        <Tooltip align="right" content={ user.display } activateOn={['click']} leaveDelay={ 300 }>
-          <div className={"avatar-progress avatar-progress--"+(user.id === this.props.user.id ? "xlarge" : "large")} style={{ display: "inline-block" }}>
-            <Avatar src={ gravatarify(user) } name={ user.display }
-              size={ user.id === this.props.user.id ? "xlarge" : "large" } />
-            { !player.is_turn || this.props.game.interface.laid_down || !this.props.game.interface.dealt ? null :
-              <CircularProgress size={ user.id === this.props.user.id ? "xlarge" : "large" } style={{
-                "--stroke-color": team_colors[+player.team+1],
-              }} />
-            }
-          </div>
-        </Tooltip>,
+          <PlayerAvatar user={ user }
+            size={ user.id === this.props.user.id ? "xlarge" : "large" }
+            team={+player.team+1}
+            loading={this.props.game.interface.dealt && !this.props.game.interface.laid_down && player.is_turn}
+            />,
       },
       "is_dealer":{
         name: "Dealing",
