@@ -55,6 +55,11 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(inner)
 	}
 
+	var searchGamesFactory = func() parsel.Parseltongue {
+		inner := new(SearchGamesHandler)
+		return auth.Require(inner)
+	}
+
 	var queryFactory = func() parsel.Parseltongue {
 		inner := new(QueryHandler)
 		return auth.Allow(inner)
@@ -86,6 +91,9 @@ func BuildRouter(router *mux.Router, debug bool) {
 
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp/validate", parsel.Wrap(validateTOTPFactory, config)).Methods("PUT")
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp/{Device:[a-zA-Z0-9]+}/validate", parsel.Wrap(validateTOTPFactory, config)).Methods("PUT")
+
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/games", parsel.Wrap(searchGamesFactory, config)).Methods("GET")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/games/{Lifecycle:[a-zA-Z0-9]+}", parsel.Wrap(searchGamesFactory, config)).Methods("GET")
 
 	router.Handle("/api/v1/user", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/user/plans", parsel.Wrap(planQueryFactory, config)).Methods("GET")
