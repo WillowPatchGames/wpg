@@ -888,7 +888,7 @@ func (hs *HeartsState) tabulateRoundScore() error {
 	var winner_score = hs.Players[0].Score
 	var max_score = hs.Players[0].Score
 	for player := 1; player < hs.Config.NumPlayers; player++ {
-		if hs.Players[player].Score > max_score {
+		if hs.Players[player].Score >= max_score {
 			max_score = hs.Players[player].Score
 		}
 
