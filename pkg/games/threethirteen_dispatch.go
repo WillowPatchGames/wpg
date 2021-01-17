@@ -95,6 +95,7 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 			finished.LoadData(game, state, player)
 			finished.ReplyTo = header.MessageID
 			c.undispatch(game, player, finished.MessageID, finished.ReplyTo, finished)
+			send_synopsis = true
 		}
 	case "deal":
 		if state.Dealt {

@@ -137,6 +137,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			finished.LoadData(game, state, player)
 			finished.ReplyTo = header.MessageID
 			c.undispatch(game, player, finished.MessageID, finished.ReplyTo, finished)
+			send_synopsis = true
 		}
 	case "discard":
 		var data EightJacksDiscardMsg

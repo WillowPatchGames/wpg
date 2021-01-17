@@ -77,6 +77,7 @@ func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *
 			finished.LoadData(game, state, player)
 			finished.ReplyTo = header.MessageID
 			c.undispatch(game, player, finished.MessageID, finished.ReplyTo, finished)
+			send_synopsis = true
 		}
 	case "deal":
 		if player.Index != state.Dealer {
