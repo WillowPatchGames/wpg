@@ -659,9 +659,9 @@ class SpadesAfterPartyPage extends React.Component {
           }
         }
 
-        let turn = await UserCache.FromId(data.turn);
-        let leader = await UserCache.FromId(data.leader);
-        let dealer = await UserCache.FromId(data.dealer);
+        let turn = data.turn ? await UserCache.FromId(data.turn) : null;
+        let leader = data.leader ? await UserCache.FromId(data.leader) : null;
+        let dealer = data.dealer ? await UserCache.FromId(data.dealer) : null;
 
         let played = null;
         if (data.played) {
