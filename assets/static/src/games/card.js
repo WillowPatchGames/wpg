@@ -332,10 +332,7 @@ class CardImage extends React.Component {
     }
 
     if (rank === "logo") {
-      var logo = <>
-        <img style={{ width: "75%", position: "absolute", top: "10%" }} src={ logosrc }/>
-        <img style={{ width: "75%", transform: "rotate(180deg)", position: "absolute", bottom: "10%" }} src={ logosrc }/>
-      </>;
+      var logo = <img style={{ width: "75%", paddingTop: "15%" }} src={ logosrc } alt="WillowPatchGames logo"/>;
       underlay = underlay ? <>{ logo }{ underlay }</> : logo;
     }
 
@@ -397,8 +394,8 @@ class CardImage extends React.Component {
         viewBox={ viewBox } {...props}>
         <use href={ cards+"#"+name} x={ x } y={ y }/>
       </svg>
-      { underlay }
       { overlay }
+      { underlay }
       { badge }
     </div>;
   }
