@@ -117,7 +117,7 @@ class SpadesGameComponent extends React.Component {
     if (this.state.game.interface.data.who_played) {
       annotations = [];
       for (let who_player of this.state.game.interface.data.who_played) {
-        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></>;
+        let annotation = <div key={ who_player.id }><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></div>;
         annotations.push(annotation);
       }
     }
@@ -829,11 +829,10 @@ class SpadesAfterPartyPage extends React.Component {
   render() {
     var current_round = null;
 
-    console.log(this.state.active);
     if (this.state.active.played) {
       var annotations = [];
       for (let who_player of this.state.active.who_played) {
-        let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></>;
+        let annotation = <div key={ who_player.id }><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></div>;
         annotations.push(annotation);
       }
 
@@ -874,7 +873,7 @@ class SpadesAfterPartyPage extends React.Component {
           let player = round_players[player_index];
           let hand = player?.hand ? CardHand.deserialize(player.hand).cardSort(true, true) : null;
           hands_data.push(
-            <div>
+            <div key={ user.id }>
               <l.List>
                 <l.CollapsibleList handle={
                     <l.SimpleListItem text={ <b>{user.display + "'s"} Hand</b> } metaIcon="chevron_right" />
@@ -918,16 +917,16 @@ class SpadesAfterPartyPage extends React.Component {
               for (let offset = 0; offset < num_players; offset++) {
                 let annotation_player_index = (trick.leader + offset) % num_players;
                 let annotation_player = this.state.player_mapping[annotation_player_index];
-                let annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <span title={ annotation_player.display }>{ annotation_player.display }</span></>;
+                let annotation = <div key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <span title={ annotation_player.display }>{ annotation_player.display }</span></div>;
                 if (annotation_player_index === trick.winner) {
-                  annotation = <><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b title={ annotation_player.display }>{ annotation_player.display }</b></>;
+                  annotation = <div key={ annotation_player.id }><Avatar src={ gravatarify(annotation_player) } name={ annotation_player.display } size="medium" /> <b title={ annotation_player.display }>{ annotation_player.display }</b></div>;
                 }
                 annotations.push(annotation);
               }
             }
             let cards = trick?.played ? CardHand.deserialize(trick.played).toImage(null, null, annotations) : null;
             tricks_data.push(
-              <l.CollapsibleList handle={
+              <l.CollapsibleList key={ trick_index } handle={
                   <l.SimpleListItem text={ <b>Trick { parseInt(trick_index) + 1 }</b> } metaIcon="chevron_right" />
                 }
               >
@@ -1059,30 +1058,30 @@ class SpadesAfterPartyPage extends React.Component {
       var final_scores = [];
       for (let player_index of Object.keys(this.state.player_mapping).sort()) {
         let score_player = this.state.player_mapping[player_index];
-        score_players.push(<td colspan={2} style={{ borderBottom: "1px solid #777", paddingLeft: '25px', paddingRight: '25px' }}><Avatar src={ gravatarify(score_player) } name={ score_player.display } size="medium" /> { score_player.display }</td>);
+        score_players.push(<td key={ player_index } colSpan={2} style={{ borderBottom: "1px solid #777", paddingLeft: '25px', paddingRight: '25px' }}><Avatar src={ gravatarify(score_player) } name={ score_player.display } size="medium" /> { score_player.display }</td>);
       }
       for (let round_index in this.state.history.scores) {
         let round_row = [];
-        round_row.push(<td style={{ borderTop: "10px solid transparent", borderBottom: "10px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
+        round_row.push(<td key={ round_index } style={{ borderTop: "10px solid transparent", borderBottom: "10px solid transparent" }}> { parseInt(round_index) + 1 } </td>);
         for (let player_index of Object.keys(this.state.player_mapping).sort()) {
           let round_score = parseInt(this.state.history.scores[round_index][player_index].round_score);
           let score = parseInt(this.state.history.scores[round_index][player_index].score);
           let overtakes = parseInt(this.state.history.scores[round_index][player_index].overtakes);
 
           if (parseInt(round_index) === (this.state.history.scores.length - 1)) {
-            final_scores.push(<td colspan={2} style={{ whiteSpace: "nowrap", borderTop: "1px solid #000" }}> { score } / { overtakes } </td>);
+            final_scores.push(<td key={ player_index } colSpan={2} style={{ whiteSpace: "nowrap", borderTop: "1px solid #000" }}> { score } / { overtakes } </td>);
           }
 
           let entry = '-';
           let incr = !isNaN(round_score) && round_score < 0 ? ""+round_score : "+"+round_score
-          entry = <>
-            <td style={{ whiteSpace: "nowrap", textAlign: "right", paddingLeft: "10px" }}>{ score } / { overtakes }&nbsp;</td>
-            <td style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>
-          </>;
+          entry = [
+            <td key={ player_index+"score" } style={{ whiteSpace: "nowrap", textAlign: "right", paddingLeft: "10px" }}>{ score } / { overtakes }&nbsp;</td>,
+            <td key={ player_index+"incr" } style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>,
+          ];
 
-          round_row.push(entry);
+          round_row.push(...entry);
         }
-        round_scores.push(<tr> { round_row } </tr>);
+        round_scores.push(<tr key={ round_index }>{ round_row }</tr>);
       }
 
       scoreboard_data = <div className="fit-content" style={{ margin: "0 auto 0.5em auto", maxWidth: "90%" }}>
