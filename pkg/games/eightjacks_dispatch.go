@@ -169,7 +169,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 	case "sort":
 		var data EightJacksSortMsg
 		if err = json.Unmarshal(message, &data); err != nil {
-
+			return err
 		}
 
 		err = state.Order(player.Index, data.Order)
