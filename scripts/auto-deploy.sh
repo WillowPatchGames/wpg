@@ -15,7 +15,7 @@ while [ 1 ]; do
     fi
     if [ "x$latest_prod_tag" != "x" ] && [ "x$latest_prod_tag" != "x$last_prod_tag" ]; then
         bash ./scripts/deploy.sh prod "$latest_prod_tag"
-        echo "$latest_beta_tag" > "$HOME/wpg/.tags/prod"
+        echo "$latest_prod_tag" > "$HOME/wpg/.tags/prod"
     fi
     sleep 600
 done
