@@ -10,4 +10,11 @@ git clone https://git.cipherboy.com/WillowPatchGames/wpg
 git clone https://git.cipherboy.com/WillowPatchGames/ansible
 git clone https://git.cipherboy.com/WillowPatchGames/nginx-configs
 
-cd wpg && git checkout "$committish" && make clean deps "$location-deploy"
+cd wpg && git checkout "$committish"
+if [ -e assets/static/src/images/.git ]; then
+    git pull
+else
+    rm -rf assets/static/src/images && git clone https://git.cipherboy.com/WillowPatchGames/images
+fi
+
+make clean deps "$location-deploy"
