@@ -14,7 +14,7 @@ cd wpg && git checkout "$committish"
 if [ -e assets/static/src/images/.git ]; then
     git pull
 else
-    rm -rf assets/static/src/images && git clone https://git.cipherboy.com/WillowPatchGames/images
+    rm -rf assets/static/src/images && git clone https://git.cipherboy.com/WillowPatchGames/images assets/static/src/images
 fi
 
 make clean deps "$location-deploy"
