@@ -2,13 +2,20 @@
 
 while [ 1 ]; do
     git fetch --all
-    beta_tag="$(git tag -l "beta-*" --sort=taggerdate | tail -n 1)"
-    prod_tag="$(git tag -l "prod-*" --sort=taggerdate | tail -n 1)"
-    if [ "x$beta_tag" != "x" ]; then
-        bash ./scripts/deploy.sh beta "$beta_tag"
+
+    latest_beta_tag="$(git tag -l "beta-*" --sort=taggerdate | tail -n 1)"
+    latest_prod_tag="$(git tag -l "prod-*" --sort=taggerdate | tail -n 1)"
+
+    last_beta_tag="$(cat "$HOME/wpg/.tags/beta")"
+    last_prod_tag="$(cat "$HOME/wpg/.tags/prod")"
+
+    if [ "x$latest_beta_tag" != "x" ] && [ "x$latest_beta_tag" != "x$last_beta_tag" ]; then
+        bash ./scripts/deploy.sh beta "$latest_beta_tag"
+        echo "$latest_beta_tag" > "$HOME/wpg/.tags/beta"
     fi
-    if [ "x$prod_tag" != "x" ]; then
-        bash ./scripts/deploy.sh prod "$prod_tag"
+    if [ "x$latest_prod_tag" != "x" ] && [ "x$latest_prod_tag" != "x$last_prod_tag" ]; then
+        bash ./scripts/deploy.sh prod "$latest_prod_tag"
+        echo "$latest_beta_tag" > "$HOME/wpg/.tags/prod"
     fi
     sleep 600
 done
