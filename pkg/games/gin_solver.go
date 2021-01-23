@@ -195,19 +195,20 @@ func (gs *GinSolver) IsWildCard(card Card) bool {
 
 // Partition a sorted hand into unique regions. Each index is the end (not
 // inclusive). The last index is explicitly included. If the delta between
-// two cards is more than one (e.g., Two and Four of Clubs), the hand is
-// considered partitioned. Notably, without wild cards, two disjoint
+// two cards is more than `nwilds+1` (e.g., Two and Four of Clubs), the hand is
+// considered partitioned. Notably, with only `nwilds` wild cards, two disjoint
 // partitions may not be joined by either kinds or runs.
 //
 // Precondition: hand is already sorted. Otherwise, these partitions wouldn't
 // make any sense.
-func (gs *GinSolver) DivideHand(hand []Card) []int {
+func (gs *GinSolver) DivideHandBy(hand []Card, nwilds int) []int {
 	var partitions []int
 
+	// TODO: handle AceHigh and RunsWrap
 	for index := 1; index < len(hand); index++ {
 		var last_card = hand[index-1]
 		var this_card = hand[index]
-		if int(last_card.Rank)+1 < int(this_card.Rank) {
+		if int(last_card.Rank)+nwilds+1 < int(this_card.Rank) {
 			// Partition after last_card, but before this card.
 			partitions = append(partitions, index)
 		}
@@ -217,6 +218,9 @@ func (gs *GinSolver) DivideHand(hand []Card) []int {
 	partitions = append(partitions, len(hand))
 
 	return partitions
+}
+func (gs *GinSolver) DivideHand(hand []Card) []int {
+	return gs.DivideHandBy(hand, 0)
 }
 
 func subsets(items []int) [][]int {
@@ -628,5 +632,235 @@ func (gs *GinSolver) GroupValueSum(hand []Card, groups []int) int {
 }
 
 func (gs *GinSolver) ComputeMinScore(hand []Card) int {
-	return 10000
+	allCost := 0
+	for _, card := range hand {
+		allCost += gs.PointValue[card.Rank]
+	}
+	min := gs.MinScoreLessThan(hand, allCost)
+	if min > allCost {
+		min = allCost
+	}
+	return min
+}
+
+func (gs *GinSolver) MinScoreLessThan(hand []Card, maxScore int) int {
+	minScore := maxScore + 1
+
+	if len(hand) < 3 {
+		return minScore
+	}
+
+	// Sort all the cards. This allows us to put Jokers ahead of other
+	// wild cards. Notably, we want to sort in reversed order (hence,
+	// define our less function as a more function.
+	sort.SliceStable(hand, func(i, j int) bool {
+		return hand[i].Rank > hand[j].Rank
+	})
+
+	// Before beginning, sort the cards in the hand from highest to lowest,
+	// removing any wild cards before we begin. We sort purely by rank, in
+	// reverse.
+	var wilds = make([]int, 0)
+	var ranked = make([]int, 0)
+	var all = make([]int, len(hand))
+	for card, _ := range hand {
+		if gs.IsWildCard(hand[card]) {
+			wilds = append(wilds, card)
+		} else {
+			ranked = append(ranked, card)
+		}
+		all[card] = card
+	}
+
+	alwaysRanked := make([]Card, len(ranked))
+	for i, r := range ranked {
+		alwaysRanked[i] = hand[r]
+	}
+
+	wildCosts := make([]int, len(wilds))
+	for i, r := range wilds {
+		wildCosts[i] = gs.PointValue[hand[r].Rank]
+	}
+	sort.Ints(wildCosts)
+
+	tries := gs.TryWildCards(hand, all)
+
+	for _, regular := range tries {
+		nwilds := len(all) - len(regular)
+		rankedHere := make([]Card, 0)
+		for _, r := range regular {
+			rankedHere = append(rankedHere, hand[r])
+		}
+		divided := gs.DivideHandBy(rankedHere, nwilds)
+
+		dividedResults := make([]DividedResult, len(divided))
+		last := 0
+		for i, divide := range divided {
+			division := make([]int, divide-last)
+			for l := last; last < divide; last++ {
+				division[last-l] = last
+			}
+			dividedResults[i] = gs.DivideResult(rankedHere, division, minScore-1, nwilds)
+		}
+
+		wildCost := 0
+		for used := nwilds; used >= 0; used-- {
+			score := wildCost + findLeast(dividedResults, minScore-1, nwilds)
+			if score < minScore {
+				minScore = score
+			}
+			if used > 0 {
+				wildCost += wildCosts[nwilds-used]
+			}
+		}
+
+		// Success
+		if minScore == 0 {
+			break
+		}
+	}
+
+	return minScore
+}
+
+// Map from wildcards to cost
+type DividedResult = map[int]int
+type Match struct {
+	cards []int
+	cost  int
+	wc    Interval
+}
+
+func (gs *GinSolver) AllMatches(hand []Card, cards []int) []Match {
+	r := make([]Match, 0)
+	for _, subset := range subsets(cards) {
+		if len(subset) == 0 {
+			continue
+		}
+		wc := gs.WcValidGroup(hand, subset)
+		if wc.min != flag {
+			cost := 0
+			for _, card := range subset {
+				cost += gs.PointValue[hand[card].Rank]
+			}
+			r = append(r, Match{subset, cost, wc})
+		}
+	}
+	return r
+}
+
+func maximalMatchesLessThanWithout(all []Match, omit []int, nwilds int) []Match {
+	if len(all) == 0 {
+		return []Match{Match{make([]int, 0), 0, Interval{0, 0}}}
+	}
+	this := all[0]
+	rest := all[1:]
+	without := maximalMatchesLessThanWithout(rest, omit, nwilds)
+	usedHere := make(map[int]bool, len(this.cards))
+	for _, card := range omit {
+		usedHere[card] = true
+	}
+	needsOmit := false
+	for _, card := range this.cards {
+		if usedHere[card] {
+			needsOmit = true
+			break
+		}
+		usedHere[card] = true
+		omit = append(omit, card)
+	}
+	if this.wc.min == flag || this.wc.min > nwilds || needsOmit {
+		return without
+	}
+
+	for _, m := range maximalMatchesLessThanWithout(rest, omit, nwilds-this.wc.min) {
+		with := Match{
+			append(m.cards, this.cards...),
+			m.cost + this.cost,
+			AndInterval(m.wc, this.wc),
+		}
+		if with.wc.min != flag && with.wc.min <= nwilds {
+			without = append(without, with)
+		}
+	}
+	return without
+}
+
+func (gs *GinSolver) DivideResult(hand []Card, cards []int, maxScore int, nwilds int) DividedResult {
+	all := make([]Match, 0)
+	for _, match := range gs.AllMatches(hand, cards) {
+		// Filter out matches that require too many wildcards
+		if match.wc.min <= nwilds {
+			all = append(all, match)
+		}
+	}
+	allCost := 0
+	for _, card := range cards {
+		allCost += gs.PointValue[hand[card].Rank]
+	}
+
+	r := make(DividedResult)
+	for used := nwilds; used >= 0; used-- {
+		r[used] = maxScore + 1
+	}
+	for used := nwilds; used >= 0; used-- {
+		for _, match := range maximalMatchesLessThanWithout(all, []int{}, used) {
+			if match.wc.min == flag {
+				continue
+			}
+			deadwood := allCost - match.cost
+			if deadwood >= maxScore {
+				continue
+			}
+
+			max := match.wc.min + match.wc.more
+			if match.wc.more == flag || max > nwilds {
+				max = nwilds
+			}
+			for u := match.wc.min; u <= max; u++ {
+				if deadwood < r[used] {
+					r[used] = deadwood
+				}
+			}
+		}
+	}
+
+	return r
+}
+
+func findLeast(dividedResults []DividedResult, maxScore int, nwilds int) int {
+	minScore := maxScore + 1
+	for _, chosen := range choose(len(dividedResults), nwilds) {
+		score := 0
+		for i, choice := range chosen {
+			sc, ok := dividedResults[i][choice]
+			if !ok {
+				score = minScore
+				break
+			}
+			score += sc
+			if score >= minScore {
+				break
+			}
+		}
+		if score < minScore {
+			minScore = score
+		}
+	}
+	return minScore
+}
+
+func choose(n int, c int) [][]int {
+	if n == 0 {
+		return [][]int{[]int{}}
+	}
+	r := make([][]int, 0)
+	for t := c; t >= 0; t-- {
+		r2 := choose(n-1, c-t)
+		for i, _ := range r2 {
+			r2[i] = append(r2[i], t)
+		}
+		r = append(r, r2...)
+	}
+	return r
 }

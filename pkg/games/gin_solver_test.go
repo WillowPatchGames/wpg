@@ -711,10 +711,35 @@ var TestCases = []ValidGroupEntry{
 	},
 }
 
+var someSolver = GinSolver{
+	PointValue:       DefaultPointValue,
+	WildCards:        []CardRank{JokerRank, SevenRank},
+	AnyWildGroup:     true,
+	WildAsRank:       true,
+	AllWildGroups:    true,
+	MostlyWildGroups: true,
+	WildJokerRanked:  false,
+	SameSuitRuns:     true,
+	AceHigh:          false,
+	AceLow:           false,
+	RunsWrap:         false,
+}
+
 func TestIsValidGroup(t *testing.T) {
 	for _, more := range MoreCases {
 		TestCases = append(TestCases, more...)
 	}
+
+	// ls pkg/games/* | entr env GOROOT="" go test -v git.cipherboy.com/WillowPatchGames/wpg/pkg/games
+	ex := []Card{
+		Card{0, SpadesSuit, JackRank},
+		Card{0, SpadesSuit, KingRank},
+		Card{0, SpadesSuit, SevenRank},
+	}
+	c := []int{0, 1}
+	t.Log(someSolver.AllMatches(ex, c))
+	t.Log(someSolver.DivideResult(ex, c, 100, 1))
+	t.Log(someSolver.ComputeMinScore(ex))
 
 	for _, tc := range TestCases {
 		for _, entry := range tc.Entries {
