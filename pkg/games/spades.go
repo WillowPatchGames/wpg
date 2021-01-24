@@ -1061,7 +1061,7 @@ func (ss *SpadesState) tabulateRoundScore() error {
 			} else if ss.Players[player].Score == winner_score {
 				// If we have two teams who are tied for the winning score,
 				// we need to play another round until they break apart.
-				if winning_team == ss.Players[player].Team {
+				if winning_team != ss.Players[player].Team {
 					winning_team = -1
 				}
 			}
