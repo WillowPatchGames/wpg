@@ -857,34 +857,40 @@ func TestIsValidGroup(t *testing.T) {
 			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
 				t.Error("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
 			}
-			/*
-				actual_score := (&tc.Solver).MinScoreBelow(group, 100)
-				if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
-					if len(group) > 10 {
-						continue
-					}
-					m := (&tc.Solver).AllMatches(group, cards)
-					if len(m) < 12 {
-						//t.Log("All matches", m)
-					}
-					t.Log("Mostly",tc.Solver.MostlyWildGroups||tc.Solver.AnyWildGroup,"all",tc.Solver.AllWildGroups||tc.Solver.AnyWildGroup)
-					t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+			actual_score := (&tc.Solver).MinScoreBelow(group, 100)
+			if (entry.IsRun || entry.IsKind) == (actual_score != 0) && !tc.Solver.RunsWrap && !tc.Solver.AceHigh {
+				if len(group) > 10 {
+					continue
 				}
-			*/
+				m := (&tc.Solver).AllMatches(group, cards)
+				if len(m) < 12 {
+					//t.Log("All matches", m)
+				}
+				t.Log("Mostly",tc.Solver.MostlyWildGroups||tc.Solver.AnyWildGroup,"all",tc.Solver.AllWildGroups||tc.Solver.AnyWildGroup)
+				exp := "nonzero"
+				if entry.IsRun || entry.IsKind {
+					exp = "zero"
+				}
+				t.Error("ERROR Expected:", exp, "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+			}
 		}
 	}
 	for _, tc := range HandTestCases {
 		for _, entry := range tc.Entries {
 			group := entry.Hand
 			cards := make([]int, len(group))
-			for index := range group {
+			regular := make([]int, 0)
+			for index, card := range group {
 				cards[index] = index
+				if !(&tc.Solver).IsWildCard(card) {
+					regular = append(regular, index)
+				}
 			}
 
 			actual_score := (&tc.Solver).MinScore(group)
 
 			if actual_score != entry.Score {
-				m := (&tc.Solver).AllMatches(group, cards)
+				m := (&tc.Solver).AllMatchesLessThan(group, regular, 4)
 				if len(m) < 40 {
 					t.Log("All matches", m)
 				}
