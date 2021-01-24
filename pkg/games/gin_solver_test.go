@@ -4,15 +4,15 @@ import (
 	"testing"
 )
 
-type HandEntry struct {
-	Hand   []Card
+type GroupEntry struct {
+	Group   []Card
 	IsRun  bool
 	IsKind bool
 }
 
 type ValidGroupEntry struct {
 	Solver  GinSolver
-	Entries []HandEntry
+	Entries []GroupEntry
 }
 
 var DefaultPointValue = map[CardRank]int{
@@ -118,20 +118,20 @@ func across(fields []GinSetter, df GinSolver) []GinSolver {
 	)
 }
 
-// Test one hand across multiple GinSolver configurations,
+// Test one group across multiple GinSolver configurations,
 // providing functions to verify isRun and isRank based on
 // the particular GinSolver
-func handAcross(
-	fields []GinSetter, df GinSolver, hand []Card,
+func groupAcross(
+	fields []GinSetter, df GinSolver, group []Card,
 	isRun func(GinSolver) bool, isRank func(GinSolver) bool,
 ) []ValidGroupEntry {
 	ret := make([]ValidGroupEntry, 0)
 	for _, solver := range across(fields, df) {
 		ret = append(ret, ValidGroupEntry{
 			Solver: solver,
-			Entries: []HandEntry{
-				HandEntry{
-					Hand:   hand,
+			Entries: []GroupEntry{
+				GroupEntry{
+					Group:   group,
 					IsRun:  isRun(solver),
 					IsKind: isRank(solver),
 				},
@@ -141,21 +141,21 @@ func handAcross(
 	return ret
 }
 
-// Test multiple hands across GinSolver configurations
-func handsAcross(
-	fields []GinSetter, df GinSolver, hands [][]Card,
+// Test multiple groups across GinSolver configurations
+func groupsAcross(
+	fields []GinSetter, df GinSolver, groups [][]Card,
 	isRun func([]Card, GinSolver) bool, isRank func([]Card, GinSolver) bool,
 ) []ValidGroupEntry {
 	ret := make([]ValidGroupEntry, 0)
-	for _, hand := range hands {
-		ret = append(ret, handAcross(fields,
+	for _, group := range groups {
+		ret = append(ret, groupAcross(fields,
 			df,
-			hand,
+			group,
 			func(gs GinSolver) bool {
-				return isRun(hand, gs)
+				return isRun(group, gs)
 			},
 			func(gs GinSolver) bool {
-				return isRank(hand, gs)
+				return isRank(group, gs)
 			},
 		)...)
 	}
@@ -163,7 +163,7 @@ func handsAcross(
 }
 
 var MoreCases = [][]ValidGroupEntry{
-	handAcross(
+	groupAcross(
 		allOptions, defaultSolver,
 		[]Card{
 			Card{0, SpadesSuit, AceRank},
@@ -177,7 +177,7 @@ var MoreCases = [][]ValidGroupEntry{
 			return false
 		},
 	),
-	handAcross(
+	groupAcross(
 		allOptions, defaultSolver,
 		[]Card{
 			Card{0, SpadesSuit, AceRank},
@@ -191,7 +191,7 @@ var MoreCases = [][]ValidGroupEntry{
 			return false
 		},
 	),
-	handAcross(
+	groupAcross(
 		allOptions, defaultSolver,
 		[]Card{
 			Card{0, NoneSuit, JokerRank},
@@ -205,7 +205,7 @@ var MoreCases = [][]ValidGroupEntry{
 			return gs.AnyWildGroup || gs.AllWildGroups
 		},
 	),
-	handsAcross(
+	groupsAcross(
 		append(allOptions, addWildCard(FourRank)), defaultSolver,
 		[][]Card{
 			[]Card{
@@ -224,16 +224,16 @@ var MoreCases = [][]ValidGroupEntry{
 				Card{0, NoneSuit, FourRank},
 			},
 		},
-		func(hand []Card, gs GinSolver) bool {
-			if len(hand) < 3 {
+		func(group []Card, gs GinSolver) bool {
+			if len(group) < 3 {
 				return false
 			}
 			fourWild := len(gs.WildCards) > 1
 			return gs.AnyWildGroup || (gs.AllWildGroups && fourWild) ||
 				(gs.MostlyWildGroups && (!fourWild || gs.WildAsRank))
 		},
-		func(hand []Card, gs GinSolver) bool {
-			if len(hand) < 3 {
+		func(group []Card, gs GinSolver) bool {
+			if len(group) < 3 {
 				return false
 			}
 			fourWild := len(gs.WildCards) > 1
@@ -258,9 +258,9 @@ var TestCases = []ValidGroupEntry{
 			AceLow:           true,
 			RunsWrap:         false,
 		},
-		Entries: []HandEntry{
-			HandEntry{
-				Hand: []Card{
+		Entries: []GroupEntry{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, ClubsSuit, FourRank},
 					Card{0, HeartsSuit, ThreeRank},
@@ -268,8 +268,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, ThreeRank},
 					Card{0, ClubsSuit, AceRank},
@@ -277,8 +277,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, FiveRank},
 					Card{0, ClubsSuit, FiveRank},
@@ -286,8 +286,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: true,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, ThreeRank},
 					Card{0, NoneSuit, JokerRank},
@@ -295,8 +295,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, FourRank},
 					Card{0, NoneSuit, JokerRank},
@@ -304,8 +304,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, FourRank},
 					Card{0, NoneSuit, JokerRank},
@@ -314,8 +314,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, ThreeRank},
 					Card{0, HeartsSuit, TwoRank},
 					Card{0, NoneSuit, JokerRank},
@@ -324,8 +324,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, FourRank},
 					Card{0, NoneSuit, JokerRank},
@@ -335,8 +335,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, SpadesSuit, ThreeRank},
 					Card{0, NoneSuit, JokerRank},
@@ -344,8 +344,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, HeartsSuit, FiveRank},
 					Card{0, NoneSuit, JokerRank},
@@ -353,8 +353,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: true,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, AceRank},
 					Card{0, NoneSuit, JokerRank},
@@ -362,8 +362,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
@@ -371,8 +371,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, JackRank},
 					Card{0, NoneSuit, JokerRank},
@@ -380,8 +380,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, HeartsSuit, JackRank},
@@ -399,8 +399,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, HeartsSuit, JackRank},
@@ -419,8 +419,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, HeartsSuit, JackRank},
@@ -438,8 +438,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, HeartsSuit, JackRank},
@@ -457,8 +457,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, HeartsSuit, JackRank},
@@ -476,8 +476,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, KingRank},
 					Card{0, HeartsSuit, QueenRank},
 					Card{0, HeartsSuit, JackRank},
@@ -496,8 +496,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
@@ -521,9 +521,9 @@ var TestCases = []ValidGroupEntry{
 			AceLow:           true,
 			RunsWrap:         false,
 		},
-		Entries: []HandEntry{
-			HandEntry{
-				Hand: []Card{
+		Entries: []GroupEntry{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, ClubsSuit, FourRank},
 					Card{0, HeartsSuit, ThreeRank},
@@ -531,8 +531,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, SpadesSuit, FourRank},
 					Card{0, SpadesSuit, ThreeRank},
@@ -540,8 +540,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, SevenRank},
 					Card{0, HeartsSuit, SevenRank},
 					Card{0, DiamondsSuit, SevenRank},
@@ -550,8 +550,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: true,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, SevenRank},
 					Card{0, HeartsSuit, SevenRank},
 					Card{0, SpadesSuit, EightRank},
@@ -575,9 +575,9 @@ var TestCases = []ValidGroupEntry{
 			AceLow:           true,
 			RunsWrap:         false,
 		},
-		Entries: []HandEntry{
-			HandEntry{
-				Hand: []Card{
+		Entries: []GroupEntry{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, ClubsSuit, FourRank},
 					Card{0, HeartsSuit, ThreeRank},
@@ -585,8 +585,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  false,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, FiveRank},
 					Card{0, SpadesSuit, FourRank},
 					Card{0, SpadesSuit, ThreeRank},
@@ -594,8 +594,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, AceRank},
@@ -603,8 +603,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, AceRank},
@@ -629,9 +629,9 @@ var TestCases = []ValidGroupEntry{
 			AceLow:           true,
 			RunsWrap:         true,
 		},
-		Entries: []HandEntry{
-			HandEntry{
-				Hand: []Card{
+		Entries: []GroupEntry{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, AceRank},
@@ -639,8 +639,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, AceRank},
@@ -649,8 +649,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, JackRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
@@ -660,8 +660,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, JackRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, NoneSuit, JokerRank},
@@ -671,8 +671,8 @@ var TestCases = []ValidGroupEntry{
 				IsRun:  true,
 				IsKind: false,
 			},
-			HandEntry{
-				Hand: []Card{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, JackRank},
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, AceRank},
@@ -697,9 +697,9 @@ var TestCases = []ValidGroupEntry{
 			AceLow:           true,
 			RunsWrap:         true,
 		},
-		Entries: []HandEntry{
-			HandEntry{
-				Hand: []Card{
+		Entries: []GroupEntry{
+			GroupEntry{
+				Group: []Card{
 					Card{0, SpadesSuit, AceRank},
 					Card{0, SpadesSuit, QueenRank},
 					Card{0, NoneSuit, JokerRank},
@@ -743,17 +743,17 @@ func TestIsValidGroup(t *testing.T) {
 
 	for _, tc := range TestCases {
 		for _, entry := range tc.Entries {
-			hand := entry.Hand
-			cards := make([]int, len(hand))
-			for index := range hand {
+			group := entry.Group
+			cards := make([]int, len(group))
+			for index := range group {
 				cards[index] = index
 			}
-			actual_group := (&tc.Solver).IsValidGroup(hand, cards)
-			actual_run := (&tc.Solver).IsRun(hand, cards)
-			actual_kind := (&tc.Solver).IsKind(hand, cards)
+			actual_group := (&tc.Solver).IsValidGroup(group, cards)
+			actual_run := (&tc.Solver).IsRun(group, cards)
+			actual_kind := (&tc.Solver).IsKind(group, cards)
 
 			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
-				t.Fatal("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor hand\n", hand, "\nand solver\n", tc.Solver)
+				t.Fatal("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
 			}
 		}
 	}
