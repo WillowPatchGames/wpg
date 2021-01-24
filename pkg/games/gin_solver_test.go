@@ -1,11 +1,12 @@
 package games
 
 import (
+	"sort"
 	"testing"
 )
 
 type GroupEntry struct {
-	Group   []Card
+	Group  []Card
 	IsRun  bool
 	IsKind bool
 }
@@ -13,6 +14,16 @@ type GroupEntry struct {
 type ValidGroupEntry struct {
 	Solver  GinSolver
 	Entries []GroupEntry
+}
+
+type HandEntry struct {
+	Hand  []Card
+	Score int
+}
+
+type ValidHandEntry struct {
+	Solver  GinSolver
+	Entries []HandEntry
 }
 
 var DefaultPointValue = map[CardRank]int{
@@ -131,7 +142,7 @@ func groupAcross(
 			Solver: solver,
 			Entries: []GroupEntry{
 				GroupEntry{
-					Group:   group,
+					Group:  group,
 					IsRun:  isRun(solver),
 					IsKind: isRank(solver),
 				},
@@ -162,7 +173,7 @@ func groupsAcross(
 	return ret
 }
 
-var MoreCases = [][]ValidGroupEntry{
+var MoreGroupCases = [][]ValidGroupEntry{
 	groupAcross(
 		allOptions, defaultSolver,
 		[]Card{
@@ -243,7 +254,7 @@ var MoreCases = [][]ValidGroupEntry{
 	),
 }
 
-var TestCases = []ValidGroupEntry{
+var GroupTestCases = []ValidGroupEntry{
 	ValidGroupEntry{
 		Solver: GinSolver{
 			PointValue:       DefaultPointValue,
@@ -713,7 +724,7 @@ var TestCases = []ValidGroupEntry{
 
 var someSolver = GinSolver{
 	PointValue:       DefaultPointValue,
-	WildCards:        []CardRank{JokerRank, SevenRank},
+	WildCards:        []CardRank{JokerRank},
 	AnyWildGroup:     true,
 	WildAsRank:       true,
 	AllWildGroups:    true,
@@ -725,23 +736,114 @@ var someSolver = GinSolver{
 	RunsWrap:         false,
 }
 
+var HandTestCases = []ValidHandEntry{
+	ValidHandEntry{
+		Solver: someSolver,
+		Entries: []HandEntry{
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, KingRank},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, SpadesSuit, KingRank},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, NoneSuit, ThreeRank},
+					Card{0, SpadesSuit, ThreeRank},
+					Card{0, HeartsSuit, ThreeRank},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, SpadesSuit, KingRank},
+					Card{0, DiamondsSuit, ThreeRank},
+					Card{0, SpadesSuit, ThreeRank},
+					Card{0, HeartsSuit, ThreeRank},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, SpadesSuit, KingRank},
+					Card{0, DiamondsSuit, ThreeRank},
+				},
+				Score: 3,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, SpadesSuit, KingRank},
+					Card{0, DiamondsSuit, TenRank},
+					Card{0, DiamondsSuit, NineRank},
+					Card{0, DiamondsSuit, EightRank},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, SpadesSuit, KingRank},
+					Card{0, DiamondsSuit, NineRank},
+					Card{0, DiamondsSuit, EightRank},
+				},
+				Score: 17,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, DiamondsSuit, NineRank},
+					Card{0, DiamondsSuit, EightRank},
+				},
+				Score: 17,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, SpadesSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, DiamondsSuit, QueenRank},
+				},
+				Score: 11,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, JackRank},
+					Card{0, DiamondsSuit, QueenRank},
+					Card{0, NoneSuit, JokerRank},
+				},
+				Score: 43,
+			},
+		},
+	},
+}
+
 func TestIsValidGroup(t *testing.T) {
-	for _, more := range MoreCases {
-		TestCases = append(TestCases, more...)
+	for _, more := range MoreGroupCases {
+		GroupTestCases = append(GroupTestCases, more...)
 	}
 
 	// ls pkg/games/* | entr env GOROOT="" go test -v git.cipherboy.com/WillowPatchGames/wpg/pkg/games
-	ex := []Card{
-		Card{0, SpadesSuit, JackRank},
-		Card{0, SpadesSuit, KingRank},
-		Card{0, SpadesSuit, SevenRank},
-	}
-	c := []int{0, 1}
-	t.Log(someSolver.AllMatches(ex, c))
-	t.Log(someSolver.DivideResult(ex, c, 100, 1))
-	t.Log(someSolver.ComputeMinScore(ex))
 
-	for _, tc := range TestCases {
+	for _, tc := range GroupTestCases {
 		for _, entry := range tc.Entries {
 			group := entry.Group
 			cards := make([]int, len(group))
@@ -753,7 +855,46 @@ func TestIsValidGroup(t *testing.T) {
 			actual_kind := (&tc.Solver).IsKind(group, cards)
 
 			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
-				t.Fatal("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+				t.Error("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+			}
+			/*
+				actual_score := (&tc.Solver).MinScoreBelow(group, 100)
+				if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
+					if len(group) > 10 {
+						continue
+					}
+					m := (&tc.Solver).AllMatches(group, cards)
+					if len(m) < 12 {
+						//t.Log("All matches", m)
+					}
+					t.Log("Mostly",tc.Solver.MostlyWildGroups||tc.Solver.AnyWildGroup,"all",tc.Solver.AllWildGroups||tc.Solver.AnyWildGroup)
+					t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+				}
+			*/
+		}
+	}
+	for _, tc := range HandTestCases {
+		for _, entry := range tc.Entries {
+			group := entry.Hand
+			cards := make([]int, len(group))
+			for index := range group {
+				cards[index] = index
+			}
+
+			actual_score := (&tc.Solver).MinScore(group)
+
+			if actual_score != entry.Score {
+				m := (&tc.Solver).AllMatches(group, cards)
+				if len(m) < 40 {
+					t.Log("All matches", m)
+				}
+				sorted := make([]Card, len(group))
+				copy(sorted, group)
+				sort.SliceStable(sorted, func(i, j int) bool {
+					return sorted[i].Rank < sorted[j].Rank
+				})
+				t.Log("Divided", (&tc.Solver).DivideHandBy(sorted, 0))
+				t.Error("ERROR Expected:", entry.Score, "got:", actual_score, "\nfor group\n", entry.Hand, "\nand solver\n", tc.Solver)
 			}
 		}
 	}
