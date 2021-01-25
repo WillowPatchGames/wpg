@@ -2,7 +2,6 @@ package games
 
 import (
 	"sort"
-	"log"
 )
 
 type GinSolver struct {
@@ -774,145 +773,6 @@ func (gs *GinSolver) AllMatches(hand []Card, cards []int) []Match {
 	return r
 }
 
-type Pos struct {
-	Rank CardRank
-	Suit CardSuit
-}
-
-func (gs *GinSolver) AllMatchesLessThan(hand []Card, cards []int, nwilds int) []Match {
-	r := make([]Match, 0)
-	grid := make(map[Pos][]int, len(cards))
-	for _, card := range cards {
-		pos := Pos{hand[card].Rank,hand[card].Suit}
-		grid[pos] = append(grid[pos], card)
-	}
-	for _, subset := range gs.exploreMatches(grid, nwilds) {
-		if len(subset) == 0 {
-			continue
-		}
-		wc := gs.WcValidGroup(hand, subset)
-		if wc.min != flag {
-			cost := 0
-			for _, card := range subset {
-				cost += gs.PointValue[hand[card].Rank]
-			}
-			r = append(r, Match{subset, cost, wc})
-		}
-	}
-	// An extra match to vacuum up any lonely wildcards
-	if gs.AnyWildGroup || gs.AllWildGroups {
-		r = append(r, Match{[]int{}, 0, Interval{3, flag}})
-	}
-	return r
-}
-
-func with(is []int, ins [][]int) [][]int {
-	outs := make([][]int, 0)
-	for _, in := range ins {
-		for _, i := range is {
-			outs = append(outs, append(in, i))
-		}
-	}
-	return outs
-}
-func (gs *GinSolver) exploreMatches(grid map[Pos][]int, nwilds int) [][]int {
-	r := make([][]int, 0)
-	for seed, seedi := range grid {
-		explored := gs.exploreFrom(seed, grid, nwilds)
-		r = append(r, with(seedi, explored)...)
-	}
-	return r
-}
-func (gs *GinSolver) exploreFrom(seed Pos, grid map[Pos][]int, nwilds int) [][]int {
-	var r [][]int
-	if nwilds >= 2 {
-		r = [][]int{[]int{}}
-	} else {
-		r = [][]int{}
-	}
-	return append(append(r, gs.exploreKindFrom(seed, grid)...), gs.exploreRunFrom(seed, grid, nwilds)...)
-}
-func (gs *GinSolver) exploreKindFrom(seed Pos, grid map[Pos][]int) [][]int {
-	r := make([][]int, 0)
-	for _, suit := range nextInKind(seed.Suit) {
-		pos := Pos{seed.Rank, suit}
-		posi, ok := grid[pos]
-		if !ok {
-			continue
-		}
-		r = append(r, with(posi, append(gs.exploreKindFrom(pos, grid), []int{}))...)
-	}
-	return r
-}
-func (gs *GinSolver) exploreRunFrom(seed Pos, grid map[Pos][]int, nwilds int) [][]int {
-	if nwilds > 12 {
-		nwilds = 12
-	}
-	r := make([][]int, 0)
-	for _, pos := range gs.nextInRun(seed, nwilds) {
-		posi, ok := grid[pos]
-		if !ok {
-			continue
-		}
-		mwilds := nwilds + 1 - int(pos.Rank - seed.Rank)
-		if mwilds < 0 {
-			continue
-		}
-		r = append(r, with(posi, append(gs.exploreRunFrom(pos, grid, mwilds), []int{}))...)
-	}
-	return r
-}
-func nextInKind(suit CardSuit) []CardSuit {
-	r := make([]CardSuit, 0)
-	i := int(suit)
-	if i < int(ClubsSuit) {
-		r = append(r, ClubsSuit)
-	}
-	if i < int(HeartsSuit) {
-		r = append(r, HeartsSuit)
-	}
-	if i < int(SpadesSuit) {
-		r = append(r, SpadesSuit)
-	}
-	if i < int(DiamondsSuit) {
-		r = append(r, DiamondsSuit)
-	}
-	if i < int(FancySuit) {
-		r = append(r, FancySuit)
-	}
-	return r
-}
-func (gs *GinSolver) nextInRun(pos Pos, nwilds int) []Pos {
-	if nwilds > 12 {
-		nwilds = 12
-	}
-	suits := []CardSuit{pos.Suit}
-	if !gs.SameSuitRuns {
-		suits = []CardSuit{NoneSuit, ClubsSuit, HeartsSuit, SpadesSuit, DiamondsSuit, FancySuit}
-	}
-	poses := make([]Pos, 0)
-	max := KingRank
-	if pos.Rank == max {
-		return poses
-	}
-	for rank := addwrap(pos.Rank, 1, AceRank, max); nwilds >= 0; nwilds = nwilds-1 {
-		if false {
-			log.Println("pos",pos,"rank",rank,"nwilds",nwilds)
-		}
-		for _, suit := range suits {
-			poses = append(poses, Pos{rank,suit})
-		}
-		if nwilds == 0 || rank == max {
-			break
-		}
-		rank = addwrap(rank, 1, AceRank, max)
-		if rank == pos.Rank {
-			break
-		}
-	}
-	return poses
-}
-
 // Find all matches …
 //  - … using no cards from `omit`, and …
 //  - … using less than `nwilds` wildcards
@@ -967,14 +827,11 @@ func maximalMatchesLessThanWithout(all []Match, omit map[int]bool, nwilds int) [
 
 func (gs *GinSolver) DivideResult(hand []Card, cards []int, maxScore int, nwilds int) DividedResult {
 	all := make([]Match, 0)
-	for _, match := range gs.AllMatchesLessThan(hand, cards, nwilds) {
+	for _, match := range gs.AllMatches(hand, cards) {
 		// Filter out matches that require too many wildcards
 		if match.wc.min <= nwilds {
 			all = append(all, match)
 		}
-	}
-	if false {
-		log.Println("all",all)
 	}
 
 	// Compute the cost of all these cards
