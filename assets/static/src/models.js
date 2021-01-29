@@ -277,6 +277,84 @@ class UserModel {
     return result;
   }
 
+  async gameSearch(lifecycle, room_id) {
+    var games_uri = this.api + '/user/' + this.id + '/games';
+    if (room_id !== undefined && room_id !== null) {
+      games_uri += "/" + room_id;
+    }
+    if (nonempty(lifecycle)) {
+      games_uri += "/" + lifecycle;
+    }
+
+    const response = await fetch(games_uri, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+    });
+
+    const data = await response.json();
+    if (data !== null && 'type' in data && data['type'] === 'error') {
+      console.log(data);
+      return data;
+    }
+
+    var result = [];
+    if (data !== null) {
+      for (let game_data of data) {
+        var game_obj = await GameModel.FromId(this, game_data.game_id);
+        game_data['game'] = game_obj;
+
+        if ('room_id' in game_data && game_data['room_id'] !== undefined && game_data['room_id'] !== null && game_data['room_id'] !== 0) {
+          var room_obj = await RoomModel.FromId(this, game_data.room_id);
+          game_data['room'] = room_obj;
+        }
+
+        result.push(game_data);
+      }
+    }
+
+    return result;
+  }
+
+  async roomSearch(lifecycle) {
+    var rooms_uri = this.api + '/user/' + this.id + '/rooms';
+    if (nonempty(lifecycle)) {
+      rooms_uri += "/" + lifecycle;
+    }
+
+    const response = await fetch(rooms_uri, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+    });
+
+    const data = await response.json();
+    if (data !== null && 'type' in data && data['type'] === 'error') {
+      console.log(data);
+      return data;
+    }
+
+    var result = [];
+    if (data !== null) {
+      for (let room_data of data) {
+        var room_obj = await RoomModel.FromId(this, room_data.room_id);
+        room_data['room'] = room_obj;
+
+        result.push(room_data);
+      }
+    }
+
+    return result;
+  }
+
   async enroll2FA(device) {
     var request = {};
     if (nonempty(device)) {
@@ -713,6 +791,32 @@ class RoomModel {
     this.mode = null;
     this.open = null;
     this.code = null;
+  }
+
+  static async FromId(user, id) {
+    var ret = new RoomModel(user);
+    var uri = ret.api + '/room/' + id;
+
+    const response = await fetch(uri, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Auth-Token': ret.user.token,
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+      ret.error = result;
+      return ret;
+    }
+
+    Object.assign(ret, result);
+    ret.error = null;
+    return ret;
   }
 
   static async FromCode(user, code) {
