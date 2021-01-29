@@ -122,7 +122,10 @@ func (handle *SearchRoomsHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		query := tx.Model(&database.RoomMember{}).Where("room_members.user_id = ? AND room_members.admitted = ?", handle.user.ID, true)
 		query = query.Joins("LEFT JOIN rooms ON room_members.room_id = rooms.id")
-		if handle.req.Lifecycle != "" {
+		// XXX -- FIXME -- Remove hack about playing lifecycle once a proper
+		// lifecycle has been introduced for rooms. Also update user's search
+		// page.
+		if handle.req.Lifecycle != "" && handle.req.Lifecycle != "playing" {
 			query = query.Where("rooms.lifecycle = ?", handle.req.Lifecycle)
 		}
 		query = query.Order("rooms.id DESC")
