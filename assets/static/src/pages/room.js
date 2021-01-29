@@ -11,6 +11,7 @@ import '@rmwc/card/styles';
 import '@rmwc/checkbox/styles';
 import '@rmwc/grid/styles';
 import '@rmwc/list/styles';
+import '@rmwc/select/styles';
 import '@rmwc/tabs/styles';
 import '@rmwc/typography/styles';
 import '@rmwc/textfield/styles';
@@ -21,6 +22,7 @@ import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
 import * as g from '@rmwc/grid';
 import * as l from '@rmwc/list';
+import { Select } from '@rmwc/select';
 import * as t from '@rmwc/tabs';
 import { Typography } from '@rmwc/typography';
 import { TextField } from '@rmwc/textfield';
@@ -586,9 +588,49 @@ class RoomArchiveTab extends React.Component {
     return (
       <div>
         <Typography use="headline3">Archive</Typography>
-        <c.Card>
-          { games }
-        </c.Card>
+        <div>
+          <g.Grid fixedColumnWidth={ true }>
+            <g.GridCell align="left" span={6} tablet={8}>
+              <Typography use="headline4">Filter</Typography>
+              <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+                <c.Card>
+                  <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+                    <Select label="Game Lifecycle" enhanced
+                      value={ this.state.game_lifecycle }
+                      onChange={ this.inputHandler("game_lifecycle") }
+                      options={[
+                        {
+                          "label": "Any",
+                          "value": "any",
+                        },
+                        {
+                          "label": "Pending",
+                          "value": "pending",
+                        },
+                        {
+                          "label": "Playing",
+                          "value": "playing",
+                        },
+                        {
+                          "label": "Finished",
+                          "value": "finished",
+                        },
+                        {
+                          "label": "Deleted",
+                          "value": "deleted",
+                        },
+                      ]}
+                    />
+                  </div>
+                </c.Card>
+              </div>
+            </g.GridCell>
+            <g.GridCell align="right" span={6} tablet={8}>
+              <Typography use="headline4">Results</Typography>
+              { games }
+            </g.GridCell>
+          </g.Grid>
+        </div>
       </div>
     );
   }
