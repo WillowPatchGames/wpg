@@ -11,7 +11,6 @@ import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/dialog/styles';
-import '@rmwc/grid/styles';
 import '@rmwc/list/styles';
 import '@rmwc/tabs/styles';
 import '@rmwc/textfield/styles';
@@ -22,7 +21,6 @@ import { Avatar } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
-import * as g from '@rmwc/grid';
 import * as l from '@rmwc/list';
 import * as t from '@rmwc/tabs';
 import { TextField } from '@rmwc/textfield';
@@ -31,6 +29,8 @@ import { Typography } from '@rmwc/typography';
 
 import { LoadingPage } from './common.js';
 import { gravatarify } from '../utils/gravatar.js';
+
+import { formatDistanceToNow } from 'date-fns';
 
 class UserProfileTab extends React.Component {
   constructor(props) {
@@ -459,10 +459,42 @@ class UserArchiveTab extends React.Component {
   }
 
   async componentDidMount() {
-		var games = await this.props.user.gameSearch(this.state.game_lifecycle);
-		var rooms = await this.props.user.gameSearch(this.state.room_lifecycle);
-    this.setState(state => Object.assign({}, state, { games, rooms }));
+		await this.reloadArchive();
   }
+
+	async reloadArchive() {
+		var games = await this.props.user.gameSearch(this.state.game_lifecycle);
+		var rooms = await this.props.user.roomSearch(this.state.room_lifecycle);
+    this.setState(state => Object.assign({}, state, { games, rooms }));
+	}
+
+	async handleDeleteGame(game) {
+		await game.delete();
+		await this.reloadArchive();
+	}
+
+	async handleJoinGame(game) {
+		this.props.setGame(game);
+		if (game.lifecycle === 'finished') {
+			this.props.setPage('/afterparty');
+		} else {
+			this.props.setPage('/play', game.code);
+		}
+
+		await this.reloadArchive();
+	}
+
+	async handleDeleteRoom(room) {
+		await room.delete();
+		await this.reloadArchive();
+	}
+
+	async handleJoinRoom(room) {
+		this.props.setRoom(room);
+		this.props.setPage('/room', room.code);
+
+		await this.reloadArchive();
+	}
 
   render() {
     var games = null;
@@ -476,15 +508,30 @@ class UserArchiveTab extends React.Component {
 				loaded_games.push(
 					<l.ListItem>
 						<l.ListItemText>
-							<l.ListItemPrimaryText>
-								<b>Game #{ game.game_id }</b>&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
+							<l.ListItemPrimaryText style={{ "textAlign": "left" }}>
+								<b>Game #{ game.game_id }</b>&nbsp;-&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
 							</l.ListItemPrimaryText>
 							<l.ListItemSecondaryText>
-								<Button theme="secondary" label={ this.state.lifecycle !== "finished" ? "resume" : "afterparty" } />
+								<span title={ game.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(game.created_at)) } ago</span>
+								Updated <span title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
 							</l.ListItemSecondaryText>
 						</l.ListItemText>
 						<l.ListItemMeta>
-							{ game.created_at }
+							{
+								game.lifecycle !== "deleted"
+								? <Button theme="secondary"
+										label={ game.lifecycle !== "finished" ? "Resume" : "Afterparty" }
+										onClick={ () => this.handleJoinGame(game.game) }
+									/>
+								: null
+							}
+							{
+								game.lifecycle !== "deleted" && game.lifecycle !== "finished"
+								? <Button theme="secondary" label="Delete"
+										onClick={ () => this.handleDeleteGame(game.game) }
+									/>
+								: null
+							}
 						</l.ListItemMeta>
 					</l.ListItem>
 				);
@@ -515,6 +562,42 @@ class UserArchiveTab extends React.Component {
     }
 
     if (this.state.rooms) {
+			var loaded_rooms = [];
+      for (let room of this.state.rooms) {
+        console.log(room);
+
+        loaded_rooms.push(
+          <l.ListItem>
+            <l.ListItemText>
+              <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
+                <b>Room #{ room.room_id }</b>&nbsp;-&nbsp;{ room.style }&nbsp;-&nbsp;<i>{ room.lifecycle }</i>
+              </l.ListItemPrimaryText>
+              <l.ListItemSecondaryText>
+                <span title={ room.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(room.created_at)) } ago</span>
+                Updated <span title={ room.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(room.updated_at)) } ago</span>
+              </l.ListItemSecondaryText>
+            </l.ListItemText>
+            <l.ListItemMeta>
+              {
+                room.lifecycle !== "deleted"
+                ? <Button theme="secondary"
+                    label={ room.lifecycle !== "finished" ? "Resume" : "Afterparty" }
+                    onClick={ () => this.handleJoinRoom(room.room) }
+                  />
+                : null
+              }
+              {
+                room.lifecycle !== "deleted" && room.lifecycle !== "finished"
+                ? <Button theme="secondary" label="Delete"
+                    onClick={ () => this.handleDeleteRoom(room.room) }
+                  />
+                : null
+              }
+            </l.ListItemMeta>
+          </l.ListItem>
+        );
+      }
+
       rooms = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
@@ -522,7 +605,9 @@ class UserArchiveTab extends React.Component {
                 <l.SimpleListItem text={ <b>Rooms</b> } metaIcon="chevron_right" />
               }
             >
-              <p>Archived room data</p>
+              <l.List twoLine>
+								{ loaded_rooms }
+							</l.List>
             </l.CollapsibleList>
           </div>
         </c.Card>
