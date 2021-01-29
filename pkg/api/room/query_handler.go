@@ -34,6 +34,7 @@ type queryHandlerResponse struct {
 	Owner  uint64 `json:"owner"`
 	Style  string `json:"style,omitempty"`
 	Open   bool   `json:"open,omitempty"`
+	Code   string `json:"code,omitempty"`
 	Games  struct {
 		Pending  []uint64 `json:"pending,omitempty"`
 		Playing  []uint64 `json:"playing,omitempty"`
@@ -198,6 +199,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	if room_member.Admitted && !room_member.Banned {
 		handle.resp.Open = room.Open
 		handle.resp.Style = room.Style
+		handle.resp.Code = room.JoinCode.String
 	}
 
 	utils.SendResponse(w, r, handle)

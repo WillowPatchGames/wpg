@@ -32,6 +32,7 @@ type SearchGamesHandlerResponse struct {
 	Style     string    `json:"style"`
 	Lifecycle string    `json:"lifecycle"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type SearchGamesHandler struct {
@@ -153,6 +154,7 @@ func (handle *SearchGamesHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 				Style:     game.Style,
 				Lifecycle: game.Lifecycle,
 				CreatedAt: game.CreatedAt,
+				UpdatedAt: game.UpdatedAt,
 			})
 		}
 

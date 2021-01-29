@@ -30,6 +30,7 @@ type SearchRoomsHandlerResponse struct {
 	Style     string    `json:"style"`
 	Lifecycle string    `json:"lifecycle"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type SearchRoomsHandler struct {
@@ -145,6 +146,7 @@ func (handle *SearchRoomsHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 				// Lifecycle: room.Lifecycle,
 				Lifecycle: "playing",
 				CreatedAt: room.CreatedAt,
+				UpdatedAt: room.UpdatedAt,
 			})
 		}
 
