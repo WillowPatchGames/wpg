@@ -666,66 +666,68 @@ class UserArchiveTab extends React.Component {
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
               <h4>Filter</h4>
               <g.Grid>
-              <g.GridCell span={6}>
-              <Select label="Game Lifecycle" enhanced
-                value={ this.state.game_lifecycle }
-                onChange={ this.inputHandler("game_lifecycle") }
-                options={[
-                  {
-                    "label": "Any",
-                    "value": "any",
-                  },
-                  {
-                    "label": "Pending",
-                    "value": "pending",
-                  },
-                  {
-                    "label": "Playing",
-                    "value": "playing",
-                  },
-                  {
-                    "label": "Finished",
-                    "value": "finished",
-                  },
-                  {
-                    "label": "Deleted",
-                    "value": "deleted",
-                  },
-                ]}
-              />
-      </g.GridCell>
-      <g.GridCell span={6}>
-              <Select label="Room Lifecycle" enhanced
-                value={ this.state.room_lifecycle }
-                onChange={ this.inputHandler("room_lifecycle") }
-                options={[
-                  {
-                    "label": "Any",
-                    "value": "any",
-                  },
-                  {
-                    "label": "Playing",
-                    "value": "playing",
-                  },
-                  {
-                    "label": "Finished",
-                    "value": "finished",
-                  },
-                  {
-                    "label": "Deleted",
-                    "value": "deleted",
-                  },
-                ]}
-              /></g.GridCell></g.Grid>
-            {
-              this.state.room_id !== null && this.state.room_id !== 0
-              ? <>
-                  Limiting to games in room #{ this.state.room_id }.<br />
-                  <Button theme="secondary" label="Clear"
-                          onClick={ () => this.handleFilterRoom(null) } />
-                </>
-              : null
-            }
+                <g.GridCell span={6}>
+                  <Select label="Game Lifecycle" enhanced
+                    value={ this.state.game_lifecycle }
+                    onChange={ this.inputHandler("game_lifecycle") }
+                    options={[
+                      {
+                        "label": "Any",
+                        "value": "any",
+                      },
+                      {
+                        "label": "Pending",
+                        "value": "pending",
+                      },
+                      {
+                        "label": "Playing",
+                        "value": "playing",
+                      },
+                      {
+                        "label": "Finished",
+                        "value": "finished",
+                      },
+                      {
+                        "label": "Deleted",
+                        "value": "deleted",
+                      },
+                    ]}
+                  />
+                </g.GridCell>
+                <g.GridCell span={6}>
+                  <Select label="Room Lifecycle" enhanced
+                    value={ this.state.room_lifecycle }
+                    onChange={ this.inputHandler("room_lifecycle") }
+                    options={[
+                      {
+                        "label": "Any",
+                        "value": "any",
+                      },
+                      {
+                        "label": "Playing",
+                        "value": "playing",
+                      },
+                      {
+                        "label": "Finished",
+                        "value": "finished",
+                      },
+                      {
+                        "label": "Deleted",
+                        "value": "deleted",
+                      },
+                    ]}
+                  />
+                </g.GridCell>
+              </g.Grid>
+              {
+                this.state.room_id !== null && this.state.room_id !== 0
+                ? <>
+                    Limiting to games in room #{ this.state.room_id }.<br />
+                    <Button theme="secondary" label="Clear"
+                            onClick={ () => this.handleFilterRoom(null) } />
+                  </>
+                : null
+              }
             </div>
           </c.Card>
         </div>
