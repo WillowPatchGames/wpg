@@ -29,6 +29,8 @@ import { ThemeProvider } from '@rmwc/theme';
 import { killable, CreateGameForm, PreGamePage } from './games.js';
 import { GameCache } from '../utils/cache.js';
 
+import { formatDistanceToNow } from 'date-fns';
+
 class RoomMembersTab extends React.Component {
   constructor(props) {
     super(props);
@@ -469,9 +471,125 @@ class RoomGamesTab extends React.Component {
 }
 
 class RoomArchiveTab extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      games: null,
+      game_lifecycle: "any",
+    }
+  }
+
+  async componentDidMount() {
+    await this.reloadArchive();
+  }
+
+  async reloadArchive() {
+    var games = await this.props.user.gameSearch(this.state.game_lifecycle, this.props.room.id);
+    if (games !== null && games.length === 0) {
+      games = null;
+    }
+
+    this.setState(state => Object.assign({}, state, { games }));
+  }
+
+  async handleDeleteGame(game) {
+    await game.delete();
+    await this.reloadArchive();
+  }
+
+  async handleJoinGame(game) {
+    this.props.setGame(game);
+    this.props.setRoom(this.props.room);
+
+    if (game.lifecycle === 'finished') {
+      this.props.setPage('/afterparty', true);
+    } else {
+      this.props.setPage('/play', true);
+    }
+  }
+
+  async newState(fn, cb) {
+    await this.setState(state => Object.assign({}, state, fn(state)));
+    await this.reloadArchive();
+  }
+
+  inputHandler(name, checky) {
+    return async (e) => {
+      var v = checky ? e.target.checked : e.target.value;
+      return await this.newState(() => ({ [name]: v }));
+    };
+  }
+
   render() {
+    var games = null;
+
+    if (this.state.games && !this.state.games.error) {
+      var loaded_games = [];
+      for (let game of this.state.games) {
+        loaded_games.push(
+          <l.ListItem>
+            <l.ListItemText>
+              <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
+                <b>Game #{ game.game_id }</b>&nbsp;-&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
+              </l.ListItemPrimaryText>
+              <l.ListItemSecondaryText>
+                <span title={ game.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(game.created_at)) } ago</span>
+                Updated <span title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
+              </l.ListItemSecondaryText>
+            </l.ListItemText>
+            <l.ListItemMeta>
+              {
+                game.lifecycle !== "deleted"
+                ? <Button theme="secondary"
+                    label={ game.lifecycle !== "finished" ? "Resume" : "Afterparty" }
+                    onClick={ () => this.handleJoinGame(game.game, game.room) }
+                  />
+                : null
+              }
+              {
+                game.lifecycle !== "deleted" && game.lifecycle !== "finished"
+                ? <Button theme="secondary" label="Delete"
+                    onClick={ () => this.handleDeleteGame(game.game) }
+                  />
+                : null
+              }
+            </l.ListItemMeta>
+          </l.ListItem>
+        );
+      }
+
+          games = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <l.CollapsibleList handle={
+                <l.SimpleListItem text={ <b>Games in room #{ this.props.room.id }</b> } metaIcon="chevron_right" />
+              }
+            >
+              <l.List twoLine>
+                { loaded_games }
+              </l.List>
+            </l.CollapsibleList>
+          </div>
+        </c.Card>
+      </div>;
+    } else if (this.state.game_lifecycle !== "any") {
+      games = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <p>No games in the { this.state.game_lifecycle } lifecycle.</p>
+          </div>
+        </c.Card>
+      </div>;
+    }
+
     return (
-      <h1>Archive</h1>
+      <div>
+        <Typography use="headline3">Archive</Typography>
+        <c.Card>
+          { games }
+        </c.Card>
+      </div>
     );
   }
 }
