@@ -11,6 +11,7 @@ import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/dialog/styles';
+import '@rmwc/grid/styles';
 import '@rmwc/list/styles';
 import '@rmwc/tabs/styles';
 import '@rmwc/textfield/styles';
@@ -21,6 +22,7 @@ import { Avatar } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
+import * as g from '@rmwc/grid';
 import * as l from '@rmwc/list';
 import * as t from '@rmwc/tabs';
 import { TextField } from '@rmwc/textfield';
@@ -444,9 +446,109 @@ class UserPlansTab extends React.Component {
   }
 }
 
+class UserArchiveTab extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      games: null,
+			game_lifecycle: null,
+      rooms: null,
+			room_lifecycle: null,
+    };
+  }
+
+  async componentDidMount() {
+		var games = await this.props.user.gameSearch(this.state.game_lifecycle);
+		var rooms = await this.props.user.gameSearch(this.state.room_lifecycle);
+    this.setState(state => Object.assign({}, state, { games, rooms }));
+  }
+
+  render() {
+    var games = null;
+    var rooms = null;
+
+    if (this.state.games) {
+			var loaded_games = [];
+			for (let game of this.state.games) {
+				console.log(game);
+
+				loaded_games.push(
+					<l.ListItem>
+						<l.ListItemText>
+							<l.ListItemPrimaryText>
+								<b>Game #{ game.game_id }</b>&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
+							</l.ListItemPrimaryText>
+							<l.ListItemSecondaryText>
+								<Button theme="secondary" label={ this.state.lifecycle !== "finished" ? "resume" : "afterparty" } />
+							</l.ListItemSecondaryText>
+						</l.ListItemText>
+						<l.ListItemMeta>
+							{ game.created_at }
+						</l.ListItemMeta>
+					</l.ListItem>
+				);
+			}
+
+      games = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <l.CollapsibleList handle={
+                <l.SimpleListItem text={ <b>Games</b> } metaIcon="chevron_right" />
+              }
+            >
+							<l.List twoLine>
+								{ loaded_games }
+							</l.List>
+            </l.CollapsibleList>
+          </div>
+        </c.Card>
+      </div>;
+    } else {
+      games = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <p>No archived game data.</p>
+          </div>
+        </c.Card>
+      </div>;
+    }
+
+    if (this.state.rooms) {
+      rooms = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <l.CollapsibleList handle={
+                <l.SimpleListItem text={ <b>Rooms</b> } metaIcon="chevron_right" />
+              }
+            >
+              <p>Archived room data</p>
+            </l.CollapsibleList>
+          </div>
+        </c.Card>
+      </div>
+    } else {
+      rooms = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <p>No archived room data.</p>
+          </div>
+        </c.Card>
+      </div>;
+    }
+
+    return (
+      <>
+        { games }
+        { rooms }
+      </>
+    );
+  }
+}
+
 class UserProfilePage extends React.Component {
   render() {
-    var paths = ['/profile/overview', '/profile/security', '/profile/plans'];
+    var paths = ['/profile/overview', '/profile/security', '/profile/plans', '/profile/archive'];
     var tab_index = paths.indexOf(window.location.pathname);
     if (tab_index === -1) {
       tab_index = 0;
@@ -465,6 +567,7 @@ class UserProfilePage extends React.Component {
             <t.Tab icon="account_box" label="Profile" onClick={ () => this.props.setPage('/profile/overview') } />
             <t.Tab icon="lock" label="Security" onClick={ () => this.props.setPage('/profile/security') } />
             <t.Tab icon="credit_card" label="Plans" onClick={ () => this.props.setPage('/profile/plans') } />
+            <t.Tab icon="games" label="Archive" onClick={ () => this.props.setPage('/profile/archive') } />
           </t.TabBar>
         </ThemeProvider>
         <br />
@@ -481,6 +584,9 @@ class UserProfilePage extends React.Component {
             </Route>
             <Route path="/profile/plans">
               <UserPlansTab {...this.props} />
+            </Route>
+            <Route path="/profile/archive">
+              <UserArchiveTab {...this.props} />
             </Route>
           </Switch>
         </div>
