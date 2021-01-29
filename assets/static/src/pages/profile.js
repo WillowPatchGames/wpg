@@ -456,114 +456,115 @@ class UserArchiveTab extends React.Component {
 
     this.state = {
       games: null,
-			game_lifecycle: "any",
+      game_lifecycle: "any",
       rooms: null,
-			room_lifecycle: "any",
-			room_id: null,
+      room_lifecycle: "any",
+      room_id: null,
     };
   }
 
   async componentDidMount() {
-		await this.reloadArchive();
+    await this.reloadArchive();
   }
 
-	async reloadArchive() {
-		var games = await this.props.user.gameSearch(this.state.game_lifecycle, this.state.room_id);
-		if (games !== null && games.length === 0) {
-			games = null;
-		}
+  async reloadArchive() {
+    var games = await this.props.user.gameSearch(this.state.game_lifecycle, this.state.room_id);
+    if (games !== null && games.length === 0) {
+      games = null;
+    }
 
-		var rooms = await this.props.user.roomSearch(this.state.room_lifecycle);
-		if (rooms !== null && rooms.length === 0) {
-			rooms = null;
-		}
+    var rooms = await this.props.user.roomSearch(this.state.room_lifecycle);
+    if (rooms !== null && rooms.length === 0) {
+      rooms = null;
+    }
 
     this.setState(state => Object.assign({}, state, { games, rooms }));
-	}
+  }
 
-	async handleDeleteGame(game) {
-		await game.delete();
-		await this.reloadArchive();
-	}
+  async handleDeleteGame(game) {
+    await game.delete();
+    await this.reloadArchive();
+  }
 
-	async handleJoinGame(game) {
-		this.props.setGame(game);
-		if (game.lifecycle === 'finished') {
-			this.props.setPage('/afterparty');
-		} else {
-			this.props.setPage('/play', game.code);
-		}
+  async handleJoinGame(game, room) {
+    this.props.setGame(game);
+    if (room) {
+      this.props.setRoom(room);
+      this.props.setPage('/play', room.code);
+    } else {
+      if (game.lifecycle === 'finished') {
+        this.props.setPage('/afterparty');
+      } else {
+        this.props.setPage('/play', game.code);
+      }
+    }
+  }
 
-		await this.reloadArchive();
-	}
+  async handleDeleteRoom(room) {
+    await room.delete();
+    await this.reloadArchive();
+  }
 
-	async handleDeleteRoom(room) {
-		await room.delete();
-		await this.reloadArchive();
-	}
+  async handleJoinRoom(room) {
+    this.props.setRoom(room);
+    this.props.setPage('/room', room.code);
+  }
 
-	async handleJoinRoom(room) {
-		this.props.setRoom(room);
-		this.props.setPage('/room', room.code);
-
-		await this.reloadArchive();
-	}
-
-	async handleFilterRoom(room_id) {
-		await this.newState(() => ({ room_id }));
-		await this.reloadArchive();
-	}
+  async handleFilterRoom(room_id) {
+    await this.newState(() => ({ room_id }));
+    await this.reloadArchive();
+  }
 
   async newState(fn, cb) {
     await this.setState(state => Object.assign({}, state, fn(state)));
-		await this.reloadArchive();
+    await this.reloadArchive();
   }
 
-	inputHandler(name, checky) {
-		return async (e) => {
-			var v = checky ? e.target.checked : e.target.value;
-			return await this.newState(() => ({ [name]: v }));
-		};
-	}
+  inputHandler(name, checky) {
+    return async (e) => {
+      var v = checky ? e.target.checked : e.target.value;
+      return await this.newState(() => ({ [name]: v }));
+    };
+  }
 
   render() {
     var games = null;
     var rooms = null;
 
     if (this.state.games && !this.state.games.error) {
-			var loaded_games = [];
-			for (let game of this.state.games) {
-				loaded_games.push(
-					<l.ListItem>
-						<l.ListItemText>
-							<l.ListItemPrimaryText style={{ "textAlign": "left" }}>
-								<b>Game #{ game.game_id }</b>&nbsp;-&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
-							</l.ListItemPrimaryText>
-							<l.ListItemSecondaryText>
-								<span title={ game.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(game.created_at)) } ago</span>
-								Updated <span title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
-							</l.ListItemSecondaryText>
-						</l.ListItemText>
-						<l.ListItemMeta>
-							{
-								game.lifecycle !== "deleted"
-								? <Button theme="secondary"
-										label={ game.lifecycle !== "finished" ? "Resume" : "Afterparty" }
-										onClick={ () => this.handleJoinGame(game.game) }
-									/>
-								: null
-							}
-							{
-								game.lifecycle !== "deleted" && game.lifecycle !== "finished"
-								? <Button theme="secondary" label="Delete"
-										onClick={ () => this.handleDeleteGame(game.game) }
-									/>
-								: null
-							}
-						</l.ListItemMeta>
-					</l.ListItem>
-				);
-			}
+      var loaded_games = [];
+      for (let game of this.state.games) {
+        loaded_games.push(
+          <l.ListItem>
+            <l.ListItemText>
+              <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
+                <b>Game #{ game.game_id }</b>&nbsp;-&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
+              </l.ListItemPrimaryText>
+              <l.ListItemSecondaryText>
+                <span title={ game.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(game.created_at)) } ago</span>
+                Updated <span title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
+              </l.ListItemSecondaryText>
+            </l.ListItemText>
+            <l.ListItemMeta>
+              {
+                game.lifecycle !== "deleted"
+                ? <Button theme="secondary"
+                    label={ game.lifecycle !== "finished" ? "Resume" : "Afterparty" }
+                    onClick={ () => this.handleJoinGame(game.game, game.room) }
+                  />
+                : null
+              }
+              {
+                game.lifecycle !== "deleted" && game.lifecycle !== "finished"
+                ? <Button theme="secondary" label="Delete"
+                    onClick={ () => this.handleDeleteGame(game.game) }
+                  />
+                : null
+              }
+            </l.ListItemMeta>
+          </l.ListItem>
+        );
+      }
 
       games = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
         <c.Card>
@@ -572,9 +573,9 @@ class UserArchiveTab extends React.Component {
                 <l.SimpleListItem text={ <b>Games { this.state.room_id !== null ? "in room #" + this.state.room_id : null  }</b> } metaIcon="chevron_right" />
               }
             >
-							<l.List twoLine>
-								{ loaded_games }
-							</l.List>
+              <l.List twoLine>
+                { loaded_games }
+              </l.List>
             </l.CollapsibleList>
           </div>
         </c.Card>
@@ -590,7 +591,7 @@ class UserArchiveTab extends React.Component {
     }
 
     if (this.state.rooms) {
-			var loaded_rooms = [];
+      var loaded_rooms = [];
       for (let room of this.state.rooms) {
         loaded_rooms.push(
           <l.ListItem>
@@ -612,15 +613,15 @@ class UserArchiveTab extends React.Component {
                   />
                 : null
               }
-							{
-								this.state.room_id !== +room.room_id
-								? <Button theme="secondary" label="Filter"
-									        onClick={ () => this.handleFilterRoom(+room.room_id) } />
-								: <Button theme="secondary" label="Clear"
-									        onClick={ () => this.handleFilterRoom(null) } />
-							}
+              {
+                this.state.room_id !== +room.room_id
+                ? <Button theme="secondary" label="Filter"
+                          onClick={ () => this.handleFilterRoom(+room.room_id) } />
+                : <Button theme="secondary" label="Clear"
+                          onClick={ () => this.handleFilterRoom(null) } />
+              }
               {/*
-								// No delete function for rooms yet.
+                // No delete function for rooms yet.
                 room.lifecycle !== "deleted" && room.lifecycle !== "finished"
                 ? <Button theme="secondary" label="Delete"
                     onClick={ () => this.handleDeleteRoom(room.room) }
@@ -640,8 +641,8 @@ class UserArchiveTab extends React.Component {
               }
             >
               <l.List twoLine>
-								{ loaded_rooms }
-							</l.List>
+                { loaded_rooms }
+              </l.List>
             </l.CollapsibleList>
           </div>
         </c.Card>
@@ -656,78 +657,78 @@ class UserArchiveTab extends React.Component {
       </div>;
     }
 
-		console.log("game_lifecycle", this.state.game_lifecycle);
+    console.log("game_lifecycle", this.state.game_lifecycle);
 
     return (
       <>
-				<div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
-	        <c.Card>
-  	        <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-							<h4>Filter</h4>
-							<g.Grid>
-							<g.GridCell span={6}>
-							<Select label="Game Lifecycle" enhanced
-								value={ this.state.game_lifecycle }
-								onChange={ this.inputHandler("game_lifecycle") }
-								options={[
-									{
-										"label": "Any",
-										"value": "any",
-									},
-									{
-										"label": "Pending",
-										"value": "pending",
-									},
-									{
-										"label": "Playing",
-										"value": "playing",
-									},
-									{
-										"label": "Finished",
-										"value": "finished",
-									},
-									{
-										"label": "Deleted",
-										"value": "deleted",
-									},
-								]}
-							/>
-			</g.GridCell>
-			<g.GridCell span={6}>
-							<Select label="Room Lifecycle" enhanced
-								value={ this.state.room_lifecycle }
-								onChange={ this.inputHandler("room_lifecycle") }
-								options={[
-									{
-										"label": "Any",
-										"value": "any",
-									},
-									{
-										"label": "Playing",
-										"value": "playing",
-									},
-									{
-										"label": "Finished",
-										"value": "finished",
-									},
-									{
-										"label": "Deleted",
-										"value": "deleted",
-									},
-								]}
-							/></g.GridCell></g.Grid>
-						{
-							this.state.room_id !== null && this.state.room_id !== 0
-							? <>
-									Limiting to games in room #{ this.state.room_id }.<br />
-									<Button theme="secondary" label="Clear"
+        <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+              <h4>Filter</h4>
+              <g.Grid>
+              <g.GridCell span={6}>
+              <Select label="Game Lifecycle" enhanced
+                value={ this.state.game_lifecycle }
+                onChange={ this.inputHandler("game_lifecycle") }
+                options={[
+                  {
+                    "label": "Any",
+                    "value": "any",
+                  },
+                  {
+                    "label": "Pending",
+                    "value": "pending",
+                  },
+                  {
+                    "label": "Playing",
+                    "value": "playing",
+                  },
+                  {
+                    "label": "Finished",
+                    "value": "finished",
+                  },
+                  {
+                    "label": "Deleted",
+                    "value": "deleted",
+                  },
+                ]}
+              />
+      </g.GridCell>
+      <g.GridCell span={6}>
+              <Select label="Room Lifecycle" enhanced
+                value={ this.state.room_lifecycle }
+                onChange={ this.inputHandler("room_lifecycle") }
+                options={[
+                  {
+                    "label": "Any",
+                    "value": "any",
+                  },
+                  {
+                    "label": "Playing",
+                    "value": "playing",
+                  },
+                  {
+                    "label": "Finished",
+                    "value": "finished",
+                  },
+                  {
+                    "label": "Deleted",
+                    "value": "deleted",
+                  },
+                ]}
+              /></g.GridCell></g.Grid>
+            {
+              this.state.room_id !== null && this.state.room_id !== 0
+              ? <>
+                  Limiting to games in room #{ this.state.room_id }.<br />
+                  <Button theme="secondary" label="Clear"
                           onClick={ () => this.handleFilterRoom(null) } />
-								</>
-							: null
-						}
-      	    </div>
-        	</c.Card>
-	      </div>
+                </>
+              : null
+            }
+            </div>
+          </c.Card>
+        </div>
         { games }
         { rooms }
       </>
