@@ -148,7 +148,7 @@ func (handle *SearchGamesHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 
 			handle.resp = append(handle.resp, SearchGamesHandlerResponse{
 				OwnerID:   game.OwnerID,
-				RoomID:    game.RoomID,
+				RoomID:    uint64(game.RoomID.Int64),
 				GameID:    game.ID,
 				Style:     game.Style,
 				Lifecycle: game.Lifecycle,
