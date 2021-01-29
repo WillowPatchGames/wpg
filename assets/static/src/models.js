@@ -278,11 +278,12 @@ class UserModel {
   }
 
   async gameSearch(lifecycle, room_id) {
-    var games_uri = this.api + '/user/' + this.id + '/games';
+    var games_uri = this.api + '/user/' + this.id;
     if (room_id !== undefined && room_id !== null) {
-      games_uri += "/" + room_id;
+      games_uri += "/rooms/" + room_id;
     }
-    if (nonempty(lifecycle)) {
+    games_uri += "/games";
+    if (nonempty(lifecycle) && lifecycle !== "any") {
       games_uri += "/" + lifecycle;
     }
 
@@ -322,7 +323,7 @@ class UserModel {
 
   async roomSearch(lifecycle) {
     var rooms_uri = this.api + '/user/' + this.id + '/rooms';
-    if (nonempty(lifecycle)) {
+    if (nonempty(lifecycle) && lifecycle !== "any") {
       rooms_uri += "/" + lifecycle;
     }
 
