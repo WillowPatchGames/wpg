@@ -11,7 +11,9 @@ import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/dialog/styles';
+import '@rmwc/grid/styles';
 import '@rmwc/list/styles';
+import '@rmwc/select/styles';
 import '@rmwc/tabs/styles';
 import '@rmwc/textfield/styles';
 import '@rmwc/theme/styles';
@@ -21,7 +23,9 @@ import { Avatar } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
 import * as d from '@rmwc/dialog';
+import * as g from '@rmwc/grid';
 import * as l from '@rmwc/list';
+import { Select } from '@rmwc/select';
 import * as t from '@rmwc/tabs';
 import { TextField } from '@rmwc/textfield';
 import { ThemeProvider } from '@rmwc/theme';
@@ -452,9 +456,10 @@ class UserArchiveTab extends React.Component {
 
     this.state = {
       games: null,
-			game_lifecycle: null,
+			game_lifecycle: "any",
       rooms: null,
-			room_lifecycle: null,
+			room_lifecycle: "any",
+			room_id: null,
     };
   }
 
@@ -463,8 +468,16 @@ class UserArchiveTab extends React.Component {
   }
 
 	async reloadArchive() {
-		var games = await this.props.user.gameSearch(this.state.game_lifecycle);
+		var games = await this.props.user.gameSearch(this.state.game_lifecycle, this.state.room_id);
+		if (games !== null && games.length === 0) {
+			games = null;
+		}
+
 		var rooms = await this.props.user.roomSearch(this.state.room_lifecycle);
+		if (rooms !== null && rooms.length === 0) {
+			rooms = null;
+		}
+
     this.setState(state => Object.assign({}, state, { games, rooms }));
 	}
 
@@ -496,15 +509,30 @@ class UserArchiveTab extends React.Component {
 		await this.reloadArchive();
 	}
 
+	async handleFilterRoom(room_id) {
+		await this.newState(() => ({ room_id }));
+		await this.reloadArchive();
+	}
+
+  async newState(fn, cb) {
+    await this.setState(state => Object.assign({}, state, fn(state)));
+		await this.reloadArchive();
+  }
+
+	inputHandler(name, checky) {
+		return async (e) => {
+			var v = checky ? e.target.checked : e.target.value;
+			return await this.newState(() => ({ [name]: v }));
+		};
+	}
+
   render() {
     var games = null;
     var rooms = null;
 
-    if (this.state.games) {
+    if (this.state.games && !this.state.games.error) {
 			var loaded_games = [];
 			for (let game of this.state.games) {
-				console.log(game);
-
 				loaded_games.push(
 					<l.ListItem>
 						<l.ListItemText>
@@ -541,7 +569,7 @@ class UserArchiveTab extends React.Component {
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
             <l.CollapsibleList handle={
-                <l.SimpleListItem text={ <b>Games</b> } metaIcon="chevron_right" />
+                <l.SimpleListItem text={ <b>Games { this.state.room_id !== null ? "in room #" + this.state.room_id : null  }</b> } metaIcon="chevron_right" />
               }
             >
 							<l.List twoLine>
@@ -551,11 +579,11 @@ class UserArchiveTab extends React.Component {
           </div>
         </c.Card>
       </div>;
-    } else {
+    } else if (this.state.game_lifecycle !== "any") {
       games = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-            <p>No archived game data.</p>
+            <p>No games in the { this.state.game_lifecycle } lifecycle.</p>
           </div>
         </c.Card>
       </div>;
@@ -564,8 +592,6 @@ class UserArchiveTab extends React.Component {
     if (this.state.rooms) {
 			var loaded_rooms = [];
       for (let room of this.state.rooms) {
-        console.log(room);
-
         loaded_rooms.push(
           <l.ListItem>
             <l.ListItemText>
@@ -586,13 +612,21 @@ class UserArchiveTab extends React.Component {
                   />
                 : null
               }
-              {
+							{
+								this.state.room_id !== +room.room_id
+								? <Button theme="secondary" label="Filter"
+									        onClick={ () => this.handleFilterRoom(+room.room_id) } />
+								: <Button theme="secondary" label="Clear"
+									        onClick={ () => this.handleFilterRoom(null) } />
+							}
+              {/*
+								// No delete function for rooms yet.
                 room.lifecycle !== "deleted" && room.lifecycle !== "finished"
                 ? <Button theme="secondary" label="Delete"
                     onClick={ () => this.handleDeleteRoom(room.room) }
                   />
                 : null
-              }
+              */}
             </l.ListItemMeta>
           </l.ListItem>
         );
@@ -612,18 +646,88 @@ class UserArchiveTab extends React.Component {
           </div>
         </c.Card>
       </div>
-    } else {
+    } else if (this.state.room_lifecycle !== "any") {
       rooms = <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
-            <p>No archived room data.</p>
+            <p>No rooms in the { this.state.room_lifecycle } lifecycle.</p>
           </div>
         </c.Card>
       </div>;
     }
 
+		console.log("game_lifecycle", this.state.game_lifecycle);
+
     return (
       <>
+				<div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
+	        <c.Card>
+  	        <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+							<h4>Filter</h4>
+							<g.Grid>
+							<g.GridCell span={6}>
+							<Select label="Game Lifecycle" enhanced
+								value={ this.state.game_lifecycle }
+								onChange={ this.inputHandler("game_lifecycle") }
+								options={[
+									{
+										"label": "Any",
+										"value": "any",
+									},
+									{
+										"label": "Pending",
+										"value": "pending",
+									},
+									{
+										"label": "Playing",
+										"value": "playing",
+									},
+									{
+										"label": "Finished",
+										"value": "finished",
+									},
+									{
+										"label": "Deleted",
+										"value": "deleted",
+									},
+								]}
+							/>
+			</g.GridCell>
+			<g.GridCell span={6}>
+							<Select label="Room Lifecycle" enhanced
+								value={ this.state.room_lifecycle }
+								onChange={ this.inputHandler("room_lifecycle") }
+								options={[
+									{
+										"label": "Any",
+										"value": "any",
+									},
+									{
+										"label": "Playing",
+										"value": "playing",
+									},
+									{
+										"label": "Finished",
+										"value": "finished",
+									},
+									{
+										"label": "Deleted",
+										"value": "deleted",
+									},
+								]}
+							/></g.GridCell></g.Grid>
+						{
+							this.state.room_id !== null && this.state.room_id !== 0
+							? <>
+									Limiting to games in room #{ this.state.room_id }.<br />
+									<Button theme="secondary" label="Clear"
+                          onClick={ () => this.handleFilterRoom(null) } />
+								</>
+							: null
+						}
+      	    </div>
+        	</c.Card>
+	      </div>
         { games }
         { rooms }
       </>
@@ -652,7 +756,7 @@ class UserProfilePage extends React.Component {
             <t.Tab icon="account_box" label="Profile" onClick={ () => this.props.setPage('/profile/overview') } />
             <t.Tab icon="lock" label="Security" onClick={ () => this.props.setPage('/profile/security') } />
             <t.Tab icon="credit_card" label="Plans" onClick={ () => this.props.setPage('/profile/plans') } />
-            <t.Tab icon="games" label="Archive" onClick={ () => this.props.setPage('/profile/archive') } />
+            <t.Tab icon="archive" label="Archive" onClick={ () => this.props.setPage('/profile/archive') } />
           </t.TabBar>
         </ThemeProvider>
         <br />
