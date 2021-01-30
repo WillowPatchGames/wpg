@@ -94,7 +94,7 @@ function notify(snackbar, message, type) {
   snackbar.notify({
     body: message,
     dismissesOnAction: true,
-    timeout: 3000,
+    timeout: type === "error" ? 7000 : 3000,
     actions: [{ title: type === "error" ? "Aw shucks" : "Cool" }],
   });
 }
