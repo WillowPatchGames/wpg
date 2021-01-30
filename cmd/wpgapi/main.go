@@ -63,6 +63,7 @@ func main() {
 
 	var debug bool
 	var proxy bool
+	var silenceHTTPLogging bool
 	var staticPath string
 
 	var planConfig string = "configs/plans.yaml"
@@ -83,6 +84,7 @@ func main() {
 
 	flag.BoolVar(&debug, "debug", false, "Enable extra debug information")
 	flag.BoolVar(&proxy, "proxy", false, "Enable proxy")
+	flag.BoolVar(&silenceHTTPLogging, "silence_http_logging", false, "Silence HTTP logging")
 	flag.StringVar(&staticPath, "static_path", "assets/static/public", "Path to web UI static assets")
 
 	flag.StringVar(&planConfig, "plan_config", "configs/plans.yaml", "Path to plan configuration file")
@@ -159,7 +161,9 @@ func main() {
 	handler := handlers.ProxyHeaders(router)
 
 	// Add logging middleware
-	handler = handlers.CombinedLoggingHandler(os.Stderr, handler)
+	if !silenceHTTPLogging {
+		handler = handlers.CombinedLoggingHandler(os.Stderr, handler)
+	}
 
 	if !debug {
 		// This handler prevents logging stacktraces during debug mode. We should
