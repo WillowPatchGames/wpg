@@ -71,6 +71,8 @@ type ThreeThirteenConfig struct {
 
 	ToPointLimit int  `json:"to_point_limit"` // -1 or 50 <= n <= 250. Whether to have a point limit to end the game early.
 	GolfScoring  bool `json:"golf_scoring"`   // Whether least points win or most points win (different scoring mechanism).
+
+	SuggestBetter bool `json:"suggest_better"` // Whether to suggest better scores
 }
 
 func (cfg ThreeThirteenConfig) Validate() error {
@@ -195,6 +197,14 @@ func (cfg *ThreeThirteenConfig) LoadConfig(wire map[string]interface{}) error {
 			cfg.GolfScoring = golf_scoring
 		} else {
 			return errors.New("unable to parse value for golf_scoring as boolean: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if wire_value, ok := wire["suggest_better"]; ok {
+		if suggest_better, ok := wire_value.(bool); ok {
+			cfg.SuggestBetter = suggest_better
+		} else {
+			return errors.New("unable to parse value for suggest_better as boolean: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
@@ -690,10 +700,12 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 	if ideal < score {
 		max_warnings := 3
 		tts.Players[player].Warnings += 1
-		if tts.Players[player].Warnings < max_warnings {
-			return errors.New("you can get a better score!")
-		} else if tts.Players[player].Warnings == max_warnings {
-			return errors.New("you can get a better score! last chance!")
+		if tts.Config.SuggestBetter {
+			if tts.Players[player].Warnings < max_warnings {
+				return errors.New("you can get a better score!")
+			} else if tts.Players[player].Warnings == max_warnings {
+				return errors.New("you can get a better score! last chance!")
+			}
 		}
 	}
 	// Note that `score` is indeed a valid score for this hand

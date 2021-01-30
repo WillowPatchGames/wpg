@@ -663,6 +663,16 @@ var GameConfig = {
           "false": "Give points to the player laying down",
         },
       },
+      {
+        "name": 'suggest_better',
+        "values": {
+          'type': 'bool', 'default': true, 'value': (x) => x,
+        },
+        "label": {
+          "true": "Tell users if they could get a better score",
+          "false": "Don't tell users if they could get a better score",
+        },
+      },
     ],
   },
 };

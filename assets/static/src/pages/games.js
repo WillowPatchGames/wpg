@@ -1022,6 +1022,7 @@ class CreateGameForm extends React.Component {
         <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
         { this.renderField(cfg.options[11]) }
         { this.renderField(cfg.options[12]) }
+        { this.renderField(cfg.options[13]) }
       </>
     );
   }
