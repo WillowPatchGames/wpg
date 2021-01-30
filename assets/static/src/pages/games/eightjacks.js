@@ -22,7 +22,7 @@ import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
 import { CardSuit, CardRank, CardImage, CardHand, CardHandImage } from '../../games/card.js';
-import { loadGame, addEv, notify, CreateGameForm } from '../games.js';
+import { loadGame, addEv, notify, killable, CreateGameForm } from '../games.js';
 import { UserCache, GameCache } from '../../utils/cache.js';
 import { gravatarify } from '../../utils/gravatar.js';
 import { team_colors } from './team_colors.js';
@@ -586,7 +586,7 @@ class EightJacksGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
         },
         "finished": async (data) => {
-          data.message = await personalize(data.winner) + " won!";
+          data.message = await Promise.all(data.winners.map(personalize)) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.winner;
           this.props.setPage('afterparty', true);
@@ -651,90 +651,29 @@ class EightJacksAfterPartyPage extends React.Component {
       finished: false,
       message: "Loading results...",
       scale: 0.225,
+      timeout: killable(() => { this.refreshData() }, 5000),
     };
 
     GameCache.Invalidate(this.props.game.id);
 
     this.unmount = addEv(this.game, {
-      "game-state": async (data) => {
-        var mapping = {};
-        for (let index in data.player_mapping) {
-          mapping[index] = await UserCache.FromId(data.player_mapping[index]);
+      "state": async (data) => {
+        var winners = [];
+        if (data.winners) {
+          winners = await Promise.all(data.winners.map(UserCache.FromId.bind(UserCache)));
         }
-
-        let winners = [];
-
-        var history = null;
-        if (data.round_history) {
-          history = {
-            scores: [],
-            players: [],
-            tricks: [],
-          };
-
-          for (let round_index in data.round_history) {
-            let round = data.round_history[round_index];
-            var round_scores = {};
-            var info = {};
-            var num_players = round.players.length;
-            var max_score = 0;
-            for (let player_index in round.players) {
-              let player = round.players[player_index];
-              round_scores[player_index] = {
-                'user': mapping[player_index],
-                'bid': player.bid,
-                'tricks': player.tricks,
-                'round_score': player.round_score,
-                'score': player.score,
-                'overtakes': player.overtakes,
-              };
-              info[player_index] = {
-                'hand': player?.hand,
-                'bid': player.bid,
-                'tricks': player.tricks,
-              };
-              if (num_players === 2) {
-                info.draw_pile = player?.draw_pile;
-              }
-              if (+round_scores[player_index].score > +max_score) {
-                winners = [];
-                winners.push(mapping[player_index]);
-                max_score = round_scores[player_index].score;
-              } else if (+round_scores[player_index].score === +max_score) {
-                winners.push(mapping[player_index]);
-              }
-            }
-
-            history.scores.push(round_scores);
-            history.players.push(info);
-
-            history.tricks.push(round.tricks);
-          }
-        }
-
-        // HACK: When refreshData() is called from the button, we don't redraw
-        // the screen even though new data is sent. Use snapshots to send only
-        // the data we care about.
-        this.setState(state => Object.assign({}, state, { history: null }));
-        this.setState(state => Object.assign({}, state, {
-          player_mapping: mapping,
-          history: history,
-          winners: winners,
-          dealt: data.dealt,
-          passed: data.passed,
-          finished: data.finished,
-        }));
-
+        if (!winners.length) winners = null;
+        this.game.winners = winners;
+        // Note: this also tells the rendering to update for the
+        // interface state updates.
+        this.setState(state => Object.assign(state, { winners }));
         if (data.finished) {
           if (this.state.timeout) {
             this.state.timeout.kill();
           }
 
-          this.setState(state => Object.assign({}, state, { timeout: null }));
+          this.setState(state => Object.assign({}, state, { finished: true, timeout: null }));
         }
-      },
-      "state": () => {
-        this.setState(state => state);
       },
       "error": (data) => {
         var message = "Unable to load game data.";
@@ -757,9 +696,14 @@ class EightJacksAfterPartyPage extends React.Component {
     return null;
   }
   componentDidMount() {
+    this.state.timeout.exec();
   }
   componentWillUnmount() {
     this.props.setGame(null);
+
+    if (this.state.timeout) {
+      this.state.timeout.kill();
+    }
 
     if (this.unmount) this.unmount();
   }
@@ -772,6 +716,9 @@ class EightJacksAfterPartyPage extends React.Component {
 
     this.props.setGame(null);
     this.props.setPage("room", true);
+  }
+  refreshData() {
+    this.game.interface.controller.wsController.send({"message_type": "peek"});
   }
 
   render() {

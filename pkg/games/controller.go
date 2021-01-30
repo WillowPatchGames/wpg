@@ -96,6 +96,17 @@ func (data *GameData) ToUserID(index int) (uint64, bool) {
 
 	return 0, false
 }
+func (data *GameData) ToUserIDs(indices []int) ([]uint64, bool) {
+	players := make([]uint64, len(indices))
+	for i, index := range indices {
+		if player, ok := data.ToUserID(index); ok {
+			players[i] = player
+		} else {
+			return players, false
+		}
+	}
+	return players, true
+}
 
 // Controller wraps game data and handles the parsing of messages from the
 // websocket or other connection. dispatch.go handles the actual dispatch

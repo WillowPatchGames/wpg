@@ -271,11 +271,11 @@ type EightJacksState struct {
 
 	Config EightJacksConfig `json:"config"`
 
-	Assigned bool `json:"assigned"`
-	Started  bool `json:"started"`
-	Dealt    bool `json:"dealt"`
-	Finished bool `json:"finished"`
-	Winner   int  `json:"winner"`
+	Assigned bool  `json:"assigned"`
+	Started  bool  `json:"started"`
+	Dealt    bool  `json:"dealt"`
+	Finished bool  `json:"finished"`
+	Winners  []int `json:"winners"`
 }
 
 func (ejs *EightJacksState) Init(cfg EightJacksConfig) error {
@@ -292,7 +292,7 @@ func (ejs *EightJacksState) Init(cfg EightJacksConfig) error {
 	ejs.Started = false
 	ejs.Dealt = false
 	ejs.Finished = false
-	ejs.Winner = -1
+	ejs.Winners = make([]int, 0)
 
 	return nil
 }
@@ -783,19 +783,21 @@ func (ejs *EightJacksState) MarkRun(run []int) error {
 	}
 
 	finished := false
+	winners := make([]int, 0)
 	for idx, indexed_player := range ejs.Players {
 		if indexed_player.Team == marker {
 			// Update by index, because indexed_player is not a reference
 			ejs.Players[idx].Runs = append(indexed_player.Runs, run)
 			if len(ejs.Players[idx].Runs) >= ejs.Config.WinLimit {
 				finished = true
-				ejs.Winner = idx
+				winners = append(winners, idx)
 			}
 		}
 	}
 
 	if finished {
 		ejs.Finished = true
+		ejs.Winners = winners
 		return errors.New(EightJacksGameOver)
 	}
 

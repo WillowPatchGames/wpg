@@ -136,15 +136,58 @@ func (ejsn *EightJacksSynopsisNotification) LoadData(data *GameData, state *Eigh
 	}
 }
 
+type EightJacksPeekNotification struct {
+	MessageHeader
+	EightJacksGameState
+
+	Players []EightJacksOtherPlayerState `json:"players"`
+	Winners []uint64                     `json:"winners"`
+}
+
+func (ejsn *EightJacksPeekNotification) LoadData(data *GameData, game *EightJacksState, player *PlayerData) {
+	ejsn.LoadHeader(data, player)
+	ejsn.MessageType = "state"
+
+	ejsn.Board = game.Board
+	ejsn.Config = game.Config
+	ejsn.GlobalHistory = game.GlobalHistory
+
+	ejsn.Assigned = game.Assigned
+	ejsn.Started = game.Started
+	ejsn.Dealt = game.Dealt
+	ejsn.Finished = game.Finished
+
+	ejsn.Winners, _ = data.ToUserIDs(game.Winners)
+
+	for _, indexed_player := range data.ToPlayer {
+		if indexed_player.Index == -1 {
+			continue
+		}
+
+		var overview EightJacksOtherPlayerState
+		overview.UID = indexed_player.UID
+		overview.Index = indexed_player.Index
+
+		overview.History = game.Players[indexed_player.Index].History
+		overview.Discards = game.Players[indexed_player.Index].Discards
+
+		overview.Team = game.Players[indexed_player.Index].Team
+		overview.Runs = game.Players[indexed_player.Index].Runs
+		overview.Score = len(game.Players[indexed_player.Index].Runs)
+
+		ejsn.Players = append(ejsn.Players, overview)
+	}
+}
+
 type EightJacksFinishedNotification struct {
 	MessageHeader
 
-	Winner uint64 `json:"winner"`
+	Winners []uint64 `json:"winners"`
 }
 
 func (ejwn *EightJacksFinishedNotification) LoadData(data *GameData, state *EightJacksState, player *PlayerData) {
 	ejwn.LoadHeader(data, player)
 	ejwn.MessageType = "finished"
 
-	ejwn.Winner, _ = data.ToUserID(state.Winner)
+	ejwn.Winners, _ = data.ToUserIDs(state.Winners)
 }

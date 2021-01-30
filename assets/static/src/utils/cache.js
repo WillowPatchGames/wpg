@@ -11,6 +11,7 @@ class UserCacheSingleton {
   }
 
   async FromId(id) {
+    if (typeof id !== 'number') return id;
     if (!loaded(this.cache[id]) || this.cache[id].access === this.access_threshhold) {
       this.cache[id] = await {
         model: await UserModel.FromId(id),

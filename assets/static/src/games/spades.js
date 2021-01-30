@@ -60,7 +60,7 @@ class SpadesController {
     });
   }
 
-  async peek() {
+  async look() {
     return await this.wsController.sendAndWait({
       'message_type': 'look',
     });
@@ -283,8 +283,8 @@ class SpadesGame {
     return this.controller.decide(keep);
   }
 
-  async peek() {
-    return this.controller.peek();
+  async look() {
+    return this.controller.look();
   }
 
   async bid(amount) {

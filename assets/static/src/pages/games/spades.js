@@ -249,7 +249,7 @@ class SpadesGameComponent extends React.Component {
                 }/>
                 {
                   !this.state.game.interface.data.peeked
-                  ? <>&nbsp;&nbsp;<Button label="Peek at cards" raised ripple={false} onClick={() => this.state.game.interface.peek()} /></>
+                  ? <>&nbsp;&nbsp;<Button label="Peek at cards" raised ripple={false} onClick={() => this.state.game.interface.look()} /></>
                   : null
                 }
               </div>
@@ -277,7 +277,7 @@ class SpadesGameComponent extends React.Component {
                 <br />
                 {
                   !this.state.game.interface.data.peeked
-                  ? <Button label="Peek at cards" raised ripple={false} onClick={() => this.state.game.interface.peek()} />
+                  ? <Button label="Peek at cards" raised ripple={false} onClick={() => this.state.game.interface.look()} />
                   : null
                 }
               </div>

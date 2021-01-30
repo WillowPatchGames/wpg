@@ -70,6 +70,11 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 
 		err = state.AssignTeams(data.Dealer, data.NumPlayers, data.TeamAssignments)
 		if err == nil {
+			// Set unused players to -1 before setting used players,
+			// in case a previous configuration was set but cancelled
+			for _, player := range game.ToPlayer {
+				player.Index = -1
+			}
 			for i, playerID := range data.PlayerMaps {
 				player, ok := game.ToPlayer[playerID]
 
@@ -81,7 +86,11 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			}
 		}
 
-		send_state = err == nil
+		var response MessageHeader
+		response.LoadHeader(game, player)
+		response.ReplyTo = header.MessageID
+
+		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
 	case "start":
 		if player.UID != game.Owner {
 			return errors.New("unable to start game that you're not the owner of")

@@ -48,7 +48,7 @@ class EightJacksController {
 
   async peek() {
     return await this.wsController.sendAndWait({
-      'message_type': 'look',
+      'message_type': 'peek',
     });
   }
 
@@ -138,7 +138,6 @@ class EightJacksGame {
     this.data.hand.setCardsTo(newHand);
     this.data.global_history = message.global_history && CardHand.deserialize(message.global_history);
     this.data.score = message?.score;
-    this.data.overtakes = message?.overtakes;
     this.data.turn = message?.turn;
     this.data.dealer = message?.dealer;
     this.data.history = message?.history ? CardHand.deserialize(message.history) : null;

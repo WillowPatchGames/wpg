@@ -70,6 +70,11 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 
 		err = state.AssignTeams(data.Dealer, data.NumPlayers, data.TeamAssignments)
 		if err == nil {
+			// Set unused players to -1 before setting used players,
+			// in case a previous configuration was set but cancelled
+			for _, player := range game.ToPlayer {
+				player.Index = -1
+			}
 			for i, playerID := range data.PlayerMaps {
 				player, ok := game.ToPlayer[playerID]
 
@@ -81,7 +86,11 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			}
 		}
 
-		send_state = err == nil
+		var response MessageHeader
+		response.LoadHeader(game, player)
+		response.ReplyTo = header.MessageID
+
+		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
 	case "start":
 		if player.UID != game.Owner {
 			return errors.New("unable to start game that you're not the owner of")
@@ -174,6 +183,15 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 
 		err = state.Order(player.Index, data.Order)
 		send_state = true
+	case "peek":
+		var response EightJacksPeekNotification
+		response.LoadData(game, state, player)
+		response.ReplyTo = header.MessageID
+		c.undispatch(game, player, response.MessageID, header.MessageID, response)
+
+		var synopsis EightJacksSynopsisNotification
+		synopsis.LoadData(game, state, player)
+		c.undispatch(game, player, synopsis.MessageID, 0, synopsis)
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}
