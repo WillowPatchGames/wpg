@@ -18,7 +18,8 @@ type ThreeThirteenPlayer struct {
 	PickedUpDiscard bool  `json:"picked_up_discard"`
 	RoundScore      int   `json:"round_score"`
 
-	Score int `json:"score"`
+	Score    int `json:"score"`
+	Warnings int `json:"warnings"`
 }
 
 func (ttp *ThreeThirteenPlayer) Init() {
@@ -368,6 +369,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 		tts.Players[index].Hand = make([]Card, 0)
 		tts.Players[index].Drawn = nil
 		tts.Players[index].PickedUpDiscard = false
+		tts.Players[index].Warnings = 0
 	}
 	tts.Discard = make([]*Card, 0)
 
@@ -507,7 +509,32 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		return errors.New("need to specify a card")
 	}
 
-	if cardID == tts.Players[player].Drawn.ID && tts.Players[player].PickedUpDiscard && tts.LaidDown == -1 {
+	if laidDown {
+		gs := tts.GinSolver()
+		newHand := make([]Card, len(tts.Players[player].Hand))
+		for i, card := range tts.Players[player].Hand {
+			if card.ID == cardID {
+				newHand[i] = *tts.Players[player].Drawn
+			} else {
+				newHand[i] = card
+			}
+		}
+		min0 := gs.MinScoreBelow(newHand, tts.Config.LayingDownLimit)
+		min1 := gs.MinScore(newHand)
+		if min1 < min0 {
+			log.Println("failed to compute actual min score", min1, "instead of", min0, "below", tts.Config.LayingDownLimit, "for hand", newHand)
+		}
+		if min0 > tts.Config.LayingDownLimit {
+			pl := "s"
+			if tts.Config.LayingDownLimit == 1 {
+				pl = ""
+			}
+			log.Println(newHand)
+			return errors.New("you cannot go out yet! must reach " + strconv.Itoa(tts.Config.LayingDownLimit) + " point" + pl + " first!")
+		}
+	}
+
+	if cardID == tts.Players[player].Drawn.ID && tts.Players[player].PickedUpDiscard && tts.LaidDown == -1 && !laidDown {
 		// If the player discards the card they picked up from the discard, give
 		// them another change to make a move. Put the discard back and clear their
 		// drawn card.
@@ -657,6 +684,20 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 
 	if ncards != len(tts.Players[player].Hand) {
 		return errors.New("some cards were missing from scoring")
+	}
+
+	ideal := gs.MinScore(tts.Players[player].Hand)
+	if ideal < score {
+		max_warnings := 3
+		tts.Players[player].Warnings += 1
+		if tts.Players[player].Warnings < max_warnings {
+			return errors.New("you can get a better score!")
+		} else if tts.Players[player].Warnings < max_warnings {
+			return errors.New("you can get a better score! last chance!")
+		}
+	}
+	if ideal > score {
+		log.Println("failed to compute minimum score for hand; got", score, "expected", ideal, "for cards", tts.Players[player].Hand)
 	}
 
 	return tts.ReportScore(player, score)
