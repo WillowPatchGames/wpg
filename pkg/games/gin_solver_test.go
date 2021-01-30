@@ -738,6 +738,113 @@ var someSolver = GinSolver{
 
 var HandTestCases = []ValidHandEntry{
 	ValidHandEntry{
+		Solver: GinSolver{
+			PointValue:       DefaultPointValue,
+			WildCards:        []CardRank{JokerRank, QueenRank},
+			AnyWildGroup:     false,
+			WildAsRank:       true,
+			AllWildGroups:    false,
+			MostlyWildGroups: false,
+			WildJokerRanked:  false,
+			SameSuitRuns:     true,
+			AceHigh:          false,
+			AceLow:           false,
+			RunsWrap:         false,
+		},
+		Entries: []HandEntry{
+			HandEntry{
+				Hand: []Card{
+					Card{13, ClubsSuit, 4},
+					Card{48, ClubsSuit, 3},
+					Card{20, ClubsSuit, 2},
+
+					Card{44, ClubsSuit, 13},
+					Card{23, SpadesSuit, 12},
+					Card{27, FancySuit, 14},
+					Card{53, ClubsSuit, 10},
+					Card{29, ClubsSuit, 9},
+					Card{28, ClubsSuit, 8},
+
+					Card{51, FancySuit, 14},
+					Card{24, SpadesSuit, 1},
+					Card{32, DiamondsSuit, 1},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{13, ClubsSuit, 4},
+					Card{48, ClubsSuit, 3},
+					Card{20, ClubsSuit, 2},
+
+					Card{44, ClubsSuit, 13},
+					Card{23, SpadesSuit, 12},
+					Card{27, FancySuit, 14},
+					Card{53, ClubsSuit, 10},
+					Card{29, ClubsSuit, 9},
+					Card{28, ClubsSuit, 8},
+
+					Card{51, FancySuit, 14},
+					Card{24, SpadesSuit, 2},
+					Card{32, SpadesSuit, 1},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{13, ClubsSuit, 4},
+					Card{48, ClubsSuit, 3},
+					Card{20, ClubsSuit, 2},
+
+					Card{44, ClubsSuit, 13},
+					Card{23, SpadesSuit, 12},
+					Card{27, FancySuit, 14},
+					Card{53, ClubsSuit, 10},
+					Card{29, ClubsSuit, 9},
+					Card{28, ClubsSuit, 8},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{13, ClubsSuit, 4},
+					Card{48, ClubsSuit, 3},
+					Card{20, ClubsSuit, 2},
+
+					Card{44, ClubsSuit, 13},
+					Card{23, SpadesSuit, 12},
+					Card{27, FancySuit, 14},
+					Card{53, ClubsSuit, 10},
+					Card{29, ClubsSuit, 9},
+					Card{28, ClubsSuit, 8},
+
+					Card{51, FancySuit, 14},
+				},
+				Score: 0,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{13, ClubsSuit, 4},
+					Card{48, ClubsSuit, 3},
+					Card{20, ClubsSuit, 2},
+
+					Card{44, ClubsSuit, 13},
+					Card{23, SpadesSuit, 12},
+					Card{27, FancySuit, 14},
+					Card{53, ClubsSuit, 10},
+					Card{29, ClubsSuit, 9},
+					Card{28, ClubsSuit, 8},
+
+					Card{51, FancySuit, 14},
+					Card{25, SpadesSuit, 3},
+					Card{24, SpadesSuit, 2},
+					Card{32, SpadesSuit, 1},
+				},
+				Score: 0,
+			},
+		},
+	},
+	ValidHandEntry{
 		Solver: someSolver,
 		Entries: []HandEntry{
 			HandEntry{
@@ -832,6 +939,40 @@ var HandTestCases = []ValidHandEntry{
 				},
 				Score: 43,
 			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, AceRank},
+					Card{0, SpadesSuit, TwoRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, FourRank},
+					Card{0, HeartsSuit, FourRank},
+					Card{0, SpadesSuit, FiveRank},
+				},
+				Score: 4,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, AceRank},
+					Card{0, SpadesSuit, TwoRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, FourRank},
+					Card{0, HeartsSuit, FourRank},
+					Card{0, ClubsSuit, FourRank},
+					Card{0, SpadesSuit, FiveRank},
+				},
+				Score: 5,
+			},
+			HandEntry{
+				Hand: []Card{
+					Card{0, SpadesSuit, TwoRank},
+					Card{0, NoneSuit, JokerRank},
+					Card{0, SpadesSuit, FourRank},
+					Card{0, HeartsSuit, FourRank},
+					Card{0, ClubsSuit, FourRank},
+					Card{0, SpadesSuit, FiveRank},
+				},
+				Score: 7,
+			},
 		},
 	},
 }
@@ -841,7 +982,7 @@ func TestIsValidGroup(t *testing.T) {
 		GroupTestCases = append(GroupTestCases, more...)
 	}
 
-	// ls pkg/games/* | entr env GOROOT="" go test -v git.cipherboy.com/WillowPatchGames/wpg/pkg/games
+	// ls pkg/games/* | entr env GOROOT="" go test -v -count=1 -run TestIsValidGroup git.cipherboy.com/WillowPatchGames/wpg/pkg/games
 
 	for _, tc := range GroupTestCases {
 		for _, entry := range tc.Entries {
@@ -857,20 +998,18 @@ func TestIsValidGroup(t *testing.T) {
 			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
 				t.Error("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
 			}
-			/*
-				actual_score := (&tc.Solver).MinScoreBelow(group, 100)
-				if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
-					if len(group) > 10 {
-						continue
-					}
-					m := (&tc.Solver).AllMatches(group, cards)
-					if len(m) < 12 {
-						//t.Log("All matches", m)
-					}
-					t.Log("Mostly",tc.Solver.MostlyWildGroups||tc.Solver.AnyWildGroup,"all",tc.Solver.AllWildGroups||tc.Solver.AnyWildGroup)
-					t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+			actual_score := (&tc.Solver).MinScoreBelow(group, 100)
+			if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
+				if len(group) > 10 {
+					continue
 				}
-			*/
+				m := (&tc.Solver).AllMatches(group, cards)
+				if len(m) < 12 {
+					//t.Log("All matches", m)
+				}
+				t.Log("Mostly",tc.Solver.MostlyWildGroups||tc.Solver.AnyWildGroup,"all",tc.Solver.AllWildGroups||tc.Solver.AnyWildGroup)
+				t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+			}
 		}
 	}
 	for _, tc := range HandTestCases {
