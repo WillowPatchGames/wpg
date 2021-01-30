@@ -17,6 +17,10 @@ const (
 
 var StandardCardSuits = [...]CardSuit{ClubsSuit, HeartsSuit, SpadesSuit, DiamondsSuit}
 
+func (s CardSuit) String() string {
+	return [...]string{"NoneSuit", "ClubsSuit", "HeartsSuit", "SpadesSuit", "DiamondsSuit", "FancySuit"}[s]
+}
+
 type CardRank int
 
 const (
@@ -39,6 +43,10 @@ const (
 
 var StandardCardRanks = [...]CardRank{AceRank, TwoRank, ThreeRank, FourRank, FiveRank, SixRank, SevenRank, EightRank, NineRank, TenRank, JackRank, QueenRank, KingRank}
 
+func (r CardRank) String() string {
+	return [...]string{"NoneRank", "AceRank", "TwoRank", "ThreeRank", "FourRank", "FiveRank", "SixRank", "SevenRank", "EightRank", "NineRank", "TenRank", "JackRank", "QueenRank", "KingRank", "JokerRank"}[r]
+}
+
 type Card struct {
 	ID   int      `json:"id"`
 	Suit CardSuit `json:"suit"`
@@ -54,7 +62,7 @@ func (c Card) Copy() *Card {
 }
 
 func (c Card) String() string {
-	return "{id:" + strconv.Itoa(c.ID) + " suit:" + strconv.Itoa(int(c.Suit)) + " rank:" + strconv.Itoa(int(c.Rank)) + "}"
+	return "Card{" + strconv.Itoa(c.ID) + ", " + c.Suit.String() + ", " + c.Rank.String() + "}"
 }
 
 type Deck struct {
