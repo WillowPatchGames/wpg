@@ -231,7 +231,9 @@ func subsets(items []int) [][]int {
 	with := make([][]int, len(without))
 	copy(with, without)
 	for i, v := range with {
-		with[i] = append(v[:], items[0])
+		cpy := make([]int, len(v), len(v)+1)
+		copy(cpy, v)
+		with[i] = append(cpy, items[0])
 	}
 
 	return append(with, without...)
