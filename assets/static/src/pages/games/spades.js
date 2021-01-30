@@ -519,9 +519,9 @@ class SpadesGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
         },
         "finished": async (data) => {
-          data.message = await personalize(data.winner) + " won!";
+          data.message = await Promise.all(data.winners.map(personalize)) + " won!";
           notify(this.props.snackbar, data.message, data.type);
-          this.game.winner = data.winner;
+          this.game.winners = data.winners;
           this.props.setPage('afterparty', true);
         },
         "error": data => {

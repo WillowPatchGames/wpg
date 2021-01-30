@@ -329,8 +329,8 @@ type SpadesState struct {
 	Split    bool `json:"split"`
 	Bid      bool `json:"bid"`
 
-	Finished bool `json:"finished"`
-	Winner   int  `json:"winner"`
+	Finished bool  `json:"finished"`
+	Winners  []int `json:"winners"`
 }
 
 func (ss *SpadesState) Init(cfg SpadesConfig) error {
@@ -346,7 +346,7 @@ func (ss *SpadesState) Init(cfg SpadesConfig) error {
 	ss.Assigned = false
 	ss.Started = false
 	ss.Finished = false
-	ss.Winner = -1
+	ss.Winners = make([]int, 0)
 
 	ss.PreviousTricks = make([][]Card, 0)
 
@@ -1049,14 +1049,14 @@ func (ss *SpadesState) tabulateRoundScore() error {
 		}
 	}
 
-	var winner_offset = -1
+	var winner_offsets = make([]int, 0)
 	var winner_score = -1
 	var winning_team = -1
 	for player := 0; player < len(ss.Players); player++ {
 		if ss.Players[player].Score >= ss.Config.WinAmount {
 			if ss.Players[player].Score > winner_score {
 				winner_score = ss.Players[player].Score
-				winner_offset = player
+				winner_offsets = append(winner_offsets, player)
 				winning_team = ss.Players[player].Team
 			} else if ss.Players[player].Score == winner_score {
 				// If we have two teams who are tied for the winning score,
@@ -1069,11 +1069,11 @@ func (ss *SpadesState) tabulateRoundScore() error {
 	}
 
 	// If we have only a single winner, exit the game.
-	if winner_offset != -1 && winning_team != -1 {
+	if len(winner_offsets) > 0 && winning_team != -1 {
 		ss.Finished = true
 		ss.Dealt = true
 		ss.Bid = true
-		ss.Winner = winner_offset
+		ss.Winners = winner_offsets
 		return errors.New(SpadesGameOver)
 	}
 

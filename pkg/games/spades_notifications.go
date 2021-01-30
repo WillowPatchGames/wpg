@@ -174,7 +174,7 @@ type SpadesPeekNotification struct {
 	Split    bool `json:"split"`
 	Finished bool `json:"finished"`
 
-	Winner uint64 `json:"winner"`
+	Winners []uint64 `json:"winners"`
 }
 
 func (spn *SpadesPeekNotification) LoadData(data *GameData, game *SpadesState, player *PlayerData) {
@@ -221,18 +221,18 @@ func (spn *SpadesPeekNotification) LoadData(data *GameData, game *SpadesState, p
 	spn.Split = game.Split
 	spn.Finished = game.Finished
 
-	spn.Winner, _ = data.ToUserID(game.Winner)
+	spn.Winners, _ = data.ToUserIDs(game.Winners)
 }
 
 type SpadesFinishedNotification struct {
 	MessageHeader
 
-	Winner uint64 `json:"winner"`
+	Winners []uint64 `json:"winners"`
 }
 
 func (sfn *SpadesFinishedNotification) LoadData(data *GameData, state *SpadesState, player *PlayerData) {
 	sfn.LoadHeader(data, player)
 	sfn.MessageType = "finished"
 
-	sfn.Winner, _ = data.ToUserID(state.Winner)
+	sfn.Winners, _ = data.ToUserIDs(state.Winners)
 }
