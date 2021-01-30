@@ -692,10 +692,12 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 		tts.Players[player].Warnings += 1
 		if tts.Players[player].Warnings < max_warnings {
 			return errors.New("you can get a better score!")
-		} else if tts.Players[player].Warnings < max_warnings {
+		} else if tts.Players[player].Warnings == max_warnings {
 			return errors.New("you can get a better score! last chance!")
 		}
 	}
+	// Note that `score` is indeed a valid score for this hand
+	// so it is suprising if it is better than `ideal`!
 	if ideal > score {
 		log.Println("failed to compute minimum score for hand; got", score, "expected", ideal, "for cards", tts.Players[player].Hand)
 	}
