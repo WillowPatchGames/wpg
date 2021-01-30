@@ -17,8 +17,10 @@ const (
 
 var StandardCardSuits = [...]CardSuit{ClubsSuit, HeartsSuit, SpadesSuit, DiamondsSuit}
 
+var CardSuitNames = [...]string{"NoneSuit", "ClubsSuit", "HeartsSuit", "SpadesSuit", "DiamondsSuit", "FancySuit"}
+
 func (s CardSuit) String() string {
-	return [...]string{"NoneSuit", "ClubsSuit", "HeartsSuit", "SpadesSuit", "DiamondsSuit", "FancySuit"}[s]
+	return CardSuitNames[s]
 }
 
 type CardRank int
@@ -43,8 +45,10 @@ const (
 
 var StandardCardRanks = [...]CardRank{AceRank, TwoRank, ThreeRank, FourRank, FiveRank, SixRank, SevenRank, EightRank, NineRank, TenRank, JackRank, QueenRank, KingRank}
 
+var CardRankNames = [...]string{"NoneRank", "AceRank", "TwoRank", "ThreeRank", "FourRank", "FiveRank", "SixRank", "SevenRank", "EightRank", "NineRank", "TenRank", "JackRank", "QueenRank", "KingRank", "JokerRank"}
+
 func (r CardRank) String() string {
-	return [...]string{"NoneRank", "AceRank", "TwoRank", "ThreeRank", "FourRank", "FiveRank", "SixRank", "SevenRank", "EightRank", "NineRank", "TenRank", "JackRank", "QueenRank", "KingRank", "JokerRank"}[r]
+	return CardRankNames[r]
 }
 
 type Card struct {
