@@ -536,16 +536,17 @@ class UserArchiveTab extends React.Component {
       for (let game of this.state.games) {
         loaded_games.push(
           <l.ListItem>
-            <l.ListItemText>
+            <l.ListItemText className="double-info">
               <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
                 <b>Game #{ game.game_id }</b>&nbsp;-&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
               </l.ListItemPrimaryText>
               <l.ListItemSecondaryText>
-                <span title={ game.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(game.created_at)) } ago</span>
-                Updated <span title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
+                <span className="info-item" title={ game.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(game.created_at)) } ago</span>
+                <span className="info-spacer"></span>
+                <span className="info-item" title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
               </l.ListItemSecondaryText>
             </l.ListItemText>
-            <l.ListItemMeta>
+            <l.ListItemMeta className="double-button">
               {
                 game.lifecycle !== "deleted"
                 ? <Button theme="secondary"
@@ -595,16 +596,17 @@ class UserArchiveTab extends React.Component {
       for (let room of this.state.rooms) {
         loaded_rooms.push(
           <l.ListItem>
-            <l.ListItemText>
+            <l.ListItemText className="double-info">
               <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
                 <b>Room #{ room.room_id }</b>&nbsp;-&nbsp;{ room.style }&nbsp;-&nbsp;<i>{ room.lifecycle }</i>
               </l.ListItemPrimaryText>
               <l.ListItemSecondaryText>
-                <span title={ room.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(room.created_at)) } ago</span>
-                Updated <span title={ room.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(room.updated_at)) } ago</span>
+                <span className="info-item" title={ room.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(room.created_at)) } ago</span>
+                <span className="info-spacer"></span>
+                <span className="info-item" title={ room.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(room.updated_at)) } ago</span>
               </l.ListItemSecondaryText>
             </l.ListItemText>
-            <l.ListItemMeta>
+            <l.ListItemMeta className="double-button">
               {
                 room.lifecycle !== "deleted"
                 ? <Button theme="secondary"
