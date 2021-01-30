@@ -1,8 +1,8 @@
 package games
 
 import (
-	"sort"
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -737,6 +737,7 @@ var someSolver = GinSolver{
 	AceLow:           false,
 	RunsWrap:         false,
 }
+
 func threeThirteenSolver(round CardRank) GinSolver {
 	return GinSolver{
 		PointValue:       DefaultPointValue,
