@@ -1015,7 +1015,7 @@ func (ss *SpadesState) tabulateRoundScore() error {
 			}
 		}
 
-		if have_partner && partner < player {
+		if have_partner && partner <= player {
 			break
 		}
 
