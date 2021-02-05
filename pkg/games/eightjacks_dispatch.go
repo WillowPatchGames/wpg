@@ -107,7 +107,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			}
 		}
 
-		if players != state.Config.NumPlayers || !state.Assigned {
+		if players == 0 || players != state.Config.NumPlayers || !state.Assigned {
 			return errors.New("must finish configuring assignments for this game")
 		}
 
@@ -115,10 +115,14 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			return err
 		}
 
-		game.Countdown = 0
-		game.CountdownTimer = nil
+		if state.Config.Countdown {
+			game.Countdown = 0
+			game.CountdownTimer = nil
 
-		return c.handleCountdown(game)
+			return c.handleCountdown(game)
+		} else {
+			return c.doEightJacksStart(game, state)
+		}
 	case "join":
 		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted
@@ -246,7 +250,7 @@ func (c *Controller) doEightJacksStart(game *GameData, state *EightJacksState) e
 		}
 	}
 
-	if players != state.Config.NumPlayers || !state.Assigned {
+	if players == 0 || players != state.Config.NumPlayers || !state.Assigned {
 		return errors.New("must finish configuring assignments for this game")
 	}
 

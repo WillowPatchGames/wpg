@@ -3,7 +3,6 @@ package games
 import (
 	"errors"
 	"log"
-	"reflect"
 	"sort"
 	"strconv"
 )
@@ -133,6 +132,8 @@ func (ejp *EightJacksPlayer) RemoveCard(cardID int) bool {
 }
 
 type EightJacksConfig struct {
+	GameConfig
+
 	NumPlayers int `json:"num_players"` // 2 <= n <= 8; best with two to four or six.
 
 	RunLength int `json:"run_length"` // 3 <= n <= 6 -- length of a run for it to count.
@@ -184,76 +185,44 @@ func (cfg EightJacksConfig) Validate() error {
 }
 
 func (cfg *EightJacksConfig) LoadConfig(wire map[string]interface{}) error {
-	if wire_value, ok := wire["num_players"]; ok {
-		if num_players, ok := wire_value.(float64); ok {
-			cfg.NumPlayers = int(num_players)
-		} else {
-			return errors.New("unable to parse value for num_players as integer: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := BoolConfig(wire, "countdown", &cfg.Countdown, true); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["run_length"]; ok {
-		if run_length, ok := wire_value.(float64); ok {
-			cfg.RunLength = int(run_length)
-		} else {
-			return errors.New("unable to parse value for run_length as integer: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := IntConfig(wire, "num_players", &cfg.NumPlayers, 4); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["win_limit"]; ok {
-		if win_limit, ok := wire_value.(float64); ok {
-			cfg.WinLimit = int(win_limit)
-		} else {
-			return errors.New("unable to parse value for win_limit as integer: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := IntConfig(wire, "run_length", &cfg.RunLength, 4); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["board_width"]; ok {
-		if board_width, ok := wire_value.(float64); ok {
-			cfg.BoardWidth = int(board_width)
-		} else {
-			return errors.New("unable to parse value for board_width as integer: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := IntConfig(wire, "win_limit", &cfg.WinLimit, 2); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["board_height"]; ok {
-		if board_height, ok := wire_value.(float64); ok {
-			cfg.BoardHeight = int(board_height)
-		} else {
-			return errors.New("unable to parse value for board_height as integer: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := IntConfig(wire, "board_width", &cfg.BoardWidth, 10); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["remove_unused"]; ok {
-		if remove_unused, ok := wire_value.(bool); ok {
-			cfg.RemoveUnused = remove_unused
-		} else {
-			return errors.New("unable to parse value for removed_unused as boolean: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := IntConfig(wire, "board_height", &cfg.BoardHeight, 10); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["wild_corners"]; ok {
-		if wild_corners, ok := wire_value.(bool); ok {
-			cfg.WildCorners = wild_corners
-		} else {
-			return errors.New("unable to parse value for wild_corners as boolean: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := BoolConfig(wire, "remove_unused", &cfg.RemoveUnused, true); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["hand_size"]; ok {
-		if hand_size, ok := wire_value.(float64); ok {
-			cfg.HandSize = int(hand_size)
-		} else {
-			return errors.New("unable to parse value for hand_size as integer: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := BoolConfig(wire, "wild_corners", &cfg.WildCorners, true); err != nil {
+		return err
 	}
 
-	if wire_value, ok := wire["joker_count"]; ok {
-		if joker_count, ok := wire_value.(float64); ok {
-			cfg.JokerCount = int(joker_count)
-		} else {
-			return errors.New("unable to parse value for joker_count as integer: " + reflect.TypeOf(wire_value).String())
-		}
+	if err := IntConfig(wire, "hand_size", &cfg.HandSize, 7); err != nil {
+		return err
+	}
+
+	if err := IntConfig(wire, "joker_count", &cfg.JokerCount, 4); err != nil {
+		return err
 	}
 
 	return nil

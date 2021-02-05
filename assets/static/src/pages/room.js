@@ -90,7 +90,7 @@ class RoomMembersTab extends React.Component {
       chat = <>
         <l.ListItem disabled key="chat">
           <p>This room has an external video chat link:<br />
-            <a href={ this.props.room.config.video_chat } target="_blank" rel="noreferrer">
+            <a href={ this.props.room.config.video_chat } target="_blank" rel="noopener noreferrer">
               { this.props.room.config.video_chat }
             </a>
           </p>
@@ -691,7 +691,7 @@ class RoomPage extends React.Component {
     var chat = null;
     if (this.props.room.config.video_chat !== undefined && this.props.room.config.video_chat !== null && this.props.room.config.video_chat.length > 0) {
       chat = <>
-        <a href={ this.props.room.config.video_chat } target="_blank" rel="noreferrer">
+        <a href={ this.props.room.config.video_chat } target="_blank" rel="noopener noreferrer">
           <Icon icon={{
               icon: "voice_chat",
               size: "xlarge",

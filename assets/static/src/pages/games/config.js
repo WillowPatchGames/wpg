@@ -511,6 +511,16 @@ var GameConfig = {
         },
         "label": "Joker count",
       },
+      {
+        "name": "countdown",
+        "values": {
+          'type': 'bool', 'default': true, 'value': (x) => x,
+        },
+        "label": {
+          "true": "Show a 3... 2... 1... countdown before beginning",
+          "false": "Start the game instantly",
+        },
+      },
     ],
   },
   'three thirteen': {

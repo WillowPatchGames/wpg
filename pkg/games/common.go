@@ -1,7 +1,9 @@
 package games
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -58,4 +60,37 @@ func (gce GameConfigError) Error() string {
 	}
 
 	return fmt.Sprintf("Invalid value for parameter: %s has value %s", gce.Parameter, gce.Value)
+}
+
+// GameConfig is a set of common game configuration options.
+type GameConfig struct {
+	Countdown bool `json:"countdown"` // Whether to wait and send countdown messages.
+}
+
+func IntConfig(wire map[string]interface{}, key string, value *int, default_value int) error {
+	if wire_value, ok := wire[key]; ok {
+		if float_value, ok := wire_value.(float64); ok {
+			*value = int(float_value)
+		} else {
+			return errors.New("unable to parse value for " + key + "as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	} else {
+		*value = default_value
+	}
+
+	return nil
+}
+
+func BoolConfig(wire map[string]interface{}, key string, value *bool, default_value bool) error {
+	if wire_value, ok := wire[key]; ok {
+		if bool_value, ok := wire_value.(bool); ok {
+			*value = bool_value
+		} else {
+			return errors.New("unable to parse value for " + key + " as bool: " + reflect.TypeOf(wire_value).String())
+		}
+	} else {
+		*value = default_value
+	}
+
+	return nil
 }
