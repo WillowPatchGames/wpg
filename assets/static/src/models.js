@@ -855,6 +855,7 @@ class RoomModel {
       'owner': this.user.id,
       'style': this.mode,
       'open': this.open,
+      'config': this.config,
     };
 
     const response = await fetch(this.create_uri, {

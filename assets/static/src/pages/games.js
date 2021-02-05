@@ -1183,6 +1183,7 @@ class CreateRoomForm extends React.Component {
       error: null,
       mode: 'single',
       open: true,
+      video_chat: '',
     }
   }
 
@@ -1197,6 +1198,8 @@ class CreateRoomForm extends React.Component {
     var room = new RoomModel(this.props.user);
     room.mode = this.state.mode;
     room.open = this.state.open;
+    room.config = {};
+    room.config.video_chat = this.state.video_chat;
 
     await room.create();
 
@@ -1238,6 +1241,7 @@ class CreateRoomForm extends React.Component {
               <l.ListGroup>
                 <l.ListGroupSubheader>Joining Options</l.ListGroupSubheader>
                 <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label={ this.state.open ? "Open for anyone to join if they have the room code" : "Generate unique invite codes for everyone" } checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
+                <TextField fullwidth label="Video Chat Link" value={ this.state.video_chat } onChange={ this.inputHandler("video_chat") } />
               </l.ListGroup>
               <br />
               <br />

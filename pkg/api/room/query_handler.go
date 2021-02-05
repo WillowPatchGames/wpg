@@ -1,6 +1,7 @@
 package room
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"sort"
@@ -40,6 +41,7 @@ type queryHandlerResponse struct {
 		Playing  []uint64 `json:"playing,omitempty"`
 		Finished []uint64 `json:"finished,omitempty"`
 	} `json:"games"`
+	Config   *RoomConfig   `json:"config"`
 	Admitted bool          `json:"admitted"`
 	Members  []membersInfo `json:"members,omitempty"`
 }
@@ -200,6 +202,15 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		handle.resp.Open = room.Open
 		handle.resp.Style = room.Style
 		handle.resp.Code = room.JoinCode.String
+	}
+
+	var cfg RoomConfig
+	if room.Config.Valid {
+		if err := json.Unmarshal([]byte(room.Config.String), &cfg); err != nil {
+			return err
+		}
+
+		handle.resp.Config = &cfg
 	}
 
 	utils.SendResponse(w, r, handle)

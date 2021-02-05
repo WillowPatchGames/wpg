@@ -17,10 +17,10 @@ import (
 )
 
 type createHandlerData struct {
-	Style    string          `json:"style"`
-	Open     bool            `json:"open"`
-	Config   *RushRoomConfig `json:"config"`
-	APIToken string          `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	Style    string      `json:"style"`
+	Open     bool        `json:"open"`
+	Config   *RoomConfig `json:"config"`
+	APIToken string      `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type createHandlerResponse struct {

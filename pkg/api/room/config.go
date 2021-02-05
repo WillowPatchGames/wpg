@@ -1,5 +1,5 @@
 package room
 
-type RushRoomConfig struct {
-	GameMode string `json:"mode"`
+type RoomConfig struct {
+	VideoChat string `json:"video_chat"`
 }

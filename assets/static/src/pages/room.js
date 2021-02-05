@@ -10,6 +10,7 @@ import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/checkbox/styles';
 import '@rmwc/grid/styles';
+import '@rmwc/icon/styles';
 import '@rmwc/list/styles';
 import '@rmwc/select/styles';
 import '@rmwc/tabs/styles';
@@ -21,6 +22,7 @@ import { Button } from '@rmwc/button';
 import { Checkbox } from '@rmwc/checkbox';
 import * as c from '@rmwc/card';
 import * as g from '@rmwc/grid';
+import { Icon } from '@rmwc/icon';
 import * as l from '@rmwc/list';
 import { Select } from '@rmwc/select';
 import * as t from '@rmwc/tabs';
@@ -81,6 +83,19 @@ class RoomMembersTab extends React.Component {
     var left_panel = null;
     var right_panel = null;
 
+    var chat = null;
+    if (this.props.room.config.video_chat !== undefined && this.props.room.config.video_chat !== null && this.props.room.config.video_chat.length > 0) {
+      chat = <>
+        <l.ListItem disabled key="chat">
+          <p>This room has an external video chat link:<br />
+            <a href={ this.props.room.config.video_chat } target="_blank" rel="noreferrer">
+              { this.props.room.config.video_chat }
+            </a>
+          </p>
+        </l.ListItem>
+      </>;
+    }
+
     if (this.state.room_owner) {
       left_panel = <>
         <article key={"joining"} className="text">
@@ -104,6 +119,7 @@ class RoomMembersTab extends React.Component {
                   <l.ListItem key="join-code-link" onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
                     <p><Link ref={ this.link_ref } to={ "/room?code=" + this.props.room.code }>{ window.location.origin + "/room?code=" + this.props.room.code }</Link></p>
                   </l.ListItem>
+                  { chat }
                 </l.ListGroup>
               </l.List>
             </div>
@@ -644,9 +660,22 @@ class RoomPage extends React.Component {
       tab_index = 0;
     }
 
+    var chat = null;
+    if (this.props.room.config.video_chat !== undefined && this.props.room.config.video_chat !== null && this.props.room.config.video_chat.length > 0) {
+      chat = <>
+        <a href={ this.props.room.config.video_chat } target="_blank" rel="noreferrer">
+          <Icon icon={{
+              icon: "voice_chat",
+              size: "xlarge",
+            }}
+          />
+        </a>
+      </>;
+    }
+
     return (
       <div className="App-page">
-        <Typography use="headline2">Room #{ this.props.room.id }</Typography>
+        <Typography use="headline2">Room #{ this.props.room.id }{ chat }</Typography>
         <div style={{ width: "65%", margin: "0 auto" }}>
           <ThemeProvider
             options={{
