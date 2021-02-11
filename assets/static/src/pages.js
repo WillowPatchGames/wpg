@@ -7,6 +7,8 @@ import {
   Switch,
 } from "react-router-dom";
 
+import { Helmet } from "react-helmet";
+
 import { AboutPage } from './pages/about.js';
 import { NotFoundPage } from './pages/common.js';
 import { DocsPage } from './pages/docs.js';
@@ -72,56 +74,170 @@ class Page extends React.Component {
     return (
       <Switch>
         <Route exact path="/about">
-          <AboutPage {...this_props} key="path-about" />
+          <>
+            <Helmet>
+              <title>About</title>
+            </Helmet>
+            <AboutPage {...this_props} key="path-about" />
+          </>
         </Route>
         <RouteWithGame path="/afterparty" game={ this.props.game }>
-          <AfterPartyPage {...this_props} key="path-afterparty" />
-          <JoinGamePage {...this_props} key="path-afterparty-missing" />
+          <>
+            <Helmet>
+              <title>{ "After Pary - Game #" + this.props.game?.id }</title>
+            </Helmet>
+            <AfterPartyPage {...this_props} key="path-afterparty" />
+          </>
+          <>
+            <Helmet>
+              <title>Join Game</title>
+            </Helmet>
+            <JoinGamePage {...this_props} key="path-afterparty-missing" />
+          </>
         </RouteWithGame>
         <RouteWithAuth path="/create/game" user={ this.props.user }>
-          <CreateGamePage {...this_props} key="path-create-game" />
-          <LoginPage {...this_props} key="path-create-game-unauthed" />
+          <>
+            <Helmet>
+              <title>Create Game</title>
+            </Helmet>
+            <CreateGamePage {...this_props} key="path-create-game" />
+          </>
+          <>
+            <Helmet>
+              <title>Login</title>
+            </Helmet>
+            <LoginPage {...this_props} key="path-create-game-unauthed" />
+          </>
         </RouteWithAuth>
         <RouteWithAuth path="/create/room" user={ this.props.user }>
-          <CreateRoomPage {...this_props} key="path-create-room" />
-          <LoginPage {...this_props} key="path-create-room-unauthed" />
+          <>
+            <Helmet>
+              <title>Create a Room</title>
+            </Helmet>
+            <CreateRoomPage {...this_props} key="path-create-room" />
+          </>
+          <>
+            <Helmet>
+              <title>Login</title>
+            </Helmet>
+            <LoginPage {...this_props} key="path-create-room-unauthed" />
+          </>
         </RouteWithAuth>
         <Route path="/docs">
-          <DocsPage {...this_props} key="path-docs" />
+          <>
+            <Helmet>
+              <title>Documentation</title>
+            </Helmet>
+            <DocsPage {...this_props} key="path-docs" />
+          </>
         </Route>
         <Route path="/join">
-          <JoinGamePage {...this_props} key="path-join" />
+          <>
+            <Helmet>
+              <title>Join Game</title>
+            </Helmet>
+            <JoinGamePage {...this_props} key="path-join" />
+          </>
         </Route>
         <Route path="/login">
-          <LoginPage {...this_props} key="path-login" />
+          <>
+            <Helmet>
+              <title>Login</title>
+            </Helmet>
+            <LoginPage {...this_props} key="path-login" />
+          </>
         </Route>
         <RouteWithGame path="/play" game={ this.props.game }>
-          <PreGamePage {...this_props} key="path-play" />
-          <JoinGamePage {...this_props} key="path-play-missing" />
+          <>
+            <Helmet>
+              <title>{ "Pre-Game - Game #" + this.props.game?.id }</title>
+            </Helmet>
+            <PreGamePage {...this_props} key="path-play" />
+          </>
+          <>
+            <Helmet>
+              <title>Join Game</title>
+            </Helmet>
+            <JoinGamePage {...this_props} key="path-play-missing" />
+          </>
         </RouteWithGame>
         <RouteWithGame path="/playing" game={ this.props.game }>
-          <GamePage {...this_props} key="path-playing" />
-          <JoinGamePage {...this_props} key="path-playing-missing" />
+          <>
+            <Helmet>
+              <title>{ "Playing - Game #" + this.props.game?.id }</title>
+            </Helmet>
+            <GamePage {...this_props} key="path-playing" />
+          </>
+          <>
+            <Helmet>
+              <title>Join Game</title>
+            </Helmet>
+            <JoinGamePage {...this_props} key="path-playing-missing" />
+          </>
         </RouteWithGame>
         <Route path="/pricing">
-          <PricingPage {...this_props} key="path-pricing" />
+          <>
+            <Helmet>
+              <title>Pricing</title>
+            </Helmet>
+            <PricingPage {...this_props} key="path-pricing" />
+          </>
         </Route>
         <Route path="/privacy">
-          <PrivacyPage {...this_props} key="path-privacy" />
+          <>
+            <Helmet>
+              <title>Privacy Policy</title>
+            </Helmet>
+            <PrivacyPage {...this_props} key="path-privacy" />
+          </>
         </Route>
         <RouteWithAuth path="/profile" user={ this.props.user }>
-          <ProfilePage {...this_props} key="path-profile" />
-          <LoginPage {...this_props} key="path-profile-unauthed" />
+          <>
+            <Helmet
+              titleTemplate="%s - Account Preferences | Willow Patch Games"
+              defaultTitle="Account Preferences | Welcome to Willow Patch Games"
+            >
+              <title>Account Preferences</title>
+            </Helmet>
+            <ProfilePage {...this_props} key="path-profile" />
+          </>
+          <>
+            <Helmet>
+              <title>Login</title>
+            </Helmet>
+            <LoginPage {...this_props} key="path-profile-unauthed" />
+          </>
         </RouteWithAuth>
         <RouteWithRoom path="/room" room={ this.props.room }>
-          <RoomPage {...this_props} key="path-room" />
-          <JoinGamePage {...this_props} key="path-room-missing" />
+          <>
+            <Helmet
+              titleTemplate={ "%s - Room #" + this.props.room?.id + " | Willow Patch Games" }
+              defaultTitle={ "Room #" + this.props.room?.id + " | Willow Patch Games" }
+            />
+            <RoomPage {...this_props} key="path-room" />
+          </>
+          <>
+            <Helmet>
+              <title>Join Game</title>
+            </Helmet>
+            <JoinGamePage {...this_props} key="path-room-missing" />
+          </>
         </RouteWithRoom>
         <Route path="/rules/rush">
-          <RushRulesPage {...this_props} key="path-rules-rush" />
+          <>
+            <Helmet>
+              <title>Rush - Rules</title>
+            </Helmet>
+            <RushRulesPage {...this_props} key="path-rules-rush" />
+          </>
         </Route>
         <Route path="/signup">
-          <SignupPage {...this_props} key="path-signup" />
+          <>
+            <Helmet>
+              <title>Sign Up</title>
+            </Helmet>
+            <SignupPage {...this_props} key="path-signup" />
+          </>
         </Route>
         <Route path="/home">
           <HomePage {...this_props} key="path-home" />
@@ -133,7 +249,12 @@ class Page extends React.Component {
           <HomePage {...this_props} key="home" />
         </Route>
         <Route>
-          <NotFoundPage {...this_props} key="not-found" />
+          <>
+            <Helmet>
+              <title>404 Error - Not Found</title>
+            </Helmet>
+            <NotFoundPage {...this_props} key="not-found" />
+          </>
         </Route>
       </Switch>
     );

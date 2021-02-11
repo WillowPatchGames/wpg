@@ -37,6 +37,7 @@
     "react": "^16.13.1",
     "react-app-polyfill": "^1.0.6",
     "react-dom": "^16.13.1",
+    "react-helmet": "^6.1.0",
     "react-lazy-load-image-component": "^1.5.0",
     "react-merge-props": "^0.1.4",
     "react-router-dom": "^5.2.0",

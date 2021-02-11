@@ -20,6 +20,8 @@ import { ThemeProvider } from '@rmwc/theme';
 
 import { SnackbarQueue, createSnackbarQueue } from '@rmwc/snackbar';
 
+import { Helmet } from "react-helmet";
+
 // Application imports
 import { Navigation } from './nav.js';
 import { Page, Footer } from './pages.js';
@@ -182,6 +184,22 @@ class App extends React.Component {
   render() {
     return (
       <div className={ "App" + (this.state.immersive ? " immersive" : "")} style={{ marginTop: '0px', 'borderTop': '0', 'paddingTop': '0px' }}>
+        <Helmet
+          titleTemplate="%s | Willow Patch Games"
+          defaultTitle="Welcome to Willow Patch Games"
+          defer={ true }
+        >
+          <meta
+            name="description"
+            content="Redefining table-top games and updating them for the 21st century
+                     WPG: Willow Patch Games"
+          />
+          <meta name="keywords"
+                content="Willow Patch Games, WillowPatchGames, WillowPatch, WPG,
+                         social games, word games, family games, friend games,
+                         rush!, quarantine games"
+          />
+        </Helmet>
         <RMWCProvider
           typography={{
             headline1: 'h1',

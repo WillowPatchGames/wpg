@@ -6,6 +6,8 @@ import {
   Link,
 } from "react-router-dom";
 
+import { Helmet } from "react-helmet";
+
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
 import '@rmwc/checkbox/styles';
@@ -177,6 +179,9 @@ class RoomMembersTab extends React.Component {
     } else if (left_panel === null) {
       return (
         <div>
+          <Helmet>
+            <title>Members</title>
+          </Helmet>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} tablet={0} />
             <g.GridCell align="right" span={6} tablet={8}>
@@ -188,6 +193,9 @@ class RoomMembersTab extends React.Component {
     } else if (right_panel === null) {
       return (
         <div>
+          <Helmet>
+            <title>Members</title>
+          </Helmet>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} tablet={0} />
             <g.GridCell align="right" span={6} tablet={8}>
@@ -199,6 +207,9 @@ class RoomMembersTab extends React.Component {
     } else {
       return (
         <div>
+          <Helmet>
+            <title>Members</title>
+          </Helmet>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={6} tablet={8}>
               { left_panel }
@@ -324,6 +335,7 @@ class RoomGamesTab extends React.Component {
   render() {
     let left_panel = null;
     let right_panel = null;
+    var tab_title = "Games";
 
     if (this.state.room_owner && this.state.create_game_form) {
       left_panel = <>
@@ -402,18 +414,22 @@ class RoomGamesTab extends React.Component {
           pending.length > 0
           ? <div>
               <Typography use="headline4">Open to Join</Typography>
-              { pending}
+              { pending }
             </div>
           : null
         }
       </>
     } else {
       right_panel = <PreGamePage {...this.props} />;
+      tab_title = "Game #" + this.props.game.id;
     }
 
     if (left_panel === null && right_panel === null) {
       return (
         <>
+          <Helmet>
+            <title>{ tab_title }</title>
+          </Helmet>
           <Typography use="headline3">Playing</Typography>
           <Button label="Refresh Games" raised onClick={() => { this.setCreateGameForm(false) ; this.clearGame() ; this.state.timeout.exec() } } />
           {
@@ -428,6 +444,9 @@ class RoomGamesTab extends React.Component {
     } else if (left_panel === null) {
       return (
         <div>
+          <Helmet>
+          <title>{ tab_title }</title>
+          </Helmet>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={2} tablet={0} />
             <g.GridCell align="right" span={8} tablet={8}>
@@ -447,6 +466,9 @@ class RoomGamesTab extends React.Component {
     } else if (right_panel === null) {
       return (
         <div>
+          <Helmet>
+            <title>{ tab_title }</title>
+          </Helmet>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={2} tablet={0} />
             <g.GridCell align="right" span={8} tablet={8}>
@@ -466,6 +488,9 @@ class RoomGamesTab extends React.Component {
     } else {
       return (
         <div>
+          <Helmet>
+            <title>{ tab_title }</title>
+          </Helmet>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={6} tablet={8}>
               <Typography use="headline3">Playing</Typography>
@@ -603,6 +628,9 @@ class RoomArchiveTab extends React.Component {
 
     return (
       <div>
+        <Helmet>
+          <title>Archive</title>
+        </Helmet>
         <Typography use="headline3">Archive</Typography>
         <div>
           <g.Grid fixedColumnWidth={ true }>

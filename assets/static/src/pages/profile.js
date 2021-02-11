@@ -7,6 +7,8 @@ import {
   Switch,
 } from "react-router-dom";
 
+import { Helmet } from "react-helmet";
+
 import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
@@ -95,6 +97,9 @@ class UserProfileTab extends React.Component {
   render() {
     return (
       <div>
+        <Helmet>
+          <title>Profile</title>
+        </Helmet>
         <c.Card>
           <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
             <Avatar src={ gravatarify(this.props.user) } name={ this.state.display } size="xlarge" />
@@ -379,8 +384,11 @@ class UserSecurityTab extends React.Component {
 
     return (
       <>
-      { password }
-      { twofa }
+        <Helmet>
+          <title>Security</title>
+        </Helmet>
+        { password }
+        { twofa }
       </>
     );
   }
@@ -444,6 +452,9 @@ class UserPlansTab extends React.Component {
 
     return (
       <div>
+        <Helmet>
+          <title>Plans</title>
+        </Helmet>
         { rendered_plans }
       </div>
     );
@@ -663,6 +674,9 @@ class UserArchiveTab extends React.Component {
 
     return (
       <>
+        <Helmet>
+          <title>Archive</title>
+        </Helmet>
         <div style={{ padding: '0.5rem 0rem 0.5rem 0rem' }} >
           <c.Card>
             <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
