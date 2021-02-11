@@ -702,9 +702,9 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 		tts.Players[player].Warnings += 1
 		if tts.Config.SuggestBetter {
 			if tts.Players[player].Warnings < max_warnings {
-				return errors.New("you can get a better score!")
+				return errors.New("you can get a better score")
 			} else if tts.Players[player].Warnings == max_warnings {
-				return errors.New("you can get a better score! last chance!")
+				return errors.New("you can get a better score! last chance")
 			}
 		}
 	}

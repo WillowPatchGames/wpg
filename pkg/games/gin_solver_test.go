@@ -1046,10 +1046,10 @@ func TestIsValidGroup(t *testing.T) {
 				if len(group) > 10 {
 					continue
 				}
-				m := (&tc.Solver).AllMatches(group, cards)
-				if len(m) < 12 {
-					//t.Log("All matches", m)
-				}
+				//m := (&tc.Solver).AllMatches(group, cards)
+				//if len(m) < 12 {
+				//	t.Log("All matches", m)
+				//}
 				t.Log("Mostly", tc.Solver.MostlyWildGroups || tc.Solver.AnyWildGroup, "all", tc.Solver.AllWildGroups || tc.Solver.AnyWildGroup)
 				t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
 			}
