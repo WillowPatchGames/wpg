@@ -1,3 +1,5 @@
+import { killable } from '../pages/games.js';
+
 class MessageController {
   constructor(game) {
     this.message_id = 1;
@@ -32,6 +34,8 @@ class WebSocketController {
 
     this.wsConnect();
     this.send({"message_type": "join"});
+
+    this.keepalive = null;
   }
 
   wsConnect() {
@@ -56,6 +60,13 @@ class WebSocketController {
         } catch {
           // Do nothing.
         }
+
+        // Also remove our old keepalive handler. It might be the thing
+        // that is calling us though.
+        if (this.keepalive) {
+          this.keepalive.kill();
+          this.keepalive = null;
+        }
       }
 
       this.game.ws = new WebSocket(this.game.endpoint);
@@ -71,6 +82,18 @@ class WebSocketController {
     // After the WebSocket was opened, attempt to flush the cache of
     // messages waiting to be sent.
     this.flushCache();
+
+    // Finally, begin our keepalive handler. This helps to ensure we
+    // eventually resume the websocket (in the event of a disconnect)
+    // and ensure the session is kept open by the server.
+    if (!this.keepalive) {
+      this.keepalive = killable(() => { this.sendKeepAlive() }, 15000);
+    }
+    this.keepalive.exec();
+  }
+
+  async sendKeepAlive() {
+    return await this.sendAndWait({ "message_type": "keepalive" });
   }
 
   // flushCache assumes an open WebSocket.

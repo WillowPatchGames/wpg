@@ -121,6 +121,17 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		}
 
 		return c.markReady(game.GID, player.UID, data.Ready)
+	case "keepalive":
+		// Our client-side JavaScript Websocket connection doesn't understand
+		// ping messages. In order to keep the read side of the connection
+		// open, we end up needing to send a simple keepalive message from the
+		// client to the server. In the event we haven't actually received any
+		// messages from the server either, we might as well attempt to send one
+		// back.
+		var message ControllerKeepAlive
+		message.LoadFromController(game, player)
+		c.undispatch(game, player, message.MessageID, 0, message)
+		return nil
 	case "word":
 		var data GameIsWord
 		if err := json.Unmarshal(message, &data); err != nil {

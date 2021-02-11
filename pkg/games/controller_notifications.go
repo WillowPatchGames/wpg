@@ -105,6 +105,15 @@ func (cc *ControllerCountdown) LoadFromController(data *GameData, player *Player
 	cc.Value = data.Countdown
 }
 
+type ControllerKeepAlive struct {
+	MessageHeader
+}
+
+func (cka *ControllerKeepAlive) LoadFromController(data *GameData, player *PlayerData) {
+	cka.LoadHeader(data, player)
+	cka.MessageType = "keepalive"
+}
+
 type ControllerNotifyWord struct {
 	MessageHeader
 	Word  string `json:"word"`
