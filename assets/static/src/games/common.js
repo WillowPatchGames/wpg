@@ -93,7 +93,7 @@ class WebSocketController {
   }
 
   async sendKeepAlive() {
-    return await this.sendAndWait({ "message_type": "keepalive" });
+    return await this.send({ "message_type": "keepalive" });
   }
 
   // flushCache assumes an open WebSocket.

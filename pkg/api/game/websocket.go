@@ -38,6 +38,10 @@ const (
 	// starving resources from other players.
 	readBufferSize = 16 * 1024 // 16KB
 
+	// readRateLimitPerSecond is the maximum number of requests from a client
+	// in a given 1-second window.
+	readRateLimitPerSecond = 7
+
 	// SendBufferSize must be limited because players could send messages which
 	// result in large response messages, starving resources from other players.
 	sendBufferSize = 16 * 1024 // 16KB
@@ -125,6 +129,28 @@ func (c *Client) readPump() {
 		return nil
 	})
 
+	// We need some mechanism here for rate limiting requests from the client.
+	// Notably, we only rate-limit inbound messages: we assume our server
+	// generates a reasonable amount of traffic for a single inbound message.
+	// While this can be disproportionate (e.g., if it is your turn to play
+	// in a multi-player synchronous game -- causing everyone else's state to
+	// update), we assume 1. Players wish to be in this game (and hence, it is
+	// a self DoS and 2. A rogue party can't always send this type of traffic
+	// in general.
+	//
+	// So how do we rate limit? Ingeniously we only need two variables: the
+	// time of the last request, and the number of requests received in the
+	// last second. If the last request was received more than a second ago,
+	// we can reset the number of requests to 1. Otherwise, we increment the
+	// counter.
+	//
+	// Since we assume readPump(...) is run in its own goroutine, if we hit
+	// the limit, we can simply sleep a second and wait for our problems to
+	// go away. :-)
+
+	var last_request int64
+	var num_requests = 0
+
 	for {
 		if !c.isActive() {
 			log.Println("Closing stale readPump() for", c.String())
@@ -148,6 +174,20 @@ func (c *Client) readPump() {
 		}
 
 		c.hub.process[c.gameID] <- ClientMessage{c, message}
+
+		// Now rate limit.
+		var now = time.Now().Unix()
+		if last_request == now {
+			num_requests += 1
+		} else {
+			num_requests = 1
+			last_request = now
+		}
+
+		if num_requests >= readRateLimitPerSecond {
+			log.Println("Overactive client needs to be rate-limited:", c.String())
+			time.Sleep(1 * time.Second)
+		}
 	}
 }
 
