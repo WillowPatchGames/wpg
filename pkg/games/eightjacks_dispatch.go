@@ -84,13 +84,13 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 
 				player.Index = i
 			}
+
+			var response MessageHeader
+			response.LoadHeader(game, player)
+			response.ReplyTo = header.MessageID
+
+			c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
 		}
-
-		var response MessageHeader
-		response.LoadHeader(game, player)
-		response.ReplyTo = header.MessageID
-
-		c.undispatch(game, player, response.MessageID, response.ReplyTo, response)
 	case "start":
 		if player.UID != game.Owner {
 			return errors.New("unable to start game that you're not the owner of")
