@@ -501,12 +501,12 @@ class UserArchiveTab extends React.Component {
     this.props.setGame(game);
     if (room) {
       this.props.setRoom(room);
-      this.props.setPage('/play', room.code);
+      this.props.setPage('/play', "?code=" + room.code);
     } else {
       if (game.lifecycle === 'finished') {
         this.props.setPage('/afterparty');
       } else {
-        this.props.setPage('/play', game.code);
+        this.props.setPage('/play', "?code=" + game.code);
       }
     }
   }
@@ -518,7 +518,7 @@ class UserArchiveTab extends React.Component {
 
   async handleJoinRoom(room) {
     this.props.setRoom(room);
-    this.props.setPage('/room', room.code);
+    this.props.setPage('/room', "?code=" + room.code);
   }
 
   async handleFilterRoom(room_id) {
