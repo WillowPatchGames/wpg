@@ -27,8 +27,9 @@ type EightJacksSquare struct {
 	X  int `json:"x"`
 	Y  int `json:"y"`
 
-	Value  Card `json:"value"`
-	Marker int  `json:"marker"`
+	Value     Card `json:"value"`
+	Marker    int  `json:"marker"`
+	WhoMarked int  `json:"who_marked"`
 }
 
 func (ejs *EightJacksSquare) CanPlay(card Card) error {
@@ -258,6 +259,19 @@ func (cfg *EightJacksConfig) LoadConfig(wire map[string]interface{}) error {
 	return nil
 }
 
+type EightJacksTurn struct {
+	Player int `json:"player"`
+
+	StartingHand []Card `json:"starting_hand"`
+	EndingHand   []Card `json:"ending_hand"`
+
+	Played Card `json:"played"`
+	Drawn  Card `json:"drawn"`
+
+	Where   int  `json:"where"`
+	Removed bool `json:"removed"`
+}
+
 type EightJacksState struct {
 	Turn   int `json:"turn"`
 	Dealer int `json:"dealer"`
@@ -267,7 +281,8 @@ type EightJacksState struct {
 	Teams   int                `json:"teams"`   // Number of teams
 	Players []EightJacksPlayer `json:"players"` // Left of dealer is found by incrementing one.
 
-	GlobalHistory []Card `json:"global_history"`
+	GlobalHistory []Card           `json:"global_history"`
+	TurnHistory   []EightJacksTurn `json:"turn_history"`
 
 	Config EightJacksConfig `json:"config"`
 
@@ -471,6 +486,7 @@ func (ejs *EightJacksState) CreateBoard() error {
 			}
 
 			piece.Marker = -1
+			piece.WhoMarked = -1
 
 			ref_piece := &piece
 			ejs.Board.Squares = append(ejs.Board.Squares, ref_piece)
@@ -620,9 +636,14 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 		return errors.New("unable to play card on specified square: " + err.Error())
 	}
 
+	var turn EightJacksTurn
+	turn.Player = player
+	turn.StartingHand = make([]Card, len(ejs.Players[player].Hand))
+	copy(turn.StartingHand, ejs.Players[player].Hand)
+	turn.Where = squareID
+	turn.Played = played
+
 	// Mark the square.
-	// FIXME: this doesn't seem to update the squares and xy_mapped
-	// that's sent over the wire??
 	if IsOneEyedJack(played) && square.Marker != -1 {
 		for _, indexed_player := range ejs.Players {
 			for _, indexed_run := range indexed_player.Runs {
@@ -635,9 +656,12 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 		}
 
 		square.Marker = -1
+		turn.Removed = true
 	} else {
 		square.Marker = ejs.Players[player].Team
+		turn.Removed = false
 	}
+	square.WhoMarked = player
 
 	// Remove the card from the hand (saving it in the history).
 	ejs.Players[player].RemoveCard(cardID)
@@ -647,8 +671,13 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 	// Draw a replacement if possible.
 	if len(ejs.Deck.Cards) > 0 {
 		ejs.Players[player].Hand = append(ejs.Players[player].Hand, *ejs.Deck.Cards[0])
+		turn.Drawn = *ejs.Deck.Cards[0]
 		ejs.Deck.Cards = ejs.Deck.Cards[1:]
 	}
+
+	turn.EndingHand = make([]Card, len(ejs.Players[player].Hand))
+	copy(turn.EndingHand, ejs.Players[player].Hand)
+	ejs.TurnHistory = append(ejs.TurnHistory, turn)
 
 	ejs.Turn = (ejs.Turn + 1) % len(ejs.Players)
 

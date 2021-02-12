@@ -142,6 +142,8 @@ type EightJacksPeekNotification struct {
 
 	Players []EightJacksOtherPlayerState `json:"players"`
 	Winners []uint64                     `json:"winners"`
+
+	Turns []EightJacksTurn `json:"turns,omitempty"`
 }
 
 func (ejsn *EightJacksPeekNotification) LoadData(data *GameData, game *EightJacksState, player *PlayerData) {
@@ -176,6 +178,13 @@ func (ejsn *EightJacksPeekNotification) LoadData(data *GameData, game *EightJack
 		overview.Score = len(game.Players[indexed_player.Index].Runs)
 
 		ejsn.Players = append(ejsn.Players, overview)
+	}
+
+	// Unlike EightJacksOtherPlayerState, this contains sensitive information
+	// (the contents of a player's hand) -- so don't display this until we're
+	// done with the game.
+	if game.Finished {
+		ejsn.Turns = game.TurnHistory
 	}
 }
 
