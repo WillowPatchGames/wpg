@@ -6,6 +6,8 @@ import { Avatar } from '@rmwc/avatar';
 import '@rmwc/avatar/styles';
 import { Button } from '@rmwc/button';
 import '@rmwc/button/styles';
+import { IconButton } from '@rmwc/icon-button';
+import '@rmwc/icon-button/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
@@ -51,6 +53,8 @@ class EightJacksGameComponent extends React.Component {
     this.state.overlap = true;
     this.state.autosort = false;
     this.state.sorting = null;
+    this.state.orientation = 0;
+    this.state.half_height = false;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
@@ -213,8 +217,9 @@ class EightJacksGameComponent extends React.Component {
       scale: this.state.scale || 0.3,
     };
     var game = this.state.game || this.game;
-    var board = Object.assign([], game.interface.data?.board?.xy_mapped || {});
-    if (!board.length) return;
+    var board = game.interface.data?.board;
+    var by_id = board?.id_mapped;
+    if (!by_id) return;
     var selected_card = this.state.selected &&
       game.interface.data.hand.cards.find(
         card => card.id === this.state.selected
@@ -245,10 +250,52 @@ class EightJacksGameComponent extends React.Component {
         }
       }
     }
+    var view_order = []; var last_row = [];
+    var transpose = false;
+    if (this.state.orientation === 2) {
+      for (let i=board.width-1; i>=0; i-=1) {
+        view_order.push([]);
+        for (let j=board.height-1; j>=0; j-=1) {
+          var id = 1 + i*board.height + j;
+          view_order[view_order.length-1].push(id);
+          if (i === 0) last_row.push(id);
+        }
+      }
+    } else if (this.state.orientation === 1) {
+      transpose = true;
+      for (let j=board.height-1; j>=0; j-=1) {
+        view_order.push([]);
+        for (let i=0; i<=board.width-1; i+=1) {
+          var id = 1 + i*board.height + j;
+          view_order[view_order.length-1].push(id);
+          if (i === board.width-1) last_row.push(id);
+        }
+      }
+    } else if (this.state.orientation === 3) {
+      transpose = true;
+      for (let j=0; j<=board.height-1; j+=1) {
+        view_order.push([]);
+        for (let i=board.width-1; i>=0; i-=1) {
+          var id = 1 + i*board.height + j;
+          view_order[view_order.length-1].push(id);
+          if (i === 0) last_row.push(id);
+        }
+      }
+    } else {
+      for (let i=0; i<=board.width-1; i+=1) {
+        view_order.push([]);
+        for (let j=0; j<=board.height-1; j+=1) {
+          var id = 1 + i*board.height + j;
+          view_order[view_order.length-1].push(id);
+          if (i === board.width-1) last_row.push(id);
+        }
+      }
+    }
     var rows = [];
-    for (let row of board) {
+    for (let ids of view_order) {
       var col = [];
-      for (let spot of Object.assign([], row)) {
+      for (let id of ids) {
+        var spot = by_id[id];
         var suit = new CardSuit(spot.value.suit).toImage();
         var rank = new CardRank(spot.value.rank).toImage();
         if (rank === "joker") {
@@ -282,6 +329,8 @@ class EightJacksGameComponent extends React.Component {
           <td key={ spot.id } style={{ padding: 0 }}>
             { tooltip(
               <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
+                y_part={ this.state.half_height && !last_row.includes(id) ? 0.70 : 0 }
+                transpose={ transpose }
                 onClick={ this.handleClick(spot) }
                 style={{
                   "--card-fill": sel === 2 ? (team_colors[user_team] || "#82fff3") : sel ? "rgb(251 255 2)" : null,
@@ -349,12 +398,24 @@ class EightJacksGameComponent extends React.Component {
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
             <h3>Board</h3>
-            <Slider
-                value={this.state.scale}
-                onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
-                min={0.1}
-                max={0.35}
+            <div style={{ display: "flex" }}>
+              <IconButton
+                checked={this.state.half_height}
+                onClick={() => this.setState(state => Object.assign(state, {half_height:!state.half_height}))}
+                onIcon="unfold_more"
+                icon="unfold_less"
               />
+              <Slider
+                  value={this.state.scale}
+                  onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
+                  min={0.1}
+                  max={0.35}
+                />
+              <IconButton
+                onClick={() => this.setState(state => Object.assign(state, {orientation:(state.orientation + 1) % 4}))}
+                icon="rotate_90_degrees_ccw"
+              />
+            </div>
             { this.drawBoard(true) }
             {this.state.game.interface.my_turn()
               ? <>
@@ -676,6 +737,8 @@ class EightJacksAfterPartyPage extends React.Component {
       message: "Loading results...",
       scale: 0.225,
       timeout: killable(() => { this.refreshData() }, 5000),
+      orientation: 0,
+      half_height: false,
     };
 
     GameCache.Invalidate(this.props.game.id);
@@ -994,12 +1057,24 @@ class EightJacksAfterPartyPage extends React.Component {
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                 <h3>Board</h3>
-                <Slider
-                    value={this.state.scale}
-                    onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
-                    min={0.1}
-                    max={0.35}
+                <div style={{ display: "flex" }}>
+                  <IconButton
+                    checked={this.state.half_height}
+                    onClick={() => this.setState(state => Object.assign(state, {half_height:!state.half_height}))}
+                    onIcon="unfold_more"
+                    icon="unfold_less"
                   />
+                  <Slider
+                      value={this.state.scale}
+                      onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
+                      min={0.1}
+                      max={0.35}
+                    />
+                  <IconButton
+                    onClick={() => this.setState(state => Object.assign(state, {orientation:(state.orientation + 1) % 4}))}
+                    icon="rotate_90_degrees_ccw"
+                  />
+                </div>
                 { this.drawBoard() }
               </div>
             </c.Card>

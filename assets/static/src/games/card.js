@@ -296,7 +296,7 @@ var card_dim = [202.5,315];
 class CardImage extends React.Component {
   render() {
     var {
-      scale, x_part, y_part,
+      scale, x_part, y_part, transpose,
       card, suit, rank,
       underlay, overlay, annotation, badge,
       className, ...props } = this.props;
@@ -308,6 +308,9 @@ class CardImage extends React.Component {
     if (!scale) scale = 0.5;
     if (!x_part) x_part = 1;
     if (!y_part) y_part = 1;
+    if (transpose) {
+      [ x_part, y_part ] = [ y_part, x_part ];
+    }
     if (card) {
       suit = card.suit?.toImage() || suit;
       rank = card.rank?.toImage() || rank;
@@ -332,17 +335,27 @@ class CardImage extends React.Component {
     }
 
     if (rank === "logo") {
-      var logo = <img style={{ width: "75%", paddingTop: "15%" }} src={ logosrc } alt="WillowPatchGames logo"/>;
+      var logo = <img style={{ width: "75%", paddingTop: transpose?"0%":"15%" }} src={ logosrc } alt="WillowPatchGames logo"/>;
       underlay = underlay ? <>{ logo }{ underlay }</> : logo;
     }
 
+    var overlaystyle = {};
+
+    if (transpose) {
+      var ratio = 100*((card_dim[0]*Math.abs(y_part))/(card_dim[1]*Math.abs(x_part)));
+      overlaystyle = {
+        width: ratio+"%",
+        left: (100-ratio)/2 + "%",
+      };
+    }
+
     if (underlay) {
-      underlay = <div className="card-overlay centered">{ underlay }</div>;
+      underlay = <div className="card-overlay centered" style={ overlaystyle }>{ underlay }</div>;
     } else {
       underlay = <></>;
     }
     if (overlay) {
-      overlay = <div className="card-overlay centered">{ overlay }</div>;
+      overlay = <div className="card-overlay centered" style={ overlaystyle }>{ overlay }</div>;
     } else {
       overlay = <></>;
     }
@@ -359,10 +372,10 @@ class CardImage extends React.Component {
     }
 
     var viewBox = [
-      card_dim[0]*(x_part < 0 ? 1+x_part : 0),
-      card_dim[1]*(y_part < 0 ? 1+y_part : 0),
-      card_dim[0]*Math.abs(x_part),
-      card_dim[1]*Math.abs(y_part),
+      card_dim[transpose ? 1 : 0]*(x_part < 0 ? 1+x_part : 0),
+      card_dim[transpose ? 0 : 1]*(y_part < 0 ? 1+y_part : 0),
+      card_dim[transpose ? 1 : 0]*Math.abs(x_part),
+      card_dim[transpose ? 0 : 1]*Math.abs(y_part),
     ];
     var borders = {};
     if (y_part < 1 && y_part > -1) {
@@ -385,14 +398,21 @@ class CardImage extends React.Component {
         borders.borderBottomRightRadius = 0;
       }
     }
+    var usestyle;
+    if (transpose) {
+      usestyle = {
+        transform: "rotate(90deg)",
+        transformOrigin: (card_dim[1]/2)+"px "+(card_dim[1]/2)+"px",
+      };
+    }
 
     return <div className={ "card" + className } style={ borders }>
       { annotation }
-      <svg className="card-image"
-        width={ card_dim[0]*scale*Math.abs(x_part) }
-        height={ card_dim[1]*scale*Math.abs(y_part) }
+      <svg className={"card-image"+(transpose?" card-transpose":"")}
+        width={ card_dim[transpose ? 1 : 0]*scale*Math.abs(x_part) }
+        height={ card_dim[transpose ? 0 : 1]*scale*Math.abs(y_part) }
         viewBox={ viewBox } {...props}>
-        <use href={ cards+"#"+name} x={ x } y={ y }/>
+        <use href={ cards+"#"+name} x={ x } y={ y } style={ usestyle }/>
       </svg>
       { overlay }
       { underlay }
