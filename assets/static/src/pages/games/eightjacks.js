@@ -27,6 +27,7 @@ import { UserCache, GameCache } from '../../utils/cache.js';
 import { gravatarify } from '../../utils/gravatar.js';
 import { team_colors } from './team_colors.js';
 import { PlayerAvatar } from '../../utils/player.js';
+import { TooltipWrapper } from '../../utils/tooltip.js';
 
 var autosort_persistent = true;
 
@@ -214,7 +215,6 @@ class EightJacksGameComponent extends React.Component {
     var game = this.state.game || this.game;
     var board = Object.assign([], game.interface.data?.board?.xy_mapped || {});
     if (!board.length) return;
-    var by_id = game.interface.data.board.id_mapped;
     var selected_card = this.state.selected &&
       game.interface.data.hand.cards.find(
         card => card.id === this.state.selected
@@ -237,12 +237,18 @@ class EightJacksGameComponent extends React.Component {
         user_team = +player.team+1;
       }
     }
+    var displays = {};
+    if (game.interface.synopsis.players) {
+      for (let player of game.interface.synopsis.players) {
+        if (player.player_index !== undefined && player.player_index !== -1) {
+          displays[player.player_index] = player.user.display;
+        }
+      }
+    }
     var rows = [];
     for (let row of board) {
       var col = [];
       for (let spot of Object.assign([], row)) {
-        // FIXME: hack
-        spot = by_id[spot.id];
         var suit = new CardSuit(spot.value.suit).toImage();
         var rank = new CardRank(spot.value.rank).toImage();
         if (rank === "joker") {
@@ -265,14 +271,23 @@ class EightJacksGameComponent extends React.Component {
               }}>{ text }</span>
           }
         </>;
+        var tooltip = e => e;
+        if (spot.who_marked !== undefined && spot.who_marked !== -1) {
+          var name = displays[spot.who_marked];
+          if (name) {
+            tooltip = e => <TooltipWrapper content={ name } align="bottom">{e}</TooltipWrapper>;
+          }
+        }
         col.push(
           <td key={ spot.id } style={{ padding: 0 }}>
-            <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
-              onClick={ this.handleClick(spot) }
-              style={{
-                "--card-fill": sel === 2 ? (team_colors[user_team] || "#82fff3") : sel ? "rgb(251 255 2)" : null,
-                "--card-fill-opacity": sel ? 0.5 : 1,
-              }} />
+            { tooltip(
+              <CardImage suit={ suit } rank={ rank } overlay={ overlay } {...boardProps}
+                onClick={ this.handleClick(spot) }
+                style={{
+                  "--card-fill": sel === 2 ? (team_colors[user_team] || "#82fff3") : sel ? "rgb(251 255 2)" : null,
+                  "--card-fill-opacity": sel ? 0.5 : 1,
+                }} />
+            )}
           </td>
         );
       }
@@ -289,9 +304,9 @@ class EightJacksGameComponent extends React.Component {
     var status = a => <h3>{ a }</h3>;
     var big_status = a => <h2>{ a }</h2>;
     let annotations = null;
-    if (this.state.game.interface.data.who_played) {
+    if (this.state.game.interface.data.who_marked) {
       annotations = [];
-      for (let who_player of this.state.game.interface.data.who_played) {
+      for (let who_player of this.state.game.interface.data.who_marked) {
         let annotation = <><Avatar src={ gravatarify(who_player) } name={ who_player.display } size="medium" /> <span title={ who_player.display }>{ who_player.display }</span></>;
         annotations.push(annotation);
       }
