@@ -183,8 +183,10 @@ class App extends React.Component {
   }
 
   setNotification(notification) {
-    console.log("Got notification:" + notification);
     this.setState(state => Object.assign({}, state, { notification }));
+    if (notification && window && window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(100);
+    }
   }
 
   render() {
