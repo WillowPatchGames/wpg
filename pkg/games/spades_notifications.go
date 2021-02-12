@@ -211,7 +211,9 @@ func (spn *SpadesPeekNotification) LoadData(data *GameData, game *SpadesState, p
 			}
 		}
 
-		spn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+		if len(game.RoundHistory) > 0 {
+			spn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+		}
 	} else {
 		spn.RoundHistory = game.RoundHistory
 	}

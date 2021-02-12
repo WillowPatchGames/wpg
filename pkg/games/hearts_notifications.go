@@ -205,7 +205,9 @@ func (hpn *HeartsPeekNotification) LoadData(data *GameData, game *HeartsState, p
 		}
 
 		// Allow spectators to see previous rounds before the game has ended.
-		hpn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+		if len(game.RoundHistory) > 0 {
+			hpn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+		}
 	} else {
 		hpn.RoundHistory = game.RoundHistory
 	}

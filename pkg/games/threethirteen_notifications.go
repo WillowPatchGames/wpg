@@ -176,7 +176,9 @@ func (ttpn *ThreeThirteenPeekNotification) LoadData(data *GameData, game *ThreeT
 			ttpn.Discard = append(ttpn.Discard, *game.Discard[len(game.Discard)-1])
 		}
 
-		ttpn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+		if len(game.RoundHistory) > 0 {
+			ttpn.RoundHistory = game.RoundHistory[:len(game.RoundHistory)-1]
+		}
 	} else {
 		ttpn.RoundHistory = game.RoundHistory
 	}
