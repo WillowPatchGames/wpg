@@ -84,7 +84,7 @@ class Page extends React.Component {
         <RouteWithGame path="/afterparty" game={ this.props.game }>
           <>
             <Helmet>
-              <title>{ "After Pary - Game #" + this.props.game?.id }</title>
+              <title>{ "After Party - Game #" + this.props.game?.id }</title>
             </Helmet>
             <AfterPartyPage {...this_props} key="path-afterparty" />
           </>

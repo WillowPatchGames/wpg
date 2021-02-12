@@ -583,6 +583,7 @@ class EightJacksGamePage extends React.Component {
           }
         },
         "countdown": data => {
+          this.props.setNotification(data.value + "...");
           data.message = "Game starting in " + data.value;
           this.setState(state => Object.assign({}, state, { countdown: data.value }));
           setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
