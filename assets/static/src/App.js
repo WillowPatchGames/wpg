@@ -183,9 +183,13 @@ class App extends React.Component {
   }
 
   setNotification(notification) {
-    this.setState(state => Object.assign({}, state, { notification }));
-    if (notification && window && window.navigator && window.navigator.vibrate) {
-      window.navigator.vibrate(100);
+    // Only update on change, to avoid a haptic feedback when nothing has
+    // changed.
+    if (this.state.notification !== notification) {
+      this.setState(state => Object.assign({}, state, { notification }));
+      if (notification && window && window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(100);
+      }
     }
   }
 

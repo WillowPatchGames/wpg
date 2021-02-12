@@ -455,7 +455,7 @@ class SpadesGameSynopsis extends React.Component {
       for (let player_index of Object.keys(this.state.indexed_players).sort()) {
         let player = this.state.indexed_players[player_index];
         if (+this.props.user.id === +player.user.id) {
-          if (player.is_turn) {
+          if (player.is_turn && !this.props.game.interface.finished) {
             this.props.setNotification("Your Turn!");
           } else {
             this.props.setNotification(null);
