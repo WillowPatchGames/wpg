@@ -234,7 +234,11 @@ class ThreeThirteenGameComponent extends React.Component {
     if ((!this.state.game.interface.dealt || this.state.game.interface.laid_down) && this.state.game.interface.synopsis && this.state.game.interface.synopsis.players) {
       var index_mapping = {};
       for (let array_index in this.state.game.interface.synopsis.players) {
-        var game_index = this.state.game.interface.synopsis.players[array_index].player_index;
+        var player = this.state.game.interface.synopsis.players[array_index];
+        if (!player.playing) {
+          continue;
+        }
+        var game_index = player.player_index;
         if (game_index in index_mapping) {
           console.log("Bad game! Different players have the same identifier!", this.state.game.interface.synopsis.players);
         }
