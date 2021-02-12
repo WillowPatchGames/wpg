@@ -506,12 +506,22 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 	// Don't hold the lock while we are writing the transaction.
 	c.lock.Unlock()
 
-	if err := tx.Model(gamedb).Update("Config", string(encoded)).Error; err != nil {
-		return err
+	s_encoded := string(encoded)
+	if gamedb.Config.String != s_encoded {
+		log.Println("Saving dirty config to database...")
+		if err := tx.Model(gamedb).Update("Config", s_encoded).Error; err != nil {
+			return err
+		}
+		gamedb.Config.String = s_encoded
 	}
 
-	if err := tx.Model(gamedb).Update("State", string(encoded_state)).Error; err != nil {
-		return err
+	s_encoded_state := string(encoded_state)
+	if gamedb.State.String != s_encoded_state {
+		log.Println("Saving dirty state to database...")
+		if err := tx.Model(gamedb).Update("State", s_encoded_state).Error; err != nil {
+			return err
+		}
+		gamedb.State.String = s_encoded_state
 	}
 
 	var candidateError error = nil
