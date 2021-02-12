@@ -39,6 +39,7 @@ class App extends React.Component {
       game: null,
       room: null,
       immersive: false,
+      notification: null,
     };
 
     this.snackbar = createSnackbarQueue();
@@ -181,12 +182,24 @@ class App extends React.Component {
     }
   }
 
+  setNotification(notification) {
+    console.log("Got notification:" + notification);
+    this.setState(state => Object.assign({}, state, { notification }));
+  }
+
   render() {
+    var notified_title = "%s | Willow Patch Games";
+    var notified_default = "Welcome to Willow Patch Games";
+    if (this.state.notification) {
+      notified_title = "(" + this.state.notification + ") " + notified_title;
+      notified_default = "(" + this.state.notification + ") " + notified_default;
+    }
+
     return (
       <div className={ "App" + (this.state.immersive ? " immersive" : "")} style={{ marginTop: '0px', 'borderTop': '0', 'paddingTop': '0px' }}>
         <Helmet
-          titleTemplate="%s | Willow Patch Games"
-          defaultTitle="Welcome to Willow Patch Games"
+          titleTemplate={ notified_title }
+          defaultTitle={ notified_default }
           defer={ true }
         >
           <meta
@@ -244,6 +257,7 @@ class App extends React.Component {
               setRoom={ this.setRoom.bind(this) }
               setGame={ this.setGame.bind(this) }
               setImmersive={ this.setImmersive.bind(this) }
+              setNotification={ this.setNotification.bind(this) }
 
               match={ this.props.match }
               location={ this.props.location }

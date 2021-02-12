@@ -501,6 +501,14 @@ class EightJacksGameSynopsis extends React.Component {
 
       for (let player_index of Object.keys(this.state.indexed_players).sort()) {
         let player = this.state.indexed_players[player_index];
+        if (+this.props.user.id === +player.user.id) {
+          if (player.is_turn) {
+            this.props.setNotification("Your Turn!");
+          } else {
+            this.props.setNotification(null);
+          }
+        }
+
         remaining.push(player);
       }
 
