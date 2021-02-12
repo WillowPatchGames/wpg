@@ -799,13 +799,6 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 
 	tts.Players[player].RoundScore = score
 
-	// Save information for this history.
-	history := tts.RoundHistory[len(tts.RoundHistory)-1]
-	history.Players[player].RoundScore = score
-	history.Players[player].Score = history.Players[player].Score + score
-	history.Players[player].FinalHand = make([]Card, len(tts.Players[player].Hand))
-	copy(history.Players[player].FinalHand, tts.Players[player].Hand)
-
 	all_in := true
 	for _, player := range tts.Players {
 		if player.RoundScore == -1 {
@@ -813,6 +806,8 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 			break
 		}
 	}
+
+	history := tts.RoundHistory[len(tts.RoundHistory)-1]
 
 	if all_in {
 		max_score := tts.Players[0].Score
@@ -836,6 +831,15 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 			}
 
 			max_score = tts.Players[tts.LaidDown].Score
+		}
+
+		// Save round history, correctly! This must be done after score is
+		// calculated but before we exit.
+		for index := range tts.Players {
+			history.Players[index].RoundScore = tts.Players[index].RoundScore
+			history.Players[index].Score = tts.Players[index].Score
+			history.Players[index].FinalHand = make([]Card, len(tts.Players[index].Hand))
+			copy(history.Players[index].FinalHand, tts.Players[index].Hand)
 		}
 
 		if tts.Config.ToPointLimit != -1 && max_score >= tts.Config.ToPointLimit {
