@@ -982,7 +982,6 @@ class ThreeThirteenAfterPartyPage extends React.Component {
             var round_scores = {};
             var info = {};
             var turns = round?.plays;
-            var num_players = round.players.length;
 
             for (let player_index in round.players) {
               let player = round.players[player_index];
@@ -1199,67 +1198,65 @@ class ThreeThirteenAfterPartyPage extends React.Component {
 
     if (this.state.history && this.state.history.scores) {
       let round_index = parseInt(this.state.historical_round);
-      let round_data = <b>No data found for round { round_index + 1 }!</b>;
+      let thistory = <b>No data found for round { round_index + 1 }!</b>;
 
       if (this.state.history.players[round_index]) {
-      }
-
-      let thistory = null;
-      if (this.state.historical_turn === -1) {
-        let players = this.state.history.players[this.state.historical_round];
-        let player = players && players[this.state.historical_player];
-        if (!player) {
-          thistory = <b>No data for this player.</b>;
+        if (this.state.historical_turn === -1) {
+          let players = this.state.history.players[this.state.historical_round];
+          let player = players && players[this.state.historical_player];
+          if (!player) {
+            thistory = <b>No data for this player.</b>;
+          } else {
+            let show_dealt = this.state.show_dealt;
+            let final_hand = player.final_hand ? CardHand.deserialize(player.final_hand).cardSort(false, false) : null;
+            let dealt_hand = player.dealt_hand ? CardHand.deserialize(player.dealt_hand).cardSort(false, false) : null;
+            thistory = <>
+              <h2>{ show_dealt ? "Intial Hand" : "Final Hand" }</h2>
+              { (show_dealt ? dealt_hand : final_hand)?.toImage(handProps) }
+            </>;
+          }
         } else {
-          let show_dealt = this.state.show_dealt;
-          let final_hand = player.final_hand ? CardHand.deserialize(player.final_hand).cardSort(false, false) : null;
-          let dealt_hand = player.dealt_hand ? CardHand.deserialize(player.dealt_hand).cardSort(false, false) : null;
-          thistory = <>
-            <h2>{ show_dealt ? "Intial Hand" : "Final Hand" }</h2>
-            { (show_dealt ? dealt_hand : final_hand)?.toImage(handProps) }
-          </>;
-        }
-      } else {
-        let turns = this.state.history.turns[this.state.historical_round];
-        let turn = turns && turns[this.state.historical_turn];
-        if (!turn) {
-          thistory = <b>No data for this turn.</b>;
-        } else {
-          let show_before = this.state.show_before;
-          let top_discard = turn.top_discard ? Card.deserialize(turn.top_discard) : null;
-          let drawn = turn.drawn ? Card.deserialize(turn.drawn) : null;
-          let discarded = turn.discarded ? Card.deserialize(turn.discarded) : null;
-          let starting_hand = turn.starting_hand ? CardHand.deserialize(turn.starting_hand).cardSort(false, false) : null;
-          let ending_hand = turn.ending_hand ? CardHand.deserialize(turn.ending_hand).cardSort(false, false) : null;
-          let player = this.state.player_mapping[turn.player];
-          let laid_down = turn.laid_down;
-          thistory = <>
-            { laid_down ? <h2>Went Out!</h2> : null }
-            <div className="flexbox">
-              <div className="flexible">
-                <h3>Deck</h3>
-                <CardImage />
+          let turns = this.state.history.turns[this.state.historical_round];
+          let turn = turns && turns[this.state.historical_turn];
+          if (!turn) {
+            thistory = <b>No data for this turn.</b>;
+          } else {
+            let show_before = this.state.show_before;
+            let top_discard = turn.top_discard ? Card.deserialize(turn.top_discard) : null;
+            let drawn = turn.drawn ? Card.deserialize(turn.drawn) : null;
+            let discarded = turn.discarded ? Card.deserialize(turn.discarded) : null;
+            let starting_hand = turn.starting_hand ? CardHand.deserialize(turn.starting_hand).cardSort(false, false) : null;
+            let ending_hand = turn.ending_hand ? CardHand.deserialize(turn.ending_hand).cardSort(false, false) : null;
+            let player = this.state.player_mapping[turn.player];
+            let laid_down = turn.laid_down;
+            thistory = <>
+              { laid_down ? <h2>Went Out!</h2> : null }
+              <div className="flexbox">
+                <div className="flexible">
+                  <h3>Deck</h3>
+                  <CardImage />
+                </div>
+                <div className="flexible">
+                  <h3>Discard Pile</h3>
+                  { top_discard.toImage() }
+                </div>
+                {
+                  show_before
+                  ? <div className="flexible">
+                      <h3>Drawn</h3>
+                      { drawn.toImage() }
+                    </div>
+                  : <div className="flexible">
+                      <h3>Discarded</h3>
+                      { discarded.toImage() }
+                    </div>
+                }
               </div>
-              <div className="flexible">
-                <h3>Discard Pile</h3>
-                { top_discard.toImage() }
-              </div>
-              {
-                show_before
-                ? <div className="flexible">
-                    <h3>Drawn</h3>
-                    { drawn.toImage() }
-                  </div>
-                : <div className="flexible">
-                    <h3>Discarded</h3>
-                    { discarded.toImage() }
-                  </div>
-              }
-            </div>
-            <h2>{ show_before ? "Before Discarding" : "After Discarding" }</h2>
-            { (show_before ? starting_hand : ending_hand)?.toImage(handProps) }
-            <h2>{ player.display }</h2>
-          </>;
+              <h2>{ show_before ? "Before Discarding" : "After Discarding" }</h2>
+              { (show_before ? starting_hand : ending_hand)?.toImage(handProps) }
+              <h2>{ player.display }</h2>
+            </>;
+          }
         }
       }
 
@@ -1272,7 +1269,7 @@ class ThreeThirteenAfterPartyPage extends React.Component {
               <IconButton icon="fast_rewind" size="xsmall" onClick={ () => this.skip(-1) }/>
               <div style={{ display: "inline-flex", flexDirection: "column", verticalAlign: "text-bottom" }}>
                 <h2 style={{ margin: 0 }}>Round {+this.state.historical_round+1}</h2>
-                <h3 style={{ margin: 0 }}>{ +this.state.historical_turn === -1 ? "Cards" : "Turn "+(+this.state.historical_turn+1) }</h3>
+                <h3 style={{ margin: 0 }}>{ +this.state.historical_turn === -1 ? "Hands" : "Turn "+(+this.state.historical_turn+1) }</h3>
               </div>
               <IconButton icon="fast_forward" size="xsmall" onClick={ () => this.skip(1) }/>
               <IconButton icon="skip_next" size="xsmall" onClick={ () => this.skip(10) }/>
