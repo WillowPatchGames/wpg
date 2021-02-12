@@ -136,12 +136,15 @@ class UserSecurityTab extends React.Component {
     this.device = React.createRef();
     this.validation = React.createRef();
     this.password = React.createRef();
+    this.renamed = React.createRef();
 
     this.state = {
       passwordError: null,
       twofaError: null,
       deviceInfo: null,
       devices: null,
+      openRenameDialog: false,
+      renameDevice: null,
       openDeleteDialog: false,
       deleteDevice: null,
     };
@@ -154,6 +157,14 @@ class UserSecurityTab extends React.Component {
   async reloadDevices() {
     var devices = await this.props.user.list2FA();
     this.setState(state => Object.assign({}, state, { devices }));
+  }
+
+  openRenameDialog(openState) {
+    this.setState(state => Object.assign({}, state, { openRenameDialog: openState }));
+    if (!openState) {
+      this.setState(state => Object.assign({}, state, { renameDevice: null }));
+      this.reloadDevices();
+    }
   }
 
   openDeleteDialog(openState) {
@@ -243,6 +254,27 @@ class UserSecurityTab extends React.Component {
     this.setState(state => Object.assign({}, state, { deviceInfo: device_info }));
   }
 
+  startRenameDevice(event, device) {
+    event.preventDefault();
+
+    this.openRenameDialog(true);
+    this.setState(state => Object.assign({}, state, { renameDevice: device }));
+  }
+
+  async renameDevice(event) {
+    event.preventDefault();
+
+    var device = this.state.renameDevice;
+    var result = await this.props.user.rename2FA(device.device, this.renamed.current.value);
+    this.openRenameDialog(false);
+
+    if ('type' in result && result['type'] === 'error') {
+      this.set2FAError(result.message);
+    }
+
+    this.reloadDevices();
+  }
+
   startRemoveDevice(event, device) {
     event.preventDefault();
 
@@ -296,6 +328,7 @@ class UserSecurityTab extends React.Component {
               { device.device }
             </l.ListItemPrimaryText>
             <l.ListItemSecondaryText>
+              <Button onClick={ (event) => this.startRenameDevice(event, device) } theme="secondary">Rename</Button>
               <Button onClick={ (event) => this.startRemoveDevice(event, device) } theme="secondary">Delete</Button>
               {
                 device.validated
@@ -332,11 +365,24 @@ class UserSecurityTab extends React.Component {
                     <d.DialogContent>
                       <p>To confirm deletion of the device, enter your password.</p>
                       <form onSubmit={ (event) => this.removeDevice(event) }>
-                        <TextField fullwidth placeholder="pasword..." name="password" type="password" inputRef={ this.password } /><br />
+                        <TextField fullwidth placeholder="pasword..." name={ "password-remove-device" + this.state.removeDevice?.device } type="password" inputRef={ this.password } /><br />
                       </form>
                     </d.DialogContent>
                     <d.DialogActions>
                       <d.DialogButton onClick={ (event) => this.removeDevice(event) } theme="secondary">Confirm</d.DialogButton>
+                      <d.DialogButton action="close" theme="secondary">Cancel</d.DialogButton>
+                    </d.DialogActions>
+                  </d.Dialog>
+                  <d.Dialog open={ this.state.openRenameDialog === true } onClosed={() => this.openRenameDialog(false) }>
+                    <d.DialogTitle>Rename Device</d.DialogTitle>
+                    <d.DialogContent>
+                      <p>Please enter the new name for this device (currently { this.state.renameDevice?.device }).</p>
+                      <form onSubmit={ (event) => this.renameDevice(event) }>
+                        <TextField fullwidth placeholder={ this.state.renameDevice?.device } name="device" type="text" inputRef={ this.renamed } /><br />
+                      </form>
+                    </d.DialogContent>
+                    <d.DialogActions>
+                      <d.DialogButton onClick={ (event) => this.renameDevice(event) } theme="secondary">Rename</d.DialogButton>
                       <d.DialogButton action="close" theme="secondary">Cancel</d.DialogButton>
                     </d.DialogActions>
                   </d.Dialog>

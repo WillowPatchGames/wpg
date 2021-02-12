@@ -423,6 +423,30 @@ class UserModel {
     return await response.json();
   }
 
+  async rename2FA(current, future) {
+    var request = {};
+    if (nonempty(current)) {
+      request['device'] = current;
+    }
+    if (nonempty(future)) {
+      request['future'] = future;
+    }
+
+    var unenroll_uri = this.api + '/user/' + this.id + '/totp';
+    const response = await fetch(unenroll_uri, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request),
+    });
+
+    return await response.json();
+  }
+
   async remove2FA(device, password) {
     var request = {};
     if (nonempty(device)) {

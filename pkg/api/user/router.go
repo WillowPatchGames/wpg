@@ -45,6 +45,11 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(inner)
 	}
 
+	var renameTOTPFactory = func() parsel.Parseltongue {
+		inner := new(RenameTOTPHandler)
+		return auth.Require(inner)
+	}
+
 	var removeTOTPFactory = func() parsel.Parseltongue {
 		inner := new(DeleteTOTPHandler)
 		return auth.Require(inner)
@@ -87,8 +92,10 @@ func BuildRouter(router *mux.Router, debug bool) {
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/plans", parsel.Wrap(planQueryFactory, config)).Methods("GET")
 
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp", parsel.Wrap(getTOTPFactory, config)).Methods("GET")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp", parsel.Wrap(renameTOTPFactory, config)).Methods("PATCH")
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp", parsel.Wrap(enrollTOTPFactory, config)).Methods("PUT")
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp", parsel.Wrap(removeTOTPFactory, config)).Methods("DELETE")
+	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp/{Device:[a-zA-Z0-9]+}", parsel.Wrap(renameTOTPFactory, config)).Methods("PATCH")
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp/{Device:[a-zA-Z0-9]+}", parsel.Wrap(removeTOTPFactory, config)).Methods("DELETE")
 
 	router.Handle("/api/v1/user/{UserID:[0-9]+}/totp/image", parsel.Wrap(showTOTPFactory, config)).Methods("GET")

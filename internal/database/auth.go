@@ -239,6 +239,45 @@ func (user *User) GetTOTPDevices(tx *gorm.DB) ([]string, error) {
 	return devices, nil
 }
 
+func (user *User) RenameTOTP(tx *gorm.DB, device string, future string) error {
+	if user.ID == 0 {
+		panic("Unable to get TOTP key for NULL UserID")
+	}
+
+	current, err := user.GetTOTPDevices(tx)
+	if err != nil {
+		return err
+	}
+
+	for _, other := range current {
+		if other == future || other == future+"-key" || other == future+"-key-pending" {
+			return errors.New("unable to rename key to something which already exists")
+		}
+	}
+
+	var auth Auth
+	var key = device + "-key"
+	var pending = false
+
+	err = tx.First(&auth, "category = ? AND key = ? AND user_id = ?", "totp-secret", key, user.ID).Error
+	if err != nil {
+		key += "-pending"
+		pending = true
+		err = tx.First(&auth, "category = ? AND key = ? AND user_id = ?", "totp-secret", key, user.ID).Error
+	}
+
+	if err != nil {
+		return err
+	}
+
+	auth.Key = future + "-key"
+	if pending {
+		auth.Key += "-pending"
+	}
+
+	return tx.Save(&auth).Error
+}
+
 func (user *User) RemoveTOTP(tx *gorm.DB, device string) error {
 	if user.ID == 0 {
 		panic("Unable to get TOTP key for NULL UserID")
