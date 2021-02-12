@@ -542,7 +542,7 @@ class UserArchiveTab extends React.Component {
     var games = null;
     var rooms = null;
 
-    if (this.state.games && !this.state.games.error) {
+    if (this.state.games && this.state.games.type !== 'error' && !this.state.games.error) {
       var loaded_games = [];
       for (let game of this.state.games) {
         loaded_games.push(
@@ -602,7 +602,8 @@ class UserArchiveTab extends React.Component {
       </div>;
     }
 
-    if (this.state.rooms) {
+    if (this.state.rooms && this.state.rooms.type !== 'error' && !this.state.rooms.error) {
+      console.log("OK to iterate rooms:", this.state.rooms);
       var loaded_rooms = [];
       for (let room of this.state.rooms) {
         loaded_rooms.push(
@@ -669,8 +670,6 @@ class UserArchiveTab extends React.Component {
         </c.Card>
       </div>;
     }
-
-    console.log("game_lifecycle", this.state.game_lifecycle);
 
     return (
       <>
