@@ -234,7 +234,7 @@ class ThreeThirteenGameComponent extends React.Component {
     if ((!this.state.game.interface.dealt || this.state.game.interface.laid_down) && this.state.game.interface.synopsis && this.state.game.interface.synopsis.players) {
       var index_mapping = {};
       for (let array_index in this.state.game.interface.synopsis.players) {
-        var player = this.state.game.interface.synopsis.players[array_index];
+        let player = this.state.game.interface.synopsis.players[array_index];
         if (!player.playing) {
           continue;
         }
@@ -247,7 +247,7 @@ class ThreeThirteenGameComponent extends React.Component {
       }
 
       for (let game_index in Object.keys(index_mapping).sort()) {
-        var player = this.state.game.interface.synopsis.players[index_mapping[game_index]];
+        let player = this.state.game.interface.synopsis.players[index_mapping[game_index]];
         if (+player.user.id === this.props.user.id && !show_yourself) {
           continue
         }
