@@ -273,7 +273,7 @@ class EightJacksGameComponent extends React.Component {
         </>;
         var tooltip = e => e;
         if (spot.who_marked !== undefined && spot.who_marked !== -1) {
-          var name = displays[spot.who_marked];
+          let name = displays[spot.who_marked];
           if (name) {
             tooltip = e => <TooltipWrapper content={ name } align="bottom">{e}</TooltipWrapper>;
           }
