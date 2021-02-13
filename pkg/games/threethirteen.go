@@ -3,9 +3,10 @@ package games
 import (
 	"errors"
 	"log"
-	"reflect"
 	"sort"
 	"strconv"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 const ThreeThirteenGameOver string = "game is over"
@@ -54,160 +55,28 @@ func (ttp *ThreeThirteenPlayer) RemoveCard(cardID int) bool {
 }
 
 type ThreeThirteenConfig struct {
-	NumPlayers int `json:"num_players"` // 1 <= n <= 15; best with four-ish.
+	NumPlayers int `json:"num_players" config:"type:int,min:1,default:4,max:15" label:"Number of players"` // Best with four-ish.
 
-	MinDrawSize int  `json:"min_draw_size"` // 13 <= n <= 40; minimum card count overhead per player -- used when calculating number of decks to use. Best with 7ish.
-	AddJokers   bool `json:"add_jokers"`    // Add jokers as a permanent wild cards, two per deck used.
+	MinDrawSize int  `json:"min_draw_size" config:"type:int,min:13,default:15,max:40" label:"Minimum number of extra cards (per player)"`       // Minimum card count overhead per player -- used when calculating number of decks to use. Best with 7ish.
+	AddJokers   bool `json:"add_jokers" config:"type:bool,default:true" label:"true:Add Jokers as permanent wild cards,false:Leave Jokers out"` // Add jokers as a permanent wild cards, two per deck used.
 
-	WildAsRank        bool `json:"wilds_as_rank"`        // Whether to allow wild cards to become their rank.
-	AllowMostlyWild   bool `json:"allow_mostly_wild"`    // Allow groupings to have more wild cards than non-wild cards.
-	AllowAllWildCards bool `json:"allow_all_wild_cards"` // Whether or not to allow a grouping of all wild cards.
-	SameSuitRuns      bool `json:"same_suit_runs"`       // Whether runs have to be of the same suit.
-	AceHigh           bool `json:"ace_high"`             // Whether ace is high or low.
+	WildAsRank        bool `json:"wilds_as_rank" config:"type:bool,default:true" label:"true:Use non-Joker wild cards as their rank,false:Always treat wild cards as wild"`                            // Whether to allow wild cards to become their rank.
+	AllowMostlyWild   bool `json:"allow_mostly_wild" config:"type:bool,default:false" label:"true:Allow groups with mostly wild cards,false:Only allow up to half of the cards in a group to be wild"` // Allow groupings to have more wild cards than non-wild cards.
+	AllowAllWildCards bool `json:"allow_all_wild_cards" config:"type:bool,default:false" label:"true:Allow all cards in a group to be wild,false:Forbid all-wild groups"`                              // Whether or not to allow a grouping of all wild cards.
+	SameSuitRuns      bool `json:"same_suit_runs" config:"type:bool,default:true" label:"true:Require runs to be of the same suit,false:Allow mixed-suit runs"`                                        // Whether runs have to be of the same suit.
+	AceHigh           bool `json:"ace_high" config:"type:bool,default:false" label:"true:Aces are high,false:Aces are low"`                                                                            // Whether ace is high or low.
 
-	LayingDownLimit     int  `json:"laying_down_limit"`     // 0 <= n <= 20. Number of points remaining in hand to lay down.
-	WithFourteenthRound bool `json:"with_fourteenth_round"` // Whether to add an additional round without numbered wilds.
-	AllowLastDraw       bool `json:"allow_last_draw"`       // Whether to give every player one last draw after someone lays down.
+	LayingDownLimit     int  `json:"laying_down_limit" config:"type:int,min:0,default:0,max:20" label:"Laying down limit"`                                                                          // 0 <= n <= 20. Number of points remaining in hand to lay down.
+	WithFourteenthRound bool `json:"with_fourteenth_round" config:"type:bool,default:false" label:"true:Play an extra round with no ranked wild cards,false:Stick to thirteen rounds (Kings wild)"` // Whether to add an additional round without numbered wilds.
+	AllowLastDraw       bool `json:"allow_last_draw" config:"type:bool,default:true" label:"true:Give everyone else one last draw after going out,false:End round immediately after going out"`     // Whether to give every player one last draw after someone lays down.
 
-	ToPointLimit int  `json:"to_point_limit"` // -1 or 50 <= n <= 250. Whether to have a point limit to end the game early.
-	GolfScoring  bool `json:"golf_scoring"`   // Whether least points win or most points win (different scoring mechanism).
+	ToPointLimit int  `json:"to_point_limit" config:"type:enum,default:-1,options:-1:No Point Limit;50:50 Points;100:100 Points;150:150 Points;200:200 Points;250:250 Points" label:"Point limit to end early"` // -1 or 50 <= n <= 250. Whether to have a point limit to end the game early.
+	GolfScoring  bool `json:"golf_scoring" config:"type:bool,default:true" label:"true:Count points against yourself,false:Give points to the player laying down"`                                              // Whether least points win or most points win (different scoring mechanism).
 
-	SuggestBetter bool `json:"suggest_better"` // Whether to suggest better scores
+	SuggestBetter bool `json:"suggest_better" config:"type:bool,default:true" label:"true:Tell users if they could get a better score,false:Don't tell users if they could get a better score"` // Whether to suggest better scores
 }
 
 func (cfg ThreeThirteenConfig) Validate() error {
-	if cfg.NumPlayers < 1 || cfg.NumPlayers > 15 {
-		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 1 and 6"}
-	}
-
-	if cfg.MinDrawSize < 13 || cfg.MinDrawSize > 40 {
-		return GameConfigError{"minimum draw size", strconv.Itoa(cfg.MinDrawSize), "between 13 and 40"}
-	}
-
-	if cfg.LayingDownLimit < 0 || cfg.LayingDownLimit > 20 {
-		return GameConfigError{"laying down limit", strconv.Itoa(cfg.LayingDownLimit), "between 0 and 20"}
-	}
-
-	if cfg.ToPointLimit != -1 && (cfg.ToPointLimit < 50 || cfg.ToPointLimit > 250) {
-		return GameConfigError{"ending point limit", strconv.Itoa(cfg.LayingDownLimit), "-1 or between 50 and 250"}
-	}
-
-	return nil
-}
-
-func (cfg *ThreeThirteenConfig) LoadConfig(wire map[string]interface{}) error {
-	if wire_value, ok := wire["num_players"]; ok {
-		if num_players, ok := wire_value.(float64); ok {
-			cfg.NumPlayers = int(num_players)
-		} else {
-			return errors.New("unable to parse value for num_players as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["min_draw_size"]; ok {
-		if min_draw_size, ok := wire_value.(float64); ok {
-			cfg.MinDrawSize = int(min_draw_size)
-		} else {
-			return errors.New("unable to parse value for min_draw_size as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["add_jokers"]; ok {
-		if add_jokers, ok := wire_value.(bool); ok {
-			cfg.AddJokers = add_jokers
-		} else {
-			return errors.New("unable to parse value for add_jokers as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["wilds_as_rank"]; ok {
-		if wilds_as_rank, ok := wire_value.(bool); ok {
-			cfg.WildAsRank = wilds_as_rank
-		} else {
-			return errors.New("unable to parse value for wilds_as_rank as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["allow_mostly_wild"]; ok {
-		if allow_mostly_wild, ok := wire_value.(bool); ok {
-			cfg.AllowMostlyWild = allow_mostly_wild
-		} else {
-			return errors.New("unable to parse value for allow_mostly_wild as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["allow_all_wild_cards"]; ok {
-		if allow_all_wild_cards, ok := wire_value.(bool); ok {
-			cfg.AllowAllWildCards = allow_all_wild_cards
-		} else {
-			return errors.New("unable to parse value for allow_all_wild_cards as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["same_suit_runs"]; ok {
-		if same_suit_runs, ok := wire_value.(bool); ok {
-			cfg.SameSuitRuns = same_suit_runs
-		} else {
-			return errors.New("unable to parse value for same_suit_runs as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["ace_high"]; ok {
-		if ace_high, ok := wire_value.(bool); ok {
-			cfg.AceHigh = ace_high
-		} else {
-			return errors.New("unable to parse value for ace_high as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["laying_down_limit"]; ok {
-		if laying_down_limit, ok := wire_value.(float64); ok {
-			cfg.LayingDownLimit = int(laying_down_limit)
-		} else {
-			return errors.New("unable to parse value for laying_down_limit as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["with_fourteenth_round"]; ok {
-		if with_fourteenth_round, ok := wire_value.(bool); ok {
-			cfg.WithFourteenthRound = with_fourteenth_round
-		} else {
-			return errors.New("unable to parse value for with_fourteenth_round as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["allow_last_draw"]; ok {
-		if allow_last_draw, ok := wire_value.(bool); ok {
-			cfg.AllowLastDraw = allow_last_draw
-		} else {
-			return errors.New("unable to parse value for allow_last_draw as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["to_point_limit"]; ok {
-		if to_point_limit, ok := wire_value.(float64); ok {
-			cfg.ToPointLimit = int(to_point_limit)
-		} else {
-			return errors.New("unable to parse value for to_point_limit as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["golf_scoring"]; ok {
-		if golf_scoring, ok := wire_value.(bool); ok {
-			cfg.GolfScoring = golf_scoring
-		} else {
-			return errors.New("unable to parse value for golf_scoring as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["suggest_better"]; ok {
-		if suggest_better, ok := wire_value.(bool); ok {
-			cfg.SuggestBetter = suggest_better
-		} else {
-			return errors.New("unable to parse value for suggest_better as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
 	return nil
 }
 
@@ -264,7 +133,7 @@ type ThreeThirteenState struct {
 }
 
 func (tts *ThreeThirteenState) Init(cfg ThreeThirteenConfig) error {
-	var err error = cfg.Validate()
+	var err error = figgy.Validate(cfg)
 	if err != nil {
 		log.Println("Error with ThreeThirteenConfig", err)
 		return err
@@ -302,7 +171,7 @@ func (tts *ThreeThirteenState) Start(players int) error {
 	}
 
 	tts.Config.NumPlayers = players
-	err = tts.Config.Validate()
+	err = figgy.Validate(tts.Config)
 	if err != nil {
 		log.Println("Err with ThreeThirteenConfig after starting: ", err)
 		return err

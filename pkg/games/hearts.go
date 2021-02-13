@@ -3,8 +3,9 @@ package games
 import (
 	"errors"
 	"log"
-	"reflect"
 	"strconv"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 const HeartsGameOver string = "game is over"
@@ -53,172 +54,28 @@ func (hp *HeartsPlayer) RemoveCard(cardID int) bool {
 }
 
 type HeartsConfig struct {
-	NumPlayers int `json:"num_players"` // 3 <= n <= 7; best with four.
+	NumPlayers int `json:"num_players" config:"type:int,min:3,default:4,max:7" label:"Number of players"` // Best with four.
 
-	NumberToPass     int  `json:"number_to_pass"`     // 1 <= n <= 8; number of cards to pass.
-	HoldRound        bool `json:"hold_round"`         // Whether to add a holding round when playing with non-four players.
-	MustBreakHearts  bool `json:"must_break_hearts"`  // Whether hearts need to be broken before they can be lead.
-	BlackWidowBreaks bool `json:"black_widow_breaks"` // Whether Queen of Spades breaks hearts.
-	FirstTrickHearts bool `json:"first_trick_hearts"` // Whether Hearts are allowed on the first trick.
-	WithCrib         bool `json:"with_crib"`          // Whether to remove cards or add a crib.
+	NumberToPass     int  `json:"number_to_pass" config:"type:int,min:1,default:3,max:8" label:"Number of cards to pass"`                                                                                  // Number of cards to pass.
+	HoldRound        bool `json:"hold_round" config:"type:bool,default:true" label:"true:Pass left, right, then hold (non-four players only),false:Only pass left and then right (non-four players only)"` // Whether to add a holding round when playing with non-four players.
+	MustBreakHearts  bool `json:"must_break_hearts" config:"type:bool,default:true" label:"true:Hearts must be broken before being lead,false:Can lead Hearts at any time"`                                // Whether hearts need to be broken before they can be lead.
+	BlackWidowBreaks bool `json:"black_widow_breaks" config:"type:bool,default:false" label:"true:Black Widow (Queen of Spades) breaks Hearts,false:Black Widow (Queen of Spades) doesn't break Hearts"`   // Whether Queen of Spades breaks hearts.
+	FirstTrickHearts bool `json:"first_trick_hearts" config:"type:bool,default:false" label:"true:Can sluff points on the first trick,false:Can't play points on the first trick"`                         // Whether Hearts are allowed on the first trick.
+	WithCrib         bool `json:"with_crib" config:"type:bool,default:false" label:"true:Put extra cards in a crib (taken with the first trick),false:Remove extra cards to deal evenly"`                  // Whether to remove cards or add a crib.
 
 	// Scoring
-	WinAmount         int  `json:"win_amount"`           // 50 <= n <= 250.
-	ShootMoonReduces  bool `json:"shoot_moon_reduces"`   // Whether shooting the moon reduces your score, or adds to everyone else.
-	ShootTheSun       bool `json:"shoot_the_sun"`        // Whether to score shooting the sun.
-	JackOfDiamonds    bool `json:"jack_of_dimaonds"`     // Whether taking the Jack of Diamonds in a trick reduces your score by 11.
-	TenOfClubs        bool `json:"ten_of_clubs"`         // Whether taking the Ten of Clubs doubles your score for the round.
-	BlackWidowForFive bool `json:"black_widow_for_five"` // Whether the Queen of Spades counts as 5 instead of 13.
-	AceOfHearts       bool `json:"ace_of_hearts"`        // Whether taking the Ace of Hearts counts as 5 points.
-	NoTrickBonus      bool `json:"no_trick_bonus"`       // Whether taking no tricks grants a -5 point bonus.
-	HundredToHalf     bool `json:"hundred_to_half"`      // Whether hitting exactly WinAmount points reduces your score to half.
+	WinAmount         int  `json:"win_amount" config:"type:int,min:50,default:100,max:500,step:5" label:"Ending amount"`
+	ShootMoonReduces  bool `json:"shoot_moon_reduces" config:"type:bool,default:false" label:"true:Shooting the Moon reduces your score,false:Shooting the Moon raises everyone elses' scores"`            // Whether shooting the moon reduces your score, or adds to everyone else.
+	ShootTheSun       bool `json:"shoot_the_sun" config:"type:bool,default:true" label:"true:Score double for Shooting the Sun (taking all the tricks),false:No bonus for taking all tricks"`              // Whether to score shooting the sun.
+	JackOfDiamonds    bool `json:"jack_of_dimaonds" config:"type:bool,default:false" label:"true:Taking the Jack of Diamonds reduces your score by 11,false:No bonus for taking the Jack of Diamonds"`     // Whether taking the Jack of Diamonds in a trick reduces your score by 11.
+	TenOfClubs        bool `json:"ten_of_clubs" config:"type:bool,default:false" label:"true:Taking the Ten of Clubs doubles your score for the round,false:No penalty for taking the Ten of Clubs"`       // Whether taking the Ten of Clubs doubles your score for the round.
+	BlackWidowForFive bool `json:"black_widow_for_five" config:"type:bool,default:false" label:"true:Black Widow (Queen of Spades) counts as 5,false:Black Widow (Queen of Spades) counts as 13"`          // Whether the Queen of Spades counts as 5 instead of 13.
+	AceOfHearts       bool `json:"ace_of_hearts" config:"type:bool,default:false" label:"true:Ace of Hearts counts as 5,false:Ace of Hearts counts as 1"`                                                  // Whether taking the Ace of Hearts counts as 5 points.
+	NoTrickBonus      bool `json:"no_trick_bonus" config:"type:bool,default:false" label:"true:Taking no tricks reduces your score by 5,false:No bonus for taking no tricks"`                              // Whether taking no tricks grants a -5 point bonus.
+	HundredToHalf     bool `json:"hundred_to_half" config:"type:bool,default:false" label:"true:Exactly hitting the ending amount halves your score,false:No prize for hitting the ending amount exactly"` // Whether hitting exactly WinAmount points reduces your score to half.
 }
 
 func (cfg HeartsConfig) Validate() error {
-	if cfg.NumPlayers < 3 || cfg.NumPlayers > 7 {
-		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 3 and 7"}
-	}
-
-	if cfg.NumberToPass < 1 || cfg.NumberToPass > 8 {
-		return GameConfigError{"winning score", strconv.Itoa(cfg.WinAmount), "between 1 and 8"}
-	}
-
-	if cfg.WinAmount < 50 || cfg.WinAmount > 250 {
-		return GameConfigError{"winning score", strconv.Itoa(cfg.WinAmount), "between 50 and 250"}
-	}
-
-	return nil
-}
-
-func (cfg *HeartsConfig) LoadConfig(wire map[string]interface{}) error {
-	if wire_value, ok := wire["num_players"]; ok {
-		if num_players, ok := wire_value.(float64); ok {
-			cfg.NumPlayers = int(num_players)
-		} else {
-			return errors.New("unable to parse value for num_players as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["number_to_pass"]; ok {
-		if number_to_pass, ok := wire_value.(float64); ok {
-			cfg.NumberToPass = int(number_to_pass)
-		} else {
-			return errors.New("unable to parse value for number_to_pass as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["hold_round"]; ok {
-		if hold_round, ok := wire_value.(bool); ok {
-			cfg.HoldRound = hold_round
-		} else {
-			return errors.New("unable to parse value for hold_round as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["must_break_hearts"]; ok {
-		if must_break_hearts, ok := wire_value.(bool); ok {
-			cfg.MustBreakHearts = must_break_hearts
-		} else {
-			return errors.New("unable to parse value for must_break_hearts as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["black_widow_breaks"]; ok {
-		if black_widow_breaks, ok := wire_value.(bool); ok {
-			cfg.BlackWidowBreaks = black_widow_breaks
-		} else {
-			return errors.New("unable to parse value for black_widow_breaks as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["first_trick_hearts"]; ok {
-		if first_trick_hearts, ok := wire_value.(bool); ok {
-			cfg.FirstTrickHearts = first_trick_hearts
-		} else {
-			return errors.New("unable to parse value for first_trick_hearts as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["with_crib"]; ok {
-		if with_crib, ok := wire_value.(bool); ok {
-			cfg.WithCrib = with_crib
-		} else {
-			return errors.New("unable to parse value for with_crib as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["win_amount"]; ok {
-		if win_amount, ok := wire_value.(float64); ok {
-			cfg.WinAmount = int(win_amount)
-		} else {
-			return errors.New("unable to parse value for win_amount as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["shoot_moon_reduces"]; ok {
-		if shoot_moon_reduces, ok := wire_value.(bool); ok {
-			cfg.ShootMoonReduces = shoot_moon_reduces
-		} else {
-			return errors.New("unable to parse value for shoot_moon_reduces as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["shoot_the_sun"]; ok {
-		if shoot_the_sun, ok := wire_value.(bool); ok {
-			cfg.ShootTheSun = shoot_the_sun
-		} else {
-			return errors.New("unable to parse value for shoot_the_sun as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["jack_of_dimaonds"]; ok {
-		if jack_of_dimaonds, ok := wire_value.(bool); ok {
-			cfg.JackOfDiamonds = jack_of_dimaonds
-		} else {
-			return errors.New("unable to parse value for jack_of_dimaonds as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["ten_of_clubs"]; ok {
-		if ten_of_clubs, ok := wire_value.(bool); ok {
-			cfg.TenOfClubs = ten_of_clubs
-		} else {
-			return errors.New("unable to parse value for ten_of_clubs as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["black_widow_for_five"]; ok {
-		if black_widow_for_five, ok := wire_value.(bool); ok {
-			cfg.BlackWidowForFive = black_widow_for_five
-		} else {
-			return errors.New("unable to parse value for black_widow_for_five as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["ace_of_hearts"]; ok {
-		if ace_of_hearts, ok := wire_value.(bool); ok {
-			cfg.AceOfHearts = ace_of_hearts
-		} else {
-			return errors.New("unable to parse value for ace_of_hearts as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["no_trick_bonus"]; ok {
-		if no_trick_bonus, ok := wire_value.(bool); ok {
-			cfg.NoTrickBonus = no_trick_bonus
-		} else {
-			return errors.New("unable to parse value for no_trick_bonus as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["hundred_to_half"]; ok {
-		if hundred_to_half, ok := wire_value.(bool); ok {
-			cfg.HundredToHalf = hundred_to_half
-		} else {
-			return errors.New("unable to parse value for hundred_to_half as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
 	return nil
 }
 
@@ -286,7 +143,7 @@ type HeartsState struct {
 }
 
 func (hs *HeartsState) Init(cfg HeartsConfig) error {
-	var err error = cfg.Validate()
+	var err error = figgy.Validate(cfg)
 	if err != nil {
 		log.Println("Error with HeartsConfig", err)
 		return err
@@ -317,7 +174,7 @@ func (hs *HeartsState) Start(players int) error {
 	}
 
 	hs.Config.NumPlayers = players
-	err = hs.Config.Validate()
+	err = figgy.Validate(hs.Config)
 	if err != nil {
 		log.Println("Err with HeartsConfig after starting: ", err)
 		return err
@@ -737,7 +594,7 @@ func (hs *HeartsState) PlayCard(player int, card int) error {
 		if played.Suit == HeartsSuit && !hs.HeartsBroken && hs.Config.MustBreakHearts {
 			for _, card := range hs.Players[player].Hand {
 				if card.Suit != HeartsSuit && card.Rank != JokerRank {
-					// Have a non-Spade, non-Joker card we could've played instead.
+					// Have a non-Heart, non-Joker card we could've played instead.
 					return errors.New("must sluff hearts before hearts can be lead")
 				}
 			}

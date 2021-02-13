@@ -3,6 +3,8 @@ package games
 import (
 	"encoding/json"
 	"errors"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 // EightJacks message types:
@@ -111,7 +113,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			return errors.New("must finish configuring assignments for this game")
 		}
 
-		if err = state.Config.Validate(); err != nil {
+		if err = figgy.Validate(state.Config); err != nil {
 			return err
 		}
 

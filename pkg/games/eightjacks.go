@@ -134,18 +134,18 @@ func (ejp *EightJacksPlayer) RemoveCard(cardID int) bool {
 }
 
 type EightJacksConfig struct {
-	NumPlayers int `json:"num_players" config:"type:int,min:2,default:4,max:8,step:1" label:"Number of players"` // 2 <= n <= 8; best with two to four or six.
+	NumPlayers int `json:"num_players" config:"type:int,min:2,default:4,max:8" label:"Number of players"` // Best with two to four or six.
 
-	RunLength int `json:"run_length" config:"type:int,min:2,default:4,max:6,step:1" label:"Run length"` // 3 <= n <= 6 -- length of a run for it to count.
-	WinLimit  int `json:"win_limit" config:"type:int,min:1,default:2,max:5,step:1" label:"Win limit"`   // 1 <= n <= 5 -- number of runs to win.
+	RunLength int `json:"run_length" config:"type:int,min:2,default:4,max:6" label:"Run length"` // Length of a run for it to count.
+	WinLimit  int `json:"win_limit" config:"type:int,min:1,default:2,max:5" label:"Win limit"`   // Number of runs to win.
 
-	BoardWidth   int  `json:"board_width" config:"type:int,min:8,default:10,max:10,step:1" label:"Board width"`                                                                    // 8 <= n <= 10
-	BoardHeight  int  `json:"board_height" config:"type:int,min:8,default:10,max:10,step:1" label:"Board height"`                                                                  // 8 <= n <= 10
+	BoardWidth   int  `json:"board_width" config:"type:int,min:8,default:10,max:10" label:"Board width"`
+	BoardHeight  int  `json:"board_height" config:"type:int,min:8,default:10,max:10" label:"Board height"`
 	RemoveUnused bool `json:"remove_unused" config:"type:bool,default:true" label:"true:Remove cards not used on the board,false:Keep all cards even if not present on the board"` // Whether to remove cards not used on the board.
 	WildCorners  bool `json:"wild_corners" config:"type:bool,default:true" label:"true:Add wild cards in the corners,false:Don't fill in corners with wild cards"`                 // Whether corners are wild (free for everyone to play on).
 
-	HandSize   int `json:"hand_size" config:"type:int,min:2,default:7,max:15,step:1" label:"Hand size"`     // 2 <= n <= 15 -- number of cards in the hand.
-	JokerCount int `json:"joker_count" config:"type:int,min:0,default:8,max:16,step:1" label:"Joker count"` // 0 <= n <= 16 -- "dual-use jacks".
+	HandSize   int `json:"hand_size" config:"type:int,min:2,default:7,max:15" label:"Hand size"`     // Number of cards in the hand.
+	JokerCount int `json:"joker_count" config:"type:int,min:0,default:8,max:16" label:"Joker count"` // "dual-use jacks".
 
 	// Common game configuration options
 	Countdown bool `json:"countdown" config:"type:bool,default:true" label:"true:Show a 3... 2... 1... countdown before beginning,false:Start the game instantly"` // Whether to wait and send countdown messages.
@@ -156,11 +156,7 @@ func (cfg EightJacksConfig) Validate() error {
 		return GameConfigError{"wild corners", strconv.Itoa(cfg.JokerCount), "true if using a 10x10 board"}
 	}
 
-	return figgy.Validate(cfg)
-}
-
-func (cfg *EightJacksConfig) LoadConfig(wire map[string]interface{}) error {
-	return figgy.Load(cfg, wire)
+	return nil
 }
 
 type EightJacksTurn struct {
@@ -198,7 +194,7 @@ type EightJacksState struct {
 }
 
 func (ejs *EightJacksState) Init(cfg EightJacksConfig) error {
-	var err error = cfg.Validate()
+	var err error = figgy.Validate(cfg)
 	if err != nil {
 		log.Println("Error with EightJacksConfig", err)
 		return err
@@ -250,7 +246,7 @@ func (ejs *EightJacksState) AssignTeams(dealer int, num_players int, player_assi
 
 	// First create players so we can assign them teams.
 	ejs.Config.NumPlayers = num_players
-	err = ejs.Config.Validate()
+	err = figgy.Validate(ejs.Config)
 	if err != nil {
 		log.Println("Err with EightJacksConfig after starting: ", err)
 		return err

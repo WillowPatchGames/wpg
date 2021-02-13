@@ -3,10 +3,11 @@ package games
 import (
 	"errors"
 	"log"
-	"reflect"
 	"strconv"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/utils"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 const RushYouWon string = "game is over; you won"
@@ -39,32 +40,18 @@ func (rp *RushPlayer) FindTile(tileID int) (int, bool) {
 }
 
 type RushConfig struct {
-	NumPlayers     int       `json:"num_players"` // 2 <= n <= 50
-	NumTiles       int       `json:"num_tiles"`   // Between 1 and 100 rounds worth
-	TilesPerPlayer bool      `json:"tiles_per_player"`
-	StartSize      int       `json:"start_size"`      // 5 <= n <= 25
-	DrawSize       int       `json:"draw_size"`       // 1 <= n <= 10
-	DiscardPenalty int       `json:"discard_penalty"` // 1 <= n <= 10
-	Frequency      Frequency `json:"frequency"`
+	NumPlayers int `json:"num_players" config:"type:int,min:2,default:4,max:50" label:"Number of players"` // Best with two to four or six.
+	NumTiles   int `json:"num_tiles" config:"type:int,min:10,default:75,max:300" label:"Number of tiles"`  // Between 1 and 200 rounds worth.
+
+	TilesPerPlayer bool      `json:"tiles_per_player" config:"type:bool,default:false" label:"true:Tiles per Player,false:Total number of tiles"`
+	Frequency      Frequency `json:"frequency" config:"type:enum,default:1,options:1:Standard US English Letter Frequencies;2:Bananagrams Tile Frequency;3:Scrabble Tile Frequency" label:"Tile frequency"`
+
+	StartSize      int `json:"start_size" config:"type:int,min:7,default:12,max:25" label:"Player tile start size"`
+	DrawSize       int `json:"draw_size" config:"type:int,min:1,default:1,max:10" label:"Player tile draw size"`
+	DiscardPenalty int `json:"discard_penalty" config:"type:int,min:1,default:3,max:5" label:"Player tile discard penalty"`
 }
 
 func (cfg RushConfig) Validate() error {
-	if cfg.NumPlayers <= 1 || cfg.NumPlayers > 50 {
-		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 50"}
-	}
-
-	if cfg.StartSize <= 4 || cfg.StartSize > 25 {
-		return GameConfigError{"starting tiles count", strconv.Itoa(cfg.StartSize), "between 5 and 25"}
-	}
-
-	if cfg.DrawSize == 0 || cfg.DrawSize > 10 {
-		return GameConfigError{"draw size", strconv.Itoa(cfg.DrawSize), "between 1 and 10"}
-	}
-
-	if cfg.DiscardPenalty == 0 || cfg.DiscardPenalty > 10 {
-		return GameConfigError{"discard penalty", strconv.Itoa(cfg.DiscardPenalty), "between 1 and 10"}
-	}
-
 	if cfg.Frequency <= StartFreqRange || cfg.Frequency >= EndFreqRange {
 		return GameConfigError{"frequency range", strconv.Itoa(int(cfg.Frequency)), "between " + strconv.Itoa(int(StartFreqRange)) + " and " + strconv.Itoa(int(EndFreqRange))}
 	}
@@ -78,7 +65,7 @@ func (cfg RushConfig) Validate() error {
 	var oneDraw int = cfg.DrawSize * cfg.NumPlayers
 	var numRounds = (totalTiles - initialTiles) / oneDraw
 
-	if totalTiles < (initialTiles+oneDraw) || numRounds > 100 {
+	if totalTiles < (initialTiles+oneDraw) || numRounds > 200 {
 		var tilesRepr string = strconv.Itoa(cfg.NumTiles)
 		if cfg.TilesPerPlayer {
 			tilesRepr += " per player"
@@ -86,71 +73,7 @@ func (cfg RushConfig) Validate() error {
 			tilesRepr += " total"
 		}
 
-		return GameConfigError{"number of tiles", tilesRepr, "must be enough for 1 to 100 rounds of drawing"}
-	}
-
-	return nil
-}
-
-func (cfg *RushConfig) LoadConfig(wire map[string]interface{}) error {
-	if wire_value, ok := wire["num_players"]; ok {
-		if num_players, ok := wire_value.(float64); ok {
-			cfg.NumPlayers = int(num_players)
-		} else {
-			return errors.New("unable to parse value for num_players as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["num_tiles"]; ok {
-		if num_tiles, ok := wire_value.(float64); ok {
-			cfg.NumTiles = int(num_tiles)
-		} else {
-			return errors.New("unable to parse value for num_tiles as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["tiles_per_player"]; ok {
-		if tiles_per_player, ok := wire_value.(bool); ok {
-			cfg.TilesPerPlayer = tiles_per_player
-		} else {
-			return errors.New("unable to parse value for tiles_per_player as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["start_size"]; ok {
-		if start_size, ok := wire_value.(float64); ok {
-			cfg.StartSize = int(start_size)
-		} else {
-			return errors.New("unable to parse value for start_size as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["draw_size"]; ok {
-		if draw_size, ok := wire_value.(float64); ok {
-			cfg.DrawSize = int(draw_size)
-		} else {
-			return errors.New("unable to parse value for draw_size as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["discard_penalty"]; ok {
-		if discard_penalty, ok := wire_value.(float64); ok {
-			cfg.DiscardPenalty = int(discard_penalty)
-		} else {
-			return errors.New("unable to parse value for discard_penalty as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["frequency"]; ok {
-		if frequency, ok := wire_value.(float64); ok {
-			if int(frequency) > int(StartFreqRange) && int(frequency) < int(EndFreqRange) {
-				cfg.Frequency = Frequency(int(frequency))
-			} else {
-				return errors.New("value for frequency is outside acceptable range: " + strconv.Itoa(int(frequency)) + " is not in (" + strconv.Itoa(int(StartFreqRange)) + ", " + strconv.Itoa(int(EndFreqRange)) + ")")
-			}
-		} else {
-			return errors.New("unable to parse value for frequency as integer: " + reflect.TypeOf(wire_value).String())
-		}
+		return GameConfigError{"number of tiles", tilesRepr, "must be enough for 1 to 200 rounds of drawing"}
 	}
 
 	return nil
@@ -167,7 +90,7 @@ type RushState struct {
 }
 
 func (rs *RushState) Init(cfg RushConfig) error {
-	var err error = cfg.Validate()
+	var err error = figgy.Validate(cfg)
 	if err != nil {
 		log.Println("Error with RushConfig", err)
 		return err
@@ -191,7 +114,7 @@ func (rs *RushState) Start(players int) error {
 
 	rs.Config.NumPlayers = players
 
-	err = rs.Config.Validate()
+	err = figgy.Validate(rs.Config)
 	if err != nil {
 		log.Println("Error with RushConfig after starting", err)
 		return err

@@ -74,10 +74,6 @@ func TestRushGame(t *testing.T) {
 	config.DiscardPenalty = 3
 	config.Frequency = BananagramsFreq
 
-	if err := config.Validate(); err != nil {
-		t.Fatal("Unable to validate good configuration", err)
-	}
-
 	var game RushState
 	if err := game.Init(config); err != nil {
 		t.Fatal("Unable to initialize game with good configration", err)

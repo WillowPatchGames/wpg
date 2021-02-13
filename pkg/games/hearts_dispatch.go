@@ -3,6 +3,8 @@ package games
 import (
 	"encoding/json"
 	"errors"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 // Hearts message types:
@@ -50,7 +52,7 @@ func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *
 		}
 
 		state.Config.NumPlayers = players
-		if err = state.Config.Validate(); err != nil {
+		if err = figgy.Validate(state.Config); err != nil {
 			return err
 		}
 

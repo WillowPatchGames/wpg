@@ -3,8 +3,9 @@ package games
 import (
 	"errors"
 	"log"
-	"reflect"
 	"strconv"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 const SpadesGameOver string = "game is over"
@@ -86,197 +87,32 @@ func (sp *SpadesPlayer) RemoveCard(cardID int) bool {
 }
 
 type SpadesConfig struct {
-	NumPlayers      int  `json:"num_players"`       // 2 <= n <= 6; best with four.
-	Overtakes       bool `json:"overtakes"`         // No overtakes at all.
-	OvertakeLimit   int  `json:"overtake_limit"`    // 2 <= n <= 20. Number of overtakes before a penalty.
-	MustBreakSpades bool `json:"must_break_spades"` // Whether spades need to be broken before they can be lead.
-	AddJokers       bool `json:"add_jokers"`        // For three or six players: add jokers to round off the number of cards. Otherwise, one card will be left in the deck with three players, or the twos will be removed with six.
-	FirstWins       bool `json:"first_wins"`        // For six players: whether the first or the last card played wins in case of a tie in value.
+	NumPlayers      int  `json:"num_players" config:"type:int,min:2,default:4,max:6" label:"Number of players"`                                                                                    // Best with four.
+	Overtakes       bool `json:"overtakes" config:"type:bool,default:true" label:"true:Overtakes counted,false:No overtakes"`                                                                      // No overtakes at all.
+	OvertakeLimit   int  `json:"overtake_limit" config:"type:int,min:2,default:10,max:20" label:"Overtake penalty limit"`                                                                          // Number of overtakes before a penalty.
+	MustBreakSpades bool `json:"must_break_spades" config:"type:bool,default:true" label:"true:Must wait for spades to be sluffed before leading spades,false:Can play spades at any time"`        // Whether spades need to be broken before they can be lead.
+	AddJokers       bool `json:"add_jokers" config:"type:bool,default:false" label:"true:Add Jokers for three or six players,false:Leave Jokers out"`                                              // For three or six players: add jokers to round off the number of cards. Otherwise, one card will be left in the deck with three players, or the twos will be removed with six.
+	FirstWins       bool `json:"first_wins" config:"type:bool,default:true" label:"true:First highest played card wins (six players only),false:Last highest played card wins (six players only)"` // For six players: whether the first or the last card played wins in case of a tie in value.
 
 	// Nil
-	WithNil        bool `json:"with_nil"`         // Allow nil bids.
-	OvertakesNil   bool `json:"overtakes_nil"`    // Overtakes count when you or your partner bids nil.
-	BlindBidding   bool `json:"blind_bidding"`    // Allow "blind" bidding.
-	WithDoubleNil  bool `json:"with_double_nil"`  // When true and both players bid nil, both must make it.
-	WithBreakBonus bool `json:"with_break_bonus"` // Breaking both double nil players grants a bonus to the breakers.
-	WithTripleNil  bool `json:"with_triple_nil"`  // A variation of blind nil, wherein the player may only choose which suit to play.
+	WithNil        bool `json:"with_nil" config:"type:bool,default:true" label:"true:Allow nil bids,false:Forbid nid and zero bids"`                                                                     // Allow nil bids.
+	OvertakesNil   bool `json:"overtakes_nil" config:"type:bool,default:false" label:"true:Score overtakes with nil,false:Ignore overtakes with nil bids"`                                               // Overtakes count when you or your partner bids nil.
+	BlindBidding   bool `json:"blind_bidding" config:"type:bool,default:true" label:"true:Enable blind bidding,false:Always peek at cards before bidding"`                                               // Allow "blind" bidding.
+	WithDoubleNil  bool `json:"with_double_nil" config:"type:bool,default:true" label:"true:Require both partners make nil if both bid nil (double nil),false:Score partners bidding nil separately"`    // When true and both players bid nil, both must make it.
+	WithBreakBonus bool `json:"with_break_bonus" config:"type:bool,default:false" label:"true:Give a bonus for breaking both partners in double nil,false:No bonus for breaking both partners nil bids"` // Breaking both double nil players grants a bonus to the breakers.
 
 	// Scoring
-	WinAmount       int  `json:"win_amount"`       // 50 <= n <= 1000.
-	OvertakePenalty int  `json:"overtake_penalty"` // n in {50, 100, 150, 200}.
-	TrickMultiplier int  `json:"trick_multiplier"` // n in {5, 10}.
-	MoonOrBoston    bool `json:"perfect_round"`    // Score half of the win amount for a perfect round (taking all tricks tricks).
-	NilScore        int  `json:"nil_score"`        // n in {50, 75. 100, 125, 150, 200}.
+	WinAmount       int  `json:"win_amount" config:"type:int,min:50,default:500,max:1000" label:"Winning point threshhold"`
+	OvertakePenalty int  `json:"overtake_penalty" config:"type:enum,default:100,options:50:50 Points;100:100 Points;150:150 Points;200:200 Points" label:"Overtake penalty"`                                         // n in {50, 100, 150, 200}.
+	TrickMultiplier int  `json:"trick_multiplier" config:"type:enum,default:10,options:5:5x;10:10x" label:"Trick multiplier"`                                                                                        // n in {5, 10}.
+	MoonOrBoston    bool `json:"perfect_round" config:"type:bool,default:false" label:"true:Score half of winning amount for a perfect round (Moon or Boston),false:Score no additional points for a perfect round"` // Score half of the win amount for a perfect round (taking all tricks tricks).
+	NilScore        int  `json:"nil_score" config:"type:enum,default:100,options:50:50 Points;75:75 Points;100:100 Points;125:125 Points;150:150 Points;200:200 Points" label:"Single nil score"`                    // n in {50, 75. 100, 125, 150, 200}.
 }
 
 func (cfg SpadesConfig) Validate() error {
-	if cfg.NumPlayers < 2 || cfg.NumPlayers > 6 {
-		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 6"}
-	}
-
-	if cfg.OvertakeLimit < 2 || cfg.OvertakeLimit > 20 {
-		return GameConfigError{"overtake limit", strconv.Itoa(cfg.OvertakeLimit), "between 2 and 20"}
-	}
-
-	if cfg.WinAmount < 50 || cfg.WinAmount > 1000 {
-		return GameConfigError{"winning score", strconv.Itoa(cfg.WinAmount), "between 50 and 1000"}
-	}
-
-	if cfg.OvertakePenalty != 50 && cfg.OvertakePenalty != 100 && cfg.OvertakePenalty != 150 && cfg.OvertakePenalty != 200 {
-		return GameConfigError{"overtake penalty", strconv.Itoa(cfg.OvertakePenalty), "50, 100, 150, or 200"}
-	}
-
-	if cfg.TrickMultiplier != 5 && cfg.TrickMultiplier != 10 {
-		return GameConfigError{"trick multiplier", strconv.Itoa(cfg.TrickMultiplier), "5 or 10"}
-	}
-
-	if !cfg.BlindBidding && cfg.WithTripleNil {
+	/*if !cfg.BlindBidding && cfg.WithTripleNil {
 		return GameConfigError{"triple nil", "true", "false when blind bidding is false"}
-	}
-
-	if cfg.WithTripleNil {
-		return GameConfigError{"triple nil", "true", "false"}
-	}
-
-	return nil
-}
-
-func (cfg *SpadesConfig) LoadConfig(wire map[string]interface{}) error {
-	if wire_value, ok := wire["num_players"]; ok {
-		if num_players, ok := wire_value.(float64); ok {
-			cfg.NumPlayers = int(num_players)
-		} else {
-			return errors.New("unable to parse value for num_players as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["overtakes"]; ok {
-		if overtakes, ok := wire_value.(bool); ok {
-			cfg.Overtakes = overtakes
-		} else {
-			return errors.New("unable to parse value for overtakes as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["overtake_limit"]; ok {
-		if overtake_limit, ok := wire_value.(float64); ok {
-			cfg.OvertakeLimit = int(overtake_limit)
-		} else {
-			return errors.New("unable to parse value for overtake_limit as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["must_break_spades"]; ok {
-		if must_break_spades, ok := wire_value.(bool); ok {
-			cfg.MustBreakSpades = must_break_spades
-		} else {
-			return errors.New("unable to parse value for must_break_spades as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["add_jokers"]; ok {
-		if add_jokers, ok := wire_value.(bool); ok {
-			cfg.AddJokers = add_jokers
-		} else {
-			return errors.New("unable to parse value for add_jokers as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["first_wins"]; ok {
-		if first_wins, ok := wire_value.(bool); ok {
-			cfg.FirstWins = first_wins
-		} else {
-			return errors.New("unable to parse value for first_wins as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["with_nil"]; ok {
-		if with_nil, ok := wire_value.(bool); ok {
-			cfg.WithNil = with_nil
-		} else {
-			return errors.New("unable to parse value for with_nil as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["overtakes_nil"]; ok {
-		if overtakes_nil, ok := wire_value.(bool); ok {
-			cfg.OvertakesNil = overtakes_nil
-		} else {
-			return errors.New("unable to parse value for overtakes_nil as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["blind_bidding"]; ok {
-		if blind_bidding, ok := wire_value.(bool); ok {
-			cfg.BlindBidding = blind_bidding
-		} else {
-			return errors.New("unable to parse value for blind_bidding as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["with_double_nil"]; ok {
-		if with_double_nil, ok := wire_value.(bool); ok {
-			cfg.WithDoubleNil = with_double_nil
-		} else {
-			return errors.New("unable to parse value for with_double_nil as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["with_break_bonus"]; ok {
-		if with_break_bonus, ok := wire_value.(bool); ok {
-			cfg.WithBreakBonus = with_break_bonus
-		} else {
-			return errors.New("unable to parse value for with_break_bonus as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["with_triple_nil"]; ok {
-		if with_triple_nil, ok := wire_value.(bool); ok {
-			cfg.WithTripleNil = with_triple_nil
-		} else {
-			return errors.New("unable to parse value for with_triple_nil as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["win_amount"]; ok {
-		if win_amount, ok := wire_value.(float64); ok {
-			cfg.WinAmount = int(win_amount)
-		} else {
-			return errors.New("unable to parse value for win_amount as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["overtake_penalty"]; ok {
-		if overtake_penalty, ok := wire_value.(float64); ok {
-			cfg.OvertakePenalty = int(overtake_penalty)
-		} else {
-			return errors.New("unable to parse value for overtake_penalty as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["trick_multiplier"]; ok {
-		if trick_multiplier, ok := wire_value.(float64); ok {
-			cfg.TrickMultiplier = int(trick_multiplier)
-		} else {
-			return errors.New("unable to parse value for trick_multiplier as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["perfect_round"]; ok {
-		if perfect_round, ok := wire_value.(bool); ok {
-			cfg.MoonOrBoston = perfect_round
-		} else {
-			return errors.New("unable to parse value for perfect_round as boolean: " + reflect.TypeOf(wire_value).String())
-		}
-	}
-
-	if wire_value, ok := wire["nil_score"]; ok {
-		if nil_score, ok := wire_value.(float64); ok {
-			cfg.NilScore = int(nil_score)
-		} else {
-			return errors.New("unable to parse value for nil_score as integer: " + reflect.TypeOf(wire_value).String())
-		}
-	}
+	}*/
 
 	return nil
 }
@@ -334,7 +170,7 @@ type SpadesState struct {
 }
 
 func (ss *SpadesState) Init(cfg SpadesConfig) error {
-	var err error = cfg.Validate()
+	var err error = figgy.Validate(cfg)
 	if err != nil {
 		log.Println("Error with SpadesConfig", err)
 		return err
@@ -371,7 +207,7 @@ func (ss *SpadesState) Start() error {
 		return errors.New("double start occurred")
 	}
 
-	err = ss.Config.Validate()
+	err = figgy.Validate(ss.Config)
 	if err != nil {
 		log.Println("Err with SpadesConfig after starting: ", err)
 		return err
@@ -412,7 +248,7 @@ func (ss *SpadesState) AssignTeams(dealer int, num_players int, player_assignmen
 
 	// First create players so we can assign them teams.
 	ss.Config.NumPlayers = num_players
-	err = ss.Config.Validate()
+	err = figgy.Validate(ss.Config)
 	if err != nil {
 		log.Println("Error with SpadesConfig after starting: ", err)
 		return err
@@ -792,9 +628,9 @@ func (ss *SpadesState) PlaceBid(player int, bid SpadesBid) error {
 		return errors.New("can't bid blind nil when not enabled by config")
 	}
 
-	if bid == TripleNilBidSpades && (!ss.Config.WithTripleNil || !ss.Config.BlindBidding) {
+	/*if bid == TripleNilBidSpades && (!ss.Config.WithTripleNil || !ss.Config.BlindBidding) {
 		return errors.New("can't bid triple nil when not enabled by config")
-	}
+	}*/
 
 	if (bid == BlindNilBidSpades || bid == TripleNilBidSpades) && ss.Players[player].Peeked {
 		return errors.New("can't bid blind or triple nil when you've peeked at your cards")

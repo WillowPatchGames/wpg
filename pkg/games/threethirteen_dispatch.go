@@ -3,6 +3,8 @@ package games
 import (
 	"encoding/json"
 	"errors"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 // ThreeThirteen message types:
@@ -68,7 +70,7 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 		}
 
 		state.Config.NumPlayers = players
-		if err = state.Config.Validate(); err != nil {
+		if err = figgy.Validate(state.Config); err != nil {
 			return err
 		}
 

@@ -3,6 +3,8 @@ package games
 import (
 	"encoding/json"
 	"errors"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 type RushDraw struct {
@@ -68,7 +70,7 @@ func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *Ga
 		}
 
 		state.Config.NumPlayers = players
-		if err = state.Config.Validate(); err != nil {
+		if err = figgy.Validate(state.Config); err != nil {
 			return err
 		}
 
