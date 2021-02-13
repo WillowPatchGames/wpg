@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -108,6 +109,21 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			room = new(database.Room)
 			if err = tx.First(room, handle.req.RoomID).Error; err != nil {
 				return err
+			}
+
+			if err := room.HandleExpiration(tx); err != nil {
+				return err
+			}
+
+			if room.Lifecycle != "playing" {
+				msg := "unable to create game in a"
+				if room.Lifecycle == "expired" {
+					msg += "n expired"
+				} else {
+					msg += " " + room.Lifecycle
+				}
+				msg += " room"
+				return errors.New(msg)
 			}
 
 			if err = api.UserCanCreateGame(*handle.user, *room); err != nil {
