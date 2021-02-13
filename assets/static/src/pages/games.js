@@ -147,10 +147,8 @@ class PreGamePage extends React.Component {
 class AfterPartyPage extends React.Component {
   constructor(props) {
     super(props);
-    console.log(this.props.game);
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
-    console.log(this.game);
   }
   render() {
     var mode = this.props.game.mode || this.props.game.style;
@@ -934,7 +932,7 @@ class CreateGameForm extends React.Component {
       return null;
     }
 
-    if (option.values.type === 'select') {
+    if (option.values.type === 'select' || option.values.type === 'enum') {
       return this.renderSelect(option);
     }
 
