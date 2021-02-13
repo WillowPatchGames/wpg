@@ -5,6 +5,8 @@ import (
 	"log"
 	"sort"
 	"strconv"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 const EightJacksGameOver string = "game is over"
@@ -132,100 +134,33 @@ func (ejp *EightJacksPlayer) RemoveCard(cardID int) bool {
 }
 
 type EightJacksConfig struct {
-	GameConfig
+	NumPlayers int `json:"num_players" config:"type:int,min:2,default:4,max:8,step:1" label:"Number of players"` // 2 <= n <= 8; best with two to four or six.
 
-	NumPlayers int `json:"num_players"` // 2 <= n <= 8; best with two to four or six.
+	RunLength int `json:"run_length" config:"type:int,min:2,default:4,max:6,step:1" label:"Run length"` // 3 <= n <= 6 -- length of a run for it to count.
+	WinLimit  int `json:"win_limit" config:"type:int,min:1,default:2,max:5,step:1" label:"Win limit"`   // 1 <= n <= 5 -- number of runs to win.
 
-	RunLength int `json:"run_length"` // 3 <= n <= 6 -- length of a run for it to count.
-	WinLimit  int `json:"win_limit"`  // 1 <= n <= 5 -- number of runs to win.
+	BoardWidth   int  `json:"board_width" config:"type:int,min:8,default:10,max:10,step:1" label:"Board width"`                                                                    // 8 <= n <= 10
+	BoardHeight  int  `json:"board_height" config:"type:int,min:8,default:10,max:10,step:1" label:"Board height"`                                                                  // 8 <= n <= 10
+	RemoveUnused bool `json:"remove_unused" config:"type:bool,default:true" label:"true:Remove cards not used on the board,false:Keep all cards even if not present on the board"` // Whether to remove cards not used on the board.
+	WildCorners  bool `json:"wild_corners" config:"type:bool,default:true" label:"true:Add wild cards in the corners,false:Don't fill in corners with wild cards"`                 // Whether corners are wild (free for everyone to play on).
 
-	BoardWidth   int  `json:"board_width"`   // 8 <= n <= 10
-	BoardHeight  int  `json:"board_height"`  // 8 <= n <= 10
-	RemoveUnused bool `json:"remove_unused"` // Whether to remove cards not used on the board.
-	WildCorners  bool `json:"wild_corners"`  // Whether corners are wild (free for everyone to play on).
+	HandSize   int `json:"hand_size" config:"type:int,min:2,default:7,max:15,step:1" label:"Hand size"`     // 2 <= n <= 15 -- number of cards in the hand.
+	JokerCount int `json:"joker_count" config:"type:int,min:0,default:8,max:16,step:1" label:"Joker count"` // 0 <= n <= 16 -- "dual-use jacks".
 
-	HandSize   int `json:"hand_size"`   // 2 <= n <= 15 -- number of cards in the hand.
-	JokerCount int `json:"joker_count"` // 0 <= n <= 16 -- "dual-use jacks".
+	// Common game configuration options
+	Countdown bool `json:"countdown" config:"type:bool,default:true" label:"true:Show a 3... 2... 1... countdown before beginning,false:Start the game instantly"` // Whether to wait and send countdown messages.
 }
 
 func (cfg EightJacksConfig) Validate() error {
-	if cfg.NumPlayers < 2 || cfg.NumPlayers > 8 {
-		return GameConfigError{"number of players", strconv.Itoa(cfg.NumPlayers), "between 2 and 8"}
-	}
-
-	if cfg.RunLength < 3 || cfg.RunLength > 6 {
-		return GameConfigError{"run length", strconv.Itoa(cfg.RunLength), "between 3 and 6"}
-	}
-
-	if cfg.WinLimit < 1 || cfg.WinLimit > 5 {
-		return GameConfigError{"number of runs to win", strconv.Itoa(cfg.WinLimit), "between 1 and 5"}
-	}
-
-	if cfg.BoardWidth < 8 || cfg.BoardWidth > 10 {
-		return GameConfigError{"board width", strconv.Itoa(cfg.BoardWidth), "between 8 and 10"}
-	}
-
-	if cfg.BoardHeight < 8 || cfg.BoardHeight > 10 {
-		return GameConfigError{"board height", strconv.Itoa(cfg.BoardHeight), "between 8 and 10"}
-	}
-
-	if cfg.HandSize < 2 || cfg.HandSize > 15 {
-		return GameConfigError{"size of hand", strconv.Itoa(cfg.HandSize), "between 2 and 15"}
-	}
-
-	if cfg.JokerCount < 0 || cfg.JokerCount > 16 {
-		return GameConfigError{"number of jokers", strconv.Itoa(cfg.JokerCount), "between 0 and 16"}
-	}
-
 	if cfg.BoardWidth == 10 && cfg.BoardHeight == 10 && !cfg.WildCorners {
 		return GameConfigError{"wild corners", strconv.Itoa(cfg.JokerCount), "true if using a 10x10 board"}
 	}
 
-	return nil
+	return figgy.Validate(cfg)
 }
 
 func (cfg *EightJacksConfig) LoadConfig(wire map[string]interface{}) error {
-	if err := BoolConfig(wire, "countdown", &cfg.Countdown, true); err != nil {
-		return err
-	}
-
-	if err := IntConfig(wire, "num_players", &cfg.NumPlayers, 4); err != nil {
-		return err
-	}
-
-	if err := IntConfig(wire, "run_length", &cfg.RunLength, 4); err != nil {
-		return err
-	}
-
-	if err := IntConfig(wire, "win_limit", &cfg.WinLimit, 2); err != nil {
-		return err
-	}
-
-	if err := IntConfig(wire, "board_width", &cfg.BoardWidth, 10); err != nil {
-		return err
-	}
-
-	if err := IntConfig(wire, "board_height", &cfg.BoardHeight, 10); err != nil {
-		return err
-	}
-
-	if err := BoolConfig(wire, "remove_unused", &cfg.RemoveUnused, true); err != nil {
-		return err
-	}
-
-	if err := BoolConfig(wire, "wild_corners", &cfg.WildCorners, true); err != nil {
-		return err
-	}
-
-	if err := IntConfig(wire, "hand_size", &cfg.HandSize, 7); err != nil {
-		return err
-	}
-
-	if err := IntConfig(wire, "joker_count", &cfg.JokerCount, 4); err != nil {
-		return err
-	}
-
-	return nil
+	return figgy.Load(cfg, wire)
 }
 
 type EightJacksTurn struct {

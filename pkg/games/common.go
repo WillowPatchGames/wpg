@@ -64,7 +64,7 @@ func (gce GameConfigError) Error() string {
 
 // GameConfig is a set of common game configuration options.
 type GameConfig struct {
-	Countdown bool `json:"countdown"` // Whether to wait and send countdown messages.
+	Countdown bool `json:"countdown" type:bool,default:true" label:"true:Show a 3... 2... 1... countdown before beginning,false:Start the game instantly"` // Whether to wait and send countdown messages.
 }
 
 func IntConfig(wire map[string]interface{}, key string, value *int, default_value int) error {
