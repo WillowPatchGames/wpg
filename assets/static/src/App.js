@@ -194,9 +194,9 @@ class App extends React.Component {
   }
 
   render() {
-    var notified_title = "%s | Willow Patch Games";
-    var notified_default = "Welcome to Willow Patch Games";
-    if (this.state.notification) {
+    let notified_title = "%s | Willow Patch Games";
+    let notified_default = "Welcome to Willow Patch Games";
+    if (this.state.notification !== undefined && this.state.notification !== null && this.state.notification !== "") {
       notified_title = "(" + this.state.notification + ") " + notified_title;
       notified_default = "(" + this.state.notification + ") " + notified_default;
     }
@@ -257,6 +257,7 @@ class App extends React.Component {
               user={ this.state.user }
               room={ this.state.room }
               game={ this.state.game }
+              notification={ this.state.notification }
 
               setUser={ this.setUser.bind(this) }
               setPage={ this.setPage.bind(this) }

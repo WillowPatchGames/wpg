@@ -65,11 +65,23 @@ class RouteWithRoom extends React.Component {
 
 class Page extends React.Component {
   shouldComponentUpdate(nextProps) {
-    return nextProps.room !== this.props.room || nextProps.game !== this.props.game || nextProps.user !== this.props.user || nextProps.location !== this.props.location;
+    return nextProps.room !== this.props.room || nextProps.game !== this.props.game || nextProps.user !== this.props.user || nextProps.location !== this.props.location || nextProps.notification !== this.props.notification;
   }
 
   render() {
     var this_props = Object.assign({}, this.props, { location: undefined });
+
+    let notified_preferences_title = "%s - Account Preferences | Welcome to Willow Patch Games";
+    let notified_preferences_default = "Account Preferences | Welcome to Willow Patch Games";
+    let notified_room_title = "%s - Room #" + this.props.room?.id + " | Willow Patch Games";
+    let notified_room_default = "Room #" + this.props.room?.id + " | Willow Patch Games";
+    if (this.props.notification !== undefined && this.props.notification !== null && this.props.notification !== "") {
+      notified_preferences_title = "(" + this.props.notification + ") " + notified_preferences_title;
+      notified_preferences_default = "(" + this.props.notification + ") " + notified_preferences_default;
+      notified_room_title = "(" + this.props.notification + ") " + notified_room_title;
+      notified_room_default = "(" + this.props.notification + ") " + notified_room_default;
+    }
+
 
     return (
       <Switch>
@@ -194,8 +206,8 @@ class Page extends React.Component {
         <RouteWithAuth path="/profile" user={ this.props.user }>
           <>
             <Helmet
-              titleTemplate="%s - Account Preferences | Willow Patch Games"
-              defaultTitle="Account Preferences | Welcome to Willow Patch Games"
+              titleTemplate={ notified_preferences_title }
+              defaultTitle={ notified_preferences_default }
             >
               <title>Account Preferences</title>
             </Helmet>
@@ -211,8 +223,8 @@ class Page extends React.Component {
         <RouteWithRoom path="/room" room={ this.props.room }>
           <>
             <Helmet
-              titleTemplate={ "%s - Room #" + this.props.room?.id + " | Willow Patch Games" }
-              defaultTitle={ "Room #" + this.props.room?.id + " | Willow Patch Games" }
+              titleTemplate={ notified_room_title }
+              defaultTitle={ notified_room_default }
             />
             <RoomPage {...this_props} key="path-room" />
           </>
