@@ -70,30 +70,13 @@ func (handle *CreateHandler) verifyRequest() error {
 		return api_errors.ErrMissingRequest
 	}
 
-	if games.GameModeFromString(handle.req.Style) == -1 {
+	var mode = games.GameModeFromString(handle.req.Style)
+	if mode == -1 {
 		return api_errors.ErrBadValue
 	}
 
 	if handle.req.Config != nil {
-		if handle.req.Style == "rush" {
-			var config games.RushConfig
-			handle.parsedConfig = &config
-		} else if handle.req.Style == "spades" {
-			var config games.SpadesConfig
-			handle.parsedConfig = &config
-		} else if handle.req.Style == "three thirteen" {
-			var config games.ThreeThirteenConfig
-			handle.parsedConfig = &config
-		} else if handle.req.Style == "eight jacks" {
-			var config games.EightJacksConfig
-			handle.parsedConfig = &config
-		} else if handle.req.Style == "hearts" {
-			var config games.HeartsConfig
-			handle.parsedConfig = &config
-		} else {
-			panic("Unknown game mode -- in enum but not here: " + handle.req.Style)
-		}
-
+		handle.parsedConfig = mode.EmptyConfig()
 		if err := figgy.Load(handle.parsedConfig, handle.req.Config); err != nil {
 			return err
 		}

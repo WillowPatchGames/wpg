@@ -189,10 +189,27 @@ func (ss *SpadesState) Init(cfg SpadesConfig) error {
 	return nil
 }
 
+func (ss *SpadesState) GetConfiguration() figgy.Figgurable {
+	return ss.Config
+}
+
 func (ss *SpadesState) ReInit() error {
 	// No-op for now. Nothing needs to be re-initialized after reloading
 	// from JSON serialization.
 	return nil
+}
+
+func (ss *SpadesState) IsStarted() bool {
+	return ss.Started
+}
+
+func (ss *SpadesState) IsFinished() bool {
+	return ss.Finished
+}
+
+func (ss *SpadesState) ResetStatus() {
+	ss.Started = false
+	ss.Finished = false
 }
 
 func (ss *SpadesState) Start() error {

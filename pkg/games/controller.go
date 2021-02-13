@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/internal/database"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 const (
@@ -73,7 +74,7 @@ type GameData struct {
 	Owner uint64 `json:"owner"`
 
 	// The internal game state.
-	State interface{} `json:"state"`
+	State ConfigurableState `json:"state"`
 
 	// Mapping from database user id to player information.
 	ToPlayer map[uint64]*PlayerData `json:"players"`
@@ -149,20 +150,7 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 
 	var data GameData
 	var mode GameMode = GameModeFromString(gamedb.Style)
-
-	if mode == RushGame {
-		data.State = new(RushState)
-	} else if mode == SpadesGame {
-		data.State = new(SpadesState)
-	} else if mode == ThreeThirteenGame {
-		data.State = new(ThreeThirteenState)
-	} else if mode == EightJacksGame {
-		data.State = new(EightJacksState)
-	} else if mode == HeartsGame {
-		data.State = new(HeartsState)
-	} else {
-		panic("Valid but unsupported game mode: " + gamedb.Style)
-	}
+	data.State = mode.NewState()
 
 	if gamedb.State.Valid {
 		if err := json.Unmarshal([]byte(gamedb.State.String), &data); err != nil {
@@ -173,44 +161,14 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 	if data.GID != gamedb.ID {
 		// Assume this game hasn't yet been initialized. Create a new game and then
 		// persist it back to the database.
-		var config interface{}
+		var config figgy.Figgurable = mode.EmptyConfig()
 
 		if !gamedb.Config.Valid {
 			return errors.New("got unexpectedly empty game configuration")
 		}
 
-		if mode == RushGame {
-			var parsed RushConfig
-			if err := json.Unmarshal([]byte(gamedb.Config.String), &parsed); err != nil {
-				return err
-			}
-			config = &parsed
-		} else if mode == SpadesGame {
-			var parsed SpadesConfig
-			if err := json.Unmarshal([]byte(gamedb.Config.String), &parsed); err != nil {
-				return err
-			}
-			config = &parsed
-		} else if mode == ThreeThirteenGame {
-			var parsed ThreeThirteenConfig
-			if err := json.Unmarshal([]byte(gamedb.Config.String), &parsed); err != nil {
-				return err
-			}
-			config = &parsed
-		} else if mode == EightJacksGame {
-			var parsed EightJacksConfig
-			if err := json.Unmarshal([]byte(gamedb.Config.String), &parsed); err != nil {
-				return err
-			}
-			config = &parsed
-		} else if mode == HeartsGame {
-			var parsed HeartsConfig
-			if err := json.Unmarshal([]byte(gamedb.Config.String), &parsed); err != nil {
-				return err
-			}
-			config = &parsed
-		} else {
-			panic("Valid but unsupported game mode: " + gamedb.Style)
+		if err := figgy.Parse(config, []byte(gamedb.Config.String)); err != nil {
+			return err
 		}
 
 		// Add and initialize a new game object.
@@ -228,43 +186,8 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		c.ToGame[gamedb.ID] = &data
 	}
 
-	if mode == RushGame {
-		var state *RushState = c.ToGame[gamedb.ID].State.(*RushState)
-		if state != nil {
-			if err := state.ReInit(); err != nil {
-				return err
-			}
-		}
-	} else if mode == SpadesGame {
-		var state *SpadesState = c.ToGame[gamedb.ID].State.(*SpadesState)
-		if state != nil {
-			if err := state.ReInit(); err != nil {
-				return err
-			}
-		}
-	} else if mode == ThreeThirteenGame {
-		var state *ThreeThirteenState = c.ToGame[gamedb.ID].State.(*ThreeThirteenState)
-		if state != nil {
-			if err := state.ReInit(); err != nil {
-				return err
-			}
-		}
-	} else if mode == EightJacksGame {
-		var state *EightJacksState = c.ToGame[gamedb.ID].State.(*EightJacksState)
-		if state != nil {
-			if err := state.ReInit(); err != nil {
-				return err
-			}
-		}
-	} else if mode == HeartsGame {
-		var state *HeartsState = c.ToGame[gamedb.ID].State.(*HeartsState)
-		if state != nil {
-			if err := state.ReInit(); err != nil {
-				return err
-			}
-		}
-	} else {
-		panic("Valid but unsupported game mode: " + gamedb.Style)
+	if err := c.ToGame[gamedb.ID].State.ReInit(); err != nil {
+		return err
 	}
 
 	return nil
@@ -272,7 +195,7 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 
 // Add a new game to a controller. Note that, while configuration information
 // is populated, the game isn't yet started.
-func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config interface{}) error {
+func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config figgy.Figgurable) error {
 	// If the game exists, throw an error.
 	if c.GameExists(gid) {
 		return errors.New("game with specified id (" + strconv.FormatUint(gid, 10) + ") already exists in controller")
@@ -285,57 +208,12 @@ func (c *Controller) addGame(modeRepr string, gid uint64, owner uint64, config i
 		return errors.New("unknown game mode: " + modeRepr)
 	}
 
+	var err error
 	game := new(GameData)
 	game.lock = sync.Mutex{}
-
-	// Type assert to grab the configuration.
-	if mode == RushGame {
-		var asserted *RushConfig = config.(*RushConfig)
-		var state *RushState = new(RushState)
-
-		if err := state.Init(*asserted); err != nil {
-			return err
-		}
-
-		game.State = state
-	} else if mode == SpadesGame {
-		var asserted *SpadesConfig = config.(*SpadesConfig)
-		var state *SpadesState = new(SpadesState)
-
-		if err := state.Init(*asserted); err != nil {
-			return err
-		}
-
-		game.State = state
-	} else if mode == EightJacksGame {
-		var asserted *EightJacksConfig = config.(*EightJacksConfig)
-		var state *EightJacksState = new(EightJacksState)
-
-		if err := state.Init(*asserted); err != nil {
-			return err
-		}
-
-		game.State = state
-	} else if mode == HeartsGame {
-		var asserted *HeartsConfig = config.(*HeartsConfig)
-		var state *HeartsState = new(HeartsState)
-
-		if err := state.Init(*asserted); err != nil {
-			return err
-		}
-
-		game.State = state
-	} else if mode == ThreeThirteenGame {
-		var asserted *ThreeThirteenConfig = config.(*ThreeThirteenConfig)
-		var state *ThreeThirteenState = new(ThreeThirteenState)
-
-		if err := state.Init(*asserted); err != nil {
-			return err
-		}
-
-		game.State = state
-	} else {
-		panic("Valid but unsupported game mode: " + modeRepr)
+	game.State, err = mode.Init(config)
+	if err != nil {
+		return err
 	}
 
 	game.GID = gid
@@ -363,71 +241,13 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 	var encoded []byte
 	var err error
 	if game.State != nil {
-		var started = false
-		var finished = false
+		var started = game.State.IsStarted()
+		var finished = game.State.IsFinished()
 
-		if game.Mode == RushGame {
-			var state *RushState = game.State.(*RushState)
-			var config = state.Config
-
-			encoded, err = json.Marshal(config)
-			if err != nil {
-				c.lock.Unlock()
-				return err
-			}
-
-			started = state.Started
-			finished = state.Finished
-		} else if game.Mode == SpadesGame {
-			var state *SpadesState = game.State.(*SpadesState)
-			var config = state.Config
-
-			encoded, err = json.Marshal(config)
-			if err != nil {
-				c.lock.Unlock()
-				return err
-			}
-
-			started = state.Started
-			finished = state.Finished
-		} else if game.Mode == ThreeThirteenGame {
-			var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
-			var config = state.Config
-
-			encoded, err = json.Marshal(config)
-			if err != nil {
-				c.lock.Unlock()
-				return err
-			}
-
-			started = state.Started
-			finished = state.Finished
-		} else if game.Mode == EightJacksGame {
-			var state *EightJacksState = game.State.(*EightJacksState)
-			var config = state.Config
-
-			encoded, err = json.Marshal(config)
-			if err != nil {
-				c.lock.Unlock()
-				return err
-			}
-
-			started = state.Started
-			finished = state.Finished
-		} else if game.Mode == HeartsGame {
-			var state *HeartsState = game.State.(*HeartsState)
-			var config = state.Config
-
-			encoded, err = json.Marshal(config)
-			if err != nil {
-				c.lock.Unlock()
-				return err
-			}
-
-			started = state.Started
-			finished = state.Finished
-		} else {
-			panic("Unknown game mode: " + game.Mode.String())
+		encoded, err = json.Marshal(game.State.GetConfiguration())
+		if err != nil {
+			c.lock.Unlock()
+			return err
 		}
 
 		if gamedb.Lifecycle != "deleted" {
@@ -439,29 +259,7 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 				gamedb.Lifecycle = "finished"
 			}
 		} else {
-			if game.Mode == RushGame {
-				var state *RushState = game.State.(*RushState)
-				state.Started = false
-				state.Finished = false
-			} else if game.Mode == SpadesGame {
-				var state *SpadesState = game.State.(*SpadesState)
-				state.Started = false
-				state.Finished = false
-			} else if game.Mode == ThreeThirteenGame {
-				var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
-				state.Started = false
-				state.Finished = false
-			} else if game.Mode == EightJacksGame {
-				var state *EightJacksState = game.State.(*EightJacksState)
-				state.Started = false
-				state.Finished = false
-			} else if game.Mode == HeartsGame {
-				var state *HeartsState = game.State.(*HeartsState)
-				state.Started = false
-				state.Finished = false
-			} else {
-				panic("Unknown game mode: " + game.Mode.String())
-			}
+			game.State.ResetStatus()
 		}
 	}
 
@@ -508,7 +306,6 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 
 	s_encoded := string(encoded)
 	if gamedb.Config.String != s_encoded {
-		log.Println("Saving dirty config to database...")
 		if err := tx.Model(gamedb).Update("Config", s_encoded).Error; err != nil {
 			return err
 		}
@@ -517,7 +314,6 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 
 	s_encoded_state := string(encoded_state)
 	if gamedb.State.String != s_encoded_state {
-		log.Println("Saving dirty state to database...")
 		if err := tx.Model(gamedb).Update("State", s_encoded_state).Error; err != nil {
 			return err
 		}

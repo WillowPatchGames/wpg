@@ -212,10 +212,27 @@ func (ejs *EightJacksState) Init(cfg EightJacksConfig) error {
 	return nil
 }
 
+func (ejs *EightJacksState) GetConfiguration() figgy.Figgurable {
+	return ejs.Config
+}
+
 func (ejs *EightJacksState) ReInit() error {
 	// No-op for now. Nothing needs to be re-initialized after reloading
 	// from JSON serialization.
 	return nil
+}
+
+func (ejs *EightJacksState) IsStarted() bool {
+	return ejs.Started
+}
+
+func (ejs *EightJacksState) IsFinished() bool {
+	return ejs.Finished
+}
+
+func (ejs *EightJacksState) ResetStatus() {
+	ejs.Started = false
+	ejs.Finished = false
 }
 
 func (ejs *EightJacksState) Start() error {

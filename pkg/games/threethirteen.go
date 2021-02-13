@@ -156,10 +156,27 @@ func (tts *ThreeThirteenState) Init(cfg ThreeThirteenConfig) error {
 	return nil
 }
 
+func (tts *ThreeThirteenState) GetConfiguration() figgy.Figgurable {
+	return tts.Config
+}
+
 func (tts *ThreeThirteenState) ReInit() error {
 	// No-op for now. Nothing needs to be re-initialized after reloading
 	// from JSON serialization.
 	return nil
+}
+
+func (tts *ThreeThirteenState) IsStarted() bool {
+	return tts.Started
+}
+
+func (tts *ThreeThirteenState) IsFinished() bool {
+	return tts.Finished
+}
+
+func (tts *ThreeThirteenState) ResetStatus() {
+	tts.Started = false
+	tts.Finished = false
 }
 
 func (tts *ThreeThirteenState) Start(players int) error {

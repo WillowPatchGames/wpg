@@ -1,8 +1,11 @@
 package games
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 )
 
 // GameMode describes which mode (type? style?) a given game is. This is a
@@ -43,6 +46,70 @@ func (gm GameMode) IsValid() bool {
 	return gm == RushGame || gm == SpadesGame || gm == ThreeThirteenGame || gm == EightJacksGame || gm == HeartsGame
 }
 
+func (gm GameMode) NewState() ConfigurableState {
+	switch gm {
+	case RushGame:
+		return &RushState{}
+	case SpadesGame:
+		return &SpadesState{}
+	case ThreeThirteenGame:
+		return &ThreeThirteenState{}
+	case EightJacksGame:
+		return &EightJacksState{}
+	case HeartsGame:
+		return &HeartsState{}
+	default:
+		panic("Unable to create an empty state for this game mode")
+		return nil
+	}
+}
+
+func (gm GameMode) Init(config figgy.Figgurable) (ConfigurableState, error) {
+	switch gm {
+	case RushGame:
+		var asserted *RushConfig = config.(*RushConfig)
+		var state = &RushState{}
+		return state, state.Init(*asserted)
+	case SpadesGame:
+		var asserted *SpadesConfig = config.(*SpadesConfig)
+		var state = &SpadesState{}
+		return state, state.Init(*asserted)
+	case ThreeThirteenGame:
+		var asserted *ThreeThirteenConfig = config.(*ThreeThirteenConfig)
+		var state = &ThreeThirteenState{}
+		return state, state.Init(*asserted)
+	case EightJacksGame:
+		var asserted *EightJacksConfig = config.(*EightJacksConfig)
+		var state = &EightJacksState{}
+		return state, state.Init(*asserted)
+	case HeartsGame:
+		var asserted *HeartsConfig = config.(*HeartsConfig)
+		var state = &HeartsState{}
+		return state, state.Init(*asserted)
+	default:
+		panic("Unable to create an initialized state for this game mode")
+		return nil, errors.New("unable to create an initialized state for this game mode")
+	}
+}
+
+func (gm GameMode) EmptyConfig() figgy.Figgurable {
+	switch gm {
+	case RushGame:
+		return &RushConfig{}
+	case SpadesGame:
+		return &SpadesConfig{}
+	case ThreeThirteenGame:
+		return &ThreeThirteenConfig{}
+	case EightJacksGame:
+		return &EightJacksConfig{}
+	case HeartsGame:
+		return &HeartsConfig{}
+	default:
+		panic("Unable to create an empty config for this game mode")
+		return nil
+	}
+}
+
 // GameConfigError is a type of error specific for errors in the
 // configuration; it documents which parameter was bad, what its
 // bad value was, and what an allowed range of values were.
@@ -58,4 +125,12 @@ func (gce GameConfigError) Error() string {
 	}
 
 	return fmt.Sprintf("Invalid value for parameter: %s has value %s", gce.Parameter, gce.Value)
+}
+
+type ConfigurableState interface {
+	GetConfiguration() figgy.Figgurable
+	ReInit() error
+	IsStarted() bool
+	IsFinished() bool
+	ResetStatus()
 }

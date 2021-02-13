@@ -104,6 +104,32 @@ func (rs *RushState) Init(cfg RushConfig) error {
 	return nil
 }
 
+func (rs *RushState) GetConfiguration() figgy.Figgurable {
+	return rs.Config
+}
+
+func (rs *RushState) ReInit() error {
+	for _, player := range rs.Players {
+		player.NewTiles = make([]LetterTile, 0)
+		player.Board.ReInit()
+	}
+
+	return nil
+}
+
+func (rs *RushState) IsStarted() bool {
+	return rs.Started
+}
+
+func (rs *RushState) IsFinished() bool {
+	return rs.Finished
+}
+
+func (rs *RushState) ResetStatus() {
+	rs.Started = false
+	rs.Finished = false
+}
+
 func (rs *RushState) Start(players int) error {
 	var err error
 
@@ -146,15 +172,6 @@ func (rs *RushState) Start(players int) error {
 	// to load their hands).
 	rs.DrawID = 1
 	rs.Started = true
-
-	return nil
-}
-
-func (rs *RushState) ReInit() error {
-	for _, player := range rs.Players {
-		player.NewTiles = make([]LetterTile, 0)
-		player.Board.ReInit()
-	}
 
 	return nil
 }

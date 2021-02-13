@@ -159,10 +159,27 @@ func (hs *HeartsState) Init(cfg HeartsConfig) error {
 	return nil
 }
 
+func (hs *HeartsState) GetConfiguration() figgy.Figgurable {
+	return hs.Config
+}
+
 func (hs *HeartsState) ReInit() error {
 	// No-op for now. Nothing needs to be re-initialized after reloading
 	// from JSON serialization.
 	return nil
+}
+
+func (hs *HeartsState) IsStarted() bool {
+	return hs.Started
+}
+
+func (hs *HeartsState) IsFinished() bool {
+	return hs.Finished
+}
+
+func (hs *HeartsState) ResetStatus() {
+	hs.Started = false
+	hs.Finished = false
 }
 
 func (hs *HeartsState) Start(players int) error {
