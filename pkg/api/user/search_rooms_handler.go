@@ -31,6 +31,7 @@ type SearchRoomsHandlerResponse struct {
 	Lifecycle string    `json:"lifecycle"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type SearchRoomsHandler struct {
@@ -94,7 +95,7 @@ func (handle SearchRoomsHandler) verifyRequest() error {
 		return err
 	}
 
-	if handle.req.Lifecycle != "" && handle.req.Lifecycle != "pending" && handle.req.Lifecycle != "playing" && handle.req.Lifecycle != "finished" && handle.req.Lifecycle != "deleted" {
+	if handle.req.Lifecycle != "" && handle.req.Lifecycle != "playing" && handle.req.Lifecycle != "finished" && handle.req.Lifecycle != "deleted" && handle.req.Lifecycle != "expired" {
 		return api_errors.ErrBadValue
 	}
 
@@ -122,10 +123,7 @@ func (handle *SearchRoomsHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		query := tx.Model(&database.RoomMember{}).Where("room_members.user_id = ? AND room_members.admitted = ?", handle.user.ID, true)
 		query = query.Joins("LEFT JOIN rooms ON room_members.room_id = rooms.id")
-		// XXX -- FIXME -- Remove hack about playing lifecycle once a proper
-		// lifecycle has been introduced for rooms. Also update user's search
-		// page.
-		if handle.req.Lifecycle != "" && handle.req.Lifecycle != "playing" {
+		if handle.req.Lifecycle != "" {
 			query = query.Where("rooms.lifecycle = ?", handle.req.Lifecycle)
 		}
 		query = query.Order("rooms.id DESC")
@@ -142,14 +140,18 @@ func (handle *SearchRoomsHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 				return err
 			}
 
+			if err := room.HandleExpiration(tx); err != nil {
+				return err
+			}
+
 			handle.resp = append(handle.resp, SearchRoomsHandlerResponse{
-				OwnerID: room.OwnerID,
-				RoomID:  room.ID,
-				Style:   room.Style,
-				// Lifecycle: room.Lifecycle,
-				Lifecycle: "playing",
+				OwnerID:   room.OwnerID,
+				RoomID:    room.ID,
+				Style:     room.Style,
+				Lifecycle: room.Lifecycle,
 				CreatedAt: room.CreatedAt,
 				UpdatedAt: room.UpdatedAt,
+				ExpiresAt: room.ExpiresAt,
 			})
 		}
 

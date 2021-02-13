@@ -239,7 +239,10 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 
 	var game *GameData = c.ToGame[gamedb.ID]
 	var encoded []byte
+	var encoded_state []byte
 	var err error
+	var was_done = !(gamedb.Lifecycle == "pending" || gamedb.Lifecycle == "playing")
+
 	if game.State != nil {
 		var started = game.State.IsStarted()
 		var finished = game.State.IsFinished()
@@ -250,7 +253,7 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 			return err
 		}
 
-		if gamedb.Lifecycle != "deleted" {
+		if !was_done {
 			if !started {
 				gamedb.Lifecycle = "pending"
 			} else if started && !finished {
@@ -258,12 +261,16 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 			} else {
 				gamedb.Lifecycle = "finished"
 			}
-		} else {
+
+			if err := tx.Model(gamedb).Update("lifecycle", gamedb.Lifecycle).Error; err != nil {
+				return err
+			}
+		} else if gamedb.Lifecycle == "deleted" {
 			game.State.ResetStatus()
 		}
 	}
 
-	encoded_state, err := json.Marshal(game)
+	encoded_state, err = json.Marshal(game)
 	if err != nil {
 		c.lock.Unlock()
 		return err
@@ -306,17 +313,33 @@ func (c *Controller) PersistGame(gamedb *database.Game, tx *gorm.DB) error {
 
 	s_encoded := string(encoded)
 	if gamedb.Config.String != s_encoded {
-		if err := tx.Model(gamedb).Update("Config", s_encoded).Error; err != nil {
-			return err
+		if was_done {
+			if err := tx.Model(gamedb).UpdateColumn("config", s_encoded).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Model(gamedb).Update("config", s_encoded).Error; err != nil {
+				return err
+			}
 		}
+
 		gamedb.Config.String = s_encoded
 	}
 
 	s_encoded_state := string(encoded_state)
 	if gamedb.State.String != s_encoded_state {
-		if err := tx.Model(gamedb).Update("State", s_encoded_state).Error; err != nil {
-			return err
+		// Here, if the state has changed, it could just be that someone is peeking
+		// at an old, expired game. Use the correct update call.
+		if was_done {
+			if err := tx.Model(gamedb).UpdateColumn("state", s_encoded_state).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Model(gamedb).Update("state", s_encoded_state).Error; err != nil {
+				return err
+			}
 		}
+
 		gamedb.State.String = s_encoded_state
 	}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -28,13 +29,16 @@ type createHandlerData struct {
 }
 
 type createHandlerResponse struct {
-	GameID    uint64 `json:"id"`
-	Owner     uint64 `json:"owner"`
-	Room      uint64 `json:"room,omitempty"`
-	Style     string `json:"style"`
-	Open      bool   `json:"open"`
-	Code      string `json:"code"`
-	Lifecycle string `json:"lifecycle"`
+	GameID    uint64    `json:"id"`
+	Owner     uint64    `json:"owner"`
+	Room      uint64    `json:"room,omitempty"`
+	Style     string    `json:"style"`
+	Open      bool      `json:"open"`
+	Code      string    `json:"code"`
+	Lifecycle string    `json:"lifecycle"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type CreateHandler struct {
@@ -142,6 +146,10 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
+		if err := game.HandleExpiration(tx); err != nil {
+			return err
+		}
+
 		if err = business.AccountToPlan(tx, user_plan_id, uint64(game.RoomID.Int64), game.ID); err != nil {
 			return err
 		}
@@ -201,6 +209,10 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	handle.resp.Open = game.Open
 	handle.resp.Code = game.JoinCode.String
 	handle.resp.Lifecycle = game.Lifecycle
+
+	handle.resp.CreatedAt = game.CreatedAt
+	handle.resp.UpdatedAt = game.UpdatedAt
+	handle.resp.ExpiresAt = game.ExpiresAt
 
 	utils.SendResponse(w, r, &handle)
 	return nil

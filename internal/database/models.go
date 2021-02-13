@@ -62,7 +62,8 @@ type Room struct {
 	Style string
 	Open  bool
 
-	JoinCode sql.NullString `gorm:"unique"`
+	JoinCode  sql.NullString `gorm:"unique"`
+	Lifecycle string
 
 	Config sql.NullString
 
@@ -71,6 +72,7 @@ type Room struct {
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ExpiresAt time.Time
 }
 
 type RoomMember struct {
@@ -106,6 +108,7 @@ type Game struct {
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ExpiresAt time.Time
 }
 
 type GamePlayer struct {

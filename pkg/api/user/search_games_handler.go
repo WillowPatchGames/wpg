@@ -33,6 +33,7 @@ type SearchGamesHandlerResponse struct {
 	Lifecycle string    `json:"lifecycle"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type SearchGamesHandler struct {
@@ -96,7 +97,7 @@ func (handle SearchGamesHandler) verifyRequest() error {
 		return err
 	}
 
-	if handle.req.Lifecycle != "" && handle.req.Lifecycle != "pending" && handle.req.Lifecycle != "playing" && handle.req.Lifecycle != "finished" && handle.req.Lifecycle != "deleted" {
+	if handle.req.Lifecycle != "" && handle.req.Lifecycle != "pending" && handle.req.Lifecycle != "playing" && handle.req.Lifecycle != "finished" && handle.req.Lifecycle != "deleted" && handle.req.Lifecycle != "expired" {
 		return api_errors.ErrBadValue
 	}
 
@@ -147,6 +148,10 @@ func (handle *SearchGamesHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 				return err
 			}
 
+			if err := game.HandleExpiration(tx); err != nil {
+				return err
+			}
+
 			handle.resp = append(handle.resp, SearchGamesHandlerResponse{
 				OwnerID:   game.OwnerID,
 				RoomID:    uint64(game.RoomID.Int64),
@@ -155,6 +160,7 @@ func (handle *SearchGamesHandler) ServeErrableHTTP(w http.ResponseWriter, r *htt
 				Lifecycle: game.Lifecycle,
 				CreatedAt: game.CreatedAt,
 				UpdatedAt: game.UpdatedAt,
+				ExpiresAt: game.ExpiresAt,
 			})
 		}
 

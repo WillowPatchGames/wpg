@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -31,19 +32,23 @@ type membersInfo struct {
 }
 
 type queryHandlerResponse struct {
-	RoomID uint64 `json:"id"`
-	Owner  uint64 `json:"owner"`
-	Style  string `json:"style,omitempty"`
-	Open   bool   `json:"open,omitempty"`
-	Code   string `json:"code,omitempty"`
-	Games  struct {
+	RoomID    uint64 `json:"id"`
+	Owner     uint64 `json:"owner"`
+	Style     string `json:"style,omitempty"`
+	Open      bool   `json:"open,omitempty"`
+	Lifecycle string `json:"lifecycle,omitempty"`
+	Code      string `json:"code,omitempty"`
+	Games     struct {
 		Pending  []uint64 `json:"pending,omitempty"`
 		Playing  []uint64 `json:"playing,omitempty"`
 		Finished []uint64 `json:"finished,omitempty"`
 	} `json:"games"`
-	Config   *RoomConfig   `json:"config"`
-	Admitted bool          `json:"admitted"`
-	Members  []membersInfo `json:"members,omitempty"`
+	Config    *RoomConfig   `json:"config"`
+	Admitted  bool          `json:"admitted"`
+	Members   []membersInfo `json:"members,omitempty"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+	ExpiresAt time.Time     `json:"expires_at"`
 }
 
 type QueryHandler struct {
@@ -105,6 +110,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				return err
 			}
 
+			if err := room.HandleExpiration(tx); err != nil {
+				return err
+			}
+
 			// Looking up a room by integer identifier isn't sufficient to join any
 			// room. Return an error in this case.
 			if err := tx.First(&room_member, "user_id = ? AND room_id = ?", handle.user.ID, room.ID).Error; err != nil {
@@ -112,6 +121,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			}
 		} else if strings.HasPrefix(handle.req.JoinCode, "rc-") {
 			if err := tx.First(&room, "join_code = ?", handle.req.JoinCode).Error; err != nil {
+				return err
+			}
+
+			if err := room.HandleExpiration(tx); err != nil {
 				return err
 			}
 
@@ -147,6 +160,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			}
 
 			if err := tx.First(&room, "id = ?", room_member.RoomID).Error; err != nil {
+				return err
+			}
+
+			if err := room.HandleExpiration(tx); err != nil {
 				return err
 			}
 		}
@@ -199,6 +216,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	handle.resp.Admitted = room_member.Admitted && !room_member.Banned
 
 	if room_member.Admitted && !room_member.Banned {
+		handle.resp.Lifecycle = room.Lifecycle
 		handle.resp.Open = room.Open
 		handle.resp.Style = room.Style
 		handle.resp.Code = room.JoinCode.String
@@ -212,6 +230,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 		handle.resp.Config = &cfg
 	}
+
+	handle.resp.CreatedAt = room.CreatedAt
+	handle.resp.UpdatedAt = room.UpdatedAt
+	handle.resp.ExpiresAt = room.ExpiresAt
 
 	utils.SendResponse(w, r, handle)
 	return nil

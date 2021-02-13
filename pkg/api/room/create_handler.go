@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -24,11 +25,15 @@ type createHandlerData struct {
 }
 
 type createHandlerResponse struct {
-	RoomID uint64 `json:"id"`
-	Owner  uint64 `json:"owner"`
-	Style  string `json:"style"`
-	Open   bool   `json:"open"`
-	Code   string `json:"code"`
+	RoomID    uint64    `json:"id"`
+	Owner     uint64    `json:"owner"`
+	Style     string    `json:"style"`
+	Lifecycle string    `json:"lifecycle"`
+	Open      bool      `json:"open"`
+	Code      string    `json:"code"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type CreateHandler struct {
@@ -88,6 +93,7 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			room.JoinCode.Valid = true
 			room.JoinCode.String = "rc-" + utils.JoinCode()
 		}
+		room.Lifecycle = "playing"
 
 		if handle.req.Config != nil {
 			config, err := json.Marshal(handle.req.Config)
@@ -100,6 +106,10 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		}
 
 		if err = tx.Create(&room).Error; err != nil {
+			return err
+		}
+
+		if err := room.HandleExpiration(tx); err != nil {
 			return err
 		}
 
@@ -125,8 +135,13 @@ func (handle CreateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 	handle.resp.RoomID = room.ID
 	handle.resp.Owner = room.OwnerID
 	handle.resp.Style = room.Style
+	handle.resp.Lifecycle = room.Lifecycle
 	handle.resp.Open = room.Open
 	handle.resp.Code = room.JoinCode.String
+
+	handle.resp.CreatedAt = room.CreatedAt
+	handle.resp.UpdatedAt = room.UpdatedAt
+	handle.resp.ExpiresAt = room.ExpiresAt
 
 	utils.SendResponse(w, r, &handle)
 	return nil

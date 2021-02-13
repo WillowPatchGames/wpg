@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -32,6 +33,9 @@ type queryHandlerResponse struct {
 	Lifecycle string      `json:"lifecycle"`
 	Config    interface{} `json:"config"`
 	Admitted  bool        `json:"admitted"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	ExpiresAt time.Time   `json:"expires_at"`
 }
 
 type QueryHandler struct {
@@ -94,6 +98,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 				return err
 			}
 
+			if err := game.HandleExpiration(tx); err != nil {
+				return err
+			}
+
 			// Looking up a game by integer identifier isn't sufficient to join any
 			// game. Return an error in this case.
 			if err := tx.First(&game_player, "user_id = ? AND game_id = ?", handle.user.ID, game.ID).Error; err != nil {
@@ -101,6 +109,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			}
 		} else if strings.HasPrefix(handle.req.JoinCode, "gc-") {
 			if err := tx.First(&game, "join_code = ?", handle.req.JoinCode).Error; err != nil {
+				return err
+			}
+
+			if err := game.HandleExpiration(tx); err != nil {
 				return err
 			}
 
@@ -139,6 +151,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			if err := tx.First(&game, "id = ?", game_player.GameID).Error; err != nil {
 				return err
 			}
+
+			if err := game.HandleExpiration(tx); err != nil {
+				return err
+			}
 		} else {
 			panic("Error case")
 		}
@@ -168,6 +184,10 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 		handle.resp.Lifecycle = game.Lifecycle
 		handle.resp.Config = gameConfig
 	}
+
+	handle.resp.CreatedAt = game.CreatedAt
+	handle.resp.UpdatedAt = game.UpdatedAt
+	handle.resp.ExpiresAt = game.ExpiresAt
 
 	utils.SendResponse(w, r, handle)
 	return nil

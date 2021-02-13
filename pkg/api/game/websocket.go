@@ -457,11 +457,7 @@ func (hub *Hub) deleteGame(gameID GameID) {
 			return err
 		}
 
-		if err := hub.controller.PersistGame(&gamedb, tx); err != nil {
-			return err
-		}
-
-		return tx.Save(&gamedb).Error
+		return hub.controller.PersistGame(&gamedb, tx)
 	}); err != nil {
 		log.Println("Unable to persist game (", gameID, "):", err)
 		return
