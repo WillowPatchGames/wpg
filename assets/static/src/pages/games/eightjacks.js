@@ -651,6 +651,8 @@ class EightJacksGamePage extends React.Component {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
         "started": data => {
+          this.props.setNotification("Starting!");
+          setTimeout(() => this.props.setNotification(null), 2000);
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
 
@@ -1050,7 +1052,7 @@ class EightJacksAfterPartyPage extends React.Component {
         <div>
           { winner_info }
           {
-            this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+            this.props.room ? <><Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button><br /><br /></> : <></>
           }
           { scoreboard_data }
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>

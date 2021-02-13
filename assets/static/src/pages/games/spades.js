@@ -507,6 +507,8 @@ class SpadesGamePage extends React.Component {
       this.state.interface = this.game.interface;
       this.unmount = addEv(this.game, {
         "started": data => {
+          this.props.setNotification("Starting!");
+          setTimeout(() => this.props.setNotification(null), 2000);
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
 
@@ -1187,7 +1189,7 @@ class SpadesAfterPartyPage extends React.Component {
         <div>
           { winner_info }
           {
-            this.props.room ? <Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button> : <></>
+            this.props.room ? <><Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button><br /><br /></> : <></>
           }
           { current_round }
           { scoreboard_data }
