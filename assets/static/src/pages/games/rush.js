@@ -177,6 +177,7 @@ class RushGamePage extends React.Component {
         "started": data => {
           this.props.setNotification("Starting!");
           setTimeout(() => this.props.setNotification(null), 2000);
+          window.scrollTo(0, 0);
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
 
@@ -186,6 +187,7 @@ class RushGamePage extends React.Component {
         },
         "countdown": data => {
           this.props.setNotification(data.value + "...");
+          window.scrollTo(0, 0);
           data.message = "Game starting in " + data.value;
           this.setState(state => Object.assign({}, state, { countdown: data.value }));
           setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
