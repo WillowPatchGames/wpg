@@ -73,6 +73,11 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 			}
 
 			if plan.MaxOpenGames != database.PlanUnlimitedAllowed {
+				if err := expireOpenGames(tx, user, room); err != nil {
+					log.Println("Error expiring any active games:", err)
+					continue
+				}
+
 				var openGames int64
 				if err := tx.Model(&database.UserPlanAccounting{}).Where("user_plan_accountings.user_plan_id = ? AND user_plan_accountings.room_id = NULL AND user_plan_accountings.game_id != NULL", user.ID).Joins("LEFT JOIN games ON user_plan_accountings.game_id = games.id").Where("games.lifecycle = ?", "pending").Count(&openGames).Error; err != nil {
 					log.Println("Error loading open game count:", err)
@@ -113,6 +118,11 @@ func CanCreateGame(tx *gorm.DB, user database.User, room *database.Room, style s
 			}
 
 			if plan.MaxOpenGamesInRoom != database.PlanUnlimitedAllowed {
+				if err := expireOpenGames(tx, user, room); err != nil {
+					log.Println("Error expiring any active games:", err)
+					continue
+				}
+
 				var openGamesInRoom int64
 				if err := tx.Model(&database.UserPlanAccounting{}).Where("user_plan_accountings.user_plan_id = ? AND user_plan_accountings.room_id = ? AND user_plan_accountings.game_id != NULL", user.ID, room.ID).Joins("LEFT JOIN games ON user_plan_accountings.game_id = games.id").Where("games.lifecycle = ?", "pending").Count(&openGamesInRoom).Error; err != nil {
 					log.Println("Error loading game count in room:", err)
@@ -166,8 +176,13 @@ func CanCreateRoom(tx *gorm.DB, user database.User) (uint64, error) {
 		}
 
 		if plan.MaxOpenRooms != database.PlanUnlimitedAllowed {
+			if err := expireOpenRooms(tx, user); err != nil {
+				log.Println("Error expiring open rooms before counting", err)
+				continue
+			}
+
 			var openRooms int64
-			if err := tx.Model(&database.Room{}).Where("owner_id = ? AND lifecycle = ?", user.ID, "pending").Count(&openRooms).Error; err != nil {
+			if err := tx.Model(&database.Room{}).Where("owner_id = ? AND lifecycle = ?", user.ID, "playing").Count(&openRooms).Error; err != nil {
 				log.Println("Error loading open rooms!", err)
 				continue
 			}

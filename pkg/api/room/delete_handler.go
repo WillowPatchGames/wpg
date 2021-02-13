@@ -1,6 +1,7 @@
 package room
 
 import (
+	"errors"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -59,6 +60,14 @@ func (handle *DeleteHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		if err := tx.First(&room, handle.req.RoomID).Error; err != nil {
 			return err
+		}
+
+		if err := room.HandleExpiration(tx); err != nil {
+			return err
+		}
+
+		if room.Lifecycle != "playing" {
+			return errors.New("unable to delete room that isn't open")
 		}
 
 		if room.OwnerID != handle.user.ID {

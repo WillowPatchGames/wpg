@@ -81,6 +81,14 @@ func (handle *AdmitHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
+		if err := room.HandleExpiration(tx); err != nil {
+			return err
+		}
+
+		if room.Lifecycle != "playing" {
+			return errors.New("can't modify room that isn't open")
+		}
+
 		if handle.user.ID != room.OwnerID {
 			return hwaterr.WrapError(api_errors.ErrAccessDenied, http.StatusForbidden)
 		}

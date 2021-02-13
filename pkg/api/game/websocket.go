@@ -40,7 +40,7 @@ const (
 
 	// readRateLimitPerSecond is the maximum number of requests from a client
 	// in a given 1-second window.
-	readRateLimitPerSecond = 15
+	readRateLimitPerSecond = 30
 
 	// SendBufferSize must be limited because players could send messages which
 	// result in large response messages, starving resources from other players.

@@ -83,8 +83,6 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("ServeHTTP - ", handle.Hub)
-
 	// Create Client, Player
 	client := new(Client)
 	client.hub = handle.Hub
