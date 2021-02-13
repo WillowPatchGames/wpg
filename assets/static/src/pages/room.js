@@ -583,7 +583,7 @@ class RoomArchiveTab extends React.Component {
             </l.ListItemText>
             <l.ListItemMeta>
               {
-                game.lifecycle !== "deleted"
+                game.lifecycle !== "deleted" && game.lifecycle !== "expired"
                 ? <Button theme="secondary"
                     label={ game.lifecycle !== "finished" ? "Resume" : "Afterparty" }
                     onClick={ () => this.handleJoinGame(game.game, game.room) }
@@ -591,7 +591,7 @@ class RoomArchiveTab extends React.Component {
                 : null
               }
               {
-                game.lifecycle !== "deleted" && game.lifecycle !== "finished"
+                game.lifecycle !== "deleted" && game.lifecycle !== "finished" && game.lifecycle !== "expired"
                 ? <Button theme="secondary" label="Delete"
                     onClick={ () => this.handleDeleteGame(game.game) }
                   />
@@ -662,6 +662,10 @@ class RoomArchiveTab extends React.Component {
                         {
                           "label": "Deleted",
                           "value": "deleted",
+                        },
+                        {
+                          "label": "Expired",
+                          "value": "expired",
                         },
                       ]}
                     />

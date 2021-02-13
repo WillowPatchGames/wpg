@@ -605,7 +605,7 @@ class UserArchiveTab extends React.Component {
             </l.ListItemText>
             <l.ListItemMeta className="double-button">
               {
-                game.lifecycle !== "deleted"
+                game.lifecycle !== "deleted" && game.lifecycle !== "expired"
                 ? <Button theme="secondary"
                     label={ game.lifecycle !== "finished" ? "Resume" : "Afterparty" }
                     onClick={ () => this.handleJoinGame(game.game, game.room) }
@@ -613,7 +613,7 @@ class UserArchiveTab extends React.Component {
                 : null
               }
               {
-                game.lifecycle !== "deleted" && game.lifecycle !== "finished"
+                game.lifecycle !== "deleted" && game.lifecycle !== "finished" && game.lifecycle !== "expired"
                 ? <Button theme="secondary" label="Delete"
                     onClick={ () => this.handleDeleteGame(game.game) }
                   />
@@ -668,7 +668,7 @@ class UserArchiveTab extends React.Component {
               {
                 room.lifecycle !== "deleted"
                 ? <Button theme="secondary"
-                    label={ room.lifecycle !== "finished" ? "Resume" : "Afterparty" }
+                    label="Enter"
                     onClick={ () => this.handleJoinRoom(room.room) }
                   />
                 : null
@@ -752,6 +752,10 @@ class UserArchiveTab extends React.Component {
                         "label": "Deleted",
                         "value": "deleted",
                       },
+                      {
+                        "label": "Expired",
+                        "value": "expired",
+                      },
                     ]}
                   />
                 </g.GridCell>
@@ -769,12 +773,12 @@ class UserArchiveTab extends React.Component {
                         "value": "playing",
                       },
                       {
-                        "label": "Finished",
-                        "value": "finished",
-                      },
-                      {
                         "label": "Deleted",
                         "value": "deleted",
+                      },
+                      {
+                        "label": "Expired",
+                        "value": "expired",
                       },
                     ]}
                   />
