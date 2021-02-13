@@ -738,8 +738,15 @@ class CreateGameForm extends React.Component {
 
   async componentDidMount() {
     let GameConfig = await GameModel.LoadConfig();
-    console.log(GameConfig);
-    this.setState(state => Object.assign(state, { GameConfig }));
+
+    var have_game = this.props.game !== undefined && this.props.game !== null && this.props.game.config !== undefined && this.props.game.config !== null;
+    var game = have_game ? this.props.game : undefined;
+
+    this.setState(state => Object.assign(state, { GameConfig }), () => {
+      if (have_game && game.style !== null) {
+        this.setState(state => Object.assign(state, this.createGameConfig(game.style)));
+      }
+    });
   }
 
   createGameConfig(new_style) {

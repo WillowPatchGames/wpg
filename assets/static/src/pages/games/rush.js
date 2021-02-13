@@ -5,16 +5,20 @@ import React from 'react';
 import '@rmwc/avatar/styles';
 import '@rmwc/button/styles';
 import '@rmwc/card/styles';
+import '@rmwc/grid/styles';
+import '@rmwc/list/styles';
 
 import { Avatar, AvatarCount, AvatarGroup } from '@rmwc/avatar';
 import { Button } from '@rmwc/button';
 import * as c from '@rmwc/card';
+import * as g from '@rmwc/grid';
+import * as l from '@rmwc/list';
 
 // Application imports
 import { RushGame, RushData } from '../../games/rush.js';
 import { RushGameComponent } from './rush-component.js';
 
-import { loadGame, addEv, notify, killable } from '../games.js';
+import { loadGame, addEv, notify, killable, CreateGameForm } from '../games.js';
 import { UserCache, GameCache } from '../../utils/cache.js';
 import { gravatarify } from '../../utils/gravatar.js';
 
@@ -331,6 +335,22 @@ class RushAfterPartyPage extends React.Component {
     this.props.setPage("room", true);
   }
   render() {
+    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
+      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+        <div className="text-center">
+          <h3>Game Configuration</h3>
+          <l.List>
+            <l.CollapsibleList handle={
+                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+              }
+            >
+              <CreateGameForm {...this.props} editable={ false } />
+            </l.CollapsibleList>
+          </l.List>
+        </div>
+      </c.Card>
+    </div>;
+
     return (
       <>
         <RushGameSynopsis {...this.props} />
@@ -360,6 +380,12 @@ class RushAfterPartyPage extends React.Component {
             : <p>{ this.state.message }</p>
             }
           </ol>
+          <g.Grid fixedColumnWidth={ true }>
+            <g.GridCell align="left" span={3} tablet={8} />
+            <g.GridCell align="right" span={6} tablet={8}>
+              { configuration }
+            </g.GridCell>
+          </g.Grid>
         </div>
       </>
     );
