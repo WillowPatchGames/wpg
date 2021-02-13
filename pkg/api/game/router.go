@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/parsel"
 )
 
@@ -29,11 +30,15 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(inner)
 	}
 
+	var configHandler = new(ConfigHandler)
+	configHandler.Serialize()
+
 	router.Handle("/api/v1/game", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/game/find", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/game/{GameID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/game/{GameID:[0-9]+}", parsel.Wrap(deleteFactory, config)).Methods("DELETE")
 
+	router.Handle("/api/v1/games/config", hwaterr.Wrap(configHandler)).Methods("GET")
 	router.Handle("/api/v1/games", parsel.Wrap(createFactory, config)).Methods("POST")
 
 	gamehub := NewHub()
