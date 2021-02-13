@@ -1019,6 +1019,33 @@ class GameModel {
     return ret;
   }
 
+  static async LoadConfig() {
+    var base_uri = window.location.protocol + '//' + window.location.host + '/api/v1';
+    var uri = base_uri + '/games/config';
+
+    const response = await fetch(uri, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      redirect: 'follow',
+    });
+
+    let result = await response.json();
+    for (var game in result) {
+      for (var option in result[game].options) {
+        let type = result[game].options[option].values.type;
+        if (type === 'int' || type === 'enum') {
+          result[game].options[option].values.value = (x) => +x;
+        } else {
+          result[game].options[option].values.value = (x) => x;
+        }
+      }
+    }
+
+    return result;
+  }
+
   async create() {
     var request = {
       'owner': this.user.id,

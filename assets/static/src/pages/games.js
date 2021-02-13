@@ -42,7 +42,6 @@ import { HeartsGame } from '../games/hearts.js';
 import { HeartsGamePage, HeartsAfterPartyPage } from './games/hearts.js';
 import { EightJacksGame } from '../games/eightjacks.js';
 import { EightJacksGamePage, EightJacksAfterPartyPage } from './games/eightjacks.js';
-import { GameConfig } from './games/config.js';
 import { UserCache } from '../utils/cache.js';
 
 function loadGame(game) {
@@ -733,13 +732,18 @@ class CreateGameForm extends React.Component {
       open: have_game ? game.open : true,
       spectators: have_game && game.spectator !== undefined ? game.spectator : true,
       initialized: false,
-    }
+      GameConfig: {},
+    };
+  }
 
-    Object.assign(this.state, this.createGameConfig());
+  async componentDidMount() {
+    let GameConfig = await GameModel.LoadConfig();
+    console.log(GameConfig);
+    this.setState(state => Object.assign(state, { GameConfig }));
   }
 
   createGameConfig(new_style) {
-    var have_game = this.props.game !== undefined && this.props.game !== null && this.props.game.config !== undefined && this.props.game.config !== null;
+    var have_game = this.props.game !== undefined && this.props.game !== null && this.props.game.config !== undefined && this.props.game.config !== null && this.props.game.style === new_style;
     var game = have_game ? this.props.game : undefined;
     var config = have_game ? game.config : undefined;
     var have_arg = new_style !== undefined && new_style !== null;
@@ -749,20 +753,25 @@ class CreateGameForm extends React.Component {
       return null;
     }
 
+    if (this.state?.initialize && this.state?.mode === new_style) {
+      return null;
+    }
+
     var additional_state = {
       initialized: true,
     };
+
     var style = have_arg
                 ? new_style
                 : (
                   have_state ? this.state.mode : game.style
                 );
-    if (style && GameConfig[style]) {
-      for (let option of GameConfig[style].options) {
+    if (style && this.state.GameConfig[style]) {
+      for (let option of this.state.GameConfig[style].options) {
         additional_state[option.name] = option.values.value(have_game ? config[option.name] : option.values.default);
       }
     } else {
-      console.log("Unknown game style: " + style, game, this.state, this.props, GameConfig);
+      console.log("Unknown game style: " + style, game, this.state, this.props, this.state.GameConfig);
     }
 
     if (additional_state !== null) {
@@ -774,7 +783,7 @@ class CreateGameForm extends React.Component {
 
   toObject() {
     var obj = {};
-    for (let option of GameConfig[this.state.mode].options) {
+    for (let option of this.state.GameConfig[this.state.mode].options) {
       obj[option.name] = option.values.value(this.state[option.name]);
     }
     return obj;
@@ -931,7 +940,10 @@ class CreateGameForm extends React.Component {
 
   renderRush() {
     var pl = (num, name) => (""+num+" "+name+(+num === 1 ? "" : "s"));
-    var cfg = GameConfig['rush'];
+    var cfg = this.state.GameConfig['rush'];
+    if (!cfg) {
+      return null;
+    }
 
     return (
       <>
@@ -968,7 +980,10 @@ class CreateGameForm extends React.Component {
   }
 
   renderSpades() {
-    var cfg = GameConfig.spades;
+    var cfg = this.state.GameConfig.spades;
+    if (!cfg) {
+      return null;
+    }
 
     return (
       <>
@@ -1007,7 +1022,10 @@ class CreateGameForm extends React.Component {
   }
 
   renderThreeThirteen() {
-    var cfg = GameConfig['three thirteen'];
+    var cfg = this.state.GameConfig['three thirteen'];
+    if (!cfg) {
+      return null;
+    }
 
     return (
       <>
@@ -1034,7 +1052,10 @@ class CreateGameForm extends React.Component {
   }
 
   renderEightJacks() {
-    var cfg = GameConfig['eight jacks'];
+    var cfg = this.state.GameConfig['eight jacks'];
+    if (!cfg) {
+      return null;
+    }
 
     return (
       <>
@@ -1057,7 +1078,10 @@ class CreateGameForm extends React.Component {
   }
 
     renderHearts() {
-      var cfg = GameConfig.hearts;
+      var cfg = this.state.GameConfig.hearts;
+      if (!cfg) {
+        return null;
+      }
 
       return (
         <>
@@ -1086,9 +1110,9 @@ class CreateGameForm extends React.Component {
 
   render() {
     var known_modes = [];
-    for (let value of Object.keys(GameConfig)) {
+    for (let value of Object.keys(this.state.GameConfig)) {
       known_modes.push({
-        'label': GameConfig[value].name,
+        'label': this.state.GameConfig[value].name,
         'value': value,
       });
     }
@@ -1135,8 +1159,8 @@ class CreateGameForm extends React.Component {
                 />
                 <br/>
                 {
-                  GameConfig[this.state.mode] && GameConfig[this.state.mode].description
-                  ? <p> { GameConfig[this.state.mode].description } </p>
+                  this.state.GameConfig[this.state.mode] && this.state.GameConfig[this.state.mode].description
+                  ? <p> { this.state.GameConfig[this.state.mode].description } </p>
                   : null
                 }
               </l.ListGroup>
