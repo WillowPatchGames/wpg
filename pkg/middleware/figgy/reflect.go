@@ -27,13 +27,13 @@ func nestedReflect(obj interface{}, configKey string, labelKey string, v visitor
 	}
 
 	if vObj.Kind() != reflect.Struct {
-		return errors.New("parsel: invalid object during reflection: " + reflect.TypeOf(obj).String() + " -- not eventually a struct")
+		return errors.New("figgy: invalid object during reflection: " + reflect.TypeOf(obj).String() + " -- not eventually a struct")
 	}
 
 	var tObj reflect.Type = vObj.Type()
 
 	if vObj.NumField() != tObj.NumField() {
-		panic("parsel: unable to parse object with different number of fields in reflect.Value than reflect.Type(reflect.Value): " + reflect.TypeOf(obj).String())
+		panic("figgy: unable to parse object with different number of fields in reflect.Value than reflect.Type(reflect.Value): " + reflect.TypeOf(obj).String())
 	}
 
 	for fieldI := 0; fieldI < tObj.NumField(); fieldI++ {
@@ -60,7 +60,15 @@ func nestedReflect(obj interface{}, configKey string, labelKey string, v visitor
 		jsonValue, jsonPresent := sfField.Tag.Lookup("json")
 		configValue, configPresent := sfField.Tag.Lookup(configKey)
 		labelValue, labelPresent := sfField.Tag.Lookup(labelKey)
-		if jsonPresent && (configPresent || labelPresent) {
+		if jsonPresent && jsonValue != "-" {
+			if !configPresent {
+				return errors.New("figgy: unable to find " + configKey + " tag in field with non-empty JSON tag: " + jsonValue + " at field " + sfField.Name)
+			}
+
+			if !labelPresent {
+				return errors.New("figgy: unable to find " + labelKey + " tag in field with non-empty JSON tag: " + jsonValue + " at field " + sfField.Name)
+			}
+
 			err := v.Visit(vField, jsonValue, configValue, labelValue)
 			if err != nil {
 				return err

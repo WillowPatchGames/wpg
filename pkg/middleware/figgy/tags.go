@@ -9,7 +9,6 @@ package figgy
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -38,7 +37,7 @@ type intConfigTag struct {
 
 func (ict *intConfigTag) LoadValue(field reflect.Value, values map[string]interface{}) error {
 	if values == nil {
-		errors.New("passed nil value map")
+		return errors.New("passed nil value map")
 	}
 
 	var value int = ict.Default
@@ -46,9 +45,8 @@ func (ict *intConfigTag) LoadValue(field reflect.Value, values map[string]interf
 	if wire_value, ok := values[ict.Field]; ok {
 		if float_value, ok := wire_value.(float64); ok {
 			value = int(float_value)
-			log.Println("Loaded value for "+ict.Field+":", value)
 		} else {
-			return errors.New("unable to parse value for " + ict.Field + "as integer: " + reflect.TypeOf(wire_value).String())
+			return errors.New("unable to parse value for " + ict.Field + " as integer: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
@@ -86,7 +84,7 @@ type boolConfigTag struct {
 
 func (bct *boolConfigTag) LoadValue(field reflect.Value, values map[string]interface{}) error {
 	if values == nil {
-		errors.New("passed nil value map")
+		return errors.New("passed nil value map")
 	}
 
 	var value bool = bct.Default
@@ -94,9 +92,8 @@ func (bct *boolConfigTag) LoadValue(field reflect.Value, values map[string]inter
 	if wire_value, ok := values[bct.Field]; ok {
 		if bool_value, ok := wire_value.(bool); ok {
 			value = bool_value
-			log.Println("Loaded value for "+bct.Field+":", value)
 		} else {
-			return errors.New("unable to parse value for " + bct.Field + "as bool: " + reflect.TypeOf(wire_value).String())
+			return errors.New("unable to parse value for " + bct.Field + " as bool: " + reflect.TypeOf(wire_value).String())
 		}
 	}
 
@@ -111,6 +108,76 @@ func (bct *boolConfigTag) ValidateValue(field reflect.Value) error {
 
 func (bct *boolConfigTag) GetType() string {
 	return bct.Type
+}
+
+type selectOption struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type enumConfigTag struct {
+	Type    string         `json:"type"`
+	Field   string         `json:"-"`
+	Default string         `json:"default"`
+	Options []selectOption `json:"options"`
+}
+
+func (ect *enumConfigTag) LoadValue(field reflect.Value, values map[string]interface{}) error {
+	if values == nil {
+		return errors.New("passed nil value map")
+	}
+
+	var value int
+	value, err := strconv.Atoi(ect.Default)
+	if err != nil {
+		return errors.New("bad default value: " + ect.Default + ": can't parse as int: " + err.Error())
+	}
+
+	if wire_value, ok := values[ect.Field]; ok {
+		if float_value, ok := wire_value.(float64); ok {
+			value = int(float_value)
+		} else if string_value, ok := wire_value.(string); ok {
+			value, err = strconv.Atoi(string_value)
+			if err != nil {
+				return errors.New("unable to parse value for " + ect.Field + " as integer: " + err.Error())
+			}
+		} else {
+			return errors.New("unable to parse value for " + ect.Field + " as integer: " + reflect.TypeOf(wire_value).String())
+		}
+	}
+
+	if err := ect.validateValue(value); err != nil {
+		return err
+	}
+
+	field.SetInt(int64(value))
+
+	return nil
+}
+
+func (ect *enumConfigTag) ValidateValue(field reflect.Value) error {
+	value := int(field.Int())
+	return ect.validateValue(value)
+}
+
+func (ect *enumConfigTag) validateValue(value int) error {
+	var found = false
+	for _, option := range ect.Options {
+		if strconv.Itoa(value) == option.Value {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return errors.New(fmt.Sprintf("invalid value for parameter: %s has value %d; outside of allowed range", ect.Field, value))
+	}
+
+	return nil
+}
+
+func (ect *enumConfigTag) GetType() string {
+	return ect.Type
 }
 
 type labelTag struct {
@@ -153,8 +220,6 @@ func findKeyValue(field string, parts []string, key string) (string, error) {
 		if len(piece) < len(key)+1 {
 			continue
 		}
-
-		log.Println("Considering:", piece[0:len(key)+1], "for", key+":")
 
 		if piece[0:len(key)+1] == key+":" {
 			if len(result) != 0 {
@@ -200,8 +265,6 @@ func findKeyValueWithDefault(field string, parts []string, key string, defaultVa
 
 func parseConfigField(field string, config string) (configurable, error) {
 	split := strings.Split(config, ",")
-
-	log.Println("split:", split)
 
 	c_type, err := findKeyValue(field, split, "type")
 	if err != nil {
@@ -273,15 +336,48 @@ func parseConfigField(field string, config string) (configurable, error) {
 			Field:   field,
 			Default: b_default,
 		}, nil
+	} else if c_type == "enum" {
+		s_default, err := findKeyValue(field, split, "default")
+		if err != nil {
+			return nil, err
+		}
+
+		s_options, err := findKeyValue(field, split, "options")
+		if err != nil {
+			return nil, err
+		}
+
+		sa_options := strings.Split(s_options, ";")
+		var o_options = make([]selectOption, 0)
+
+		for index, option := range sa_options {
+			sa_option := strings.SplitN(option, ":", 2)
+			if len(sa_option) != 2 {
+				return nil, errors.New("unable to parse value of enum option for field " + field + " at index " + strconv.Itoa(index) + " -- bad value: " + option)
+			}
+
+			var o_option = selectOption{
+				Value: sa_option[0],
+				Label: sa_option[1],
+			}
+			o_options = append(o_options, o_option)
+		}
+
+		return &enumConfigTag{
+			Type:    c_type,
+			Field:   field,
+			Default: s_default,
+			Options: o_options,
+		}, nil
 	}
 
-	return nil, errors.New("unknown type of field " + field + ": " + c_type)
+	return nil, errors.New("unknown type of config field " + field + ": " + c_type)
 }
 
 func parseLabelField(field string, config_type string, label string) (labelable, error) {
 	split := strings.Split(label, ",")
 
-	if config_type == "int" {
+	if config_type == "int" || config_type == "enum" {
 		return &labelTag{
 			Type:  config_type,
 			Field: field,
@@ -308,13 +404,11 @@ func parseLabelField(field string, config_type string, label string) (labelable,
 		return result, nil
 	}
 
-	return nil, errors.New("unknown type of field " + field + ": " + config_type)
+	return nil, errors.New("unknown type of label field " + field + ": " + config_type)
 }
 
 func parseFields(jsonValue, config, label string) (string, configurable, labelable, error) {
 	field := strings.Split(jsonValue, ",")[0]
-
-	log.Println("field:", field)
 
 	config_obj, err := parseConfigField(field, config)
 	if err != nil {
