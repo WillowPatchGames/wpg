@@ -15,6 +15,7 @@ import (
 	api_errors "git.cipherboy.com/WillowPatchGames/wpg/pkg/errors"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/games"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/auth"
+	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/figgy"
 	"git.cipherboy.com/WillowPatchGames/wpg/pkg/middleware/hwaterr"
 )
 
@@ -45,7 +46,7 @@ type CreateHandler struct {
 	resp createHandlerResponse
 	user *database.User
 
-	parsedConfig interface{}
+	parsedConfig figgy.Figgurable
 }
 
 func (handle CreateHandler) GetResponse() interface{} {
@@ -76,66 +77,29 @@ func (handle *CreateHandler) verifyRequest() error {
 	if handle.req.Config != nil {
 		if handle.req.Style == "rush" {
 			var config games.RushConfig
-			if err := config.LoadConfig(handle.req.Config); err != nil {
-				return err
-			}
-
-			err := config.Validate()
-			if err != nil {
-				return err
-			}
-
 			handle.parsedConfig = &config
 		} else if handle.req.Style == "spades" {
 			var config games.SpadesConfig
-			if err := config.LoadConfig(handle.req.Config); err != nil {
-				return err
-			}
-
-			err := config.Validate()
-			if err != nil {
-				return err
-			}
-
 			handle.parsedConfig = &config
 		} else if handle.req.Style == "three thirteen" {
 			var config games.ThreeThirteenConfig
-			if err := config.LoadConfig(handle.req.Config); err != nil {
-				return err
-			}
-
-			err := config.Validate()
-			if err != nil {
-				return err
-			}
-
 			handle.parsedConfig = &config
 		} else if handle.req.Style == "eight jacks" {
 			var config games.EightJacksConfig
-			if err := config.LoadConfig(handle.req.Config); err != nil {
-				return err
-			}
-
-			err := config.Validate()
-			if err != nil {
-				return err
-			}
-
 			handle.parsedConfig = &config
 		} else if handle.req.Style == "hearts" {
 			var config games.HeartsConfig
-			if err := config.LoadConfig(handle.req.Config); err != nil {
-				return err
-			}
-
-			err := config.Validate()
-			if err != nil {
-				return err
-			}
-
 			handle.parsedConfig = &config
 		} else {
 			panic("Unknown game mode -- in enum but not here: " + handle.req.Style)
+		}
+
+		if err := figgy.Load(handle.parsedConfig, handle.req.Config); err != nil {
+			return err
+		}
+
+		if err := figgy.Validate(handle.parsedConfig); err != nil {
+			return err
 		}
 	}
 
