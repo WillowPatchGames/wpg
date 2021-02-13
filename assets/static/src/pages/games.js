@@ -1088,35 +1088,35 @@ class CreateGameForm extends React.Component {
     );
   }
 
-    renderHearts() {
-      var cfg = this.state.GameConfig.hearts;
-      if (!cfg) {
-        return null;
-      }
+  renderHearts() {
+    var cfg = this.state.GameConfig.hearts;
+    if (!cfg) {
+      return null;
+    }
 
-      return (
-        <>
-          <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-          { this.renderField(cfg.options[0]) }
-          <l.ListGroupSubheader>Playing Options</l.ListGroupSubheader>
-          { this.renderField(cfg.options[1]) }
-          { this.renderField(cfg.options[2]) }
-          { this.renderField(cfg.options[3]) }
-          { this.renderField(cfg.options[4]) }
-          { this.renderField(cfg.options[5]) }
-          { this.renderField(cfg.options[6]) }
-          <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
-          { this.renderField(cfg.options[7]) }
-          { this.renderField(cfg.options[8]) }
-          { this.renderField(cfg.options[9]) }
-          { this.renderField(cfg.options[10]) }
-          { this.renderField(cfg.options[11]) }
-          { this.renderField(cfg.options[12]) }
-          { this.renderField(cfg.options[13]) }
-          { this.renderField(cfg.options[14]) }
-          { this.renderField(cfg.options[15]) }
-        </>
-      );
+    return (
+      <>
+        <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[0]) }
+        <l.ListGroupSubheader>Playing Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[1]) }
+        { this.renderField(cfg.options[2]) }
+        { this.renderField(cfg.options[3]) }
+        { this.renderField(cfg.options[4]) }
+        { this.renderField(cfg.options[5]) }
+        { this.renderField(cfg.options[6]) }
+        <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[7]) }
+        { this.renderField(cfg.options[8]) }
+        { this.renderField(cfg.options[9]) }
+        { this.renderField(cfg.options[10]) }
+        { this.renderField(cfg.options[11]) }
+        { this.renderField(cfg.options[12]) }
+        { this.renderField(cfg.options[13]) }
+        { this.renderField(cfg.options[14]) }
+        { this.renderField(cfg.options[15]) }
+      </>
+    );
   }
 
   render() {
@@ -1146,6 +1146,11 @@ class CreateGameForm extends React.Component {
     return (
       <c.Card>
         <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+          {
+            this.props.editable === false
+            ? <Typography theme="error" use="body2">This configuration is not editable.</Typography>
+            : null
+          }
           <form onSubmit={ this.handleSubmit.bind(this) }>
             <l.List twoLine>
               <l.ListGroup>
