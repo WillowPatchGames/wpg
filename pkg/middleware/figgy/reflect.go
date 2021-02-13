@@ -15,7 +15,7 @@ type visitor interface {
 	Visit(field reflect.Value, jsonValue string, configValue string, labelValue string) error
 }
 
-func nestedReflect(obj interface{}, configKey string, labelKey string, v visitor) error {
+func nestedReflect(obj interface{}, configKey string, labelKey string, v visitor, readOnly bool) error {
 	var vObj reflect.Value = reflect.ValueOf(obj)
 
 	for vObj.Kind() == reflect.Ptr && !vObj.IsNil() {
@@ -45,7 +45,7 @@ func nestedReflect(obj interface{}, configKey string, labelKey string, v visitor
 		}
 
 		if vField.Kind() == reflect.Struct && vField.CanInterface() {
-			err := nestedReflect(vField.Interface(), configKey, labelKey, v)
+			err := nestedReflect(vField.Interface(), configKey, labelKey, v, readOnly)
 			if err != nil {
 				return err
 			}
@@ -53,7 +53,7 @@ func nestedReflect(obj interface{}, configKey string, labelKey string, v visitor
 			continue
 		}
 
-		if !vField.CanSet() {
+		if !vField.CanSet() && !readOnly {
 			continue
 		}
 

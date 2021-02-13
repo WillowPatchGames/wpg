@@ -23,7 +23,7 @@ func Parse(obj Figgurable, data []byte) error {
 	}
 
 	var v validator
-	err := nestedReflect(obj, "config", "label", v)
+	err := nestedReflect(obj, "config", "label", v, false)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func Load(obj Figgurable, wire map[string]interface{}) error {
 	var l loader
 	l.Values = wire
 
-	err := nestedReflect(obj, "config", "label", l)
+	err := nestedReflect(obj, "config", "label", l, false)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func Load(obj Figgurable, wire map[string]interface{}) error {
 
 func Validate(obj Figgurable) error {
 	var v validator
-	err := nestedReflect(obj, "config", "label", v)
+	err := nestedReflect(obj, "config", "label", v, true)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,6 @@ func Validate(obj Figgurable) error {
 func SerializeOptions(obj Figgurable) ([]map[string]interface{}, error) {
 	var v serializer
 	v.Output = new([]map[string]interface{})
-
-	err := nestedReflect(obj, "config", "label", v)
+	err := nestedReflect(obj, "config", "label", v, true)
 	return *v.Output, err
 }
