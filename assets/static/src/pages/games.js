@@ -329,7 +329,7 @@ class PreGameUserPage extends React.Component {
     return (
       <div>
         { countdown }
-        <h1>Game #{ this.props.game.id }</h1>
+        <h1>Game #{ this.props.game.id } - { this.props.game.style }</h1>
         { content }
       </div>
     );
@@ -1399,8 +1399,12 @@ class JoinGamePage extends React.Component {
       // Try loading it as a room instead, before displaying the game error page.
       var room = await RoomModel.FromCode(this.props.user, this.state.code);
       if (room.error === undefined || room.error === null) {
-        this.props.setPage('room', '?code=' + room.code);
+        var page = '/room/games';
+        if (!room.admitted) {
+          page = '/room/members';
+        }
         this.props.setRoom(room);
+        this.props.setPage(page, '?code=' + room.code);
         return;
       }
 

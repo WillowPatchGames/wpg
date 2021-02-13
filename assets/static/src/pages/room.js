@@ -46,6 +46,7 @@ class RoomMembersTab extends React.Component {
       dummy: null,
       members: this.props.room.members,
       room_owner: +this.props.user.id === +this.props.room.owner,
+      not_admitted: 0,
     };
 
     this.code_ref = React.createRef();
@@ -353,7 +354,7 @@ class RoomGamesTab extends React.Component {
               <br />
               <c.Card>
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
-                  Game #{ game.id }
+                  Game #{ game.id } - { game.style }
                 </div>
                 <c.CardActions style={{ justifyContent: "center" }}>
                   <c.CardActionButton theme={['secondaryBg', 'onSecondary']} raised onClick={ () => this.joinGame(game) }>
@@ -381,7 +382,7 @@ class RoomGamesTab extends React.Component {
               <br />
               <c.Card>
                 <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
-                  Game #{ game.id }
+                  Game #{ game.id } - { game.style }
                 </div>
                 <c.CardActions style={{ justifyContent: "center" }}>
                   <c.CardActionButton theme={['secondaryBg', 'onSecondary']} raised onClick={ () => this.joinGame(game) }>
@@ -686,6 +687,43 @@ class RoomArchiveTab extends React.Component {
 }
 
 class RoomPage extends React.Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      not_admitted: 0,
+      room_owner: +this.props.user.id === +this.props.room.owner,
+      timeout: killable(() => { this.checkForUnadmitted() }, 5000),
+    };
+  }
+
+  componentDidMount() {
+    this.state.timeout.exec();
+  }
+
+  componentWillUnmount() {
+    if (this.state.timeout) {
+      this.state.timeout.kill();
+    }
+  }
+
+  async checkForUnadmitted() {
+    if (this.state.room_owner && this.props.room.members) {
+      await this.props.room.update();
+
+      var not_admitted = 0;
+      for (let member of this.props.room.members) {
+        if (!member.admitted) {
+          not_admitted += 1;
+        }
+      }
+
+      this.setState(state => Object.assign({}, state, { not_admitted }));
+    } else if (!this.state.room_owner) {
+      this.state.timeout.kill();
+    }
+  }
+
   render() {
     var paths = ['/room/games', '/room/members', '/room/archive'];
     var tab_index = paths.indexOf(window.location.pathname);
@@ -706,6 +744,11 @@ class RoomPage extends React.Component {
       </>;
     }
 
+    var members_label = "Members";
+    if (this.state.not_admitted > 0) {
+      members_label += " (" + this.state.not_admitted + ")";
+    }
+
     return (
       <div className="App-page">
         <Typography use="headline2">Room #{ this.props.room.id }{ chat }</Typography>
@@ -719,7 +762,7 @@ class RoomPage extends React.Component {
           >
             <t.TabBar activeTabIndex={ tab_index }>
               <t.Tab icon="games" label="Games" onClick={ () => this.props.setPage('/room/games', true) } />
-              <t.Tab icon="groups" label="Members" onClick={ () => this.props.setPage('/room/members', true) } />
+              <t.Tab icon="groups" label={ members_label } onClick={ () => this.props.setPage('/room/members', true) } />
               <t.Tab icon="archive" label="Archive" onClick={ () => this.props.setPage('/room/archive', true) } />
             </t.TabBar>
           </ThemeProvider>
