@@ -29,9 +29,16 @@ func BuildRouter(router *mux.Router, debug bool) {
 		return auth.Require(inner)
 	}
 
+	var deleteFactory = func() parsel.Parseltongue {
+		inner := new(DeleteHandler)
+		return auth.Require(inner)
+	}
+
 	router.Handle("/api/v1/room", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/room", parsel.Wrap(deleteFactory, config)).Methods("DELETE")
 	router.Handle("/api/v1/room/find", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/room/{RoomID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/room/{RoomID:[0-9]+}", parsel.Wrap(deleteFactory, config)).Methods("DELETE")
 
 	router.Handle("/api/v1/room/{RoomID:[0-9]+}/admit", parsel.Wrap(admitFactory, config)).Methods("PUT")
 	router.Handle("/api/v1/room/{RoomID:[0-9]+}/admit/{UserID:[0-9]+}", parsel.Wrap(admitFactory, config)).Methods("PUT")

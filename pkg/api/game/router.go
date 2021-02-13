@@ -34,6 +34,7 @@ func BuildRouter(router *mux.Router, debug bool) {
 	configHandler.Serialize()
 
 	router.Handle("/api/v1/game", parsel.Wrap(queryFactory, config)).Methods("GET")
+	router.Handle("/api/v1/game", parsel.Wrap(deleteFactory, config)).Methods("DELETE")
 	router.Handle("/api/v1/game/find", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/game/{GameID:[0-9]+}", parsel.Wrap(queryFactory, config)).Methods("GET")
 	router.Handle("/api/v1/game/{GameID:[0-9]+}", parsel.Wrap(deleteFactory, config)).Methods("DELETE")

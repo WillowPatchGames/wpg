@@ -965,6 +965,32 @@ class RoomModel {
 
     return await this.update();
   }
+
+  async delete() {
+    var uri = this.api + '/room/' + this.id;
+
+    const response = await fetch(uri, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
+      },
+      redirect: 'follow'
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+    this.error = null;
+    await this.update();
+    return this;
+  }
 }
 
 class GameModel {

@@ -613,7 +613,7 @@ class UserArchiveTab extends React.Component {
                 : null
               }
               {
-                game.lifecycle !== "deleted" && game.lifecycle !== "finished" && game.lifecycle !== "expired"
+                game.lifecycle !== "deleted" && game.lifecycle !== "finished" && game.lifecycle !== "expired" && +game.owner_id === +this.props.user.id
                 ? <Button theme="secondary" label="Delete"
                     onClick={ () => this.handleDeleteGame(game.game) }
                   />
@@ -680,14 +680,13 @@ class UserArchiveTab extends React.Component {
                 : <Button theme="secondary" label="Clear"
                           onClick={ () => this.handleFilterRoom(null) } />
               }
-              {/*
-                // No delete function for rooms yet.
-                room.lifecycle !== "deleted" && room.lifecycle !== "finished"
+              {
+                room.lifecycle !== "deleted" && room.lifecycle !== "finished" && room.lifecycle !== "expired" && +room.owner_id === +this.props.user.id
                 ? <Button theme="secondary" label="Delete"
                     onClick={ () => this.handleDeleteRoom(room.room) }
                   />
                 : null
-              */}
+              }
             </l.ListItemMeta>
           </l.ListItem>
         );
