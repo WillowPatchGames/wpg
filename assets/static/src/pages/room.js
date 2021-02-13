@@ -572,16 +572,17 @@ class RoomArchiveTab extends React.Component {
       for (let game of this.state.games) {
         loaded_games.push(
           <l.ListItem>
-            <l.ListItemText>
+            <l.ListItemText className="double-info">
               <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
                 <b>Game #{ game.game_id }</b>&nbsp;-&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
               </l.ListItemPrimaryText>
               <l.ListItemSecondaryText>
                 <span title={ game.created_at } style={{ color: "#000" }}>Created { formatDistanceToNow(new Date(game.created_at)) } ago</span>
-                Updated <span title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
+                <span className="info-spacer"></span>
+                <span title={ game.updated_at } style={{ color: "#000" }}>Updated { formatDistanceToNow(new Date(game.updated_at)) } ago</span>
               </l.ListItemSecondaryText>
             </l.ListItemText>
-            <l.ListItemMeta>
+            <l.ListItemMeta className="double-button">
               {
                 game.lifecycle !== "deleted" && game.lifecycle !== "expired"
                 ? <Button theme="secondary"

@@ -322,6 +322,10 @@ input:not([type="checkbox"]):not([type="radio"]):disabled, textarea:disabled {
 }
 
 /* Some styles for more responsive thingies for list items, esp. on archive */
+.double-info.mdc-list-item__text > .mdc-list-item__primary-text {
+  position: relative;
+  top: -10px;
+}
 .mdc-list-item__text.double-info {
   flex-grow: 0.2;
   text-align: left;
@@ -331,8 +335,9 @@ input:not([type="checkbox"]):not([type="radio"]):disabled, textarea:disabled {
   flex-wrap: wrap;
   width: 100%;
   justify-content: space-between;
-  margin-top: 10px;
   max-width: 250px;
+  position: relative;
+  top: -10px;
 }
 .mdc-list-item__text.double-info > .mdc-list-item__secondary-text:before {
   content: none;
