@@ -243,14 +243,23 @@ class Page extends React.Component {
             <RushRulesPage {...this_props} key="path-rules-rush" />
           </>
         </Route>
-        <Route path="/signup">
+        <RouteWithAuth path="/signup">
+          <>
+            <Helmet
+              titleTemplate={ notified_preferences_title }
+              defaultTitle={ notified_preferences_default }
+            >
+              <title>Account Preferences</title>
+            </Helmet>
+            <ProfilePage {...this_props} key="path-profile" />
+          </>
           <>
             <Helmet>
               <title>Sign Up</title>
             </Helmet>
             <SignupPage {...this_props} key="path-signup" />
           </>
-        </Route>
+        </RouteWithAuth>
         <Route path="/home">
           <HomePage {...this_props} key="path-home" />
         </Route>
