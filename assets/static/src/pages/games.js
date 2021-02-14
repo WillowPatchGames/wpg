@@ -112,6 +112,13 @@ class GamePage extends React.Component {
   constructor(props) {
     super(props);
     console.log(this.props.game);
+    if (this.props.game.lifecycle === 'pending') {
+      this.props.setPage('/play', true);
+    } else if (this.props.game.lifecycle === 'finished') {
+      this.props.setPage('/afterparty', true);
+    } else if (!this.props.game.lifecycle === 'playing') {
+      this.props.setPage('/play', false);
+    }
   }
   render() {
     var mode = this.props.game.mode || this.props.game.style;
