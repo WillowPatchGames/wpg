@@ -1,5 +1,9 @@
 package games
 
+import (
+	"strings"
+)
+
 type HeartsPlayerState struct {
 	Hand []Card `json:"hand"`
 
@@ -114,6 +118,7 @@ type HeartsSynopsisNotification struct {
 	Players []HeartsPlayerSynopsis `json:"players"`
 
 	PassDirection HeartsPassDirection `json:"pass_direction"` // Direction to pass cards.
+	SuitIndicator string              `json:"suit"`
 }
 
 func (hsn *HeartsSynopsisNotification) LoadData(data *GameData, state *HeartsState, player *PlayerData) {
@@ -140,6 +145,17 @@ func (hsn *HeartsSynopsisNotification) LoadData(data *GameData, state *HeartsSta
 	}
 
 	hsn.PassDirection = state.PassDirection
+
+	if !state.Dealt {
+		hsn.SuitIndicator = "dealing"
+	} else if !state.Passed {
+		hsn.SuitIndicator = "passing"
+	} else if len(state.Played) == 0 || len(state.Played) == len(state.Players) {
+		hsn.SuitIndicator = "waiting"
+	} else if len(state.Played) > 0 {
+		hsn.SuitIndicator = state.Played[0].Suit.String()
+		hsn.SuitIndicator = strings.TrimSuffix(hsn.SuitIndicator, "Suit")
+	}
 }
 
 type HeartsPeekNotification struct {

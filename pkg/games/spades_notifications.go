@@ -144,7 +144,7 @@ func (ssn *SpadesSynopsisNotification) LoadData(data *GameData, state *SpadesSta
 		ssn.SuitIndicator = "dealing"
 	} else if !state.Bid {
 		ssn.SuitIndicator = "bidding"
-	} else if len(state.Played) == 0 {
+	} else if len(state.Played) == 0 || len(state.Played) == len(state.Players) {
 		ssn.SuitIndicator = "waiting"
 	} else if len(state.Played) > 0 {
 		ssn.SuitIndicator = state.Played[0].Suit.String()
