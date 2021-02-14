@@ -364,28 +364,22 @@ class SpadesGameSynopsis extends React.Component {
   newState() {
     let new_state = { indexed_players: {}, spectators: {}, suit: undefined, broken: this.props.game.interface.data.spades_broken };
 
-    if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
-      for (let player of this.props.game.interface.synopsis.players) {
-        if (player.player_index !== -1) {
-          new_state.indexed_players[player.player_index] = player;
-        } else {
-          new_state.spectators[player.player_index] = player;
+    if (this.props.game.interface.synopsis) {
+      if (this.props.game.interface.synopsis.players) {
+        for (let player of this.props.game.interface.synopsis.players) {
+          if (player.player_index !== -1) {
+            new_state.indexed_players[player.player_index] = player;
+          } else {
+            new_state.spectators[player.player_index] = player;
+          }
         }
       }
-    }
-    if (this.props.game.interface.data && this.props.game.interface.data.played) {
-      var i = this.props.game.interface;
-      if (i.bidded && i.dealt && !i.finished) {
-        var num_played = this.props.game.interface.data.played.cards.length;
-        var num_players = this.props.game.config.num_players;
-        if (num_played > 0 && num_played < num_players) {
-          new_state.suit = this.props.game.interface.data.played.cards[0].suit;
-        } else {
-          new_state.suit = "waiting";
-        }
-      } else if (!i.finished) {
-        new_state.suit = i.dealt ? "bidding" : "dealing";
+
+      var suit = this.props.game.interface.synopsis.suit;
+      if (suit && CardSuit.fromString(suit) !== null) {
+        suit = CardSuit.fromString(suit);
       }
+      new_state.suit = suit;
     }
 
     return new_state;

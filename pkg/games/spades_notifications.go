@@ -1,5 +1,9 @@
 package games
 
+import (
+	"strings"
+)
+
 type SpadesPlayerState struct {
 	Hand   []Card `json:"hand,omitempty"`
 	Drawn  *Card  `json:"drawn,omitempty"`
@@ -92,9 +96,10 @@ type SpadesPlayerSynopsis struct {
 	PlayerIndex int    `json:"player_index"`
 	Team        int    `json:"team"`
 
-	IsTurn   bool `json:"is_turn"`
-	IsLeader bool `json:"is_leader"`
-	IsDealer bool `json:"is_dealer"`
+	IsTurn        bool   `json:"is_turn"`
+	IsLeader      bool   `json:"is_leader"`
+	IsDealer      bool   `json:"is_dealer"`
+	SuitIndicator string `json:"suit"`
 
 	Bid       int `json:"bid"`
 	Tricks    int `json:"tricks"`
@@ -130,6 +135,20 @@ func (ssn *SpadesSynopsisNotification) LoadData(data *GameData, state *SpadesSta
 			synopsis.Tricks = state.Players[indexed_player.Index].Tricks
 			synopsis.Score = state.Players[indexed_player.Index].Score
 			synopsis.Overtakes = state.Players[indexed_player.Index].Overtakes
+		}
+
+		if !state.Dealt {
+			synopsis.SuitIndicator = "dealing"
+		} else if !state.Bid {
+			synopsis.SuitIndicator = "bidding"
+		} else if len(state.Played) == 0 {
+			synopsis.SuitIndicator = "waiting"
+		} else if len(state.Played) > 0 {
+			synopsis.SuitIndicator = state.Played[0].Suit.String()
+			synopsis.SuitIndicator = strings.TrimSuffix(synopsis.SuitIndicator, "Suit")
+			if state.Played[0].Rank == JokerRank {
+				synopsis.SuitIndicator = "Spades"
+			}
 		}
 
 		ssn.Players = append(ssn.Players, synopsis)

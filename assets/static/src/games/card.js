@@ -79,6 +79,16 @@ class CardSuit {
   static deserialize(obj) {
     return new CardSuit(obj);
   }
+
+  static fromString(str) {
+    for (let key in CardSuit.apiValueToString) {
+      if (CardSuit.apiValueToString[key] === str.toLowerCase()) {
+        return new CardSuit(key);
+      }
+    }
+
+    return null;
+  }
 }
 
 class CardRank {

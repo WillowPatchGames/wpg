@@ -3,7 +3,6 @@ package room
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
