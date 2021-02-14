@@ -1,11 +1,15 @@
 // Library imports
 import React from 'react';
 
+import { Button } from '@rmwc/button';
 import '@rmwc/button/styles';
 import '@rmwc/checkbox/styles';
 import '@rmwc/select/styles';
 import '@rmwc/typography/styles';
+import { TextField } from '@rmwc/textfield';
 import '@rmwc/textfield/styles';
+import * as g from '@rmwc/grid';
+import '@rmwc/grid/styles';
 import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
@@ -35,13 +39,14 @@ class DemoGamePage extends React.Component {
         overlap: 0.75,
       },
       sorting: null,
+      meta_visible: true,
     };
     this.move = this.move.bind(this);
     this.unlisten = [];
   }
   componentDidMount() {
-    document.addEventListener("keydown", this.move);
-    this.unlisten.push(() => document.removeEventListener("keydown", this.move));
+    //document.addEventListener("keydown", this.move);
+    //this.unlisten.push(() => document.removeEventListener("keydown", this.move));
   }
   componentWillUnmount() {
     for (let l of this.unlisten.splice(0,-1)) {
@@ -222,44 +227,94 @@ class DemoGamePage extends React.Component {
       { <span style={sideStyle}>{ sortMessage }</span> }
       { <span style={modeStyle}>{ sortMode }</span> }
     </>;
+
+    var card_elements = [];
+    if (this.state.meta_visible) {
+      card_elements.push(<CardImage key={ "action" } overlay={ sortOverlay }
+          scale={this.state.props.scale} selected={this.state.sorting}
+          onClick={() => this.sort()}/>);
+    }
+    card_elements.push(...this.state.hand.cards.map((card,i) =>
+      <CardImage card={ card } key={ card.id }
+        scale={this.state.props.scale}
+        selected={ this.selected(card,i) }
+        badge={ this.badger(card,i) }
+        onClick={() => this.select(card,i)}
+        />));
+    console.log(this.state.hand.cards, card_elements.length);
+    if (this.state.meta_visible) {
+      card_elements.push(<CardImage key={ null } overlay={ <h3>Add card</h3> }
+        scale={this.state.props.scale}
+        onClick={() => this.setState(state => {
+          state.hand.cards.push(new Card(state.id+=1,1+Math.floor(Math.random() * 4),1+Math.floor(Math.random() * 13)));
+          return state;
+        })}/>);
+    }
+
     return <div>
       <h1>Demo</h1>
       <div>
-        <Slider min={0.1} max={1} value={this.state.props.scale} onInput={e => {let scale=e.detail.value;
-          this.setState(state => {Object.assign(state.props, {scale});return state})}}/>
-        <Slider min={0} max={1} value={1-this.state.props.overlap} onInput={e => {let overlap=1-e.detail.value;
-          this.setState(state => {Object.assign(state.props, {overlap});return state})}}/>
-        <Slider min={0} max={5} value={this.state.props.curve} onInput={e => {let curve=e.detail.value;
-          this.setState(state => {Object.assign(state.props, {curve});return state})}}/>
+        <g.Grid>
+          <g.GridRow>
+            <g.GridCell align="left" span={2} tablet={2}>
+              <TextField label="scale" type="number" value={ this.state.props.scale }
+                onChange={e => { e.preventDefault(); let scale=e.target.value; this.setState(state => {Object.assign(state.props, {scale});return state})}}
+                min={0.1} max={1} step={0.001}
+              />
+            </g.GridCell>
+            <g.GridCell align="right" span={10} tablet={6}>
+              <Slider min={0.1} max={1} step={0.001} value={this.state.props.scale} onChange={e => {let scale=e.detail.value;
+                this.setState(state => {Object.assign(state.props, {scale});return state})}}/>
+            </g.GridCell>
+          </g.GridRow>
+          <g.GridRow>
+            <g.GridCell align="left" span={2} tablet={2}>
+              <TextField label="overlap" type="number" value={ this.state.props.overlap }
+                onChange={e => {e.preventDefault(); let overlap=e.target.value; this.setState(state => {Object.assign(state.props, {overlap});return state})}}
+                min={0} max={1} step={0.001}
+              />
+            </g.GridCell>
+            <g.GridCell align="right" span={10} tablet={6}>
+              <Slider min={0} max={1} step={0.001} value={1-this.state.props.overlap} onChange={e => {let overlap=1-e.detail.value;
+                this.setState(state => {Object.assign(state.props, {overlap});return state})}}/>
+            </g.GridCell>
+          </g.GridRow>
+          <g.GridRow>
+            <g.GridCell align="left" span={2} tablet={2}>
+              <TextField label="curve" type="number" value={ this.state.props.curve }
+                onChange={e => {e.preventDefault(); let curve=e.target.value; this.setState(state => {Object.assign(state.props, {curve});return state})}}
+                min={0} max={5} step={0.001}
+              />
+            </g.GridCell>
+            <g.GridCell align="right" span={10} tablet={6}>
+              <Slider min={0} max={5} step={0.001} value={this.state.props.curve} onChange={e => {let curve=e.detail.value;
+                this.setState(state => {Object.assign(state.props, {curve});return state})}}/>
+            </g.GridCell>
+          </g.GridRow>
+        </g.Grid>
       </div>
-      <div style={{ border: "1px dotted gray", width: "fit-content", margin: "auto" }}>
-      <CardHandImage {...this.state.props}>
-        { [
-          <CardImage key={ "action" } overlay={ sortOverlay }
-            scale={this.state.props.scale} selected={this.state.sorting}
-            onClick={() => this.sort()}/>
-        ].concat(this.state.hand.cards.map((card,i) =>
-          <CardImage card={ card } key={ card.id }
-            scale={this.state.props.scale}
-            selected={ this.selected(card,i) }
-            badge={ this.badger(card,i) }
-            onClick={() => this.select(card,i)}
-            />
-        ).concat([
-          <CardImage key={ null } overlay={ <h3>Add card</h3> }
-            scale={this.state.props.scale}
-            onClick={() => this.setState(state => {
-              state.hand.cards.push(new Card(state.id+=1,1+Math.floor(Math.random() * 4),1+Math.floor(Math.random() * 13)));
-              return state;
-            })}/>
-        ]))}
-      </CardHandImage>
+      <div tabIndex="0" onKeyDown={ this.move }>
+        <div style={{ width: "fit-content", margin: "auto" }}>
+          <br /><br />
+          <br /><br />
+          <CardHandImage {...this.state.props}>
+            { card_elements }
+          </CardHandImage>
+          <br /><br />
+          <br /><br />
+        </div>
+        <p>Select cards with Left and Right arrows.</p>
+        <p>Number keys 1 (ace) through 0 (10) and (j)ack, (q)ueen, (k)ing to set rank. Increment with Shift+D and decrement with Shift+A</p>
+        <p>Set suit of (c)lubs, (h)earts, (s)pades, (d)iamonds, or use Shift+W/Shift+S or Up and Down.</p>
+        <p>Re-sort with Enter. Randomize selected card with backtick, randomize all cards with tilde.</p>
+        <p>Add/remove cards with +/-.</p>
+        <Button label="Remove Selection" raised
+          onClick={ () => this.setState(state => { state.selected = null; return state; }) }
+        />
+        <Button label="Toggle Meta Cards" raised
+          onClick={ () => this.setState(state => { state.meta_visible = !state.meta_visible; return state; }) }
+        />
       </div>
-      <p>Select cards with Left and Right arrows.</p>
-      <p>Number keys 1 (ace) through 0 (10) and (j)ack, (q)ueen, (k)ing to set rank. Increment with Shift+D and decrement with Shift+A</p>
-      <p>Set suit of (c)lubs, (h)earts, (s)pades, (d)iamonds, or use Shift+W/Shift+S or Up and Down.</p>
-      <p>Re-sort with Enter. Randomize selected card with backtick, randomize all cards with tilde.</p>
-      <p>Add/remove cards with +/-.</p>
     </div>;
   }
 }
