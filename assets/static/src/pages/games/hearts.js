@@ -607,7 +607,7 @@ class HeartsAfterPartyPage extends React.Component {
         }
 
         let who_played = this.state.active.who_played;
-        if (!this.state.active.who_played || (played && data.who_played && played.length === 1 && +this.state.who_played[0].id !== +data.who_played[0])) {
+        if (!who_played || (played && data.who_played && data.played.length === 1 && +who_played[0].id !== +data.who_played[0])) {
           who_played = [];
           if (data.who_played) {
             for (let uid of data.who_played) {
