@@ -1485,6 +1485,7 @@ class JoinGamePage extends React.Component {
                     <Link to="/create/room">Looking to make a new room? Create one here!</Link><br /><br />
                     A room lets you play multiple games without having to share a new link every time!
                   </p>
+                  <Button raised label="Host a Room" onClick={ () => this.props.setPage('/create/room', false) } />
                 </div>
               </div>
             </c.Card>
@@ -1502,6 +1503,7 @@ class JoinGamePage extends React.Component {
                   <p>
                     <Link to="/create/game">Looking to play a single game with some friends? Make one here!</Link>
                   </p>
+                  <Button raised label="Host a Game" onClick={ () => this.props.setPage('/create/game', false) } />
                 </div>
               </div>
             </c.Card>
