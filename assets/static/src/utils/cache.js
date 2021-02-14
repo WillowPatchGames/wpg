@@ -1,7 +1,11 @@
 import { UserModel, GameModel } from '../models.js';
 
-function loaded(v) {
+function uloaded(v) {
   return v !== undefined && v !== null && v.model && !v.model.error && v.model.display;
+}
+
+function gloaded(v) {
+  return v !== undefined && v !== null && v.model && !v.model.error && v.model.style;
 }
 
 class UserCacheSingleton {
@@ -13,8 +17,8 @@ class UserCacheSingleton {
   async FromId(id) {
     if (typeof id !== 'number') return id;
 
-    var threshhold = +this.access_threshhold + Math.floor(Math.random() * 10 - 5);
-    if (!loaded(this.cache[id]) || +this.cache[id].access >= +threshhold) {
+    var threshhold = +this.access_threshhold + Math.floor(Math.random() * 20 - 10);
+    if (!uloaded(this.cache[id]) || +this.cache[id].access >= +threshhold) {
       this.cache[id] = await {
         model: await UserModel.FromId(id),
         access: 0,
@@ -44,8 +48,8 @@ class GameCacheSingleton {
     }
 
     // Avoid a thundering herd; spread out retries.
-    var threshhold = +this.access_threshhold + Math.floor(Math.random() * 10 - 5);
-    if (!loaded(this.cache[id]) || +this.cache[id].access >= +threshhold) {
+    var threshhold = +this.access_threshhold + Math.floor(Math.random() * 20 - 10);
+    if (!gloaded(this.cache[id]) || +this.cache[id].access >= +threshhold) {
       this.cache[id] = await {
         model: await GameModel.FromId(user, id),
         access: 0,
@@ -58,7 +62,7 @@ class GameCacheSingleton {
   }
 
   Invalidate(id) {
-    if (loaded(this.cache[id])) {
+    if (gloaded(this.cache[id])) {
       this.cache[id] = null;
     }
   }
