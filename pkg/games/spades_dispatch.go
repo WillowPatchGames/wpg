@@ -232,19 +232,25 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 	// If the state changed for a bunch of people, notify them all.
 	if send_state {
 		for _, indexed_player := range game.ToPlayer {
-			if !indexed_player.Admitted || !indexed_player.Playing {
+			if !indexed_player.Admitted {
 				continue
 			}
 
-			// Send players their initial state. Mark it as a reply to the player
-			// who originally dealt, so they know the deal was successful.
-			var response SpadesStateNotification
-			response.LoadData(game, state, indexed_player)
-			if indexed_player.UID == player.UID {
-				response.ReplyTo = header.MessageID
-			}
+			if indexed_player.Playing {
+				// Send players their initial state. Mark it as a reply to the player
+				// who originally dealt, so they know the deal was successful.
+				var response SpadesStateNotification
+				response.LoadData(game, state, indexed_player)
+				if indexed_player.UID == player.UID {
+					response.ReplyTo = header.MessageID
+				}
 
-			c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
+				c.undispatch(game, indexed_player, response.MessageID, response.ReplyTo, response)
+			} else {
+				var response SpadesPeekNotification
+				response.LoadData(game, state, indexed_player)
+				c.undispatch(game, indexed_player, response.MessageID, 0, response)
+			}
 		}
 	}
 
