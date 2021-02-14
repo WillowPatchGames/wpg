@@ -12,7 +12,9 @@ class UserCacheSingleton {
 
   async FromId(id) {
     if (typeof id !== 'number') return id;
-    if (!loaded(this.cache[id]) || this.cache[id].access === this.access_threshhold) {
+
+    var threshhold = +this.access_threshhold + Math.floor(Math.random() * 10 - 5);
+    if (!loaded(this.cache[id]) || +this.cache[id].access >= +threshhold) {
       this.cache[id] = await {
         model: await UserModel.FromId(id),
         access: 0,
@@ -32,7 +34,7 @@ class GameCacheSingleton {
   constructor() {
     this.user = null;
     this.cache = {};
-    this.access_threshhold = 20;
+    this.access_threshhold = 100;
   }
 
   async FromId(user, id) {
@@ -41,7 +43,9 @@ class GameCacheSingleton {
       this.user = user;
     }
 
-    if (!loaded(this.cache[id]) || this.cache[id].access === this.access_threshhold) {
+    // Avoid a thundering herd; spread out retries.
+    var threshhold = +this.access_threshhold + Math.floor(Math.random() * 10 - 5);
+    if (!loaded(this.cache[id]) || +this.cache[id].access >= +threshhold) {
       this.cache[id] = await {
         model: await GameModel.FromId(user, id),
         access: 0,

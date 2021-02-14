@@ -65,7 +65,6 @@ class RoomMembersTab extends React.Component {
 
   async checkForGames() {
     // XXX: Convert to WebSocket
-    this.props.room.games = null;
     await this.props.room.update();
 
     this.setState(state => Object.assign({}, state, { members: this.props.room.members }));
@@ -255,7 +254,6 @@ class RoomGamesTab extends React.Component {
 
   async checkForGames() {
     // XXX: Convert to WebSocket
-    this.props.room.games = null;
     await this.props.room.update();
 
     if (this.props.room.games) {
