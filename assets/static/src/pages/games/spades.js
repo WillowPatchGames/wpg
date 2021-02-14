@@ -592,7 +592,8 @@ class SpadesAfterPartyPage extends React.Component {
       },
       winners: this.game?.winners,
       dealt: false,
-      passed: false,
+      split: false,
+      bidded: false,
       finished: false,
       message: "Loading results...",
       timeout: killable(() => { this.refreshData() }, 5000),
@@ -693,7 +694,8 @@ class SpadesAfterPartyPage extends React.Component {
           history: history,
           winners: winners,
           dealt: data.dealt,
-          passed: data.passed,
+          split: data.split,
+          bidded: data.bidded,
           finished: data.finished,
           active: {
             turn: turn,
@@ -855,7 +857,15 @@ class SpadesAfterPartyPage extends React.Component {
         <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
           <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
             <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-              Please wait for the round to begin...
+              {
+                !this.state.dealt
+                ? "Please wait for the round to begin..."
+                : !this.state.split
+                ? "Please wait for the cards to be split..."
+                : !this.state.bidded
+                ? "Please wait for players to bid..."
+                : "Please wait for a card to be played..."
+              }
             </div>
           </c.Card>
         </div>
