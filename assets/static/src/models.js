@@ -1,4 +1,4 @@
-import { UserCache } from './utils/cache.js';
+import { UserCache, GameCache, RoomCache } from './utils/cache.js';
 
 function nonempty(str) {
   return str !== undefined && str !== null && str !== "";
@@ -306,11 +306,11 @@ class UserModel {
     var result = [];
     if (data !== null) {
       for (let game_data of data) {
-        var game_obj = await GameModel.FromId(this, game_data.game_id);
+        var game_obj = await GameCache.FromId(this, game_data.game_id);
         game_data['game'] = game_obj;
 
         if ('room_id' in game_data && game_data['room_id'] !== undefined && game_data['room_id'] !== null && game_data['room_id'] !== 0) {
-          var room_obj = await RoomModel.FromId(this, game_data.room_id);
+          var room_obj = await RoomCache.FromId(this, game_data.room_id);
           game_data['room'] = room_obj;
         }
 
@@ -346,7 +346,7 @@ class UserModel {
     var result = [];
     if (data !== null) {
       for (let room_data of data) {
-        var room_obj = await RoomModel.FromId(this, room_data.room_id);
+        var room_obj = await RoomCache.FromId(this, room_data.room_id);
         room_data['room'] = room_obj;
 
         result.push(room_data);
