@@ -400,24 +400,26 @@ class RoomGamesTab extends React.Component {
         }
       }
 
-      right_panel = <>
-        {
-          playing.length > 0
-          ? <div>
-              <Typography use="headline4">In Progress</Typography>
-              { playing }
-            </div>
-          : null
-        }
-        {
-          pending.length > 0
-          ? <div>
-              <Typography use="headline4">Open to Join</Typography>
-              { pending }
-            </div>
-          : null
-        }
-      </>
+      if (playing.length > 0 || pending.length > 0) {
+        right_panel = <>
+          {
+            playing.length > 0
+            ? <div>
+                <Typography use="headline4">In Progress</Typography>
+                { playing }
+              </div>
+            : null
+          }
+          {
+            pending.length > 0
+            ? <div>
+                <Typography use="headline4">Open to Join</Typography>
+                { pending }
+              </div>
+            : null
+          }
+        </>
+      }
     } else {
       right_panel = <PreGamePage {...this.props} />;
       tab_title = "Game #" + this.props.game.id;
