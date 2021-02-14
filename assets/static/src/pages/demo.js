@@ -258,7 +258,7 @@ class DemoGamePage extends React.Component {
           <g.GridRow>
             <g.GridCell align="left" span={2} tablet={2}>
               <TextField label="scale" type="number" value={ this.state.props.scale }
-                onChange={e => { e.preventDefault(); let scale=e.target.value; this.setState(state => {Object.assign(state.props, {scale});return state})}}
+                onChange={e => { let scale=parseFloat(e.target.value); this.setState(state => {Object.assign(state.props, {scale});return state})}}
                 min={0.1} max={1} step={0.001}
               />
             </g.GridCell>
@@ -270,7 +270,7 @@ class DemoGamePage extends React.Component {
           <g.GridRow>
             <g.GridCell align="left" span={2} tablet={2}>
               <TextField label="overlap" type="number" value={ this.state.props.overlap }
-                onChange={e => {e.preventDefault(); let overlap=e.target.value; this.setState(state => {Object.assign(state.props, {overlap});return state})}}
+                onChange={e => { let overlap=parseFloat(e.target.value); this.setState(state => {Object.assign(state.props, {overlap});return state})}}
                 min={0} max={1} step={0.001}
               />
             </g.GridCell>
@@ -282,7 +282,7 @@ class DemoGamePage extends React.Component {
           <g.GridRow>
             <g.GridCell align="left" span={2} tablet={2}>
               <TextField label="curve" type="number" value={ this.state.props.curve }
-                onChange={e => {e.preventDefault(); let curve=e.target.value; this.setState(state => {Object.assign(state.props, {curve});return state})}}
+                onChange={e => { let curve=parseFloat(e.target.value); this.setState(state => {Object.assign(state.props, {curve});return state})}}
                 min={0} max={5} step={0.001}
               />
             </g.GridCell>
