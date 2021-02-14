@@ -315,7 +315,7 @@ class PreGameUserPage extends React.Component {
       return (
         <div>
           { countdown }
-          <h1>Game #{ this.props.game.id }</h1>
+          <h1>Game #{ this.props.game.id } - { this.props.game.style }</h1>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} tablet={8} />
             <g.GridCell align="right" span={6} tablet={8}>
@@ -644,6 +644,7 @@ class PreGameAdminPage extends React.Component {
                   </l.ListItemMeta>
                 </l.ListItem>
             )}
+            { players.length === 0 ? "There are no players in this game." : null }
             <l.ListItem disabled>
               <h1>Spectators</h1>
             </l.ListItem>
@@ -653,17 +654,18 @@ class PreGameAdminPage extends React.Component {
                   <l.ListItemMeta>
                     <span>
                     { user.id === this.props.user.id
-                      ? <>&nbsp;<Button raised label="Promote" onClick={ () => this.toggleSpectator(user) } /></>
+                      ? <>&nbsp;<Button raised label="Admit" onClick={ () => this.toggleSpectator(user) } /></>
                       : <>
                           <Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
                           &nbsp;
-                          <Button raised label="Promote" onClick={ () => this.toggleSpectator(user) } />
+                          <Button raised label="Admit" onClick={ () => this.toggleSpectator(user) } />
                         </>
                     }
                     </span>
                   </l.ListItemMeta>
                 </l.ListItem>
             )}
+            { spectators.length === 0 ? "There are no spectators in this game." : null }
             <l.ListItem disabled>
               <h1>Waiting</h1>
             </l.ListItem>
@@ -676,6 +678,7 @@ class PreGameAdminPage extends React.Component {
                   </l.ListItemMeta>
                 </l.ListItem>
             )}
+            { waiting.filter(user => !user.admitted).length === 0 ? "There are no users waiting to join this game." : null }
           </l.ListGroup>
         </l.List>
         <Button onClick={ () => this.start() } label={ this.state.started ? "Restart" : "Start" } raised />
@@ -695,7 +698,7 @@ class PreGameAdminPage extends React.Component {
       return (
         <div>
           { countdown }
-          <h1>Game #{ this.props.game.id }</h1>
+          <h1>Game #{ this.props.game.id } - { this.props.game.style }</h1>
           <g.Grid fixedColumnWidth={ true }>
             <g.GridCell align="left" span={3} tablet={8} />
             <g.GridCell align="right" span={6} tablet={8}>
@@ -712,7 +715,7 @@ class PreGameAdminPage extends React.Component {
     return (
       <div>
         { countdown }
-        <h1>Game #{ this.props.game.id }</h1>
+        <h1>Game #{ this.props.game.id } - { this.props.game.style }</h1>
         { content }
         <br/>
         { userContent }
