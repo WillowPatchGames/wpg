@@ -841,7 +841,7 @@ class CreateGameForm extends React.Component {
   }
 
   newState(fn, cb) {
-    if (!this.state.editable) {
+    if (!this.state.room_owner) {
       return;
     }
 

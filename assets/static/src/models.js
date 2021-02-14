@@ -229,7 +229,7 @@ class UserModel {
         'X-Auth-Token': this.token
       },
       redirect: 'follow',
-      body: JSON.stringify(request)
+      body: JSON.stringify(request),
     });
 
     const result = await response.json();
@@ -877,7 +877,7 @@ class RoomModel {
   async create() {
     var request = {
       'owner': this.user.id,
-      'style': this.mode,
+      'style': this.mode ? this.mode : this.style,
       'open': this.open,
       'config': this.config,
     };
@@ -915,7 +915,46 @@ class RoomModel {
         'Accept': 'application/json',
         'X-Auth-Token': this.user.token,
       },
-      redirect: 'follow'
+      redirect: 'follow',
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.log(result);
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+    this.error = null;
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+
+    if (this.members !== undefined && this.members !== null && this.members.length > 0) {
+      for (let member of this.members) {
+        member.user = await UserCache.FromId(member.user_id);
+      }
+    }
+
+    return this;
+  }
+
+  async save() {
+    var request = {
+      'style': this.mode ? this.mode : this.style,
+      'config': this.config,
+    };
+
+    var uri = this.api + '/room/' + this.id;
+    const response = await fetch(uri, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request),
     });
 
     const result = await response.json();

@@ -90,7 +90,6 @@ func (handle UpdateHandler) verifyRequest() error {
 func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {
 	err := handle.verifyRequest()
 	if err != nil {
-		log.Println("Here")
 		return hwaterr.WrapError(err, http.StatusBadRequest)
 	}
 
@@ -115,7 +114,6 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 					break Fields
 				}
 
-				log.Println("Update email", user.Email, "->", handle.req.Email)
 				database.SetSQLFromString(&user.Email, handle.req.Email)
 				if user.Email.Valid {
 					user.Config.GravatarHash.Valid = true
@@ -130,7 +128,6 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 					break Fields
 				}
 
-				log.Println("Update display", user.Display, "->", handle.req.Display)
 				user.Display = handle.req.Display
 			case "password", "old_password", "new_password":
 				if user.Guest {
@@ -140,12 +137,11 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 
 				changePassword = true
 			default:
-				log.Println("Field:", field)
+				log.Println("Unknown field to update in room:", field)
 				err = api_errors.ErrMissingRequest
 			}
 
 			if err != nil {
-				log.Println("Got error modifying user:", err)
 				return err
 			}
 		}

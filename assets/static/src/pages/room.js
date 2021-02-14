@@ -47,6 +47,7 @@ class RoomMembersTab extends React.Component {
       members: this.props.room.members,
       room_owner: +this.props.user.id === +this.props.room.owner,
       not_admitted: 0,
+      video_chat: this.props.room.config?.video_chat,
     };
 
     this.code_ref = React.createRef();
@@ -70,6 +71,21 @@ class RoomMembersTab extends React.Component {
     this.setState(state => Object.assign({}, state, { members: this.props.room.members }));
   }
 
+  async updateConfig() {
+    if (!this.props.room.config) {
+      this.props.room.config = {};
+    }
+    this.props.room.config.video_chat = this.state.video_chat;
+
+    var ret = await this.props.room.save();
+    if (ret && (ret.error || ret.type === "error")) {
+      console.log(ret);
+    }
+
+    await this.props.room.update();
+    this.setState(state => Object.assign({}, state, { video_chat: this.props.room.config.video_chat }));
+  }
+
   async toggleAdmitted(member) {
     if (!this.state.room_owner || member.user_id === this.props.room.owner) {
       return;
@@ -81,21 +97,48 @@ class RoomMembersTab extends React.Component {
     this.setState(state => Object.assign({}, state, { members: this.props.room.members }));
   }
 
+  newState(fn, cb) {
+    return this.setState(state => Object.assign({}, state, fn(state)));
+  }
+
+  inputHandler(name, checky) {
+    return (e) => {
+      var v = checky ? e.target.checked : e.target.value;
+      return this.newState(() => ({ [name]: v }));
+    };
+  }
+
   render() {
     var left_panel = null;
     var right_panel = null;
 
     var chat = null;
-    if (this.props.room.config.video_chat !== undefined && this.props.room.config.video_chat !== null && this.props.room.config.video_chat.length > 0) {
+    if (this.state.room_owner) {
       chat = <>
-        <l.ListItem disabled key="chat">
-          <p>This room has an external video chat link:<br />
-            <a href={ this.props.room.config.video_chat } target="_blank" rel="noopener noreferrer">
-              { this.props.room.config.video_chat }
-            </a>
-          </p>
+        <l.ListItem disabled key="chat-desc">
+          <p>Configure external video chat link:</p>
+        </l.ListItem>
+        <l.ListItem key="chat-code">
+          <l.ListItemText className="App-game-code">
+            <TextField fullwidth value={ this.state.video_chat } onChange={ this.inputHandler("video_chat") } />
+          </l.ListItemText>
+        </l.ListItem>
+        <l.ListItem disabled key="chat-submit">
+          <Button label="Update" raised onClick={() => this.updateConfig() } />
         </l.ListItem>
       </>;
+    } else {
+      if (this.props.room.config.video_chat !== undefined && this.props.room.config.video_chat !== null && this.props.room.config.video_chat.length > 0) {
+        chat = <>
+          <l.ListItem disabled key="chat">
+            <p>This room has an external video chat link:<br />
+              <a href={ this.props.room.config.video_chat } target="_blank" rel="noopener noreferrer">
+                { this.props.room.config.video_chat }
+              </a>
+            </p>
+          </l.ListItem>
+        </>;
+      }
     }
 
     if (this.state.room_owner) {
