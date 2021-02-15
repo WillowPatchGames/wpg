@@ -512,7 +512,7 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, playing
 
 	if !admitted {
 		player.Admitted = false
-		player.Playing = false
+		player.Playing = true
 	} else {
 		player.Admitted = true
 		player.Playing = playing
