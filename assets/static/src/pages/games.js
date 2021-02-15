@@ -629,6 +629,13 @@ class PreGameAdminPage extends React.Component {
                 <l.ListItem key={user.id} disabled style={{ height: "auto", minHeight: "72px" }}>
                   <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
+                    { user.id === this.props.user.id
+                      ? null
+                      : <>
+                          <Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
+                          &nbsp;
+                        </>
+                    }
                     <Button raised label="Bench" onClick={ () => this.toggleSpectator(user) } />
                     { this.state.order
                       ? <>
