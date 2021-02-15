@@ -661,11 +661,11 @@ class PreGameAdminPage extends React.Component {
                   <l.ListItemMeta>
                     <span>
                     { user.id === this.props.user.id
-                      ? <>&nbsp;<Button raised label="Admit" onClick={ () => this.toggleSpectator(user) } /></>
+                      ? <>&nbsp;<Button raised label="Make Player" onClick={ () => this.toggleSpectator(user) } /></>
                       : <>
                           <Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
                           &nbsp;
-                          <Button raised label="Admit" onClick={ () => this.toggleSpectator(user) } />
+                          <Button raised label="Make Player" onClick={ () => this.toggleSpectator(user) } />
                         </>
                     }
                     </span>
