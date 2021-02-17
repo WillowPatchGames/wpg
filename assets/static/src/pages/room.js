@@ -591,8 +591,10 @@ class RoomArchiveTab extends React.Component {
 
     if (game.lifecycle === 'finished') {
       this.props.setPage('/afterparty', true);
+    } else if (game.lifecycle === 'playing') {
+      this.props.setPage('/playing', true);
     } else {
-      this.props.setPage('/play', true);
+      this.props.setPage('/room/games', true);
     }
   }
 
