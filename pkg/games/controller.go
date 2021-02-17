@@ -492,7 +492,7 @@ func (c *Controller) markReady(gid uint64, uid uint64, ready bool) error {
 // the game admin and not the players themselves. The exception to this is
 // that users joining by individual invite tokens should be auto-admitted as
 // they were previously invited individually.
-func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, playing bool) error {
+func (c *Controller) markAdmitted(us uint64, gid uint64, uid uint64, admitted bool, playing bool) error {
 	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
 
 	if !c.GameExists(gid) {
@@ -505,6 +505,10 @@ func (c *Controller) markAdmitted(gid uint64, uid uint64, admitted bool, playing
 
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
+
+	if player.Admitted != admitted && us != game.Owner {
+		return errors.New("player with specified id (" + strconv.FormatUint(us, 10) + ") does not have authorization to change admitted status for " + strconv.FormatUint(uid, 10))
+	}
 
 	// The owner has to be admitted. :-)
 	if uid == game.Owner {

@@ -256,6 +256,17 @@ class PreGameUserPage extends React.Component {
   componentWillUnmount() {
     if (this.unmount) this.unmount();
   }
+  toggleSpectator(user) {
+    for (let u in this.state.players) {
+      if (this.state.players[u] === user) {
+        user.playing = !user.playing;
+
+        this.game.interface.controller.admitPlayer(user.user_id, true, user.playing);
+      }
+    }
+
+    this.setState(state => Object.assign({}, state, { players: this.state.players }));
+  }
   render() {
     let message = "Game is in an unknown state.";
     if (this.state.status === "pending") {
@@ -264,12 +275,17 @@ class PreGameUserPage extends React.Component {
       message = "Waiting for the game to start...";
     }
 
+    let us = null;
     let users = [];
     if (this.state.players !== null) {
       var i = 0;
       for (let player_id of Object.keys(this.state.players).sort()) {
         let player = this.state.players[player_id];
-        var display = +player_id === +this.props.user.id ? "You" : player.user.display;
+        let display = player.user.display;
+        if (+player_id === +this.props.user.id) {
+          display = "You";
+          us = player;
+        }
         users.push(
           <l.ListItem key={display} disabled>
             <span className="unselectable">{+i + 1}.&nbsp;</span> {display}
@@ -284,26 +300,40 @@ class PreGameUserPage extends React.Component {
 
     let content = <c.Card>
       <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-        <b>
-          { message }
-        </b>
-
+        {
+          message
+          ? <p>
+              <b>
+                { message }
+              </b>
+            </p>
+          : null
+        }
         {
           this.state.status !== "pending"
-          ? <l.List>
-              <l.CollapsibleList handle={
-                  <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-                }
-              >
-                <CreateGameForm {...this.props} editable={ false } />
-              </l.CollapsibleList>
-              <l.ListGroup>
-                <l.ListItem disabled>
-                  <b>Users</b>
-                </l.ListItem>
-                { users }
-              </l.ListGroup>
-            </l.List>
+          ? <>
+              {
+                us !== null
+                ? <Button raised label={ us.playing ? "Spectate" : "Play" }
+                    onClick={ () => this.toggleSpectator(us) }
+                  />
+                : null
+              }
+              <l.List>
+                <l.CollapsibleList handle={
+                    <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+                  }
+                >
+                  <CreateGameForm {...this.props} editable={ false } />
+                </l.CollapsibleList>
+                <l.ListGroup>
+                  <l.ListItem disabled>
+                    <b>Users</b>
+                  </l.ListItem>
+                  { users }
+                </l.ListGroup>
+              </l.List>
+            </>
           : null
         }
       </div>

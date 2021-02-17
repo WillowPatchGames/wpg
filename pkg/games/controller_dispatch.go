@@ -101,7 +101,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return err
 		}
 
-		if player.UID != game.Owner {
+		if player.UID != game.Owner && data.Target != player.UID {
 			return errors.New("player not authorized to admit other players")
 		}
 
@@ -109,7 +109,7 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			return errors.New("can't admit player into game that has already started")
 		}
 
-		return c.markAdmitted(game.GID, data.Target, data.Admit, data.Playing)
+		return c.markAdmitted(player.UID, game.GID, data.Target, data.Admit, data.Playing)
 	case "ready":
 		var data GameReady
 		if err := json.Unmarshal(message, &data); err != nil {
