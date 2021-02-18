@@ -4,11 +4,12 @@ import {
   Link,
 } from "react-router-dom";
 
+import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
+import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
-import * as g from '@rmwc/grid';
-import { Typography } from '@rmwc/typography';
+import '../App.css';
 
 import GameStartsScreen from '../images/Screenshots/Game starts screen 1.png';
 import YouDrewMessage from '../images/Screenshots/you drew message.png';

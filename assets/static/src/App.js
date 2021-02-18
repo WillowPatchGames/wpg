@@ -4,21 +4,12 @@ import {
   withRouter
 } from "react-router-dom";
 
-import '@rmwc/top-app-bar/styles';
-import '@rmwc/icon/styles';
-import '@rmwc/button/styles';
-import '@rmwc/card/styles';
-import '@rmwc/dialog/styles';
-import '@rmwc/grid/styles';
-import '@rmwc/snackbar/styles';
-import '@rmwc/typography/styles';
-import '@rmwc/textfield/styles';
-import '@rmwc/theme/styles';
-
 import { RMWCProvider } from '@rmwc/provider';
 import { ThemeProvider } from '@rmwc/theme';
+import '@rmwc/theme/styles';
 
 import { SnackbarQueue, createSnackbarQueue } from '@rmwc/snackbar';
+import '@rmwc/snackbar/styles';
 
 import { Helmet } from "react-helmet";
 

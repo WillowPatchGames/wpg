@@ -2,17 +2,18 @@ import React from 'react';
 
 import { Link } from "react-router-dom";
 
+import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
+import * as d from '@rmwc/dialog';
 import '@rmwc/dialog/styles';
+import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
+import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
+import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
-import * as c from '@rmwc/card';
-import * as d from '@rmwc/dialog';
-import * as l from '@rmwc/list';
-import { Slider } from '@rmwc/slider';
-import { Typography } from '@rmwc/typography';
+import '../App.css';
 
 import { PlanModel } from '../models.js';
 

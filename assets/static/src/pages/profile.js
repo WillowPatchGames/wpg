@@ -9,29 +9,28 @@ import {
 
 import { Helmet } from "react-helmet";
 
-import '@rmwc/avatar/styles';
-import '@rmwc/button/styles';
-import '@rmwc/card/styles';
-import '@rmwc/dialog/styles';
-import '@rmwc/grid/styles';
-import '@rmwc/list/styles';
-import '@rmwc/select/styles';
-import '@rmwc/tabs/styles';
-import '@rmwc/textfield/styles';
-import '@rmwc/theme/styles';
-import '@rmwc/typography/styles';
-
 import { Avatar } from '@rmwc/avatar';
+import '@rmwc/avatar/styles';
 import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import * as c from '@rmwc/card';
+import '@rmwc/card/styles';
 import * as d from '@rmwc/dialog';
+import '@rmwc/dialog/styles';
 import * as g from '@rmwc/grid';
+import '@rmwc/grid/styles';
 import * as l from '@rmwc/list';
+import '@rmwc/list/styles';
 import { Select } from '@rmwc/select';
+import '@rmwc/select/styles';
 import * as t from '@rmwc/tabs';
+import '@rmwc/tabs/styles';
 import { TextField } from '@rmwc/textfield';
+import '@rmwc/textfield/styles';
 import { ThemeProvider } from '@rmwc/theme';
+import '@rmwc/theme/styles';
 import { Typography } from '@rmwc/typography';
+import '@rmwc/typography/styles';
 
 import { LoadingPage } from './common.js';
 import { gravatarify } from '../utils/gravatar.js';

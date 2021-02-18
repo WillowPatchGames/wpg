@@ -3,15 +3,14 @@ import React from 'react';
 
 import { Button } from '@rmwc/button';
 import '@rmwc/button/styles';
-import '@rmwc/checkbox/styles';
-import '@rmwc/select/styles';
-import '@rmwc/typography/styles';
 import { TextField } from '@rmwc/textfield';
 import '@rmwc/textfield/styles';
 import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
 import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
+
+import '../App.css';
 
 import { Card, CardHand, CardHandImage, CardImage } from '../games/card.js';
 

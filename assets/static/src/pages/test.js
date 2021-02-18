@@ -1,16 +1,14 @@
 // Library imports
 import React from 'react';
 
-import '@rmwc/button/styles';
-import '@rmwc/checkbox/styles';
-import '@rmwc/select/styles';
-import '@rmwc/typography/styles';
-import '@rmwc/textfield/styles';
-
 import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import { Checkbox } from '@rmwc/checkbox';
+import '@rmwc/checkbox/styles';
 import { Select } from '@rmwc/select';
+import '@rmwc/select/styles';
 import { TextField } from '@rmwc/textfield';
+import '@rmwc/textfield/styles';
 
 // Application imports
 import '../App.css';

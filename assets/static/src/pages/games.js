@@ -5,28 +5,26 @@ import {
   Link,
 } from "react-router-dom";
 
-import '@rmwc/avatar/styles';
-import '@rmwc/button/styles';
-import '@rmwc/icon-button/styles';
-import '@rmwc/card/styles';
-import '@rmwc/dialog/styles';
-import '@rmwc/grid/styles';
-import '@rmwc/list/styles';
-import '@rmwc/select/styles';
-import '@rmwc/switch/styles';
-import '@rmwc/typography/styles';
-import '@rmwc/textfield/styles';
-
 import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import { IconButton } from '@rmwc/icon-button';
+import '@rmwc/icon-button/styles';
 import * as c from '@rmwc/card';
+import '@rmwc/card/styles';
 import * as d from '@rmwc/dialog';
+import '@rmwc/dialog/styles';
 import * as g from '@rmwc/grid';
+import '@rmwc/grid/styles';
 import * as l from '@rmwc/list';
+import '@rmwc/list/styles';
 import { Select } from '@rmwc/select';
+import '@rmwc/select/styles';
 import { Switch } from '@rmwc/switch';
+import '@rmwc/switch/styles';
 import { Typography } from '@rmwc/typography';
+import '@rmwc/typography/styles';
 import { TextField } from '@rmwc/textfield';
+import '@rmwc/textfield/styles';
 
 // Application imports
 import '../App.css';
@@ -1439,7 +1437,7 @@ class JoinGamePage extends React.Component {
     if (try_game) {
       var game = await GameModel.FromCode(this.props.user, this.state.code);
       if (game.error === undefined || game.error === null) {
-        var page = '/play';
+        let page = '/play';
         if (game.lifecycle === 'playing') {
           game = loadGame(game);
           page = '/playing';
@@ -1463,7 +1461,7 @@ class JoinGamePage extends React.Component {
       // Try loading it as a room instead, before displaying the game error page.
       var room = await RoomModel.FromCode(this.props.user, this.state.code);
       if (room.error === undefined || room.error === null) {
-        var page = '/room/games';
+        let page = '/room/games';
         if (!room.admitted) {
           page = '/room/members';
         }

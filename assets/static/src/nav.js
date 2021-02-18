@@ -1,24 +1,17 @@
 import React from 'react';
 
-import './App.css';
-import '@rmwc/top-app-bar/styles';
-import '@rmwc/icon/styles';
-import '@rmwc/icon-button/styles';
-import '@rmwc/button/styles';
-import '@rmwc/card/styles';
-import '@rmwc/dialog/styles';
-import '@rmwc/drawer/styles';
-import '@rmwc/grid/styles';
-import '@rmwc/list/styles';
-import '@rmwc/typography/styles';
-import '@rmwc/textfield/styles';
-import '@rmwc/theme/styles';
-
 import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import { IconButton } from '@rmwc/icon-button';
+import '@rmwc/icon-button/styles';
 import * as d from '@rmwc/drawer';
+import '@rmwc/drawer/styles';
 import * as l from '@rmwc/list';
+import '@rmwc/list/styles';
 import * as bar from '@rmwc/top-app-bar';
+import '@rmwc/top-app-bar/styles';
+
+import './App.css';
 
 class AuthedHeaderComponent extends React.Component {
   render() {

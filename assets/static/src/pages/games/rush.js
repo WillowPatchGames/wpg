@@ -1,18 +1,16 @@
 // Library imports
 import React from 'react';
 
-
-import '@rmwc/avatar/styles';
-import '@rmwc/button/styles';
-import '@rmwc/card/styles';
-import '@rmwc/grid/styles';
-import '@rmwc/list/styles';
-
 import { Avatar, AvatarCount, AvatarGroup } from '@rmwc/avatar';
+import '@rmwc/avatar/styles';
 import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import * as c from '@rmwc/card';
+import '@rmwc/card/styles';
 import * as g from '@rmwc/grid';
+import '@rmwc/grid/styles';
 import * as l from '@rmwc/list';
+import '@rmwc/list/styles';
 
 // Application imports
 import { RushGame, RushData } from '../../games/rush.js';

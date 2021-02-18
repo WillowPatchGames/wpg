@@ -2,13 +2,14 @@ import React from 'react';
 
 import { LazyLoadComponent } from 'react-lazy-load-image-component';
 
+import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
+import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
+import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
-import * as c from '@rmwc/card';
-import * as g from '@rmwc/grid';
-import { Typography } from '@rmwc/typography';
+import '../App.css';
 
 import willows from '../images/WillowPatch.jpg';
 import alex_scheel from '../images/alex-scheel.jpg';

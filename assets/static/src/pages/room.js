@@ -8,29 +8,30 @@ import {
 
 import { Helmet } from "react-helmet";
 
+import { Button } from '@rmwc/button';
 import '@rmwc/button/styles';
+import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
+import { Checkbox } from '@rmwc/checkbox';
 import '@rmwc/checkbox/styles';
+import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
+import { Icon } from '@rmwc/icon';
 import '@rmwc/icon/styles';
+import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
+import { Select } from '@rmwc/select';
 import '@rmwc/select/styles';
+import * as t from '@rmwc/tabs';
 import '@rmwc/tabs/styles';
+import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
+import { TextField } from '@rmwc/textfield';
 import '@rmwc/textfield/styles';
+import { ThemeProvider } from '@rmwc/theme';
 import '@rmwc/theme/styles';
 
-import { Button } from '@rmwc/button';
-import { Checkbox } from '@rmwc/checkbox';
-import * as c from '@rmwc/card';
-import * as g from '@rmwc/grid';
-import { Icon } from '@rmwc/icon';
-import * as l from '@rmwc/list';
-import { Select } from '@rmwc/select';
-import * as t from '@rmwc/tabs';
-import { Typography } from '@rmwc/typography';
-import { TextField } from '@rmwc/textfield';
-import { ThemeProvider } from '@rmwc/theme';
+import '../App.css';
 
 import { killable, CreateGameForm, PreGamePage } from './games.js';
 import { GameCache } from '../utils/cache.js';

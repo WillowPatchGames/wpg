@@ -1,10 +1,11 @@
 import React from 'react';
 
+import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
+import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
-import * as g from '@rmwc/grid';
-import { Typography } from '@rmwc/typography';
+import '../App.css';
 
 class PrivacyPage extends React.Component {
   render() {

@@ -5,6 +5,7 @@ import mergeProps from 'react-merge-props';
 import '../../main.scss';
 
 import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import { CircularProgress } from '@rmwc/circular-progress';
 import '@rmwc/circular-progress/styles';
 

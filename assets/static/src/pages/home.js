@@ -2,14 +2,14 @@ import React from 'react';
 
 import { LazyLoadComponent, LazyLoadImage } from 'react-lazy-load-image-component';
 
-import '../App.css';
+import * as g from '@rmwc/grid';
 import '@rmwc/grid/styles';
+import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
+import { Theme } from '@rmwc/theme';
 import '@rmwc/theme/styles';
 
-import * as g from '@rmwc/grid';
-import { Typography } from '@rmwc/typography';
-import { Theme } from '@rmwc/theme';
+import '../App.css';
 
 import logo from '../images/logo.png';
 import WinnerGif from '../images/Home-Page-small.gif';
