@@ -14,12 +14,16 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
-ReactDOM.render(
-  <BrowserRouter style={{ 'marginTop': "0px", 'borderTop': '0', 'paddingTop': '0px' }}>
-    <App />
-  </BrowserRouter>,
-  document.getElementById('root')
-);
+const root = document.getElementById('root');
+const doc = <BrowserRouter>
+  <App />
+</BrowserRouter>;
+
+if (root.hasChildNodes()) {
+  ReactDOM.hydrate(doc, root);
+} else {
+  ReactDOM.render(doc, root);
+}
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
