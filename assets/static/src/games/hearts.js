@@ -92,7 +92,7 @@ class HeartsGame {
     this.data = new HeartsData(game);
     this.synopsis = {};
 
-    this.started = false;
+    this.started = game.lifecycle === 'playing' || game.lifecycle === 'finished';
     this.dealt = false;
     this.passed = false;
     this.finished = false;

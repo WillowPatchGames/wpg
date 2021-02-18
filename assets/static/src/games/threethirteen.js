@@ -124,7 +124,7 @@ class ThreeThirteenGame {
     this.data = new ThreeThirteenData(game);
     this.synopsis = {};
 
-    this.started = false;
+    this.started = game.lifecycle === 'playing' || game.lifecycle === 'finished';
     this.dealt = false;
     this.laid_down = false;
     this.laid_down_user = null;

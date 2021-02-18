@@ -113,7 +113,7 @@ class SpadesGame {
     this.data = new SpadesData(game);
     this.synopsis = {};
 
-    this.started = false;
+    this.started = game.lifecycle === 'playing' || game.lifecycle === 'finished';
     this.dealt = false;
     this.split = false;
     this.bidded = false;
