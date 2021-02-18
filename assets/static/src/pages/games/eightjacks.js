@@ -708,11 +708,33 @@ class EightJacksGamePage extends React.Component {
       </div>
     }
 
+    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
+      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+        <div className="text-center">
+          <h3>Game Configuration</h3>
+          <l.List>
+            <l.CollapsibleList handle={
+                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+              }
+            >
+              <CreateGameForm {...this.props} editable={ false } />
+            </l.CollapsibleList>
+          </l.List>
+        </div>
+      </c.Card>
+    </div>;
+
     return (
       <div>
         { countdown }
         <EightJacksGameSynopsis {...this.props} game={ this.game } />
         <EightJacksGameComponent {...this.props} game={ this.game } interface={ this.state.interface } notify={ (...arg) => notify(this.props.snackbar, ...arg) } />
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} tablet={8} />
+          <g.GridCell align="right" span={6} tablet={8}>
+            { configuration }
+          </g.GridCell>
+        </g.Grid>
       </div>
     );
   }

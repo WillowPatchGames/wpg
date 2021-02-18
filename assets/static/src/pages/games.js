@@ -111,6 +111,8 @@ function killable(func, interval) {
 class GamePage extends React.Component {
   constructor(props) {
     super(props);
+    var game = loadGame(this.props.game);
+    this.props.setGame(game);
     console.log(this.props.game);
     if (this.props.game.lifecycle === 'pending') {
       this.props.setPage('/play', true);
@@ -145,6 +147,13 @@ class PreGamePage extends React.Component {
     this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
+    if (this.props.game.lifecycle === 'playing') {
+      this.props.setPage('/playing', true);
+    } else if (this.props.game.lifecycle === 'finished') {
+      this.props.setPage('/afterparty', true);
+    } else if (this.props.game.lifecycle === 'pending') {
+      this.props.setPage('/play', false);
+    }
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
@@ -1430,7 +1439,15 @@ class JoinGamePage extends React.Component {
     if (try_game) {
       var game = await GameModel.FromCode(this.props.user, this.state.code);
       if (game.error === undefined || game.error === null) {
-        this.props.setPage('play', '?code=' + game.code);
+        var page = '/play';
+        if (game.lifecycle === 'playing') {
+          game = loadGame(game);
+          page = '/playing';
+        } else if (game.lifecycle === 'finished') {
+          game = loadGame(game);
+          page = '/afterpraty';
+        }
+        this.props.setPage(page, '?code=' + game.code);
         this.props.setGame(game);
         return;
       }
