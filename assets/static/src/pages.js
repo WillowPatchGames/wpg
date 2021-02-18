@@ -24,16 +24,7 @@ import { PricingPage } from './pages/pricing.js';
 import { PrivacyPage } from './pages/privacy.js';
 import { DemoGamePage } from './pages/demo.js';
 
-function updateComponent(thisProps, nextProps) {
-  var ret = nextProps.room !== thisProps.room || nextProps.game !== thisProps.game || nextProps.user !== thisProps.user || nextProps.location !== thisProps.location || nextProps.notification !== thisProps.notification;
-  return ret;
-}
-
 class RouteWithAuth extends React.Component {
-  shouldComponentUpdate(nextProps) {
-    return updateComponent(this.props, nextProps);
-  }
-
   render() {
     var child = this.props.children[1];
     if (this.props.user && this.props.user.authed) {
@@ -47,10 +38,6 @@ class RouteWithAuth extends React.Component {
 }
 
 class RouteWithGame extends React.Component {
-  shouldComponentUpdate(nextProps) {
-    return updateComponent(this.props, nextProps);
-  }
-
   render() {
     var child = this.props.children[1];
     if (this.props.game) {
@@ -64,10 +51,6 @@ class RouteWithGame extends React.Component {
 }
 
 class RouteWithRoom extends React.Component {
-  shouldComponentUpdate(nextProps) {
-    return updateComponent(this.props, nextProps);
-  }
-
   render() {
     var child = this.props.children[1];
     if (this.props.room) {
@@ -81,10 +64,6 @@ class RouteWithRoom extends React.Component {
 }
 
 class Page extends React.Component {
-  shouldComponentUpdate(nextProps) {
-    return updateComponent(this.props, nextProps);
-  }
-
   render() {
     var this_props = Object.assign({}, this.props, { location: undefined });
 
@@ -110,7 +89,7 @@ class Page extends React.Component {
             <AboutPage {...this_props} key="path-about" />
           </>
         </Route>
-        <RouteWithGame path="/afterparty" game={ this.props.game }>
+        <RouteWithGame path="/afterparty" user={ this.props.user } game={ this.props.game }>
           <>
             <Helmet>
               <title>{ "After Party - Game #" + this.props.game?.id }</title>
@@ -176,7 +155,7 @@ class Page extends React.Component {
             <LoginPage {...this_props} key="path-login" />
           </>
         </Route>
-        <RouteWithGame path="/play" game={ this.props.game }>
+        <RouteWithGame path="/play" user={ this.props.user } game={ this.props.game }>
           <>
             <Helmet>
               <title>{ "Pre-Game - Game #" + this.props.game?.id }</title>
@@ -190,7 +169,7 @@ class Page extends React.Component {
             <JoinGamePage {...this_props} key="path-play-missing" />
           </>
         </RouteWithGame>
-        <RouteWithGame path="/playing" game={ this.props.game }>
+        <RouteWithGame path="/playing" user={ this.props.user } game={ this.props.game }>
           <>
             <Helmet>
               <title>{ "Playing - Game #" + this.props.game?.id }</title>
@@ -237,7 +216,7 @@ class Page extends React.Component {
             <LoginPage {...this_props} key="path-profile-unauthed" />
           </>
         </RouteWithAuth>
-        <RouteWithRoom path="/room" room={ this.props.room }>
+        <RouteWithRoom path="/room" user={ this.props.user } room={ this.props.room }>
           <>
             <Helmet
               titleTemplate={ notified_room_title }
