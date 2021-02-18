@@ -814,6 +814,7 @@ class UserProfilePage extends React.Component {
     var tab_index = paths.indexOf(window.location.pathname);
     if (tab_index === -1) {
       tab_index = 0;
+      console.log("Here?");
     }
 
     return (
@@ -835,9 +836,6 @@ class UserProfilePage extends React.Component {
         <br />
         <div style={{ width: "65%", margin: "0 auto" }}>
           <Switch>
-            <Route exact path="/profile">
-              <UserProfileTab {...this.props} />
-            </Route>
             <Route path="/profile/overview">
               <UserProfileTab {...this.props} />
             </Route>
@@ -849,6 +847,9 @@ class UserProfilePage extends React.Component {
             </Route>
             <Route path="/profile/archive">
               <UserArchiveTab {...this.props} />
+            </Route>
+            <Route>
+              <UserProfileTab {...this.props} />
             </Route>
           </Switch>
         </div>

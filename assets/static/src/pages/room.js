@@ -814,9 +814,6 @@ class RoomPage extends React.Component {
         </div>
         <br />
         <Switch>
-          <Route exact path="/room">
-            <RoomGamesTab {...this.props} />
-          </Route>
           <Route path="/room/members">
             <RoomMembersTab {...this.props} />
           </Route>
@@ -825,6 +822,9 @@ class RoomPage extends React.Component {
           </Route>
           <Route path="/room/archive">
             <RoomArchiveTab {...this.props} />
+          </Route>
+          <Route>
+            <RoomGamesTab {...this.props} />
           </Route>
         </Switch>
       </div>

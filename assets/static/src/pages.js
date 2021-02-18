@@ -24,7 +24,16 @@ import { PricingPage } from './pages/pricing.js';
 import { PrivacyPage } from './pages/privacy.js';
 import { DemoGamePage } from './pages/demo.js';
 
+function updateComponent(thisProps, nextProps) {
+  var ret = nextProps.room !== thisProps.room || nextProps.game !== thisProps.game || nextProps.user !== thisProps.user || nextProps.location !== thisProps.location || nextProps.notification !== thisProps.notification;
+  return ret;
+}
+
 class RouteWithAuth extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    return updateComponent(this.props, nextProps);
+  }
+
   render() {
     var child = this.props.children[1];
     if (this.props.user && this.props.user.authed) {
@@ -38,6 +47,10 @@ class RouteWithAuth extends React.Component {
 }
 
 class RouteWithGame extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    return updateComponent(this.props, nextProps);
+  }
+
   render() {
     var child = this.props.children[1];
     if (this.props.game) {
@@ -51,6 +64,10 @@ class RouteWithGame extends React.Component {
 }
 
 class RouteWithRoom extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    return updateComponent(this.props, nextProps);
+  }
+
   render() {
     var child = this.props.children[1];
     if (this.props.room) {
@@ -65,7 +82,7 @@ class RouteWithRoom extends React.Component {
 
 class Page extends React.Component {
   shouldComponentUpdate(nextProps) {
-    return nextProps.room !== this.props.room || nextProps.game !== this.props.game || nextProps.user !== this.props.user || nextProps.location !== this.props.location || nextProps.notification !== this.props.notification;
+    return updateComponent(this.props, nextProps);
   }
 
   render() {
@@ -243,7 +260,7 @@ class Page extends React.Component {
             <RushRulesPage {...this_props} key="path-rules-rush" />
           </>
         </Route>
-        <RouteWithAuth path="/signup">
+        <RouteWithAuth path="/signup" user={ this.props.user }>
           <>
             <Helmet
               titleTemplate={ notified_preferences_title }
