@@ -265,6 +265,9 @@ class Page extends React.Component {
         <Route exact path="/">
           <HomePage {...this_props} key="home" />
         </Route>
+        <Route path="/react-snap-200">
+          null
+        </Route>
         <Route>
           <>
             <Helmet>

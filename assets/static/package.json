@@ -44,12 +44,14 @@
     "react-scripts": "^3.4.4",
     "react-snap": "^1.23.0",
     "seamless-scroll-polyfill": "^1.1.0",
-    "shallow-eq": "^1.0.6"
+    "shallow-eq": "^1.0.6",
+    "sw-precache": "^5.2.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "postbuild": "react-snap",
+    "generate-sw": "sw-precache --root=build --config scripts/sw-precache-config.js && uglifyjs build/service-worker.js -o build/service-worker.js",
+    "postbuild": "react-snap && npm run generate-sw",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
