@@ -814,7 +814,6 @@ class UserProfilePage extends React.Component {
     var tab_index = paths.indexOf(window.location.pathname);
     if (tab_index === -1) {
       tab_index = 0;
-      console.log("Here?");
     }
 
     return (
