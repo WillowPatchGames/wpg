@@ -66,7 +66,7 @@ func (ict *intConfigTag) ValidateValue(field reflect.Value) error {
 
 func (ict *intConfigTag) validateValue(value int) error {
 	if value < ict.Min || value > ict.Max {
-		return errors.New(fmt.Sprintf("invalid value for parameter: %s has value %d; allowed between %d and %d", ict.Field, value, ict.Min, ict.Max))
+		return fmt.Errorf("invalid value for parameter: %s has value %d; allowed between %d and %d", ict.Field, value, ict.Min, ict.Max)
 	}
 
 	return nil
@@ -170,7 +170,7 @@ func (ect *enumConfigTag) validateValue(value int) error {
 	}
 
 	if !found {
-		return errors.New(fmt.Sprintf("invalid value for parameter: %s has value %d; outside of allowed range", ect.Field, value))
+		return fmt.Errorf("invalid value for parameter: %s has value %d; outside of allowed range", ect.Field, value)
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package games
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -60,7 +59,6 @@ func (gm GameMode) NewState() ConfigurableState {
 		return &HeartsState{}
 	default:
 		panic("Unable to create an empty state for this game mode")
-		return nil
 	}
 }
 
@@ -88,7 +86,6 @@ func (gm GameMode) Init(config figgy.Figgurable) (ConfigurableState, error) {
 		return state, state.Init(*asserted)
 	default:
 		panic("Unable to create an initialized state for this game mode")
-		return nil, errors.New("unable to create an initialized state for this game mode")
 	}
 }
 
@@ -106,7 +103,6 @@ func (gm GameMode) EmptyConfig() figgy.Figgurable {
 		return &HeartsConfig{}
 	default:
 		panic("Unable to create an empty config for this game mode")
-		return nil
 	}
 }
 
