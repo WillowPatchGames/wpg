@@ -134,7 +134,7 @@ class App extends React.Component {
       page = "/" + page;
     }
 
-    if (search !== undefined && search !== null && search !== "") {
+    if (search !== undefined && search !== null && search !== "" && search !== false) {
       if (search === true) {
         let params = new URLSearchParams(window.location.search);
         let code = params.get("code");

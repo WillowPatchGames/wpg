@@ -111,17 +111,25 @@ class GamePage extends React.Component {
     super(props);
     var game = loadGame(this.props.game);
     this.props.setGame(game);
-    console.log(this.props.game);
-    if (this.props.game.lifecycle === 'pending') {
-      this.props.setPage('/play', true);
+  }
+  async componentDidMount() {
+    await this.props.game.update();
+
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+    let code = this.props.room?.code || this.props.game?.code;
+    code = code ? "?code=" + code : true;
+    if (this.props.game.lifecycle === 'playing') {
+      this.props.setPage('/playing', code);
     } else if (this.props.game.lifecycle === 'finished') {
-      this.props.setPage('/afterparty', true);
-    } else if (!this.props.game.lifecycle === 'playing') {
-      this.props.setPage('/play', false);
+      this.props.setPage('/afterparty', code);
+    } else if (this.props.game.lifecycle === 'pending') {
+      this.props.setPage('/play', code);
     }
   }
   render() {
     var mode = this.props.game.mode || this.props.game.style;
+
     if (mode === 'rush') {
       return <RushGamePage {...this.props}/>
     } else if (mode === 'spades') {
@@ -145,12 +153,20 @@ class PreGamePage extends React.Component {
     this.admin = this.props.user && (this.props.user?.id === this.props.game?.owner);
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
+  }
+  async componentDidMount() {
+    await this.props.game.update();
+
+    this.game = loadGame(this.props.game);
+    this.props.setGame(this.game);
+    let code = this.props.room?.code || this.props.game?.code;
+    code = code ? "?code=" + code : true;
     if (this.props.game.lifecycle === 'playing') {
-      this.props.setPage('/playing', true);
+      this.props.setPage('/playing', code);
     } else if (this.props.game.lifecycle === 'finished') {
-      this.props.setPage('/afterparty', true);
+      this.props.setPage('/afterparty', code);
     } else if (this.props.game.lifecycle === 'pending') {
-      this.props.setPage('/play', false);
+      this.props.setPage('/play', code);
     }
   }
   render() {

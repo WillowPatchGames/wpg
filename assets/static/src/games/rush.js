@@ -325,7 +325,7 @@ class RushGame {
 
     this.data = new RushData(game);
 
-    this.started = game.lifecycle === 'playing' || game.lifecycle === 'finished';
+    this.started = false;
 
     this.onChange = () => {};
   }

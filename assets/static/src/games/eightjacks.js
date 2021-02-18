@@ -115,7 +115,7 @@ class EightJacksGame {
     this.data = new EightJacksData(game);
     this.synopsis = {};
 
-    this.started = game.lifecycle === 'playing' || game.lifecycle === 'finished';
+    this.started = false;
     this.dealt = false;
     this.finished = false;
 
