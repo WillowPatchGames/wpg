@@ -68,5 +68,8 @@
       "last 1 safari version"
     ]
   },
+  "reactSnap": {
+    "include": ["/", "/afterparty", "/play", "/playing", "/profile", "/profile/overview", "/profile/security", "/profile/plans", "/profile/archive", "/room", "/room/members", "/room/games", "/room/archive", "/demo"]
+  },
   "sideEffects": false
 }
