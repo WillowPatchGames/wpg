@@ -307,22 +307,24 @@ class PreGameUserPage extends React.Component {
       message = "Waiting for the game to start...";
     }
 
-    let us = null;
     let users = [];
     if (this.state.players !== null) {
       var i = 0;
       for (let player_id of Object.keys(this.state.players).sort()) {
         let player = this.state.players[player_id];
         let display = player.user.display;
+        let disabled = true;
+        let onClick = undefined;
         if (+player_id === +this.props.user.id) {
           display = "You";
-          us = player;
+          disabled = false;
+          onClick = () => this.toggleSpectator(player);
         }
         users.push(
           <l.ListItem key={display} disabled>
             <span className="unselectable">{+i + 1}.&nbsp;</span> {display}
             <l.ListItemMeta>
-              <span className="leftpad"><Switch checked={ player.playing } label={ player.playing ? "Player" : "Spectator" } disabled /></span>
+              <span className="leftpad"><Switch checked={ player.playing } label={ player.playing ? "Player" : "Spectator" } disabled={ disabled } onClick={ onClick } /></span>
             </l.ListItemMeta>
           </l.ListItem>
         );
@@ -343,29 +345,20 @@ class PreGameUserPage extends React.Component {
         }
         {
           this.state.status !== "pending"
-          ? <>
-              {
-                us !== null
-                ? <Button raised label={ us.playing ? "Spectate" : "Play" }
-                    onClick={ () => this.toggleSpectator(us) }
-                  />
-                : null
-              }
-              <l.List>
-                <l.CollapsibleList handle={
-                    <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-                  }
-                >
-                  <CreateGameForm {...this.props} editable={ false } />
-                </l.CollapsibleList>
-                <l.ListGroup>
-                  <l.ListItem disabled>
-                    <b>Users</b>
-                  </l.ListItem>
-                  { users }
-                </l.ListGroup>
-              </l.List>
-            </>
+          ? <l.List>
+              <l.CollapsibleList handle={
+                  <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+                }
+              >
+                <CreateGameForm {...this.props} editable={ false } />
+              </l.CollapsibleList>
+              <l.ListGroup>
+                <l.ListItem disabled>
+                  <b>Users</b>
+                </l.ListItem>
+                { users }
+              </l.ListGroup>
+            </l.List>
           : null
         }
       </div>
