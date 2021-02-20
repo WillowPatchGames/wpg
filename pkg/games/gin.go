@@ -401,6 +401,10 @@ func (gs *GinState) DiscardCard(player int, cardID int, laidDown bool) error {
 		return errors.New("need to specify a card")
 	}
 
+	if cardID <= 0 && gs.Config.BigGinAmount == -1 {
+		return errors.New("going big gin is not allowed in this game")
+	}
+
 	if laidDown {
 		solver := gs.GinSolver()
 		limit := gs.Config.LayingDownLimit
@@ -480,7 +484,7 @@ func (gs *GinState) DiscardCard(player int, cardID int, laidDown bool) error {
 	// specified a card, it must be in their hand, so remove the card from the
 	// hand. Note that if they went out with big gin, they'll have an extra card
 	// in their hand.
-	if cardID != -1 {
+	if cardID <= 0 {
 		// Check if the card is in the hand.
 		index, found := gs.Players[player].FindCard(cardID)
 		if !found {
