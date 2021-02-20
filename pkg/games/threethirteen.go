@@ -15,9 +15,11 @@ const ThreeThirteenNextRound string = "begin next round"
 type ThreeThirteenPlayer struct {
 	Hand []Card `json:"hand"`
 
-	Drawn           *Card `json:"drawn"`
-	PickedUpDiscard bool  `json:"picked_up_discard"`
-	RoundScore      int   `json:"round_score"`
+	Drawn           *Card   `json:"drawn"`
+	PickedUpDiscard bool    `json:"picked_up_discard"`
+	RoundScore      int     `json:"round_score"`
+	Groups          [][]int `json:"groups"`
+	Leftover        []int   `json:"leftover"`
 
 	Score    int `json:"score"`
 	Warnings int `json:"warnings"`
@@ -83,6 +85,9 @@ func (cfg ThreeThirteenConfig) Validate() error {
 type ThreeThirteenRoundPlayer struct {
 	DealtHand []Card `json:"dealt_hand"`
 	FinalHand []Card `json:"final_hand"`
+
+	Groups   [][]int `json:"groups"`
+	Leftover []int   `json:"leftover"`
 
 	RoundScore int `json:"round_score"`
 	Score      int `json:"score"`
@@ -655,6 +660,9 @@ func (tts *ThreeThirteenState) ScoreByGroups(player int, groups [][]int, leftove
 		log.Println("failed to compute minimum score for hand; got", score, "expected", ideal, "for cards", tts.Players[player].Hand)
 	}
 
+	tts.Players[player].Groups = groups
+	tts.Players[player].Leftover = leftover
+
 	return tts.ReportScore(player, score)
 }
 
@@ -686,8 +694,9 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 	tts.Players[player].RoundScore = score
 
 	all_in := true
-	for _, player := range tts.Players {
+	for player_index, player := range tts.Players {
 		if player.RoundScore == -1 {
+			tts.Turn = player_index
 			all_in = false
 			break
 		}
@@ -726,6 +735,8 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 			history.Players[index].Score = tts.Players[index].Score
 			history.Players[index].FinalHand = make([]Card, len(tts.Players[index].Hand))
 			copy(history.Players[index].FinalHand, tts.Players[index].Hand)
+			history.Players[index].Groups = tts.Players[index].Groups
+			history.Players[index].Leftover = tts.Players[index].Leftover
 		}
 
 		if tts.Config.ToPointLimit != -1 && max_score >= tts.Config.ToPointLimit {
