@@ -1379,7 +1379,7 @@ class GinAfterPartyPage extends React.Component {
             }
           }
 
-          let incr = !isNaN(round_score) && round_score < 0 ? ""+round_score : "+"+round_score
+          let incr = !isNaN(round_score) && round_score;
           let entries = [
             <td key={ player_index+"_score" } style={{ textAlign: "right", paddingLeft: "10px" }}>{ score }&nbsp;</td>,
             <td key={ player_index+"_incr" } style={{ textAlign: "left", paddingRight: "10px", fontSize: "75%" }}>({ incr })</td>
