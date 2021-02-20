@@ -28,13 +28,7 @@ func (hp *HeartsPlayer) Init() {
 }
 
 func (hp *HeartsPlayer) FindCard(cardID int) (int, bool) {
-	for index, card := range hp.Hand {
-		if card.ID == cardID {
-			return index, true
-		}
-	}
-
-	return -1, false
+	return FindCard(hp.Hand, cardID)
 }
 
 func (hp *HeartsPlayer) RemoveCard(cardID int) bool {

@@ -31,13 +31,7 @@ func (gp *GinPlayer) Init() {
 }
 
 func (gp *GinPlayer) FindCard(cardID int) (int, bool) {
-	for index, card := range gp.Hand {
-		if card.ID == cardID {
-			return index, true
-		}
-	}
-
-	return -1, false
+	return FindCard(gp.Hand, cardID)
 }
 
 func (gp *GinPlayer) RemoveCard(cardID int) bool {
@@ -592,13 +586,53 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 	cards := make(map[int]bool)
 	ncards := 0
 
+	hand := gs.Players[player].Hand
+	if player != gs.LaidDown {
+		// From the laying down player's hand, only include stuff they have in
+		// groups. Note, we assume that their hand was previously validated already.
+		// This ensures that, if this player lays down with cards leftover and the
+		// laying down player had points leftover, we don't count the sum of the
+		// two leftover groups of cards against this player.
+		var want_other_hand = false
+		for _, group := range groups {
+			for _, cardID := range group {
+				if _, found := FindCard(hand, cardID); !found {
+					log.Println("Want card not in our hand:", cardID)
+					want_other_hand = true
+					break
+				}
+			}
+
+			if want_other_hand {
+				break
+			}
+		}
+
+		if want_other_hand {
+			log.Println("Adding other hand")
+			for _, card := range gs.Players[gs.LaidDown].Hand {
+				var found = false
+				for _, leftoverID := range gs.Players[gs.LaidDown].Leftover {
+					if card.ID == leftoverID {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					hand = append(hand, card)
+				}
+			}
+		}
+	}
+
 	for _, group := range groups {
 		group_index := make([]int, 0)
 		for _, cardID := range group {
 			if _, ok := cards[cardID]; ok {
 				return errors.New("card was used twice")
 			}
-			index, found := gs.Players[player].FindCard(cardID)
+			index, found := FindCard(hand, cardID)
 			if !found {
 				return errors.New("unable to find card with specified identifier")
 			}
@@ -606,7 +640,8 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 			group_index = append(group_index, index)
 			ncards += 1
 		}
-		if !solver.IsValidGroup(gs.Players[player].Hand, group_index) {
+		if !solver.IsValidGroup(hand, group_index) {
+			log.Println(hand, groups, leftover)
 			// XXX better error message: stringify the cards?
 			return errors.New("not a valid grouping")
 		}
@@ -706,7 +741,7 @@ func (gs *GinState) ReportScore(player int, score int) error {
 		var max_score int
 		var our_index = gs.LaidDown
 		var our_score = gs.Players[our_index].RoundScore
-		var their_index = (gs.LaidDown + 1) % len(gs.Players)
+		var their_index = (our_index + 1) % len(gs.Players)
 		var their_score = gs.Players[their_index].RoundScore
 		if our_score < their_score {
 			var bonus = 0
@@ -717,15 +752,15 @@ func (gs *GinState) ReportScore(player int, score int) error {
 				}
 			}
 
-			gs.Players[our_score].Score = our_score + their_score + bonus
-			max_score = gs.Players[our_score].Score
+			gs.Players[our_index].Score = their_score - our_score + bonus
+			max_score = gs.Players[our_index].Score
 		} else {
 			var bonus = 0
 			if gs.Config.UndercutAmount > 0 {
 				bonus = gs.Config.UndercutAmount
 			}
 
-			gs.Players[their_score].Score = our_score + their_score + bonus
+			gs.Players[their_score].Score = their_score - our_score + bonus
 			max_score = gs.Players[their_score].Score
 		}
 

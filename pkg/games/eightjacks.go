@@ -108,13 +108,7 @@ func (sp *EightJacksPlayer) Init() {
 }
 
 func (ejp *EightJacksPlayer) FindCard(cardID int) (int, bool) {
-	for index, card := range ejp.Hand {
-		if card.ID == cardID {
-			return index, true
-		}
-	}
-
-	return -1, false
+	return FindCard(ejp.Hand, cardID)
 }
 
 func (ejp *EightJacksPlayer) RemoveCard(cardID int) bool {

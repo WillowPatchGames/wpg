@@ -31,13 +31,7 @@ func (ttp *ThreeThirteenPlayer) Init() {
 }
 
 func (ttp *ThreeThirteenPlayer) FindCard(cardID int) (int, bool) {
-	for index, card := range ttp.Hand {
-		if card.ID == cardID {
-			return index, true
-		}
-	}
-
-	return -1, false
+	return FindCard(ttp.Hand, cardID)
 }
 
 func (ttp *ThreeThirteenPlayer) RemoveCard(cardID int) bool {

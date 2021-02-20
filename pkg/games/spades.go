@@ -61,13 +61,7 @@ func (sp *SpadesPlayer) Init() {
 }
 
 func (sp *SpadesPlayer) FindCard(cardID int) (int, bool) {
-	for index, card := range sp.Hand {
-		if card.ID == cardID {
-			return index, true
-		}
-	}
-
-	return -1, false
+	return FindCard(sp.Hand, cardID)
 }
 
 func (sp *SpadesPlayer) RemoveCard(cardID int) bool {

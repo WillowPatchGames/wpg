@@ -76,3 +76,13 @@ type Deck struct {
 func (d *Deck) Init() {
 	d.Cards = make([]*Card, 0)
 }
+
+func FindCard(hand []Card, cardID int) (int, bool) {
+	for index, card := range hand {
+		if card.ID == cardID {
+			return index, true
+		}
+	}
+
+	return -1, false
+}
