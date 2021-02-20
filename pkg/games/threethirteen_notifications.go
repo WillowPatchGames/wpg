@@ -1,7 +1,9 @@
 package games
 
 type ThreeThirteenPlayerState struct {
-	Hand []Card `json:"hand,omitempty"`
+	Hand     []Card  `json:"hand,omitempty"`
+	Groups   [][]int `json:"groups,omitempty"`
+	Leftover []int   `json:"leftover,omitempty"`
 
 	Drawn           *Card `json:"drawn,omitempty"`
 	PickedUpDiscard bool  `json:"picked_up_discard"`
@@ -37,9 +39,9 @@ func (ttsn *ThreeThirteenStateNotification) LoadData(data *GameData, game *Three
 	ttsn.LoadHeader(data, player)
 	ttsn.MessageType = "state"
 
-	if len(game.Players[player.Index].Hand) > 0 {
-		ttsn.Hand = game.Players[player.Index].Hand
-	}
+	ttsn.Hand = game.Players[player.Index].Hand
+	ttsn.Groups = game.Players[player.Index].Groups
+	ttsn.Leftover = game.Players[player.Index].Leftover
 	ttsn.Drawn = game.Players[player.Index].Drawn
 	ttsn.PickedUpDiscard = game.Players[player.Index].PickedUpDiscard
 
@@ -80,7 +82,9 @@ type ThreeThirteenPlayerSynopsis struct {
 	IsTurn   bool `json:"is_turn"`
 	IsDealer bool `json:"is_dealer"`
 
-	Hand []Card `json:"hand,omitempty"`
+	Hand     []Card  `json:"hand,omitempty"`
+	Groups   [][]int `json:"groups,omitempty"`
+	Leftover []int   `json:"leftover,omitempty"`
 
 	RoundScore int `json:"round_score"`
 	Score      int `json:"score"`
@@ -120,6 +124,8 @@ func (ttsn *ThreeThirteenSynopsisNotification) LoadData(data *GameData, state *T
 
 			if (!state.Dealt || state.LaidDown != -1) && len(state.Players[indexed_player.Index].Hand) > 0 && state.Players[indexed_player.Index].Drawn == nil {
 				synopsis.Hand = state.Players[indexed_player.Index].Hand
+				synopsis.Groups = state.Players[indexed_player.Index].Groups
+				synopsis.Leftover = state.Players[indexed_player.Index].Leftover
 			}
 		}
 

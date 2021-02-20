@@ -628,25 +628,25 @@ func parseMessageHeader(message []byte) (MessageHeader, error) {
 	return obj, nil
 }
 
-func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
+func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) (bool, error) {
 	var header MessageHeader
 	var err error
 
 	header, err = parseMessageHeader(message)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if !GameModeFromString(header.Mode).IsValid() {
-		return errors.New("unknown game mode")
+		return false, errors.New("unknown game mode")
 	}
 
 	if header.ID != gid {
-		return errors.New("phantom message: message came over wrong websocket for different game: " + strconv.FormatUint(uid, 10) + " in " + strconv.FormatUint(gid, 10) + " :: " + string(message))
+		return false, errors.New("phantom message: message came over wrong websocket for different game: " + strconv.FormatUint(uid, 10) + " in " + strconv.FormatUint(gid, 10) + " :: " + string(message))
 	}
 
 	if header.Player != uid {
-		return errors.New("phantom message: message came over wrong websocket for different player: " + strconv.FormatUint(uid, 10) + " in " + strconv.FormatUint(gid, 10) + " :: " + string(message))
+		return false, errors.New("phantom message: message came over wrong websocket for different player: " + strconv.FormatUint(uid, 10) + " in " + strconv.FormatUint(gid, 10) + " :: " + string(message))
 	}
 
 	// We're going to release this lock right away, so don't bother with
@@ -656,7 +656,7 @@ func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 	gameData, ok := c.ToGame[header.ID]
 	if !ok || gameData.State == nil {
 		c.lock.Unlock()
-		return errors.New("unable to find game by id (" + strconv.FormatUint(header.ID, 10) + ")")
+		return false, errors.New("unable to find game by id (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
 
 	gameData.lock.Lock()
@@ -666,13 +666,16 @@ func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 	// and only referencing the game, release this lock.
 	c.lock.Unlock()
 
+	var was_started = gameData.State.IsStarted()
+	var was_finished = gameData.State.IsFinished()
+
 	if gameData.Mode.String() != header.Mode {
-		return errors.New("game modes don't match internal expectations")
+		return false, errors.New("game modes don't match internal expectations")
 	}
 
 	playerData, ok := gameData.ToPlayer[header.Player]
 	if !ok {
-		return errors.New("user (" + strconv.FormatUint(header.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(header.ID, 10) + ")")
+		return false, errors.New("user (" + strconv.FormatUint(header.Player, 10) + ") isn't playing this game (" + strconv.FormatUint(header.ID, 10) + ")")
 	}
 
 	var db_msg = database.GameMessage{
@@ -693,7 +696,8 @@ func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) error {
 		c.undispatch(gameData, playerData, notification.MessageID, notification.ReplyTo, notification)
 	}
 
-	return err
+	var do_update = gameData.State.IsStarted() != was_started || gameData.State.IsFinished() != was_finished
+	return do_update, err
 }
 
 func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id int, reply_to int, obj interface{}) {

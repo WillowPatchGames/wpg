@@ -584,9 +584,31 @@ func (hub *Hub) processMessage(client *Client, message []byte) error {
 		return errors.New("unable to process message from non-existent client:" + client.String())
 	}
 
-	err := hub.controller.Dispatch(message, uint64(client.gameID), uint64(client.userID))
+	changed_state, err := hub.controller.Dispatch(message, uint64(client.gameID), uint64(client.userID))
 	if err != nil {
 		log.Println("Got error processing message:", err, string(message))
+	}
+
+	if changed_state {
+		gameid := uint64(client.gameID)
+		if err := database.InTransaction(func(tx *gorm.DB) error {
+			if model, ok := hub.dbgames[GameID(gameid)]; !ok || model == nil {
+				var gamedb database.Game
+				if err := tx.First(&gamedb, gameid).Error; err != nil {
+					return err
+				}
+
+				hub.dbgames[GameID(gameid)] = &gamedb
+			}
+
+			if err := hub.controller.PersistGame(hub.dbgames[GameID(gameid)], tx); err != nil {
+				return err
+			}
+
+			return tx.Save(hub.dbgames[GameID(gameid)]).Error
+		}); err != nil {
+			log.Println("Unable to persist game (", gameid, "):", err)
+		}
 	}
 
 	return err

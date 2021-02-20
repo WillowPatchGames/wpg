@@ -1,7 +1,9 @@
 package games
 
 type GinPlayerState struct {
-	Hand []Card `json:"hand,omitempty"`
+	Hand     []Card  `json:"hand,omitempty"`
+	Groups   [][]int `json:"groups,omitempty"`
+	Leftover []int   `json:"leftover,omitempty"`
 
 	Drawn           *Card `json:"drawn,omitempty"`
 	PickedUpDiscard bool  `json:"picked_up_discard"`
@@ -36,9 +38,10 @@ func (gsn *GinStateNotification) LoadData(data *GameData, game *GinState, player
 	gsn.LoadHeader(data, player)
 	gsn.MessageType = "state"
 
-	if len(game.Players[player.Index].Hand) > 0 {
-		gsn.Hand = game.Players[player.Index].Hand
-	}
+	gsn.Hand = game.Players[player.Index].Hand
+	gsn.Groups = game.Players[player.Index].Groups
+	gsn.Leftover = game.Players[player.Index].Leftover
+
 	gsn.Drawn = game.Players[player.Index].Drawn
 	gsn.PickedUpDiscard = game.Players[player.Index].PickedUpDiscard
 
@@ -77,7 +80,9 @@ type GinPlayerSynopsis struct {
 	IsTurn   bool `json:"is_turn"`
 	IsDealer bool `json:"is_dealer"`
 
-	Hand []Card `json:"hand,omitempty"`
+	Hand     []Card  `json:"hand,omitempty"`
+	Groups   [][]int `json:"groups,omitempty"`
+	Leftover []int   `json:"leftover,omitempty"`
 
 	RoundScore int `json:"round_score"`
 	Score      int `json:"score"`
@@ -115,6 +120,8 @@ func (gsn *GinSynopsisNotification) LoadData(data *GameData, state *GinState, pl
 
 			if (!state.Dealt || state.LaidDown != -1) && len(state.Players[indexed_player.Index].Hand) > 0 && state.Players[indexed_player.Index].Drawn == nil {
 				synopsis.Hand = state.Players[indexed_player.Index].Hand
+				synopsis.Groups = state.Players[indexed_player.Index].Groups
+				synopsis.Leftover = state.Players[indexed_player.Index].Leftover
 			}
 		}
 
