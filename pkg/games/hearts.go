@@ -779,12 +779,6 @@ func (hs *HeartsState) tabulateRoundScore() error {
 	hs.Dealt = false
 	hs.Dealer = (hs.Dealer + 1) % hs.Config.NumPlayers
 
-	// Start the round: shuffle the cards and (if necessary) deal them out.
-	if err := hs.StartRound(); err != nil {
-		log.Println("Error starting round: ", err)
-		return err
-	}
-
 	return errors.New(HeartsNextRound)
 }
 

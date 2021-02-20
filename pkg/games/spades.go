@@ -927,10 +927,6 @@ func (ss *SpadesState) tabulateRoundScore() error {
 	ss.Dealt = false
 	ss.Dealer = (ss.Dealer + 1) % ss.Config.NumPlayers
 
-	if err := ss.StartRound(); err != nil {
-		return err
-	}
-
 	return errors.New(SpadesNextRound)
 }
 
