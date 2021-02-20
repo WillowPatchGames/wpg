@@ -37,6 +37,10 @@ var handProps = {
   curve: true,
 };
 
+var discardProps = {
+  overlap: true,
+};
+
 class GinGameComponent extends React.Component {
   constructor(props) {
     super(props);
@@ -220,10 +224,6 @@ class GinGameComponent extends React.Component {
   }
   render() {
     var num_players = this.state.game.config.num_players;
-
-    var discardProps = {
-      overlap: true,
-    };
 
     var show_yourself =
       !this.state.game.interface.dealt
@@ -534,7 +534,7 @@ class GinGameComponent extends React.Component {
                   { this.renderHand(false) }
                 </div>
               </c.Card>
-            </div>;
+            </div>
           </>;
         }
       } else {
@@ -1216,7 +1216,7 @@ class GinAfterPartyPage extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                { this.state.active.discard?.toImage() }
+                { this.state.active.discard?.toImage(discardProps) }
               </div>
             </c.Card>
           </div>
@@ -1227,7 +1227,7 @@ class GinAfterPartyPage extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                { this.state.active.discard?.toImage() }
+                { this.state.active.discard?.toImage(discardProps) }
               </div>
             </c.Card>
           </div>

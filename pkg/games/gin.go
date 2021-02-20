@@ -752,7 +752,8 @@ func (gs *GinState) ReportScore(player int, score int) error {
 				}
 			}
 
-			gs.Players[our_index].Score = their_score - our_score + bonus
+			var delta = their_score - our_score + bonus
+			gs.Players[our_index].Score += delta
 			max_score = gs.Players[our_index].Score
 		} else {
 			var bonus = 0
@@ -760,7 +761,8 @@ func (gs *GinState) ReportScore(player int, score int) error {
 				bonus = gs.Config.UndercutAmount
 			}
 
-			gs.Players[their_score].Score = their_score - our_score + bonus
+			var delta = their_score - our_score + bonus
+			gs.Players[their_score].Score += delta
 			max_score = gs.Players[their_score].Score
 		}
 
