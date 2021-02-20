@@ -506,7 +506,7 @@ class SpadesGamePage extends React.Component {
           window.scrollTo(0, 0);
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
-
+          this.props.game.lifecycle = "playing";
           if (!data.playing) {
             this.props.setPage('afterparty', true);
           }
