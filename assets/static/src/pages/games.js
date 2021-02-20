@@ -40,6 +40,8 @@ import { HeartsGame } from '../games/hearts.js';
 import { HeartsGamePage, HeartsAfterPartyPage } from './games/hearts.js';
 import { EightJacksGame } from '../games/eightjacks.js';
 import { EightJacksGamePage, EightJacksAfterPartyPage } from './games/eightjacks.js';
+import { GinGame } from '../games/gin.js';
+import { GinGamePage, GinAfterPartyPage } from './games/gin.js';
 import { UserCache } from '../utils/cache.js';
 
 function loadGame(game) {
@@ -58,6 +60,8 @@ function loadGame(game) {
       game.interface = new HeartsGame(game);
     } else if (mode === "eight jacks") {
       game.interface = new EightJacksGame(game);
+    } else if (mode === "gin") {
+      game.interface = new GinGame(game);
     } else {
       console.log("Unknown game mode:", mode);
     }
@@ -140,6 +144,8 @@ class GamePage extends React.Component {
       return <HeartsGamePage {...this.props}/>
     } else if (mode === 'eight jacks') {
       return <EightJacksGamePage {...this.props}/>
+    } else if (mode === 'gin') {
+      return <GinGamePage {...this.props}/>
     } else {
       return "Unrecognized game mode: " + mode;
     }
@@ -192,6 +198,8 @@ class AfterPartyPage extends React.Component {
       return <HeartsAfterPartyPage {...this.props}/>
     } else if (mode === 'eight jacks') {
       return <EightJacksAfterPartyPage {...this.props}/>
+    } else if (mode === 'gin') {
+      return <GinAfterPartyPage {...this.props}/>
     } else {
       return "Unrecognized game mode: " + mode;
     }
@@ -226,6 +234,7 @@ class PreGameUserPage extends React.Component {
         window.scrollTo(0, 0);
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
+        this.props.game.lifecycle = "playing";
         if (data.playing) {
           this.props.setPage('playing', true);
         } else {
@@ -463,6 +472,7 @@ class PreGameAdminPage extends React.Component {
         window.scrollTo(0, 0);
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
+        this.props.game.lifecycle = "playing";
         if (data.playing) {
           this.props.setPage('playing', true);
         } else {
@@ -1189,6 +1199,32 @@ class CreateGameForm extends React.Component {
     );
   }
 
+  renderGin() {
+    var cfg = this.state.GameConfig.gin;
+    if (!cfg) {
+      return null;
+    }
+
+    return (
+      <>
+        <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[0]) }
+        <l.ListGroupSubheader>Playing Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[1]) }
+        { this.renderField(cfg.options[2]) }
+        { this.renderField(cfg.options[3]) }
+        { this.renderField(cfg.options[4]) }
+        <l.ListGroupSubheader>Scoring Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[5]) }
+        { this.renderField(cfg.options[6]) }
+        { this.renderField(cfg.options[7]) }
+        { this.renderField(cfg.options[8]) }
+        { this.renderField(cfg.options[9]) }
+        { this.renderField(cfg.options[10]) }
+      </>
+    );
+  }
+
   render() {
     var known_modes = [];
     for (let value of Object.keys(this.state.GameConfig)) {
@@ -1209,6 +1245,8 @@ class CreateGameForm extends React.Component {
       config = this.renderEightJacks();
     } else if (this.state.mode === 'hearts') {
       config = this.renderHearts();
+    } else if (this.state.mode === 'gin') {
+      config = this.renderGin();
     } else if (this.state.mode !== null) {
       console.log("Unknown game mode: " + this.state.mode, this.state);
     }
