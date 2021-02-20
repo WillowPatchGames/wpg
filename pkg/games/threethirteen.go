@@ -279,6 +279,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 	// Clear out all round-specific status before each round.
 	for index := range tts.Players {
 		tts.Players[index].Hand = make([]Card, 0)
+		tts.Players[index].Groups = make([][]int, 0)
 		tts.Players[index].Drawn = nil
 		tts.Players[index].PickedUpDiscard = false
 		tts.Players[index].Warnings = 0

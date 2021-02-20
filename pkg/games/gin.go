@@ -240,6 +240,7 @@ func (gs *GinState) StartRound() error {
 	// Clear out all round-specific status before each round.
 	for index := range gs.Players {
 		gs.Players[index].Hand = make([]Card, 0)
+		gs.Players[index].Groups = make([][]int, 0)
 		gs.Players[index].Drawn = nil
 		gs.Players[index].PickedUpDiscard = false
 		gs.Players[index].Warnings = 0
@@ -484,7 +485,7 @@ func (gs *GinState) DiscardCard(player int, cardID int, laidDown bool) error {
 	// specified a card, it must be in their hand, so remove the card from the
 	// hand. Note that if they went out with big gin, they'll have an extra card
 	// in their hand.
-	if cardID <= 0 {
+	if cardID >= 0 {
 		// Check if the card is in the hand.
 		index, found := gs.Players[player].FindCard(cardID)
 		if !found {
@@ -666,27 +667,29 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 		ncards += 1
 	}
 
-	if ncards != len(gs.Players[player].Hand) {
+	if ncards != len(hand) {
 		return errors.New("some cards were missing from scoring")
 	}
 
-	ideal := solver.MinScore(gs.Players[player].Hand)
-	if ideal < score {
-		max_warnings := 3
-		gs.Players[player].Warnings += 1
-		if gs.Config.SuggestBetter {
-			if gs.Players[player].Warnings < max_warnings {
-				return errors.New("you can get a better score")
-			} else if gs.Players[player].Warnings == max_warnings {
-				return errors.New("you can get a better score! last chance")
+	/*
+		ideal := solver.MinScore(hand)
+		if ideal < score {
+			max_warnings := 3
+			gs.Players[player].Warnings += 1
+			if gs.Config.SuggestBetter {
+				if gs.Players[player].Warnings < max_warnings {
+					return errors.New("you can get a better score")
+				} else if gs.Players[player].Warnings == max_warnings {
+					return errors.New("you can get a better score! last chance")
+				}
 			}
 		}
-	}
-	// Note that `score` is indeed a valid score for this hand
-	// so it is suprising if it is better than `ideal`!
-	if ideal > score {
-		log.Println("failed to compute minimum score for hand; got", score, "expected", ideal, "for cards", gs.Players[player].Hand)
-	}
+		// Note that `score` is indeed a valid score for this hand
+		// so it is suprising if it is better than `ideal`!
+		if ideal > score {
+			log.Println("failed to compute minimum score for hand; got", score, "expected", ideal, "for cards", gs.Players[player].Hand)
+		}
+	*/
 
 	gs.Players[player].Groups = groups
 	gs.Players[player].Leftover = leftover

@@ -205,7 +205,7 @@ func (c *Controller) dispatchGin(message []byte, header MessageHeader, game *Gam
 				// who originally dealt, so they know the deal was successful.
 				var response GinStateNotification
 				response.LoadData(game, state, indexed_player)
-				if indexed_player.UID == player.UID {
+				if indexed_player.UID == player.UID && err == nil {
 					response.ReplyTo = header.MessageID
 				}
 

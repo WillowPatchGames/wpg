@@ -48,7 +48,7 @@ class GinGameComponent extends React.Component {
     this.state.game = props.game;
     this.state.selected = null;
     this.state.round_score = 0;
-    this.state.groupings = [];
+    this.state.groupings = this.defaultGroupings();
     this.state.grouping_selected = [];
     this.state.confirming = false;
     this.state.autosort = false;
@@ -61,10 +61,26 @@ class GinGameComponent extends React.Component {
         if (autosort_persistent && state.autosort) {
           this.state.game.interface.data.hand.cardSort(false, false);
         }
+        if (!state.groupings.length) {
+          state.groupings = this.defaultGroupings();
+        }
         // Jinx
         return state;
       });
     };
+  }
+  defaultGroupings() {
+    if (this.state.game.interface.laid_down
+    && this.state.game.interface.laid_down_id !== this.props.user.id
+    && this.state.game.interface.synopsis.players
+    && this.state.game.interface.data.round_score === -1
+    && this.state.game.interface.my_turn()) {
+      for (let other of this.state.game.interface.synopsis.players) {
+        if (other.user.id !== this.state.game.interface.laid_down_id) continue;
+        return other.groups || [];
+      }
+    }
+    return [];
   }
   clearSelected() {
     return this.setState(state => Object.assign({}, state, { selected: null }));
@@ -98,7 +114,7 @@ class GinGameComponent extends React.Component {
     ).map(c => c.id);
 
     var resp = await this.state.game.interface.score_by_groups(groups, leftover);
-    if (resp && resp.type !== "error" && !resp.error) {
+    if (resp && ((resp.type !== "error" && !resp.error) || resp.error === "begin next round")) {
       this.setState(state => {
         state.round_score = 0;
         state.groupings = [];
@@ -111,7 +127,7 @@ class GinGameComponent extends React.Component {
   }
   async sendScore() {
     var resp = await this.state.game.interface.score(this.state.round_score);
-    if (resp && resp.type !== "error" && !resp.error) {
+    if (resp && ((resp.type !== "error" && !resp.error) || resp.error === "begin next round")) {
       this.setState(state => {
         state.round_score = 0;
         state.groupings = [];
@@ -314,7 +330,7 @@ class GinGameComponent extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
+                <h2>{ this.state.game.interface.laid_down_user?.display } laid down!</h2>
                 <div className="flexbox">
                   <div className="flexible">
                     <h3>Deck</h3>
@@ -397,15 +413,22 @@ class GinGameComponent extends React.Component {
 
             ungrouped_score += sc;
           }
+          var superhand_cards = this.state.game.interface.data.hand.cards;
+          if (this.state.game.interface.laid_down && this.state.game.interface.laid_down_id !== this.props.user.id && this.state.game.interface.synopsis.players) {
+            for (let other of this.state.game.interface.synopsis.players) {
+              if (other.user.id !== this.state.game.interface.laid_down_id) continue;
+              superhand_cards = superhand_cards.concat(other.hand.cards);
+            }
+          }
           var groupings = this.state.groupings.map(group => group.map(g =>
-            this.state.game.interface.data.hand.cards.find(c => c.id === g)
-          ));
+            superhand_cards.find(c => c.id === g)
+          ).filter(g => g)).filter(g => g);
 
           return <div>
             {/*<div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                  <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
+                  <h2>{ this.state.game.interface.laid_down_user?.display } laid down!</h2>
                   <div className="flexbox">
                     <div className="flexible">
                       <h3>Deck</h3>
@@ -425,7 +448,7 @@ class GinGameComponent extends React.Component {
             <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                  <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
+                  <h2>{ this.state.game.interface.laid_down_user?.display } laid down!</h2>
                   <h3>Group your hand so it can be scored!</h3>
                   <p>Make runs of three or more consecutive cards{this.state.game.interface.data.config.same_suit_runs ? " of the same suit" : ""}, or groups of three or more of a kind.</p>
                   <p>These groups will be verified when you submit your score.</p>
@@ -454,6 +477,8 @@ class GinGameComponent extends React.Component {
                         {g.map((card,j) => (
                           <CardImage key={ card.id } card={ card }
                             onClick={() => this.setState(state => {
+                              if (!this.state.game.interface.data.hand.cards.includes(card))
+                                return state;
                               state.groupings[i].splice(j, 1);
                               if (!state.groupings[i].length) {
                                 state.groupings.splice(i, 1);
@@ -561,7 +586,7 @@ class GinGameComponent extends React.Component {
           <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
             <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
               <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
-                <h2>{ this.state.game.interface.laid_down_user.display } laid down!</h2>
+                <h2>{ this.state.game.interface.laid_down_user?.display } laid down!</h2>
                 <div className="flexbox">
                   <div className="flexible">
                     <h3>Deck</h3>

@@ -155,7 +155,7 @@ func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *
 				// who originally dealt, so they know the deal was successful.
 				var response HeartsStateNotification
 				response.LoadData(game, state, indexed_player)
-				if indexed_player.UID == player.UID {
+				if indexed_player.UID == player.UID && err == nil {
 					response.ReplyTo = header.MessageID
 				}
 

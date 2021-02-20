@@ -98,7 +98,7 @@ class ThreeThirteenGameComponent extends React.Component {
     ).map(c => c.id);
 
     var resp = await this.state.game.interface.score_by_groups(groups, leftover);
-    if (resp && resp.type !== "error" && !resp.error) {
+    if (resp && ((resp.type !== "error" && !resp.error) || resp.error === "begin next round")) {
       this.setState(state => {
         state.round_score = 0;
         state.groupings = [];
@@ -111,7 +111,7 @@ class ThreeThirteenGameComponent extends React.Component {
   }
   async sendScore() {
     var resp = await this.state.game.interface.score(this.state.round_score);
-    if (resp && resp.type !== "error" && !resp.error) {
+    if (resp && ((resp.type !== "error" && !resp.error) || resp.error === "begin next round")) {
       this.setState(state => {
         state.round_score = 0;
         state.groupings = [];

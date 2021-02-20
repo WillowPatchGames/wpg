@@ -205,7 +205,7 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 				// who originally dealt, so they know the deal was successful.
 				var response ThreeThirteenStateNotification
 				response.LoadData(game, state, indexed_player)
-				if indexed_player.UID == player.UID {
+				if indexed_player.UID == player.UID && err == nil {
 					response.ReplyTo = header.MessageID
 				}
 
