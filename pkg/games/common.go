@@ -17,10 +17,11 @@ const (
 	ThreeThirteenGame GameMode = iota // 2
 	EightJacksGame    GameMode = iota // 3
 	HeartsGame        GameMode = iota // 4
+	GinGame           GameMode = iota // 5
 )
 
 func (gm GameMode) String() string {
-	return []string{"rush", "spades", "three thirteen", "eight jacks", "hearts"}[gm]
+	return []string{"rush", "spades", "three thirteen", "eight jacks", "hearts", "gin"}[gm]
 }
 
 // Convert the representation of a GameMode to a string.
@@ -36,13 +37,15 @@ func GameModeFromString(repr string) GameMode {
 		return EightJacksGame
 	case "hearts":
 		return HeartsGame
+	case "gin":
+		return GinGame
 	default:
 		return -1
 	}
 }
 
 func (gm GameMode) IsValid() bool {
-	return gm == RushGame || gm == SpadesGame || gm == ThreeThirteenGame || gm == EightJacksGame || gm == HeartsGame
+	return gm == RushGame || gm == SpadesGame || gm == ThreeThirteenGame || gm == EightJacksGame || gm == HeartsGame || gm == GinGame
 }
 
 func (gm GameMode) NewState() ConfigurableState {
@@ -57,6 +60,8 @@ func (gm GameMode) NewState() ConfigurableState {
 		return &EightJacksState{}
 	case HeartsGame:
 		return &HeartsState{}
+	case GinGame:
+		return &GinState{}
 	default:
 		panic("Unable to create an empty state for this game mode")
 	}
@@ -84,6 +89,10 @@ func (gm GameMode) Init(config figgy.Figgurable) (ConfigurableState, error) {
 		var asserted *HeartsConfig = config.(*HeartsConfig)
 		var state = &HeartsState{}
 		return state, state.Init(*asserted)
+	case GinGame:
+		var asserted *GinConfig = config.(*GinConfig)
+		var state = &GinState{}
+		return state, state.Init(*asserted)
 	default:
 		panic("Unable to create an initialized state for this game mode")
 	}
@@ -101,6 +110,8 @@ func (gm GameMode) EmptyConfig() figgy.Figgurable {
 		return &EightJacksConfig{}
 	case HeartsGame:
 		return &HeartsConfig{}
+	case GinGame:
+		return &GinConfig{}
 	default:
 		panic("Unable to create an empty config for this game mode")
 	}

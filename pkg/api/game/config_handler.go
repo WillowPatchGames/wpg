@@ -81,11 +81,21 @@ func (handle *ConfigHandler) Serialize() {
 		panic("Unable to serialize three thirteen configuration: " + err.Error())
 	}
 
+	var gin = &GameConfig{
+		Description: "In Gin, players compete against each other to go out each round.",
+		Name:        "Gin (Card Game)",
+	}
+	gin.Options, err = figgy.SerializeOptions(&games.GinConfig{})
+	if err != nil {
+		panic("Unable to serialize gin configuration: " + err.Error())
+	}
+
 	handle.resp["rush"] = rush
 	handle.resp["spades"] = spades
 	handle.resp["hearts"] = hearts
 	handle.resp["eight jacks"] = ej
 	handle.resp["three thirteen"] = tt
+	handle.resp["gin"] = gin
 }
 
 func (handle *ConfigHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Request) error {

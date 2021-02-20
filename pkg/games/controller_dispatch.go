@@ -53,6 +53,10 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		var state *HeartsState = game.State.(*HeartsState)
 		started = state.Started
 		// finished = state.Finished
+	} else if game.Mode == GinGame {
+		var state *GinState = game.State.(*GinState)
+		started = state.Started
+		// finished = state.Finished
 	} else {
 		panic("Unknown game mode: " + game.Mode.String())
 	}
@@ -177,6 +181,8 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		return c.dispatchEightJacks(message, header, game, player)
 	} else if game.Mode == HeartsGame {
 		return c.dispatchHearts(message, header, game, player)
+	} else if game.Mode == GinGame {
+		return c.dispatchGin(message, header, game, player)
 	} else {
 		panic("Valid but unsupported game mode: " + game.Mode.String())
 	}
@@ -227,6 +233,11 @@ func (c *Controller) handleCountdown(game *GameData) error {
 			var state *HeartsState = game.State.(*HeartsState)
 			if !state.Started {
 				return c.doHeartsStart(game, state)
+			}
+		} else if game.Mode == GinGame {
+			var state *GinState = game.State.(*GinState)
+			if !state.Started {
+				return c.doGinStart(game, state)
 			}
 		} else {
 			panic("Unknown game mode: " + game.Mode.String())
