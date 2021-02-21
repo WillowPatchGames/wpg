@@ -602,14 +602,23 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 		for _, group := range groups {
 			for _, cardID := range group {
 				if _, found := FindCard(hand, cardID); !found {
-					log.Println("Want card not in our hand:", cardID)
 					want_other_hand = true
-					break
-				}
-			}
 
-			if want_other_hand {
-				break
+					// Here, we're in a tricky spot: if the laying down user went gin, we
+					// need to ensure the other player doesn't send a custom message and
+					// try to play off of cards they can't actually play off of. So
+					// validate each card in this group and ensure it only exists in the
+					// other player's hand.
+					//
+					// The alternative to this approach is "fixing up" the opponent's
+					// groups and removing all groups which are purely in the laid-down
+					// user's hand and addressing this then.
+					for _, allCardID := range group {
+						if _, found := FindCard(hand, allCardID); found {
+							return errors.New("unable to play off the person who laid down when they went gin or big gin")
+						}
+					}
+				}
 			}
 		}
 
