@@ -1020,22 +1020,22 @@ func TestIsValidGroup(t *testing.T) {
 		Card{42, ClubsSuit, FourRank},
 		Card{17, SpadesSuit, AceRank},
 		Card{38, DiamondsSuit, TenRank},
-		Card{36, SpadesSuit, QueenRank},//
+		Card{36, SpadesSuit, QueenRank}, //
 		Card{30, ClubsSuit, ThreeRank},
-		Card{23, DiamondsSuit, SixRank},//
+		Card{23, DiamondsSuit, SixRank}, //
 		Card{28, DiamondsSuit, AceRank},
-		Card{26, SpadesSuit, JackRank},//
+		Card{26, SpadesSuit, JackRank}, //
 		Card{9, DiamondsSuit, JackRank},
-		Card{32, SpadesSuit, KingRank},//
+		Card{32, SpadesSuit, KingRank},    //
 		Card{40, DiamondsSuit, SevenRank}, // 10
-		Card{22, SpadesSuit, SixRank}, // 11
-		Card{25, SpadesSuit, NineRank}, // 12
-		Card{45, ClubsSuit, SixRank}, // 13
-		Card{53, ClubsSuit, SevenRank}, // 14
-		Card{50, HeartsSuit, NineRank}, // 15
-		Card{29, FancySuit, JokerRank}, // 16
-		Card{27, SpadesSuit, SevenRank}, // 17
-		Card{51, HeartsSuit, SixRank}, // 18
+		Card{22, SpadesSuit, SixRank},     // 11
+		Card{25, SpadesSuit, NineRank},    // 12
+		Card{45, ClubsSuit, SixRank},      // 13
+		Card{53, ClubsSuit, SevenRank},    // 14
+		Card{50, HeartsSuit, NineRank},    // 15
+		Card{29, FancySuit, JokerRank},    // 16
+		Card{27, SpadesSuit, SevenRank},   // 17
+		Card{51, HeartsSuit, SixRank},     // 18
 	}
 	t.Log("min score", defaultSolver.MinScoreBelowUsing(hand, 99, base_groups))
 	for _, tc := range GroupTestCases {

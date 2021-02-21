@@ -529,16 +529,16 @@ func (gs *GinSolver) MinScoreBelowUsing(hand []Card, maxScore int, using [][]int
 			usingHere := make([][]int, 0)
 			for _, group := range using {
 				groupHere := make([]int, 0)
-				Group:
-					for _, card := range group {
-						for i, cardHere := range division {
-							if hand[card] == rankedHere[cardHere] {
-								groupHere = append(groupHere, i)
-								continue Group
-							}
+			Group:
+				for _, card := range group {
+					for i, cardHere := range division {
+						if hand[card] == rankedHere[cardHere] {
+							groupHere = append(groupHere, i)
+							continue Group
 						}
-						groupHere = append(groupHere, -1)
 					}
+					groupHere = append(groupHere, -1)
+				}
 				usingHere = append(usingHere, groupHere)
 			}
 			dividedResults[i] = gs.DivideResultUsing(rankedHere, division, minScore-1, nwilds, usingHere)
