@@ -546,7 +546,6 @@ func (gs *GinState) GinSolver() GinSolver {
 	return GinSolver{
 		PointValue:       pv,
 		WildCards:        wc,
-		AnyWildGroup:     false,
 		WildAsRank:       false,
 		AllWildGroups:    false,
 		MostlyWildGroups: false,

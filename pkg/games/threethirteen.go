@@ -575,7 +575,6 @@ func (tts *ThreeThirteenState) GinSolver() GinSolver {
 	return GinSolver{
 		PointValue:       pv,
 		WildCards:        wc,
-		AnyWildGroup:     false,
 		WildAsRank:       tts.Config.WildAsRank,
 		AllWildGroups:    tts.Config.AllowAllWildCards,
 		MostlyWildGroups: tts.Config.AllowMostlyWild,

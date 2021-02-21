@@ -10,21 +10,14 @@ type GinSolver struct {
 
 	// The order of precedence is:
 	//
-	// 1. AnyWildGroup
-	// 2. AllWildGroups
-	// 3. WildAsRank
-	// 4. MostlyWildGroups
+	// 1. AllWildGroups
+	// 2. WildAsRank
+	// 3. MostlyWildGroups
 	//
-	// Concretely, AnyWildGroup means that any grouping of cards that includes
-	// one or more wild card can be considered a valid group, assuming there is
-	// a valid value for that wild card that completes the group. This is the
-	// most greedy pattern: all (valid) combinations of any wild cards and ranked
-	// cards are permitted.
-	//
-	// Next, AllWildGroups allows any combination of all wild cards as allowed.
+	// AllWildGroups allows any combination of all wild cards as allowed.
 	// This means that four Jokers would be considered an allowed group, even if
 	// MostlyWildGroups was false (leading to, for example, three Jokers and an
-	// Ace being forbidden). Notably, if AnyWildGroup is false, mixed type wild
+	// Ace being forbidden). Notably, if MostlyWildGroups is false, mixed type wild
 	// cards would then be forbidden, assuming WildAsRank also doesn't apply.
 	//
 	// Barring that, WildAsRank allows treating wild cards as their face rank,
@@ -37,7 +30,6 @@ type GinSolver struct {
 	// Finally, the value of MostlyWildGroups is observed. When this value is
 	// false, wild cards must comprise half or less of the grouping. Otherwise,
 	// they can comprise more than half.
-	AnyWildGroup     bool `json:"any_wild_group"`
 	WildAsRank       bool `json:"wild_as_rank"`
 	AllWildGroups    bool `json:"all_wild_groups"`
 	MostlyWildGroups bool `json:"mostly_wild_groups"`
@@ -59,118 +51,6 @@ func (gs *GinSolver) HandToValues(hand []Card) []int {
 	var result = make([]int, len(hand))
 	for index, card := range hand {
 		result[index] = gs.PointValue[card.Rank]
-	}
-	return result
-}
-
-// Checks whether individual cards in a set of cards can sum to a particular
-// value, independent of grouping.
-func (gs *GinSolver) SubsetSum(hand []int, sum int) bool {
-	// Zero sum is trivial: no cards.
-	if sum == 0 {
-		return true
-	}
-
-	// If we have a single element, check it first.
-	if len(hand) == 1 && hand[0] != sum {
-		return false
-	}
-
-	// Copy over our elements in our hand...
-	var elements = make([]int, len(hand))
-	copy(elements, hand)
-
-	// Heuristic: sort the hand if we need to satisfy a small score. In this
-	// case, we likely won't need large elements and so will exit early.
-	if sum < 20 {
-		sort.Ints(elements)
-
-		// Edge case: smallest element is the sum; return it.
-		if elements[0] == sum {
-			return true
-		}
-
-		// Edge case: smallest element is greater than the sum; not possible to
-		// make the sum.
-		if elements[0] > sum {
-			return false
-		}
-	}
-
-	// Begin Dynamic Programming solution.
-	//
-	// Loosely modeled from http://www.cs.utsa.edu/~wagner/CS3343/ss/ss.html.
-	//
-	// Build an array of possible sum made from elements of the hand. At
-	// position j, such a sum (j) is possible if and only if data[j] == true.
-	// Hence, index 0 is possible, because we can use zero elements to create the
-	// zero sum.
-	var data []bool = make([]bool, sum+1)
-	data[0] = true
-
-	// At each step, take a new element out of the array. To any existing sum
-	// that's possible, mark (sum + element) as possible.
-	for element_index := range elements {
-		var element = elements[element_index]
-
-		// Skip any zero elements.
-		if element == 0 {
-			continue
-		}
-
-		// Edge case: element is exactly the sum; return true.
-		if element == sum {
-			return true
-		}
-
-		// n.b.: Unlike the solution given at the link above, we're doing two
-		// things differently:
-		//
-		// 1. We're using a boolean array. We don't care if an element is used more
-		//    than once, if it is present in the hand more than once.
-		// 2. We're making a copy so we can detect the edge case above again.
-		//
-		// Notably, because the solution on the above website is in-place, it
-		// requires writing the last value to the index in order to prevent
-		// multiples of the same value showing up. Here however, we make a copy,
-		// reading from the original and writing to the copy. This prevents us from
-		// using multiples of a value which doesn't have multiples in the original
-		// hand, while allowing us to use multiples of a value which does have
-		// multiples in the original hand.
-		//
-		// We hope that sum is sufficiently small, that we
-		var new_data []bool = make([]bool, len(data))
-		copy(new_data, data)
-
-		for is_existing_sum := range data {
-			// If we can't make this existing sum, we can't make (element + existing)
-			if !data[is_existing_sum] {
-				continue
-			}
-
-			// Edge case: matches the sum, exit early.
-			if (is_existing_sum + element) == sum {
-				return true
-			}
-
-			// Prevent OOB.
-			if (is_existing_sum + element) > sum {
-				break
-			}
-
-			new_data[is_existing_sum+element] = true
-		}
-
-		data = new_data
-	}
-
-	return data[sum]
-}
-
-func sum(data []int) int {
-	var result = 0
-	for _, value := range data {
-		result += value
 	}
 	return result
 }
@@ -265,7 +145,7 @@ func (gs *GinSolver) TryWildCards(hand []Card, cards []int) [][]int {
 	}
 
 	// In this case, trying wildcards as their rank is not allowed/will not produce benefits
-	if gs.AnyWildGroup || !gs.WildAsRank || (gs.MostlyWildGroups && gs.AllWildGroups) || (gs.AllWildGroups && len(regular) == 0) {
+	if !gs.WildAsRank || (gs.MostlyWildGroups && gs.AllWildGroups) || (gs.AllWildGroups && len(regular) == 0) {
 		return [][]int{regular}
 	}
 
@@ -382,7 +262,7 @@ func AndInterval(l Interval, r Interval) Interval {
 
 func (gs *GinSolver) WcValidGroup(hand []Card, cards []int) Interval {
 	if len(cards) == 0 {
-		if gs.AnyWildGroup || gs.AllWildGroups {
+		if gs.AllWildGroups {
 			return Interval{0, flag}
 		}
 		return none
@@ -395,7 +275,7 @@ func (gs *GinSolver) WcValidGroup(hand []Card, cards []int) Interval {
 // and returns the Interval of wildcards needed to make the match happen
 func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 	if len(cards) == 0 {
-		if gs.AnyWildGroup || gs.AllWildGroups {
+		if gs.AllWildGroups {
 			return Interval{0, flag}
 		}
 		return none
@@ -419,7 +299,7 @@ func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 
 	// If gs.MostlyWildGroups is false, we can only accept len(cards)-min extra
 	// wildcards (and if we only have one card we can't form a group)
-	if !gs.AnyWildGroup && !gs.MostlyWildGroups {
+	if !gs.MostlyWildGroups {
 		if len(cards) <= 1 {
 			return none
 		}
@@ -437,14 +317,14 @@ func (gs *GinSolver) WcKind(hand []Card, cards []int) Interval {
 //
 // TODO: handle WildJokerRanked
 func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
-	if len(cards) == 0 && (gs.AnyWildGroup || gs.AllWildGroups) {
+	if len(cards) == 0 && gs.AllWildGroups {
 		return Interval{0, 13}
 	}
 	if len(cards) == 0 || len(cards) > 13 {
 		return none
 	}
 	if len(cards) == 1 {
-		if !gs.AnyWildGroup && !gs.MostlyWildGroups {
+		if !gs.MostlyWildGroups {
 			return none
 		}
 		return Interval{2, 11}
@@ -558,79 +438,11 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 	// We can keep adding wildcards until we reach a full 13-card run
 	more := 13 - len(cards) - min
 	// Or until we have more wildcards than non-wildcards
-	if !gs.AnyWildGroup && !gs.MostlyWildGroups && (len(cards)-min < more) {
+	if !gs.MostlyWildGroups && (len(cards)-min < more) {
 		more = len(cards) - min
 	}
 
 	return Interval{min, more}
-}
-
-// Checks whether the given hand can make the score entered by the user. This
-// score may not be the most optimal, but it is the one they chose.
-func (gs *GinSolver) CanMakeScore(hand []Card, score int) bool {
-	// Before beginning, sort the cards in the hand from highest to lowest,
-	// removing any wild cards before we begin. We sort purely by rank, in
-	// reverse.
-	var wilds = make([]Card, 0)
-	var ranked = make([]Card, 0)
-	for _, card := range hand {
-		if gs.IsWildCard(card) {
-			wilds = append(wilds, card)
-		} else {
-			ranked = append(ranked, card)
-		}
-	}
-
-	// Sort all the cards. This allows us to put Jokers ahead of other
-	// wild cards. Notably, we want to sort in reversed order (hence,
-	// define our less function as a more function.
-	sort.SliceStable(hand, func(i, j int) bool {
-		return hand[i].Rank > hand[j].Rank
-	})
-	sort.SliceStable(wilds, func(i, j int) bool {
-		return wilds[i].Rank > wilds[j].Rank
-	})
-	sort.SliceStable(ranked, func(i, j int) bool {
-		return ranked[i].Rank > ranked[j].Rank
-	})
-
-	// Convert cards to integer point values.
-	hand_values := gs.HandToValues(hand)
-
-	// Edge cases: If all the values can't sum to the score, we'll never be able
-	// to make the score. Exit early.
-	if sum(hand_values) < score {
-		return false
-	}
-
-	// Edge case: if we exactly match the sum, it means there are no groups and
-	// we can exit early.
-	if sum(hand_values) == score {
-		return true
-	}
-
-	// If any set of individual cards cannot sum to the value, we won't be able
-	// to make this value. Exit early. This step is O(|hand| * sum).
-	if !gs.SubsetSum(hand_values, score) {
-		return false
-	}
-
-	// Divide the sorted, ranked cards into partitions of group candidates.
-	// Notably, without wild cards, no grouping can cross a gap of two ranks.
-	// However, with wild cards, we can merge across groups.
-	var ranked_partitions = gs.DivideHand(ranked)
-
-	var groups = make([]int, len(hand))
-
-	return gs.canMakeScore(hand, ranked, ranked_partitions, wilds, groups, score)
-}
-
-func (gs *GinSolver) canMakeScore(hand []Card, ranked []Card, ranked_partitions []int, wilds []Card, groups []int, score int) bool {
-	return false
-}
-
-func (gs *GinSolver) GroupValueSum(hand []Card, groups []int) int {
-	return 0
 }
 
 func (gs *GinSolver) MinScore(hand []Card) int {
@@ -769,7 +581,7 @@ func (gs *GinSolver) AllMatches(hand []Card, cards []int) []Match {
 		}
 	}
 	// An extra match to vacuum up any lonely wildcards
-	if gs.AnyWildGroup || gs.AllWildGroups {
+	if gs.AllWildGroups {
 		r = append(r, Match{[]int{}, 0, Interval{3, flag}})
 	}
 	return r

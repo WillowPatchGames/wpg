@@ -49,7 +49,6 @@ var DefaultPointValue = map[CardRank]int{
 var defaultSolver = GinSolver{
 	PointValue:       DefaultPointValue,
 	WildCards:        []CardRank{JokerRank},
-	AnyWildGroup:     false,
 	WildAsRank:       false,
 	AllWildGroups:    false,
 	MostlyWildGroups: false,
@@ -67,10 +66,6 @@ func addWildCard(rank CardRank) func(bool, GinSolver) GinSolver {
 		}
 		return gs
 	}
-}
-func setAnyWildGroup(yes bool, gs GinSolver) GinSolver {
-	gs.AnyWildGroup = yes
-	return gs
 }
 func setWildAsRank(yes bool, gs GinSolver) GinSolver {
 	gs.WildAsRank = yes
@@ -104,7 +99,6 @@ func setRunsWrap(yes bool, gs GinSolver) GinSolver {
 type GinSetter = func(bool, GinSolver) GinSolver
 
 var allOptions = []GinSetter{
-	setAnyWildGroup,
 	setWildAsRank,
 	setAllWildGroups,
 	setMostlyWildGroups,
@@ -212,10 +206,10 @@ var MoreGroupCases = [][]ValidGroupEntry{
 			Card{0, NoneSuit, JokerRank},
 		},
 		func(gs GinSolver) bool {
-			return gs.AnyWildGroup || gs.AllWildGroups
+			return gs.AllWildGroups
 		},
 		func(gs GinSolver) bool {
-			return gs.AnyWildGroup || gs.AllWildGroups
+			return gs.AllWildGroups
 		},
 	),
 	groupsAcross(
@@ -242,7 +236,7 @@ var MoreGroupCases = [][]ValidGroupEntry{
 				return false
 			}
 			fourWild := len(gs.WildCards) > 1
-			return gs.AnyWildGroup || (gs.AllWildGroups && fourWild) ||
+			return (gs.AllWildGroups && fourWild) ||
 				(gs.MostlyWildGroups && (!fourWild || gs.WildAsRank))
 		},
 		func(group []Card, gs GinSolver) bool {
@@ -250,7 +244,7 @@ var MoreGroupCases = [][]ValidGroupEntry{
 				return false
 			}
 			fourWild := len(gs.WildCards) > 1
-			return gs.AnyWildGroup || (gs.AllWildGroups && fourWild) ||
+			return (gs.AllWildGroups && fourWild) ||
 				(gs.MostlyWildGroups && (!fourWild || gs.WildAsRank))
 		},
 	),
@@ -261,7 +255,6 @@ var GroupTestCases = []ValidGroupEntry{
 		Solver: GinSolver{
 			PointValue:       DefaultPointValue,
 			WildCards:        []CardRank{JokerRank},
-			AnyWildGroup:     false,
 			WildAsRank:       true,
 			AllWildGroups:    false,
 			MostlyWildGroups: false,
@@ -524,7 +517,6 @@ var GroupTestCases = []ValidGroupEntry{
 		Solver: GinSolver{
 			PointValue:       DefaultPointValue,
 			WildCards:        []CardRank{JokerRank, SevenRank},
-			AnyWildGroup:     false,
 			WildAsRank:       true,
 			AllWildGroups:    true,
 			MostlyWildGroups: false,
@@ -578,7 +570,6 @@ var GroupTestCases = []ValidGroupEntry{
 		Solver: GinSolver{
 			PointValue:       DefaultPointValue,
 			WildCards:        []CardRank{JokerRank},
-			AnyWildGroup:     false,
 			WildAsRank:       true,
 			AllWildGroups:    false,
 			MostlyWildGroups: false,
@@ -632,7 +623,6 @@ var GroupTestCases = []ValidGroupEntry{
 		Solver: GinSolver{
 			PointValue:       DefaultPointValue,
 			WildCards:        []CardRank{JokerRank},
-			AnyWildGroup:     false,
 			WildAsRank:       true,
 			AllWildGroups:    false,
 			MostlyWildGroups: false,
@@ -700,7 +690,6 @@ var GroupTestCases = []ValidGroupEntry{
 		Solver: GinSolver{
 			PointValue:       DefaultPointValue,
 			WildCards:        []CardRank{JokerRank, SevenRank},
-			AnyWildGroup:     false,
 			WildAsRank:       true,
 			AllWildGroups:    true,
 			MostlyWildGroups: true,
@@ -727,7 +716,6 @@ var GroupTestCases = []ValidGroupEntry{
 var someSolver = GinSolver{
 	PointValue:       DefaultPointValue,
 	WildCards:        []CardRank{JokerRank},
-	AnyWildGroup:     true,
 	WildAsRank:       true,
 	AllWildGroups:    true,
 	MostlyWildGroups: true,
@@ -742,7 +730,6 @@ func threeThirteenSolver(round CardRank) GinSolver {
 	return GinSolver{
 		PointValue:       DefaultPointValue,
 		WildCards:        []CardRank{JokerRank, round},
-		AnyWildGroup:     false,
 		WildAsRank:       true,
 		AllWildGroups:    false,
 		MostlyWildGroups: false,
@@ -1050,7 +1037,7 @@ func TestIsValidGroup(t *testing.T) {
 				//if len(m) < 12 {
 				//	t.Log("All matches", m)
 				//}
-				t.Log("Mostly", tc.Solver.MostlyWildGroups || tc.Solver.AnyWildGroup, "all", tc.Solver.AllWildGroups || tc.Solver.AnyWildGroup)
+				t.Log("Mostly", tc.Solver.MostlyWildGroups, "all", tc.Solver.AllWildGroups)
 				t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
 			}
 		}
