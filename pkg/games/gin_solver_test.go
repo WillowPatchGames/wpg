@@ -1015,6 +1015,7 @@ func TestIsValidGroup(t *testing.T) {
 	// ls pkg/games/* | entr env GOROOT="" go test -v -count=1 -run TestIsValidGroup git.cipherboy.com/WillowPatchGames/wpg/pkg/games
 
 	// base_groups [[13 18 11] [14 17 10] [12 15 16]] hand [Card{42, ClubsSuit, FourRank} Card{17, SpadesSuit, AceRank} Card{38, DiamondsSuit, TenRank} Card{36, SpadesSuit, QueenRank} Card{30, ClubsSuit, ThreeRank} Card{23, DiamondsSuit, SixRank} Card{28, DiamondsSuit, AceRank} Card{26, SpadesSuit, JackRank} Card{9, DiamondsSuit, JackRank} Card{32, SpadesSuit, KingRank} Card{40, DiamondsSuit, SevenRank} Card{22, SpadesSuit, SixRank} Card{25, SpadesSuit, NineRank} Card{45, ClubsSuit, SixRank} Card{53, ClubsSuit, SevenRank} Card{50, HeartsSuit, NineRank} Card{29, FancySuit, JokerRank} Card{27, SpadesSuit, SevenRank} Card{51, HeartsSuit, SixRank}] groups [[45 51 22] [53 27 40] [25 50 29]]
+	/*
 	base_groups := [][]int{[]int{13, 18, 11}, []int{14, 17, 10}, []int{12, 15, 16}}
 	hand := []Card{
 		Card{42, ClubsSuit, FourRank},
@@ -1037,7 +1038,34 @@ func TestIsValidGroup(t *testing.T) {
 		Card{27, SpadesSuit, SevenRank},   // 17
 		Card{51, HeartsSuit, SixRank},     // 18
 	}
+	*/
+	// base_groups [[17 12 11 10 16] [14 15 13]] hand [Card{40, DiamondsSuit, ThreeRank} Card{54, HeartsSuit, JackRank} Card{21, DiamondsSuit, TenRank} Card{12, SpadesSuit, JackRank} Card{38, DiamondsSuit, SixRank} Card{29, SpadesSuit, EightRank} Card{28, SpadesSuit, SixRank} Card{5, DiamondsSuit, NineRank} Card{27, SpadesSuit, TenRank} Card{34, ClubsSuit, JackRank} Card{32, ClubsSuit, TenRank} Card{45, FancySuit, JokerRank} Card{31, ClubsSuit, EightRank} Card{48, DiamondsSuit, KingRank} Card{36, ClubsSuit, KingRank} Card{10, HeartsSuit, KingRank} Card{43, ClubsSuit, SixRank} Card{35, ClubsSuit, NineRank}] groups [[35 31 45 32 43] [36 10 48]]
+	base_groups := [][]int{[]int{17, 12, 11, 10, 16}, []int{14, 15, 13}}
+	hand := []Card{
+		Card{40, DiamondsSuit, ThreeRank},
+		Card{54, HeartsSuit, JackRank},
+		Card{21, DiamondsSuit, TenRank},
+		Card{12, SpadesSuit, JackRank},
+		Card{38, DiamondsSuit, SixRank},
+		Card{29, SpadesSuit, EightRank},
+		Card{28, SpadesSuit, SixRank},
+		Card{5, DiamondsSuit, NineRank},
+		Card{27, SpadesSuit, TenRank},
+		Card{34, ClubsSuit, JackRank},
+
+		Card{32, ClubsSuit, TenRank}, // 10
+		Card{45, FancySuit, JokerRank},
+		Card{31, ClubsSuit, EightRank},
+
+		Card{48, DiamondsSuit, KingRank},
+		Card{36, ClubsSuit, KingRank},
+		Card{10, HeartsSuit, KingRank},
+
+		Card{43, ClubsSuit, SixRank},
+		Card{35, ClubsSuit, NineRank},
+	}
 	t.Log("min score", defaultSolver.MinScoreBelowUsing(hand, 99, base_groups))
+	return
 	for _, tc := range GroupTestCases {
 		for _, entry := range tc.Entries {
 			group := entry.Group

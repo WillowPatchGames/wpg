@@ -1,6 +1,7 @@
 package games
 
 import (
+	"log"
 	"sort"
 )
 
@@ -496,6 +497,30 @@ func (gs *GinSolver) MinScoreBelowUsing(hand []Card, maxScore int, using [][]int
 		sort.SliceStable(rankedHere, func(i, j int) bool {
 			return rankedHere[i].Rank < rankedHere[j].Rank
 		})
+		usingHere := make([][]int, 0)
+		for _, group := range using {
+			groupHere := make([]int, 0)
+			found := false
+		Group:
+			for _, card := range group {
+				for i, cardHere := range rankedHere {
+					if hand[card] == cardHere {
+						groupHere = append(groupHere, i)
+						found = true
+						continue Group
+					}
+				}
+				if gs.IsWildCard(hand[card]) {
+					groupHere = append(groupHere, -1)
+				} else if found {
+					log.Println("HUH")
+				}
+			}
+			if found {
+				usingHere = append(usingHere, groupHere)
+			}
+		}
+		log.Println("usingHere", usingHere, rankedHere)
 		// Partition it into disjoint subsets
 		// that cannot be connected by `nwilds` wild cards
 		divided := gs.DivideHandBy(rankedHere, nwilds)
@@ -526,21 +551,6 @@ func (gs *GinSolver) MinScoreBelowUsing(hand []Card, maxScore int, using [][]int
 		// to the minimum score achievable using that many wildcards
 		dividedResults := make([]DividedResult, len(divisions))
 		for i, division := range divisions {
-			usingHere := make([][]int, 0)
-			for _, group := range using {
-				groupHere := make([]int, 0)
-			Group:
-				for _, card := range group {
-					for i, cardHere := range division {
-						if hand[card] == rankedHere[cardHere] {
-							groupHere = append(groupHere, i)
-							continue Group
-						}
-					}
-					groupHere = append(groupHere, -1)
-				}
-				usingHere = append(usingHere, groupHere)
-			}
 			dividedResults[i] = gs.DivideResultUsing(rankedHere, division, minScore-1, nwilds, usingHere)
 		}
 
@@ -684,15 +694,20 @@ AllMatches:
 				}
 			}
 			if had > 0 && had+wc < len(group) {
+				//log.Println("Discarding", match.cards)
 				continue AllMatches
 			}
 			if had > 0 && match.wc.min < wc {
 				if match.wc.more != flag {
 					match.wc.more -= (wc - match.wc.min)
+					if match.wc.more < 0 {
+						continue AllMatches
+					}
 				}
 				match.wc.min = wc
 			}
 		}
+		log.Println("Adding", match)
 		all = append(all, match)
 	}
 
