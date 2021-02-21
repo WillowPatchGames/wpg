@@ -129,14 +129,14 @@ class GamePage extends React.Component {
         }
       },
       "started": data => {
-        this.props.setNotification("Starting!");
-        setTimeout(() => this.props.setNotification(null), 2000);
-        window.scrollTo(0, 0);
-        data.message = "Let the games begin!";
-        notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
         this.props.game.spectating = !data.playing;
         this.props.setPage("/game", true);
+      },
+      "finished": async (data) => {
+        this.props.game.lifecycle = "finished";
+        this.game.winner = data.winner;
+        this.props.setPage('game', true);
       },
     });
   }

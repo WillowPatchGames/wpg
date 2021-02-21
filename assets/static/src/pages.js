@@ -14,7 +14,7 @@ import { AboutPage } from './pages/about.js';
 import { NotFoundPage } from './pages/common.js';
 import { DocsPage } from './pages/docs.js';
 import { Footer } from './pages/footer.js';
-import { AfterPartyPage, CreateGamePage, CreateRoomPage, JoinGamePage, PreGamePage, GamePage } from './pages/games.js';
+import { CreateGamePage, CreateRoomPage, JoinGamePage, GamePage } from './pages/games.js';
 import { HomePage } from './pages/home.js';
 import { LoginPage } from './pages/login.js';
 import { ProfilePage } from './pages/profile.js';
