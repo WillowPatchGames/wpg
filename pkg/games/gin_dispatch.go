@@ -200,7 +200,7 @@ func (c *Controller) dispatchGin(message []byte, header MessageHeader, game *Gam
 				continue
 			}
 
-			if indexed_player.Playing {
+			if indexed_player.Playing && indexed_player.Index >= 0 {
 				// Send players their initial state. Mark it as a reply to the player
 				// who originally dealt, so they know the deal was successful.
 				var response GinStateNotification
@@ -259,7 +259,7 @@ func (c *Controller) doGinStart(game *GameData, state *GinState) error {
 		// Only send state to players who are playing initially. Everyone else
 		// (namely, admitted spectators) should send a peek event before they can
 		// view the grid.
-		if indexed_player.Playing {
+		if indexed_player.Playing && indexed_player.Index >= -1 {
 			var response GinStateNotification
 			response.LoadData(game, state, indexed_player)
 			c.undispatch(game, indexed_player, response.MessageID, 0, response)
