@@ -1059,7 +1059,7 @@ class CreateGameForm extends React.Component {
           type={ option.values.type === 'int' ? 'number' : 'text' }
           label={ option.label }
           name={ option.name }
-          value={ this.state[option.name] }
+          value={ this.state[option.name] === undefined ? " " : this.state[option.name] }
           onChange={ this.state.editable ? this.inputHandler(option.name) : null }
           disabled={ !this.state.editable }
           { ...props }
@@ -1081,7 +1081,7 @@ class CreateGameForm extends React.Component {
         <Switch
           label={ this.state[option.name] ? option.label.true : option.label.false }
           name={ option.name }
-          checked={ this.state[option.name] }
+          checked={ this.state[option.name] === undefined ? false : this.state[option.name] }
           onChange={ () => this.toggle(option.name, true) }
           disabled={ !this.state.editable }
         />

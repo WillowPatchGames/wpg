@@ -162,7 +162,6 @@ class App extends React.Component {
   }
 
   setGame(game) {
-    if (game) console.trace("Setting new game:", game);
     this.setState(state => Object.assign({}, state, { game }));
   }
 
