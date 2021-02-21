@@ -69,7 +69,7 @@
     ]
   },
   "reactSnap": {
-    "include": ["/", "/afterparty", "/play", "/playing", "/profile", "/profile/overview", "/profile/security", "/profile/plans", "/profile/archive", "/room", "/room/members", "/room/games", "/room/archive", "/demo"]
+    "include": ["/", "/game", "/profile", "/profile/overview", "/profile/security", "/profile/plans", "/profile/archive", "/room", "/room/members", "/room/games", "/room/archive", "/demo", "/afterparty", "/play", "/playing"]
   },
   "sideEffects": false
 }
