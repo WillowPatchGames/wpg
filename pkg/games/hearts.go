@@ -302,9 +302,8 @@ func (hs *HeartsState) StartRound() error {
 	for len(hs.Deck.Cards) >= len(hs.Players) {
 		for player_offset := 0; player_offset < len(hs.Players); player_offset++ {
 			player_index := (starting_player + player_offset) % len(hs.Players)
-			this_card := *hs.Deck.Cards[0]
+			this_card := *hs.Deck.Draw()
 			hs.Players[player_index].Hand = append(hs.Players[player_index].Hand, this_card)
-			hs.Deck.Cards = hs.Deck.Cards[1:]
 
 			if leading_player == -1 {
 				if have_two_clubs && this_card.Rank == TwoRank && this_card.Suit == ClubsSuit {

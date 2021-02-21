@@ -69,14 +69,6 @@ func (c Card) String() string {
 	return "Card{" + strconv.Itoa(c.ID) + ", " + c.Suit.String() + ", " + c.Rank.String() + "}"
 }
 
-type Deck struct {
-	Cards []*Card `json:"cards"`
-}
-
-func (d *Deck) Init() {
-	d.Cards = make([]*Card, 0)
-}
-
 func FindCard(hand []Card, cardID int) (int, bool) {
 	for index, card := range hand {
 		if card.ID == cardID {
@@ -100,4 +92,22 @@ func RemoveCard(hand []Card, cardID int) (*Card, []Card, bool) {
 	}
 	remaining = append(remaining, hand[index+1:]...)
 	return &card, remaining, true
+}
+
+type Deck struct {
+	Cards []*Card `json:"cards"`
+}
+
+func (d *Deck) Init() {
+	d.Cards = make([]*Card, 0)
+}
+
+func (d *Deck) Draw() *Card {
+	if len(d.Cards) == 0 {
+		return nil
+	}
+
+	card := d.Cards[0]
+	d.Cards = d.Cards[1:]
+	return card
 }

@@ -336,8 +336,7 @@ func (ejs *EightJacksState) StartRound() error {
 	for i := 0; i < ejs.Config.HandSize; i++ {
 		for player_offset := 0; player_offset < len(ejs.Players); player_offset++ {
 			player_index := (starting_player + player_offset) % len(ejs.Players)
-			ejs.Players[player_index].Hand = append(ejs.Players[player_index].Hand, *ejs.Deck.Cards[0])
-			ejs.Deck.Cards = ejs.Deck.Cards[1:]
+			ejs.Players[player_index].Hand = append(ejs.Players[player_index].Hand, *ejs.Deck.Draw())
 		}
 	}
 
@@ -381,8 +380,7 @@ func (ejs *EightJacksState) CreateBoard() error {
 				piece.Value.Rank = JokerRank
 				piece.Value.Suit = NoneSuit
 			} else {
-				piece.Value = *ejs.Deck.Cards[0]
-				ejs.Deck.Cards = ejs.Deck.Cards[1:]
+				piece.Value = *ejs.Deck.Draw()
 				piece.Value.ID = 0
 			}
 
@@ -486,8 +484,7 @@ func (ejs *EightJacksState) DiscardDuplicate(player int, cardID int) error {
 
 	// Draw a replacement if possible.
 	if len(ejs.Deck.Cards) > 0 {
-		ejs.Players[player].Hand = append(ejs.Players[player].Hand, *ejs.Deck.Cards[0])
-		ejs.Deck.Cards = ejs.Deck.Cards[1:]
+		ejs.Players[player].Hand = append(ejs.Players[player].Hand, *ejs.Deck.Draw())
 	}
 
 	return nil
@@ -571,9 +568,9 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 
 	// Draw a replacement if possible.
 	if len(ejs.Deck.Cards) > 0 {
-		ejs.Players[player].Hand = append(ejs.Players[player].Hand, *ejs.Deck.Cards[0])
-		turn.Drawn = *ejs.Deck.Cards[0]
-		ejs.Deck.Cards = ejs.Deck.Cards[1:]
+		this_card := ejs.Deck.Draw()
+		ejs.Players[player].Hand = append(ejs.Players[player].Hand, *this_card)
+		turn.Drawn = *this_card
 	}
 
 	turn.EndingHand = make([]Card, len(ejs.Players[player].Hand))

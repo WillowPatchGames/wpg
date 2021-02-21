@@ -419,8 +419,7 @@ func (ss *SpadesState) StartRound() error {
 	for len(ss.Deck.Cards) >= len(ss.Players) {
 		for player_offset := 0; player_offset < len(ss.Players); player_offset++ {
 			player_index := (starting_player + player_offset) % len(ss.Players)
-			ss.Players[player_index].Hand = append(ss.Players[player_index].Hand, *ss.Deck.Cards[0])
-			ss.Deck.Cards = ss.Deck.Cards[1:]
+			ss.Players[player_index].Hand = append(ss.Players[player_index].Hand, *ss.Deck.Draw())
 		}
 	}
 

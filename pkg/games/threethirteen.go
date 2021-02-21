@@ -282,8 +282,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 	for i := 0; i < tts.Round; i++ {
 		for player_offset := 0; player_offset < len(tts.Players); player_offset++ {
 			player_index := (starting_player + player_offset) % len(tts.Players)
-			tts.Players[player_index].Hand = append(tts.Players[player_index].Hand, *tts.Deck.Cards[0])
-			tts.Deck.Cards = tts.Deck.Cards[1:]
+			tts.Players[player_index].Hand = append(tts.Players[player_index].Hand, *tts.Deck.Draw())
 		}
 	}
 
@@ -294,8 +293,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 	}
 
 	// Add the top card to the discard stack.
-	tts.Discard = append(tts.Discard, tts.Deck.Cards[0])
-	tts.Deck.Cards = tts.Deck.Cards[1:]
+	tts.Discard = append(tts.Discard, tts.Deck.Draw())
 
 	// The first person to play is the one left of the dealer.
 	tts.Turn = starting_player
@@ -357,9 +355,8 @@ func (tts *ThreeThirteenState) TakeCard(player int, FromDiscard bool) error {
 		turn.Drawn = turn.TopDiscard
 		tts.Discard = tts.Discard[:len(tts.Discard)-1]
 	} else {
-		tts.Players[player].Drawn = tts.Deck.Cards[0]
-		turn.Drawn = *tts.Deck.Cards[0]
-		tts.Deck.Cards = tts.Deck.Cards[1:]
+		tts.Players[player].Drawn = tts.Deck.Draw()
+		turn.Drawn = *tts.Players[player].Drawn
 	}
 	tts.Players[player].PickedUpDiscard = FromDiscard
 
@@ -539,8 +536,7 @@ func (tts *ThreeThirteenState) HandleLayDown(player int) {
 	if tts.Config.AllowLastDraw && len(tts.Deck.Cards) >= len(tts.Players)-1 {
 		for player_offset := 1; player_offset < len(tts.Players); player_offset++ {
 			player_index := (player + player_offset) % len(tts.Players)
-			tts.Players[player_index].Drawn = tts.Deck.Cards[0]
-			tts.Deck.Cards = tts.Deck.Cards[1:]
+			tts.Players[player_index].Drawn = tts.Deck.Draw()
 			tts.Turn = player_index
 		}
 	}
