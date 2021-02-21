@@ -33,7 +33,7 @@ import '@rmwc/theme/styles';
 
 import '../App.css';
 
-import { killable, CreateGameForm, GamePage } from './games.js';
+import { killable, CreateGameForm, PreGamePage } from './games.js';
 import { GameCache } from '../utils/cache.js';
 
 import { formatDistanceToNow } from 'date-fns';
@@ -465,7 +465,7 @@ class RoomGamesTab extends React.Component {
         </>
       }
     } else {
-      right_panel = <GamePage {...this.props} />;
+      right_panel = <PreGamePage {...this.props} />;
       tab_title = "Game #" + this.props.game.id;
     }
 

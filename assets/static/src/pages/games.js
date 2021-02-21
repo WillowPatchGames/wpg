@@ -136,6 +136,7 @@ class GamePage extends React.Component {
         notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
         this.props.game.spectating = !data.playing;
+        this.props.setPage("/game", true);
       },
     });
   }
@@ -254,6 +255,7 @@ class PreGameUserPage extends React.Component {
         notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
         this.props.game.spectating = !data.playing;
+        this.props.setPage("/game", true);
       },
       "countdown": data => {
         this.props.setNotification(data.value + "...");
@@ -481,6 +483,7 @@ class PreGameAdminPage extends React.Component {
         notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
         this.props.game.spectating = !data.playing;
+        this.props.setPage("/game", true);
       },
       "countdown": data => {
         this.props.setNotification(data.value + "...");

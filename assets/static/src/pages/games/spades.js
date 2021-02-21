@@ -507,9 +507,7 @@ class SpadesGamePage extends React.Component {
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
           this.props.game.lifecycle = "playing";
-          if (!data.playing) {
-            this.props.setPage('game', true);
-          }
+          this.props.setPage('/game', true);
         },
         "countdown": data => {
           this.props.setNotification(data.value + "...");
