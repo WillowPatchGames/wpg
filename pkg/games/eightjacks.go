@@ -89,6 +89,21 @@ func (ejb *EightJacksBoard) Init(width int, height int) {
 	ejb.IDMapped = make(map[int]*EightJacksSquare)
 }
 
+func (ejb *EightJacksBoard) ReInit() error {
+	ejb.XYMapped = make(map[int]map[int]*EightJacksSquare)
+	for i := 0; i < ejb.Width; i++ {
+		ejb.XYMapped[i] = make(map[int]*EightJacksSquare)
+	}
+	ejb.IDMapped = make(map[int]*EightJacksSquare)
+
+	for _, square := range ejb.Squares {
+		ejb.XYMapped[square.X][square.Y] = square
+		ejb.IDMapped[square.ID] = square
+	}
+
+	return nil
+}
+
 type EightJacksPlayer struct {
 	Hand     []Card `json:"hand"`
 	History  []Card `json:"history"`
@@ -203,6 +218,10 @@ func (ejs *EightJacksState) GetConfiguration() figgy.Figgurable {
 func (ejs *EightJacksState) ReInit() error {
 	// No-op for now. Nothing needs to be re-initialized after reloading
 	// from JSON serialization.
+	if err := ejs.Board.ReInit(); err != nil {
+		return nil
+	}
+
 	return nil
 }
 
