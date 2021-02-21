@@ -94,6 +94,12 @@ func RemoveCard(hand []Card, cardID int) (*Card, []Card, bool) {
 	return &card, remaining, true
 }
 
+func CopyHand(hand []Card) []Card {
+	var ret = make([]Card, len(hand))
+	copy(ret, hand)
+	return ret
+}
+
 type Deck struct {
 	Cards []*Card `json:"cards"`
 }

@@ -35,19 +35,9 @@ func (gp *GinPlayer) FindCard(cardID int) (int, bool) {
 }
 
 func (gp *GinPlayer) RemoveCard(cardID int) bool {
-	index, found := gp.FindCard(cardID)
-	if !found {
-		return false
-	}
-
-	var remaining []Card
-	if index > 0 {
-		remaining = gp.Hand[:index]
-	}
-	remaining = append(remaining, gp.Hand[index+1:]...)
-	gp.Hand = remaining
-
-	return true
+	var ret bool
+	_, gp.Hand, ret = RemoveCard(gp.Hand, cardID)
+	return ret
 }
 
 type GinConfig struct {
@@ -253,20 +243,17 @@ func (gs *GinState) StartRound() error {
 	for i := 0; i < gs.Config.HandSize; i++ {
 		for player_offset := 0; player_offset < len(gs.Players); player_offset++ {
 			player_index := (starting_player + player_offset) % len(gs.Players)
-			gs.Players[player_index].Hand = append(gs.Players[player_index].Hand, *gs.Deck.Cards[0])
-			gs.Deck.Cards = gs.Deck.Cards[1:]
+			gs.Players[player_index].Hand = append(gs.Players[player_index].Hand, *gs.Deck.Draw())
 		}
 	}
 
 	// Save the initial hands.
 	for player_index := 0; player_index < len(gs.Players); player_index++ {
-		history.Players[player_index].DealtHand = make([]Card, len(gs.Players[player_index].Hand))
-		copy(history.Players[player_index].DealtHand, gs.Players[player_index].Hand)
+		history.Players[player_index].DealtHand = CopyHand(gs.Players[player_index].Hand)
 	}
 
 	// Add the top card to the discard stack.
-	gs.Discard = append(gs.Discard, gs.Deck.Cards[0])
-	gs.Deck.Cards = gs.Deck.Cards[1:]
+	gs.Discard = append(gs.Discard, gs.Deck.Draw())
 
 	// The first person to play is the one left of the dealer.
 	gs.Turn = starting_player
@@ -317,8 +304,7 @@ func (gs *GinState) TakeCard(player int, FromDiscard bool) error {
 	turn := &history.Turns[len(history.Turns)-1]
 	turn.Player = player
 	turn.FromDiscard = FromDiscard
-	turn.StartingHand = make([]Card, len(gs.Players[player].Hand))
-	copy(turn.StartingHand, gs.Players[player].Hand)
+	turn.StartingHand = CopyHand(gs.Players[player].Hand)
 	if len(gs.Discard) > 0 {
 		turn.TopDiscard = *gs.Discard[len(gs.Discard)-1]
 	}
@@ -328,9 +314,8 @@ func (gs *GinState) TakeCard(player int, FromDiscard bool) error {
 		turn.Drawn = turn.TopDiscard
 		gs.Discard = gs.Discard[:len(gs.Discard)-1]
 	} else {
-		gs.Players[player].Drawn = gs.Deck.Cards[0]
-		turn.Drawn = *gs.Deck.Cards[0]
-		gs.Deck.Cards = gs.Deck.Cards[1:]
+		gs.Players[player].Drawn = gs.Deck.Draw()
+		turn.Drawn = *gs.Players[player].Drawn
 	}
 	gs.Players[player].PickedUpDiscard = FromDiscard
 
@@ -469,8 +454,7 @@ func (gs *GinState) DiscardCard(player int, cardID int, laidDown bool) error {
 		//
 		// Copy the hand (which wasn't modified) into the turn information.
 		turn.Discarded = *gs.Players[player].Drawn
-		turn.EndingHand = make([]Card, len(gs.Players[player].Hand))
-		copy(turn.EndingHand, gs.Players[player].Hand)
+		turn.EndingHand = CopyHand(gs.Players[player].Hand)
 
 		gs.Discard = append(gs.Discard, gs.Players[player].Drawn)
 		gs.Players[player].Drawn = nil
@@ -503,8 +487,7 @@ func (gs *GinState) DiscardCard(player int, cardID int, laidDown bool) error {
 	gs.Players[player].Drawn = nil
 
 	// Duplicate the hand for the history.
-	turn.EndingHand = make([]Card, len(gs.Players[player].Hand))
-	copy(turn.EndingHand, gs.Players[player].Hand)
+	turn.EndingHand = CopyHand(gs.Players[player].Hand)
 
 	// Advanced the turn.
 	gs.Turn = (gs.Turn + 1) % len(gs.Players)
@@ -638,19 +621,19 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 				if !found {
 					hand = append(hand, card)
 				}
-
-				for _, group := range gs.Players[gs.LaidDown].Groups {
-					base_groups = append(base_groups, make([]int, len(group)))
-					for i, id := range group {
-						for j, card := range hand {
-							if card.ID == id {
-								base_groups[len(base_groups)-1][i] = j
-								break
-							}
+			}
+			for _, group := range gs.Players[gs.LaidDown].Groups {
+				base_groups = append(base_groups, make([]int, len(group)))
+				for i, id := range group {
+					for j, card := range hand {
+						if card.ID == id {
+							base_groups[len(base_groups)-1][i] = j
+							break
 						}
 					}
 				}
 			}
+			log.Println("base_groups", base_groups, "hand", hand, "groups", gs.Players[gs.LaidDown].Groups)
 		}
 	}
 
@@ -799,8 +782,7 @@ func (gs *GinState) ReportScore(player int, score int) error {
 		for index := range gs.Players {
 			history.Players[index].RoundScore = gs.Players[index].RoundScore
 			history.Players[index].Score = gs.Players[index].Score
-			history.Players[index].FinalHand = make([]Card, len(gs.Players[index].Hand))
-			copy(history.Players[index].FinalHand, gs.Players[index].Hand)
+			history.Players[index].FinalHand = CopyHand(gs.Players[index].Hand)
 			history.Players[index].Groups = gs.Players[index].Groups
 			history.Players[index].Leftover = gs.Players[index].Leftover
 		}

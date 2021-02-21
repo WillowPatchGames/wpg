@@ -407,8 +407,7 @@ func (hs *HeartsState) StartRound() error {
 
 	// Copy everyone's dealt hands.
 	for index, indexed_player := range hs.Players {
-		history.Players[index].DealtHand = make([]Card, len(indexed_player.Hand))
-		copy(history.Players[index].DealtHand, indexed_player.Hand)
+		history.Players[index].DealtHand = CopyHand(indexed_player.Hand)
 	}
 
 	hs.Dealt = true
@@ -496,8 +495,7 @@ func (hs *HeartsState) PassCards(player int, cards []int) error {
 
 		// Then copy off their hands again...
 		for index, indexed_player := range hs.Players {
-			history.Players[index].PlayedHand = make([]Card, len(indexed_player.Hand))
-			copy(history.Players[index].PlayedHand, indexed_player.Hand)
+			history.Players[index].PlayedHand = CopyHand(indexed_player.Hand)
 		}
 
 		// Now we've gotta find the Two of Clubs so we know who the round

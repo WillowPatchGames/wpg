@@ -431,8 +431,7 @@ func (ss *SpadesState) StartRound() error {
 
 	// Copy everyone's dealt hands.
 	for index, indexed_player := range ss.Players {
-		history.Players[index].Hand = make([]Card, len(indexed_player.Hand))
-		copy(history.Players[index].Hand, indexed_player.Hand)
+		history.Players[index].Hand = CopyHand(indexed_player.Hand)
 	}
 
 	return nil
@@ -546,8 +545,7 @@ func (ss *SpadesState) DecideTop(player int, keep bool) error {
 		// Copy everyone's picked hands.
 		history := ss.RoundHistory[len(ss.RoundHistory)-1]
 		for index, indexed_player := range ss.Players {
-			history.Players[index].Hand = make([]Card, len(indexed_player.Hand))
-			copy(history.Players[index].Hand, indexed_player.Hand)
+			history.Players[index].Hand = CopyHand(indexed_player.Hand)
 		}
 	} else {
 		if len(ss.Players[player].DrawPile) >= 2 {

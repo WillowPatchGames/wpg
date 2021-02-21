@@ -536,8 +536,7 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 
 	var turn EightJacksTurn
 	turn.Player = player
-	turn.StartingHand = make([]Card, len(ejs.Players[player].Hand))
-	copy(turn.StartingHand, ejs.Players[player].Hand)
+	turn.StartingHand = CopyHand(ejs.Players[player].Hand)
 	turn.Where = squareID
 	turn.Played = played
 
@@ -573,8 +572,7 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 		turn.Drawn = *this_card
 	}
 
-	turn.EndingHand = make([]Card, len(ejs.Players[player].Hand))
-	copy(turn.EndingHand, ejs.Players[player].Hand)
+	turn.EndingHand = CopyHand(ejs.Players[player].Hand)
 	ejs.TurnHistory = append(ejs.TurnHistory, turn)
 
 	ejs.Turn = (ejs.Turn + 1) % len(ejs.Players)

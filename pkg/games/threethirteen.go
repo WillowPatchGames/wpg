@@ -288,8 +288,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 
 	// Save the initial hands.
 	for player_index := 0; player_index < len(tts.Players); player_index++ {
-		history.Players[player_index].DealtHand = make([]Card, len(tts.Players[player_index].Hand))
-		copy(history.Players[player_index].DealtHand, tts.Players[player_index].Hand)
+		history.Players[player_index].DealtHand = CopyHand(tts.Players[player_index].Hand)
 	}
 
 	// Add the top card to the discard stack.
@@ -344,8 +343,7 @@ func (tts *ThreeThirteenState) TakeCard(player int, FromDiscard bool) error {
 	turn := &history.Turns[len(history.Turns)-1]
 	turn.Player = player
 	turn.FromDiscard = FromDiscard
-	turn.StartingHand = make([]Card, len(tts.Players[player].Hand))
-	copy(turn.StartingHand, tts.Players[player].Hand)
+	turn.StartingHand = CopyHand(tts.Players[player].Hand)
 	if len(tts.Discard) > 0 {
 		turn.TopDiscard = *tts.Discard[len(tts.Discard)-1]
 	}
@@ -484,8 +482,7 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 		//
 		// Copy the hand (which wasn't modified) into the turn information.
 		turn.Discarded = *tts.Players[player].Drawn
-		turn.EndingHand = make([]Card, len(tts.Players[player].Hand))
-		copy(turn.EndingHand, tts.Players[player].Hand)
+		turn.EndingHand = CopyHand(tts.Players[player].Hand)
 
 		tts.Discard = append(tts.Discard, tts.Players[player].Drawn)
 		tts.Players[player].Drawn = nil
@@ -512,8 +509,7 @@ func (tts *ThreeThirteenState) DiscardCard(player int, cardID int, laidDown bool
 	tts.Players[player].Drawn = nil
 
 	// Duplicate the hand for the history.
-	turn.EndingHand = make([]Card, len(tts.Players[player].Hand))
-	copy(turn.EndingHand, tts.Players[player].Hand)
+	turn.EndingHand = CopyHand(tts.Players[player].Hand)
 
 	// Advanced the turn.
 	tts.Turn = (tts.Turn + 1) % len(tts.Players)
@@ -713,8 +709,7 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 		for index := range tts.Players {
 			history.Players[index].RoundScore = tts.Players[index].RoundScore
 			history.Players[index].Score = tts.Players[index].Score
-			history.Players[index].FinalHand = make([]Card, len(tts.Players[index].Hand))
-			copy(history.Players[index].FinalHand, tts.Players[index].Hand)
+			history.Players[index].FinalHand = CopyHand(tts.Players[index].Hand)
 			history.Players[index].Groups = tts.Players[index].Groups
 			history.Players[index].Leftover = tts.Players[index].Leftover
 		}
