@@ -658,7 +658,7 @@ class EightJacksGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
           this.props.game.lifecycle = "playing";
           if (!data.playing) {
-            this.props.setPage('afterparty', true);
+            this.props.setPage('game', true);
           }
         },
         "countdown": data => {
@@ -678,7 +678,7 @@ class EightJacksGamePage extends React.Component {
           data.message = await Promise.all(data.winners.map(personalize)) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.winner;
-          this.props.setPage('afterparty', true);
+          this.props.setPage('game', true);
         },
         "error": data => {
           notify(this.props.snackbar, data.error, "error");

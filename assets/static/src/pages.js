@@ -3,6 +3,7 @@ import React from 'react';
 import './App.css';
 
 import {
+  Redirect,
   Route,
   Switch,
 } from "react-router-dom";
@@ -78,6 +79,13 @@ class Page extends React.Component {
       notified_room_default = "(" + this.props.notification + ") " + notified_room_default;
     }
 
+    let params = new URLSearchParams(window.location.search);
+    let new_path = params.get("path");
+    new_path = new_path ? new_path : "/";
+    let search = window.location.search;
+    if (search && search[0] !== "?") {
+      search = "?" + search;
+    }
 
     return (
       <Switch>
@@ -89,20 +97,6 @@ class Page extends React.Component {
             <AboutPage {...this_props} key="path-about" />
           </>
         </Route>
-        <RouteWithGame path="/afterparty" user={ this.props.user } game={ this.props.game }>
-          <>
-            <Helmet>
-              <title>{ "After Party - Game #" + this.props.game?.id }</title>
-            </Helmet>
-            <AfterPartyPage {...this_props} key="path-afterparty" />
-          </>
-          <>
-            <Helmet>
-              <title>Join Game</title>
-            </Helmet>
-            <JoinGamePage {...this_props} key="path-afterparty-missing" />
-          </>
-        </RouteWithGame>
         <RouteWithAuth path="/create/game" user={ this.props.user }>
           <>
             <Helmet>
@@ -110,12 +104,7 @@ class Page extends React.Component {
             </Helmet>
             <CreateGamePage {...this_props} key="path-create-game" />
           </>
-          <>
-            <Helmet>
-              <title>Login</title>
-            </Helmet>
-            <LoginPage {...this_props} key="path-create-game-unauthed" />
-          </>
+          <Redirect to="/login?path=/create/game" />
         </RouteWithAuth>
         <RouteWithAuth path="/create/room" user={ this.props.user }>
           <>
@@ -124,12 +113,7 @@ class Page extends React.Component {
             </Helmet>
             <CreateRoomPage {...this_props} key="path-create-room" />
           </>
-          <>
-            <Helmet>
-              <title>Login</title>
-            </Helmet>
-            <LoginPage {...this_props} key="path-create-room-unauthed" />
-          </>
+          <Redirect to="/login?path=/create/room" />
         </RouteWithAuth>
         <Route path="/docs">
           <>
@@ -147,20 +131,21 @@ class Page extends React.Component {
             <JoinGamePage {...this_props} key="path-join" />
           </>
         </Route>
-        <Route path="/login">
+        <RouteWithAuth path="/login" user={ this.props.user }>
+          <Redirect to={ new_path } />
           <>
             <Helmet>
               <title>Login</title>
             </Helmet>
             <LoginPage {...this_props} key="path-login" />
           </>
-        </Route>
-        <RouteWithGame path="/play" user={ this.props.user } game={ this.props.game }>
+        </RouteWithAuth>
+        <RouteWithGame path="/game" user={ this.props.user } game={ this.props.game }>
           <>
             <Helmet>
-              <title>{ "Pre-Game - Game #" + this.props.game?.id }</title>
+              <title>{ "Game #" + this.props.game?.id }</title>
             </Helmet>
-            <PreGamePage {...this_props} key="path-play" />
+            <GamePage {...this_props} key="path-play" />
           </>
           <>
             <Helmet>
@@ -169,20 +154,15 @@ class Page extends React.Component {
             <JoinGamePage {...this_props} key="path-play-missing" />
           </>
         </RouteWithGame>
-        <RouteWithGame path="/playing" user={ this.props.user } game={ this.props.game }>
-          <>
-            <Helmet>
-              <title>{ "Playing - Game #" + this.props.game?.id }</title>
-            </Helmet>
-            <GamePage {...this_props} key="path-playing" />
-          </>
-          <>
-            <Helmet>
-              <title>Join Game</title>
-            </Helmet>
-            <JoinGamePage {...this_props} key="path-playing-missing" />
-          </>
-        </RouteWithGame>
+        <Route path="/play">
+          <Redirect to={ "/game" + search } />
+        </Route>
+        <Route path="/playing">
+          <Redirect to={ "/game" + search } />
+        </Route>
+        <Route path="/afterparty">
+          <Redirect to={ "/game" + search } />
+        </Route>
         <Route path="/pricing">
           <>
             <Helmet>
@@ -209,12 +189,7 @@ class Page extends React.Component {
             </Helmet>
             <ProfilePage {...this_props} key="path-profile" />
           </>
-          <>
-            <Helmet>
-              <title>Login</title>
-            </Helmet>
-            <LoginPage {...this_props} key="path-profile-unauthed" />
-          </>
+          <Redirect path="/login?path=/profile" />
         </RouteWithAuth>
         <RouteWithRoom path="/room" user={ this.props.user } room={ this.props.room }>
           <>
@@ -240,15 +215,7 @@ class Page extends React.Component {
           </>
         </Route>
         <RouteWithAuth path="/signup" user={ this.props.user }>
-          <>
-            <Helmet
-              titleTemplate={ notified_preferences_title }
-              defaultTitle={ notified_preferences_default }
-            >
-              <title>Account Preferences</title>
-            </Helmet>
-            <ProfilePage {...this_props} key="path-profile" />
-          </>
+          <Redirect path="profile" />
           <>
             <Helmet>
               <title>Sign Up</title>

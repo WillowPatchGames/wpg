@@ -546,18 +546,13 @@ class UserArchiveTab extends React.Component {
     this.props.setGame(game);
     if (room) {
       var room_code = room?.code ? "?code=" + room.code : null;
-      var page = game.lifecycle === "pending" ? "/room/games" : game.lifecycle === "playing" ? "/playing" : "/afterparty";
+      var page = game.lifecycle === "pending" ? "/room/games" : "/game";
       this.props.setRoom(room);
       this.props.setPage(page, room_code);
     } else {
       var game_code = game?.code ? "?code=" + game.code : null;
-      if (game.lifecycle === 'finished') {
-        this.props.setPage('/afterparty');
-      } else if (game.lifecycle === 'playing') {
-        this.props.setPage('/playing', game_code);
-      } else {
-        this.props.setPage('/play', game_code);
-      }
+      game_code = game.lifecycle === "finished" ? null : game_code;
+      this.props.setPage('/game', game_code);
     }
   }
 

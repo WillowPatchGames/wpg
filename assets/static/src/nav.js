@@ -20,9 +20,9 @@ class AuthedHeaderComponent extends React.Component {
         <div>
           <Button label={ this.props.user.display } icon="person" unelevated onClick={ () => this.props.setPage('profile') } />
           <Button label="Logout" icon="logout" unelevated onClick={() => this.props.setUser(null) } />
-          <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('playing', true)} />
+          <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage(this.props.game ? '/game' : '/join', true)} />
           { this.props.immersive ? <></> :
-            <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing', true) } />
+            <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage(this.props.game ? '/game' : '/join', true) } />
           }
         </div>
       );
@@ -33,9 +33,9 @@ class AuthedHeaderComponent extends React.Component {
         <Button label="Login" icon="login" unelevated onClick={() => this.props.setPage('login') } />
         <Button label="Sign up" icon="person_add" unelevated onClick={() => this.props.setPage('signup') } />
         <Button label="About" icon="notes" unelevated onClick={() => this.props.setPage('about') } />
-        <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('playing', true)} />
+        <Button label="Play" icon="games" unelevated onClick={() => this.props.setPage('/game', true)} />
         { this.props.immersive ? <></> :
-          <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('playing', true) } />
+          <bar.TopAppBarActionItem icon="games" onClick={() => this.props.setPage('/game', true) } />
         }
       </div>
     );

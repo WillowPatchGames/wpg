@@ -180,7 +180,7 @@ class RushGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
           this.props.game.lifecycle = "playing";
           if (!data.playing) {
-            this.props.setPage('afterparty', true);
+            this.props.setPage('game', true);
           }
         },
         "countdown": data => {
@@ -200,7 +200,7 @@ class RushGamePage extends React.Component {
           data.message = await personalize(data.winner) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.winner;
-          this.props.setPage('afterparty', true);
+          this.props.setPage('game', true);
         },
         "": data => {
           if (data.message) {

@@ -141,7 +141,7 @@ class App extends React.Component {
         search = code ? "code="+normalizeCode(code) : "";
       }
       if (search[0] !== "?") {
-        search= "?" + search;
+        search = "?" + search;
       }
 
       page = page + search;

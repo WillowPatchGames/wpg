@@ -71,6 +71,11 @@ function loadGame(game) {
 }
 
 function addEv(game, events) {
+  if (!game || !game.interface) {
+    console.trace("Got passed game with empty interface interface", game);
+    return () => { console.log("Empty game interface"); };
+  }
+
   let unmounts = [];
   for (let message_type in events) {
     var handler = events[message_type];
@@ -115,40 +120,61 @@ class GamePage extends React.Component {
     super(props);
     var game = loadGame(this.props.game);
     this.props.setGame(game);
+    this.unmount = addEv(game, {
+      "admitted": async (data) => {
+        if (data.admitted) {
+          this.setState(state => Object.assign({}, this.state, { status: "waiting" }));
+        } else {
+          this.setState(state => Object.assign({}, this.state, { status: "pending", players: null }));
+        }
+      },
+      "started": data => {
+        this.props.setNotification("Starting!");
+        setTimeout(() => this.props.setNotification(null), 2000);
+        window.scrollTo(0, 0);
+        data.message = "Let the games begin!";
+        notify(this.props.snackbar, data.message, data.type);
+        this.props.game.lifecycle = "playing";
+        this.props.game.spectating = !data.playing;
+      },
+    });
   }
+
   async componentDidMount() {
     await this.props.game.update();
-
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
-    let code = this.props.room?.code || this.props.game?.code;
-    code = code ? "?code=" + code : true;
-    var url = this.props.room ? '/room/games' : '/play';
-    if (this.props.game.lifecycle === 'playing') {
-      this.props.setPage('/playing', code);
-    } else if (this.props.game.lifecycle === 'finished') {
-      this.props.setPage('/afterparty', code);
-    } else if (this.props.game.lifecycle === 'pending') {
-      this.props.setPage(url, code);
-    }
   }
+
+  async componentWillUnmount() {
+    if (this.unmount) this.unmount();
+  }
+
   render() {
     var mode = this.props.game.mode || this.props.game.style;
+    let pending = !this.props.game.admitted || this.props.game.lifecycle === 'pending' || !this.props.game.interface;
+    let playing = !this.props.game.spectating && this.props.game.lifecycle === 'playing';
 
-    if (mode === 'rush') {
-      return <RushGamePage {...this.props}/>
-    } else if (mode === 'spades') {
-      return <SpadesGamePage {...this.props}/>
-    } else if (mode === 'three thirteen') {
-      return <ThreeThirteenGamePage {...this.props}/>
-    } else if (mode === 'hearts') {
-      return <HeartsGamePage {...this.props}/>
-    } else if (mode === 'eight jacks') {
-      return <EightJacksGamePage {...this.props}/>
-    } else if (mode === 'gin') {
-      return <GinGamePage {...this.props}/>
+    if (pending) {
+      return <PreGamePage {...this.props} />;
+    } else if (playing) {
+      if (mode === 'rush') {
+        return <RushGamePage {...this.props} />
+      } else if (mode === 'spades') {
+        return <SpadesGamePage {...this.props} />
+      } else if (mode === 'three thirteen') {
+        return <ThreeThirteenGamePage {...this.props} />
+      } else if (mode === 'hearts') {
+        return <HeartsGamePage {...this.props} />
+      } else if (mode === 'eight jacks') {
+        return <EightJacksGamePage {...this.props} />
+      } else if (mode === 'gin') {
+        return <GinGamePage {...this.props} />
+      } else {
+        return "Unrecognized game mode: " + mode;
+      }
     } else {
-      return "Unrecognized game mode: " + mode;
+      return <AfterPartyPage {...this.props} />;
     }
   }
 }
@@ -166,16 +192,6 @@ class PreGamePage extends React.Component {
 
     this.game = loadGame(this.props.game);
     this.props.setGame(this.game);
-    let code = this.props.room?.code || this.props.game?.code;
-    code = code ? "?code=" + code : true;
-    var url = this.props.room ? '/room/games' : '/play';
-    if (this.props.game.lifecycle === 'playing') {
-      this.props.setPage('/playing', code);
-    } else if (this.props.game.lifecycle === 'finished') {
-      this.props.setPage('/afterparty', code);
-    } else if (this.props.game.lifecycle === 'pending') {
-      this.props.setPage(url, code);
-    }
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
@@ -237,11 +253,7 @@ class PreGameUserPage extends React.Component {
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
-        if (data.playing) {
-          this.props.setPage('playing', true);
-        } else {
-          this.props.setPage('afterparty', true);
-        }
+        this.props.game.spectating = !data.playing;
       },
       "countdown": data => {
         this.props.setNotification(data.value + "...");
@@ -277,7 +289,7 @@ class PreGameUserPage extends React.Component {
         data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
         this.game.winner = data.winner;
-        this.props.setPage('afterparty', true);
+        this.props.setPage('/game', true);
       },
       "": data => {
         console.log(data);
@@ -468,11 +480,7 @@ class PreGameAdminPage extends React.Component {
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
-        if (data.playing) {
-          this.props.setPage('playing', true);
-        } else {
-          this.props.setPage('afterparty', true);
-        }
+        this.props.game.spectating = !data.playing;
       },
       "countdown": data => {
         this.props.setNotification(data.value + "...");
@@ -486,7 +494,7 @@ class PreGameAdminPage extends React.Component {
         data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
         this.game.winner = data.winner;
-        this.props.setPage('afterparty', true);
+        this.props.setPage('/game', true);
       },
       "": data => {
         console.log(data);
@@ -619,8 +627,6 @@ class PreGameAdminPage extends React.Component {
       this.setState(state => Object.assign({}, state, { started: false }));
       return;
     }
-
-    this.props.setPage('playing', true);
   }
   render() {
     let invite = null;
@@ -906,7 +912,7 @@ class CreateGameForm extends React.Component {
       this.props.setGame(game);
 
       if (this.props.room === null) {
-        this.props.setPage('play', '?code=' + game.code);
+        this.props.setPage('/game', '?code=' + game.code);
       }
 
       if (this.props.callback !== undefined && this.props.callback !== null) {
@@ -1486,15 +1492,7 @@ class JoinGamePage extends React.Component {
     if (try_game) {
       var game = await GameModel.FromCode(this.props.user, this.state.code);
       if (game.error === undefined || game.error === null) {
-        let page = '/play';
-        if (game.lifecycle === 'playing') {
-          game = loadGame(game);
-          page = '/playing';
-        } else if (game.lifecycle === 'finished') {
-          game = loadGame(game);
-          page = '/afterpraty';
-        }
-        this.props.setPage(page, '?code=' + game.code);
+        this.props.setPage('/game', '?code=' + game.code);
         this.props.setGame(game);
         return;
       }
@@ -1543,7 +1541,7 @@ class JoinGamePage extends React.Component {
       this.setError(user.error.message);
     } else {
       this.props.setUser(user);
-      this.props.setPage('play', true);
+      this.props.setPage('/game', true);
     }
   }
 
