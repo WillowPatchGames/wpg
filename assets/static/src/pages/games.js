@@ -385,7 +385,7 @@ class PreGameUserPage extends React.Component {
                     <Button raised label={ us.playing ? "Spectate" : "Play" }
                             onClick={ () => this.toggleSpectator(us) } />
                     <br /><br />
-                    <Switch label={ us.ready ? "Ready" : "Not Ready" } checked={ us.ready }
+                    <Switch label={ us.ready ? <b style={{ fontSize: "125%" }}>Ready</b> : <b style={{ fontSize: "125%" }}>Not Ready</b> } checked={ us.ready }
                             onChange={ () => this.toggleReady(us) } />
                   </>
                 : null
