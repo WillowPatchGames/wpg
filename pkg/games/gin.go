@@ -771,8 +771,8 @@ func (gs *GinState) ReportScore(player int, score int) error {
 			}
 
 			var delta = our_score - their_score + bonus
-			gs.Players[their_score].Score += delta
-			max_score = gs.Players[their_score].Score
+			gs.Players[their_index].Score += delta
+			max_score = gs.Players[their_index].Score
 		}
 
 		// Save round history, correctly! This must be done after score is
