@@ -224,8 +224,7 @@ func (gs *GinState) StartRound() error {
 	gs.Deck.Shuffle()
 
 	// Save the initial deck.
-	history.Deck = make([]*Card, len(gs.Deck.Cards))
-	copy(history.Deck, gs.Deck.Cards)
+	history.Deck = CopyDeck(gs.Deck.Cards)
 
 	// Clear out all round-specific status before each round.
 	for index := range gs.Players {
@@ -740,8 +739,7 @@ func (gs *GinState) ReportScore(player int, score int) error {
 	history := gs.RoundHistory[len(gs.RoundHistory)-1]
 
 	if all_in {
-		history.Discard = make([]*Card, len(gs.Discard))
-		copy(history.Discard, gs.Discard)
+		history.Discard = CopyDeck(gs.Discard)
 
 		// Simplification: the player who gets the points this round must have an
 		// "effective" max score. Why? Suppose the other player had more points.

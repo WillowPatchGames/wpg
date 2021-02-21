@@ -263,8 +263,7 @@ func (tts *ThreeThirteenState) StartRound() error {
 	tts.Deck.Shuffle()
 
 	// Save the initial deck.
-	history.Deck = make([]*Card, len(tts.Deck.Cards))
-	copy(history.Deck, tts.Deck.Cards)
+	history.Deck = CopyDeck(tts.Deck.Cards)
 
 	// Clear out all round-specific status before each round.
 	for index := range tts.Players {
@@ -683,8 +682,7 @@ func (tts *ThreeThirteenState) ReportScore(player int, score int) error {
 	if all_in {
 		max_score := tts.Players[0].Score
 
-		history.Discard = make([]*Card, len(tts.Discard))
-		copy(history.Discard, tts.Discard)
+		history.Discard = CopyDeck(tts.Discard)
 
 		if tts.Config.GolfScoring {
 			// When golfing, add everyones' score to themselves. Lowest score wins.

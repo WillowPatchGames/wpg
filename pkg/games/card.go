@@ -100,6 +100,12 @@ func CopyHand(hand []Card) []Card {
 	return ret
 }
 
+func CopyDeck(deck []*Card) []*Card {
+	var ret = make([]*Card, len(deck))
+	copy(ret, deck)
+	return ret
+}
+
 type Deck struct {
 	Cards []*Card `json:"cards"`
 }

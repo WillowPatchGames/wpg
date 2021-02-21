@@ -284,8 +284,7 @@ func (hs *HeartsState) StartRound() error {
 	hs.Deck.Shuffle()
 
 	// Save the initial deck.
-	history.Deck = make([]*Card, len(hs.Deck.Cards))
-	copy(history.Deck, hs.Deck.Cards)
+	history.Deck = CopyDeck(hs.Deck.Cards)
 
 	// Clear out all round-specific status before each round.
 	for index := range hs.Players {

@@ -357,8 +357,7 @@ func (ss *SpadesState) StartRound() error {
 	ss.Deck.Shuffle()
 
 	// Save the initial deck.
-	history.Deck = make([]*Card, len(ss.Deck.Cards))
-	copy(history.Deck, ss.Deck.Cards)
+	history.Deck = CopyDeck(ss.Deck.Cards)
 
 	// Clear out all round-specific status before each round.
 	for index := range ss.Players {
@@ -405,8 +404,7 @@ func (ss *SpadesState) StartRound() error {
 		// Save the initial draw pile and team assignments.
 		for player_index := 0; player_index < len(ss.Players); player_index++ {
 			history.Players[player_index].Team = ss.Players[player_index].Team
-			history.Players[player_index].DrawPile = make([]*Card, len(ss.Players[player_index].DrawPile))
-			copy(history.Players[player_index].DrawPile, ss.Players[player_index].DrawPile)
+			history.Players[player_index].DrawPile = CopyDeck(ss.Players[player_index].DrawPile)
 		}
 
 		ss.Dealt = true
