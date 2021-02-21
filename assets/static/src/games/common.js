@@ -146,13 +146,17 @@ class WebSocketController {
       // when we're done with everything. This lets us register a listener and
       // then "scope" its lifetime to the bounds of wsPromise() function.
       for (let ev in evs) {
-        this.game.ws.removeEventListener(ev, evs[ev]);
+        if (this.game.ws) {
+          this.game.ws.removeEventListener(ev, evs[ev]);
+        }
       }
     };
 
     // Add our specified event listeners.
     for (let ev in evs) {
-      this.game.ws.addEventListener(ev, evs[ev]);
+      if (this.game.ws) {
+        this.game.ws.addEventListener(ev, evs[ev]);
+      }
     }
 
     // Return the cleaner function for others to call later.
@@ -230,11 +234,12 @@ class WebSocketController {
       this.wsConnect();
     }
 
-    if (this.game.ws.readyState === WebSocket.OPEN) {
+    if (this.game.ws && this.game.ws.readyState === WebSocket.OPEN) {
       return Promise.resolve();
-    } else if (!this.game.ws.readyState) {
+    } else if (this.game.ws && !this.game.ws.readyState) {
       return this.wsPromise(resolve => ({ open: resolve }));
     } else {
+      this.closed = false;
       this.wsConnect();
       return this.waitOpen();
     }

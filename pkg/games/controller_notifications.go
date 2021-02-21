@@ -29,6 +29,7 @@ type ControllerNotifyAdminJoin struct {
 	Joined   uint64 `json:"joined"`
 	Admitted bool   `json:"admitted"`
 	Playing  bool   `json:"playing"`
+	Ready    bool   `json:"ready"`
 }
 
 func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player *PlayerData, joined *PlayerData) {
@@ -38,6 +39,7 @@ func (cnaj *ControllerNotifyAdminJoin) LoadFromController(data *GameData, player
 	cnaj.Joined = joined.UID
 	cnaj.Admitted = joined.Admitted
 	cnaj.Playing = joined.Playing
+	cnaj.Ready = joined.Ready
 }
 
 type ControllerNotifyAdminCountback struct {
@@ -59,6 +61,7 @@ type ControllerNotifyAdmitted struct {
 
 	Admitted bool `json:"admitted"`
 	Playing  bool `json:"playing"`
+	Ready    bool `json:"ready"`
 }
 
 func (cna *ControllerNotifyAdmitted) LoadFromController(data *GameData, player *PlayerData) {
@@ -67,6 +70,7 @@ func (cna *ControllerNotifyAdmitted) LoadFromController(data *GameData, player *
 
 	cna.Admitted = player.Admitted
 	cna.Playing = player.Playing
+	cna.Ready = player.Ready
 }
 
 type ControllerNotifyError struct {
@@ -131,6 +135,7 @@ func (cnw *ControllerNotifyWord) LoadFromController(data *GameData, player *Play
 type ControllerPlayerState struct {
 	UID     uint64 `json:"user"`
 	Playing bool   `json:"playing"`
+	Ready   bool   `json:"ready"`
 }
 
 type ControllerListUsersInGame struct {
@@ -148,6 +153,7 @@ func (cluig *ControllerListUsersInGame) LoadFromController(data *GameData, playe
 			var state ControllerPlayerState
 			state.UID = indexed_player.UID
 			state.Playing = indexed_player.Playing
+			state.Ready = indexed_player.Ready
 
 			cluig.Players = append(cluig.Players, state)
 		}

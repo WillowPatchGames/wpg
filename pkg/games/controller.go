@@ -485,6 +485,22 @@ func (c *Controller) markReady(gid uint64, uid uint64, ready bool) error {
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
 	player.Ready = ready
+
+	var notification ControllerNotifyAdmitted
+	notification.LoadFromController(game, player)
+	c.undispatch(game, player, notification.MessageID, 0, notification)
+
+	for _, indexed_player := range game.ToPlayer {
+		// Only let admitted players know who else is in the room.
+		if !indexed_player.Admitted {
+			continue
+		}
+
+		var users ControllerListUsersInGame
+		users.LoadFromController(game, indexed_player)
+		c.undispatch(game, indexed_player, users.MessageID, 0, users)
+	}
+
 	return nil
 }
 

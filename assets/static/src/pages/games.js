@@ -7,6 +7,8 @@ import {
 
 import { Button } from '@rmwc/button';
 import '@rmwc/button/styles';
+import { Icon } from '@rmwc/icon';
+import '@rmwc/icon/styles';
 import { IconButton } from '@rmwc/icon-button';
 import '@rmwc/icon-button/styles';
 import * as c from '@rmwc/card';
@@ -151,6 +153,7 @@ class GamePage extends React.Component {
     if (this.props.game?.interface) {
       this.props.game.interface.close();
     }
+    this.props.setGame(null);
   }
 
   render() {
@@ -316,6 +319,17 @@ class PreGameUserPage extends React.Component {
 
     this.setState(state => Object.assign({}, state, { players: this.state.players }));
   }
+  toggleReady(user) {
+    for (let u in this.state.players) {
+      if (this.state.players[u] === user) {
+        user.ready = !user.ready;
+
+        this.game.interface.controller.markReady(user.ready);
+      }
+    }
+
+    this.setState(state => Object.assign({}, state, { players: this.state.players }));
+  }
   render() {
     let message = "Game is in an unknown state.";
     if (this.state.status === "pending") {
@@ -324,6 +338,7 @@ class PreGameUserPage extends React.Component {
       message = "Waiting for the game to start...";
     }
 
+    let us = null;
     let users = [];
     if (this.state.players !== null) {
       var i = 0;
@@ -334,6 +349,7 @@ class PreGameUserPage extends React.Component {
         let onClick = undefined;
         if (+player_id === +this.props.user.id) {
           display = "You";
+          us = player;
           disabled = false;
           onClick = () => this.toggleSpectator(player);
         }
@@ -362,20 +378,33 @@ class PreGameUserPage extends React.Component {
         }
         {
           this.state.status !== "pending"
-          ? <l.List>
-              <l.CollapsibleList handle={
-                  <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-                }
-              >
-                <CreateGameForm {...this.props} editable={ false } />
-              </l.CollapsibleList>
-              <l.ListGroup>
-                <l.ListItem disabled>
-                  <b>Users</b>
-                </l.ListItem>
-                { users }
-              </l.ListGroup>
-            </l.List>
+          ? <>
+              {
+                us !== null
+                ? <>
+                    <Button raised label={ us.playing ? "Spectate" : "Play" }
+                            onClick={ () => this.toggleSpectator(us) } />
+                    <br /><br />
+                    <Switch label={ us.ready ? "Ready" : "Not Ready" } checked={ us.ready }
+                            onChange={ () => this.toggleReady(us) } />
+                  </>
+                : null
+              }
+              <l.List>
+                <l.CollapsibleList handle={
+                    <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+                  }
+                >
+                  <CreateGameForm {...this.props} editable={ false } />
+                </l.CollapsibleList>
+                <l.ListGroup>
+                  <l.ListItem disabled>
+                    <b>Users</b>
+                  </l.ListItem>
+                  { users }
+                </l.ListGroup>
+              </l.List>
+            </>
           : null
         }
       </div>
@@ -419,7 +448,7 @@ class PreGameAdminPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      waitlist: [Object.assign({}, this.props.user, { admitted: true, playing: false, connected: false, team: null })],
+      waitlist: [Object.assign({}, this.props.user, { admitted: true, playing: false, connected: false, ready: false, team: null })],
       started: false,
       countdown: null,
       order: true,
@@ -453,6 +482,9 @@ class PreGameAdminPage extends React.Component {
             if (data.connected !== undefined && data.connected !== null) {
               Object.assign(player, { connected: data.connected });
             }
+            if (data.ready !== undefined && data.ready !== null) {
+              Object.assign(player, { ready: data.ready });
+            }
             missing = false;
           }
         }
@@ -461,7 +493,8 @@ class PreGameAdminPage extends React.Component {
           var admitted = data.admitted ? true : false;
           var playing = data.playing ? true : false;
           var connected = data.connected ? true : false;
-          this.state.waitlist.push(Object.assign(user, { admitted, playing, connected }));
+          var ready = data.ready ? true : false;
+          this.state.waitlist.push(Object.assign(user, { admitted, playing, connected, ready }));
         }
 
         this.sortUsers();
@@ -618,6 +651,11 @@ class PreGameAdminPage extends React.Component {
     return true;
   }
   async start() {
+    for (let player of this.state.waitlist) {
+      player.connected = false;
+    }
+    this.sortUsers();
+
     this.setState(state => Object.assign({}, state, { started: true }));
 
     if (!await this.assignTeams(true)) {
@@ -694,7 +732,12 @@ class PreGameAdminPage extends React.Component {
             </l.ListItem>
             { players.map((user, i) =>
                 <l.ListItem key={user.id} disabled style={{ height: "auto", minHeight: "72px" }}>
-                  <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
+                  <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : user.ready ? <>&nbsp;-&nbsp;<i style={{ 'verticalAlign': 'middle' }}>Ready</i></> : <>&nbsp;-&nbsp;<i style={{ 'verticalAlign': 'middle' }}>Not Ready</i></> }
+                  {
+                    this.state.started
+                    ? <Icon icon={ user.connected ? 'check' : 'hourglass_empty' } style={{ 'verticalAlign': 'middle' }} />
+                    : <></>
+                  }
                   <l.ListItemMeta>
                     { user.id === this.props.user.id
                       ? null
