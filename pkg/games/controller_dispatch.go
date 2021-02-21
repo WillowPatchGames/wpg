@@ -208,6 +208,9 @@ func (c *Controller) handleCountdown(game *GameData) error {
 		// Fall through -- this decrements the above countdown by one and sends out
 		// the countdown messages.
 	} else if game.Countdown == 0 {
+		game.Countdown = 0
+		game.CountdownTimer = nil
+
 		if game.Mode == RushGame {
 			var state *RushState = game.State.(*RushState)
 			if !state.Started {

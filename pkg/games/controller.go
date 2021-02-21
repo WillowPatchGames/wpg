@@ -432,7 +432,7 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 	player.UID = uid
 	player.Index = -1
 	player.Admitted = admitted || owner
-	player.Playing = player.Admitted
+	player.Playing = player.Admitted && !game.State.IsStarted() && !game.State.IsFinished() && game.CountdownTimer == nil
 	player.InboundMsgs = nil
 	player.OutboundID = 1
 	player.OutboundMsgs = nil
