@@ -920,6 +920,8 @@ func (ss *SpadesState) tabulateRoundScore() error {
 		ss.Finished = true
 		ss.Dealt = true
 		ss.Bid = true
+		ss.Turn = -1
+		ss.Dealer = -1
 		ss.Winners = winner_offsets
 		return errors.New(SpadesGameOver)
 	}

@@ -772,6 +772,8 @@ func (hs *HeartsState) tabulateRoundScore() error {
 		hs.Dealt = true
 		hs.Passed = true
 		hs.Winner = winner_offset
+		hs.Turn = -1
+		hs.Dealer = -1
 		return errors.New(HeartsGameOver)
 	}
 

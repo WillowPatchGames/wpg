@@ -595,6 +595,8 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 	// Game ends if the next player runs out of cards.
 	if len(ejs.Players[ejs.Turn].Hand) == 0 {
 		ejs.Finished = true
+		ejs.Turn = -1
+		ejs.Dealer = -1
 		return errors.New(EightJacksGameOver)
 	}
 
@@ -738,6 +740,8 @@ func (ejs *EightJacksState) MarkRun(run []int) error {
 	if finished {
 		ejs.Finished = true
 		ejs.Winners = winners
+		ejs.Turn = -1
+		ejs.Dealer = -1
 		return errors.New(EightJacksGameOver)
 	}
 

@@ -776,6 +776,8 @@ func (tts *ThreeThirteenState) AssignWinner() {
 			winner = tts.LaidDown
 		}
 		tts.Winner = winner
+		tts.Dealer = -1
+		tts.Turn = -1
 		tts.Finished = true
 
 		return

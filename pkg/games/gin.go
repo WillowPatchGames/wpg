@@ -64,8 +64,6 @@ type GinConfig struct {
 	GinAmount       int `json:"gin_amount" config:"type:enum,default:10,options:5:5 Points;10:10 Points;20:20 Points;25:25 Points" label:"Gin score"`                                          // Bonus for going gin.
 	BigGinAmount    int `json:"big_gin_amount" config:"type:enum,default:20,options:-1:Disabled;10:10 Points;20:20 Points;40:40 Points;50:50 Points" label:"Big Gin score"`                    // Bonus for going big gin.
 	UndercutAmount  int `json:"undercut_amount" config:"type:enum,default:10,options:-1:Disabled;5:5 Points;10:10 Points;20:20 Points;25:25 Points" label:"Undercutting bonus"`                // Bonus for going gin.
-
-	SuggestBetter bool `json:"suggest_better" config:"type:bool,default:true" label:"true:Tell users if they could get a better score,false:Don't tell users if they could get a better score"` // Whether to suggest better scores
 }
 
 func (cfg GinConfig) Validate() error {
@@ -613,9 +611,11 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 					// The alternative to this approach is "fixing up" the opponent's
 					// groups and removing all groups which are purely in the laid-down
 					// user's hand and addressing this then.
-					for _, allCardID := range group {
-						if _, found := FindCard(hand, allCardID); found {
-							return errors.New("unable to play off the person who laid down when they went gin or big gin")
+					if gs.Players[gs.LaidDown].Score == 0 {
+						for _, allCardID := range group {
+							if _, found := FindCard(hand, allCardID); found {
+								return errors.New("unable to play off the person who laid down when they went gin or big gin")
+							}
 						}
 					}
 				}
@@ -681,6 +681,8 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 	}
 
 	/*
+		// NB: This was removed beacuse the matcher doesn't know about groups which
+		// it can't modify such as those from the player who went out.
 		ideal := solver.MinScore(hand)
 		if ideal < score {
 			max_warnings := 3
@@ -827,5 +829,7 @@ func (gs *GinState) AssignWinner() {
 	}
 
 	gs.Winner = winner
+	gs.Dealer = -1
+	gs.Turn = -1
 	gs.Finished = true
 }
