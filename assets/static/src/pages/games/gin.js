@@ -77,10 +77,49 @@ class GinGameComponent extends React.Component {
     && this.state.game.interface.my_turn()) {
       for (let other of this.state.game.interface.synopsis.players) {
         if (other.user.id !== this.state.game.interface.laid_down_id) continue;
+        if (other.round_score === 0) continue;
         return other.groups || [];
       }
     }
     return [];
+  }
+  shouldSubmitGroupings() {
+    let default_groupings = this.defaultGroupings();
+    let added_group = this.state.groupings.length > default_groupings.length;
+    if (added_group) {
+      return true;
+    }
+    if (this.state.groupings) {
+      for (let group of this.state.groupings) {
+        if (!group) {
+          continue;
+        }
+        for (let card of group) {
+          if (default_groupings) {
+            var found = false;
+            for (let d_group of default_groupings) {
+              if (!d_group) {
+                continue;
+              }
+              for (let d_card of d_group) {
+                if (d_card === card) {
+                  found = true;
+                }
+              }
+              if (found) {
+                break;
+              }
+            }
+            if (!found) {
+              return true;
+            }
+          } else {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
   clearSelected() {
     return this.setState(state => Object.assign({}, state, { selected: null }));
@@ -90,7 +129,7 @@ class GinGameComponent extends React.Component {
       selected: card.id === this.state.selected,
       onClick: () => {
         this.setState(state => {
-          state.selected = card.id;
+          state.selected = state.selected === card.id ? null : card.id;
           return state;
         });
       },
@@ -171,7 +210,8 @@ class GinGameComponent extends React.Component {
       this.setState(state => {
         if (!state.sorting) {
           if (!selecting) return state;
-          return Object.assign(state, {selected:card.id});
+          let selected = state.selected === card.id ? null : card.id;
+          return Object.assign(state, {selected});
         }
         var i = state.sorting.findIndex(id => id === card.id);
         if (i >= 0) {
@@ -348,7 +388,7 @@ class GinGameComponent extends React.Component {
                       {
                         onClick: () => {
                           this.setState(state => {
-                            state.selected = this.state.game.interface.data.drawn.id;
+                            state.selected = state.selected === this.state.game.interface.data.drawn.id ? null : this.state.game.interface.data.drawn.id;
                             return state;
                           });
                         },
@@ -417,6 +457,7 @@ class GinGameComponent extends React.Component {
           if (this.state.game.interface.laid_down && this.state.game.interface.laid_down_id !== this.props.user.id && this.state.game.interface.synopsis.players) {
             for (let other of this.state.game.interface.synopsis.players) {
               if (other.user.id !== this.state.game.interface.laid_down_id) continue;
+              if (+other.round_score === 0) continue;
               superhand_cards = superhand_cards.concat(other.hand.cards);
             }
           }
@@ -453,6 +494,7 @@ class GinGameComponent extends React.Component {
                   <p>Make runs of three or more consecutive cards{this.state.game.interface.data.config.same_suit_runs ? " of the same suit" : ""}, or groups of three or more of a kind.</p>
                   <p>These groups will be verified when you submit your score.</p>
                   <p>Any leftover cards will be counted against your score this round.</p>
+                  <p>When your opponent goes out with points left in their hand, you can play off their existing groups.</p>
                   <br/>
                   <h3>Your Hand</h3>
                   <h4>Points: { ungrouped_score }</h4>
@@ -513,10 +555,12 @@ class GinGameComponent extends React.Component {
                     </CardHandImage>
                   ]) }
                   <br/><br/>
+                  { this.shouldSubmitGroupings() ? "different" : "same" }
+                  <br/><br/>
                   <div>
                     <Button label={ "Submit Score of " + ungrouped_score }
                       raised={ !ungrouped_score }
-                      unelevated ripple={false} onClick={ this.state.groupings.length ? this.sendCards.bind(this) : () => this.setState(state => Object.assign(state, {confirming:true})) } />
+                      unelevated ripple={false} onClick={ this.shouldSubmitGroupings() ? this.sendCards.bind(this) : () => this.setState(state => Object.assign(state, {confirming:true})) } />
                     <d.Dialog
                       open={this.state.confirming}
                       onClose={evt => {
@@ -673,7 +717,7 @@ class GinGameComponent extends React.Component {
                       {
                         onClick: () => {
                           this.setState(state => {
-                            state.selected = this.state.game.interface.data.drawn.id;
+                            state.selected = state.selected === this.state.game.interface.data.drawn.id ? null : this.state.game.interface.data.drawn.id;
                             return state;
                           });
                         },
