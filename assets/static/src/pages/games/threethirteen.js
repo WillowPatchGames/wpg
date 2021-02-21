@@ -1063,11 +1063,6 @@ class ThreeThirteenAfterPartyPage extends React.Component {
           }
 
           this.setState(state => Object.assign({}, state, { timeout: null }));
-
-          if (this.props.game?.interface) {
-            this.props.game.interface.close();
-            this.props.game.interface = null;
-          }
         }
       },
       "error": (data) => {
@@ -1098,16 +1093,14 @@ class ThreeThirteenAfterPartyPage extends React.Component {
 
     if (this.unmount) this.unmount();
   }
-  refreshData() {
-    this.game.interface.controller.wsController.send({"message_type": "peek"});
+  async refreshData() {
+    await this.game.interface.controller.wsController.sendAndWait({"message_type": "peek"});
 
     if (this.state.finished) {
-      this.state.timeout.kill();
-      if (this.props.game?.interface) {
-        this.props.game.interface.close();
-        this.props.game.interface = null;
+      if (this.state.timeout) {
+        this.state.timeout.kill();
+        this.setState(state => Object.assign({}, state, { timeout: null }));
       }
-      this.setState(state => Object.assign({}, state, { timeout: null }));
     }
   }
   returnToRoom() {

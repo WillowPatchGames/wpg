@@ -344,8 +344,17 @@ class CardImage extends React.Component {
       y = 4 * -card_dim[1];
     }
 
+    var rotate = 0;
+    if (transpose === -1) {
+      rotate = -90;
+    } else if (transpose) {
+      rotate = 90;
+    } else if (!transpose && 1/transpose < 0) { // signed zero, sorry ;P
+      rotate = 180;
+    }
+
     if (rank === "logo") {
-      var logo = <img style={{ width: "75%", paddingTop: transpose?"0%":"15%" }} src={ logosrc } alt="WillowPatchGames logo"/>;
+      var logo = <img style={{ width: "75%", paddingTop: transpose?"0%":"15%", transform: rotate?"rotate("+rotate+"deg)":"" }} src={ logosrc } alt="WillowPatchGames logo"/>;
       underlay = underlay ? <>{ logo }{ underlay }</> : logo;
     }
 

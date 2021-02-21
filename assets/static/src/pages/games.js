@@ -133,6 +133,17 @@ class GamePage extends React.Component {
       game = await GameModel.FromId(this.props.user, id);
     }
 
+    if (!game) {
+      console.log("No game yet...", this.props.room, this.props.game);
+      return;
+    }
+
+    await game.update();
+    if (this.props.room && game.lifecycle === "pending") {
+      this.props.setPage("/room/games", true);
+      return;
+    }
+
     game = loadGame(game);
     this.props.setGame(game);
     this.unmount = addEv(game, {

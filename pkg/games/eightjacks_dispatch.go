@@ -197,7 +197,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 
 		var synopsis EightJacksSynopsisNotification
 		synopsis.LoadData(game, state, player)
-		c.undispatch(game, player, synopsis.MessageID, 0, synopsis)
+		c.undispatch(game, player, response.MessageID, header.MessageID, synopsis)
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}

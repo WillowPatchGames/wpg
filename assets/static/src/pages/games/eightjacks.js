@@ -253,6 +253,7 @@ class EightJacksGameComponent extends React.Component {
     var view_order = []; var last_row = [];
     var transpose = false;
     if (this.state.orientation === 2) {
+      transpose = -0;
       for (let i=board.width-1; i>=0; i-=1) {
         view_order.push([]);
         for (let j=board.height-1; j>=0; j-=1) {
@@ -262,7 +263,7 @@ class EightJacksGameComponent extends React.Component {
         }
       }
     } else if (this.state.orientation === 1) {
-      transpose = true;
+      transpose = -1;
       for (let j=board.height-1; j>=0; j-=1) {
         view_order.push([]);
         for (let i=0; i<=board.width-1; i+=1) {
@@ -272,7 +273,7 @@ class EightJacksGameComponent extends React.Component {
         }
       }
     } else if (this.state.orientation === 3) {
-      transpose = true;
+      transpose = 1;
       for (let j=0; j<=board.height-1; j+=1) {
         view_order.push([]);
         for (let i=board.width-1; i>=0; i-=1) {
@@ -282,6 +283,7 @@ class EightJacksGameComponent extends React.Component {
         }
       }
     } else {
+      transpose = 0;
       for (let i=0; i<=board.width-1; i+=1) {
         view_order.push([]);
         for (let j=0; j<=board.height-1; j+=1) {
@@ -409,7 +411,7 @@ class EightJacksGameComponent extends React.Component {
                   value={this.state.scale}
                   onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
                   min={0.1}
-                  max={0.35}
+                  max={0.45}
                 />
               <IconButton
                 onClick={() => this.setState(state => Object.assign(state, {orientation:(state.orientation + 1) % 4}))}
@@ -786,11 +788,6 @@ class EightJacksAfterPartyPage extends React.Component {
           }
 
           this.setState(state => Object.assign({}, state, { finished: true, timeout: null }));
-
-          if (this.props.game?.interface) {
-            this.props.game.interface.close();
-            this.props.game.interface = null;
-          }
         }
       },
       "error": (data) => {
@@ -829,22 +826,19 @@ class EightJacksAfterPartyPage extends React.Component {
     if (this.props.game.interface) {
       this.props.game.interface.close();
     }
-
     this.props.game.interface = null;
 
     this.props.setGame(null);
     this.props.setPage("room", true);
   }
-  refreshData() {
-    this.game.interface.controller.wsController.send({"message_type": "peek"});
+  async refreshData() {
+    await this.game.interface.controller.wsController.sendAndWait({"message_type": "peek"});
 
     if (this.state.finished) {
-      this.state.timeout.kill();
-      if (this.props.game?.interface) {
-        this.props.game.interface.close();
-        this.props.game.interface = null;
+      if (this.state.timeout) {
+        this.state.timeout.kill();
+        this.setState(state => Object.assign({}, state, { timeout: null }));
       }
-      this.setState(state => Object.assign({}, state, { timeout: null }));
     }
   }
 
@@ -1108,7 +1102,7 @@ class EightJacksAfterPartyPage extends React.Component {
                       value={this.state.scale}
                       onInput={e => {let scale = e.detail.value; this.setState(state => Object.assign(state, {scale}))}}
                       min={0.1}
-                      max={0.35}
+                      max={0.45}
                     />
                   <IconButton
                     onClick={() => this.setState(state => Object.assign(state, {orientation:(state.orientation + 1) % 4}))}

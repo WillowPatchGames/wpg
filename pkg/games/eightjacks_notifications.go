@@ -148,7 +148,7 @@ type EightJacksPeekNotification struct {
 
 func (ejsn *EightJacksPeekNotification) LoadData(data *GameData, game *EightJacksState, player *PlayerData) {
 	ejsn.LoadHeader(data, player)
-	ejsn.MessageType = "state"
+	ejsn.MessageType = "game-state"
 
 	ejsn.Board = game.Board
 	ejsn.Config = game.Config
