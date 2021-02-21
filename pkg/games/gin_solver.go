@@ -526,7 +526,22 @@ func (gs *GinSolver) MinScoreBelowUsing(hand []Card, maxScore int, using [][]int
 		// to the minimum score achievable using that many wildcards
 		dividedResults := make([]DividedResult, len(divisions))
 		for i, division := range divisions {
-			dividedResults[i] = gs.DivideResultUsing(rankedHere, division, minScore-1, nwilds, using)
+			usingHere := make([][]int, 0)
+			for _, group := range using {
+				groupHere := make([]int, 0)
+				Group:
+					for _, card := range group {
+						for i, cardHere := range division {
+							if hand[card] == rankedHere[cardHere] {
+								groupHere = append(groupHere, i)
+								continue Group
+							}
+						}
+						groupHere = append(groupHere, -1)
+					}
+				usingHere = append(usingHere, groupHere)
+			}
+			dividedResults[i] = gs.DivideResultUsing(rankedHere, division, minScore-1, nwilds, usingHere)
 		}
 
 		// Find the best solution by iterating over number of
@@ -655,16 +670,27 @@ AllMatches:
 		// Filter out matches that use some but not all of an existing group
 		for _, group := range using {
 			had := 0
+			wc := 0
 			for _, card := range group {
-				for _, c := range match.cards {
-					if c == card {
-						had += 1
-						break
+				if card < 0 {
+					wc += 1
+				} else {
+					for _, c := range match.cards {
+						if c == card {
+							had += 1
+							break
+						}
 					}
 				}
 			}
-			if had > 0 && had < len(group) {
+			if had > 0 && had+wc < len(group) {
 				continue AllMatches
+			}
+			if had > 0 && match.wc.min < wc {
+				if match.wc.more != flag {
+					match.wc.more -= (wc - match.wc.min)
+				}
+				match.wc.min = wc
 			}
 		}
 		all = append(all, match)
