@@ -190,6 +190,7 @@ class EightJacksGame {
 
   close() {
     this.controller.close();
+    this.onChange = (e) => { return true };
   }
 }
 

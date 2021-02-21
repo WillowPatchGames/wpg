@@ -221,6 +221,7 @@ class GinGame {
   }
 
   close() {
+    this.onChange = () => {};
     this.controller.close();
   }
 }

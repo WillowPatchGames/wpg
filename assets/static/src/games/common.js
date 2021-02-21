@@ -36,15 +36,20 @@ class WebSocketController {
     this.send({"message_type": "join"});
 
     this.keepalive = null;
+    this.closed = false;
   }
 
   wsConnect() {
+    if (this.closed) {
+      return;
+    }
+
     // In the event that our websocket points to the wrong endpoint, that
     // we don't have a websocket, or that we have a closed websocket, open a
     // new one.
     if (!this.game.ws || this.game.ws.url !== this.game.endpoint ||
           this.game.ws.readyState !== WebSocket.OPEN) {
-      console.log("Generating new WebSocket connection...", this.game.ws, this.game.endpoint);
+      console.trace("Generating new WebSocket connection...", this.game.ws, this.game.endpoint);
       var old = this.game.ws;
 
       if (old !== undefined && old !== null) {
@@ -93,7 +98,11 @@ class WebSocketController {
   }
 
   async sendKeepAlive() {
-    return await this.send({ "message_type": "keepalive" });
+    if (this.keepalive !== null && !this.closed) {
+      return await this.send({ "message_type": "keepalive" });
+    }
+
+    return new Promise((resolve, reject) => { return true });
   }
 
   // flushCache assumes an open WebSocket.
@@ -311,15 +320,27 @@ class WebSocketController {
   }
 
   close() {
-    if (this.game.ws) {
-      this.game.ws.close();
-    }
+    console.log("Closing...");
 
-    for (let type in this.listeners) {
-      for (let handler of this.listeners[type]) {
-        this.removeEventListener(type, handler);
+    this.closed = true;
+    try {
+      if (this.keepalive) {
+        this.keepalive.kill();
+        this.keepalive = null;
       }
-    }
+
+      if (this.game.ws) {
+        this.game.ws.close();
+      }
+
+      for (let type in this.listeners) {
+        for (let handler of this.listeners[type]) {
+          this.removeEventListener(type, handler);
+        }
+      }
+    } catch (e) { console.log(e) }
+
+    this.game.ws = null;
   }
 }
 

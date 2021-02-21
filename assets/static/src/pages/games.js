@@ -135,22 +135,22 @@ class GamePage extends React.Component {
       },
       "finished": async (data) => {
         this.props.game.lifecycle = "finished";
-        this.game.winner = data.winner;
-        this.props.setPage('game', true);
+        this.props.setPage('/game', true);
       },
     });
-  }
 
-  async componentDidMount() {
-    await this.props.game.update();
-    this.game = loadGame(this.props.game);
-    this.props.setGame(this.game);
+    this.state = {
+      counter: 1,
+    };
   }
 
   async componentWillUnmount() {
     if (this.unmount) this.unmount();
     this.props.setNotification(null, "Your Turn!");
     this.props.setNotification(null, "Starting!");
+    if (this.props.game?.interface) {
+      this.props.game.interface.close();
+    }
   }
 
   render() {
@@ -296,7 +296,6 @@ class PreGameUserPage extends React.Component {
         this.props.setPage('/game', true);
       },
       "": data => {
-        console.log(data);
         if (data.message) {
           notify(this.props.snackbar, data.message, data.type);
         }
@@ -502,7 +501,6 @@ class PreGameAdminPage extends React.Component {
         this.props.setPage('/game', true);
       },
       "": data => {
-        console.log(data);
         if (data.message) {
           notify(this.props.snackbar, data.message, data.type);
         }
@@ -977,7 +975,7 @@ class CreateGameForm extends React.Component {
           label={ option.label }
           name={ option.name }
           value={ this.state[option.name] }
-          onChange={ this.inputHandler(option.name) }
+          onChange={ this.state.editable ? this.inputHandler(option.name) : null }
           disabled={ !this.state.editable }
           { ...props }
         />
@@ -1226,7 +1224,6 @@ class CreateGameForm extends React.Component {
         { this.renderField(cfg.options[7]) }
         { this.renderField(cfg.options[8]) }
         { this.renderField(cfg.options[9]) }
-        { this.renderField(cfg.options[10]) }
       </>
     );
   }

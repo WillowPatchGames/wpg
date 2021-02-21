@@ -554,9 +554,7 @@ class GinGameComponent extends React.Component {
                       ]}
                     </CardHandImage>
                   ]) }
-                  <br/><br/>
-                  { this.shouldSubmitGroupings() ? "different" : "same" }
-                  <br/><br/>
+                  <br /><br />
                   <div>
                     <Button label={ "Submit Score of " + ungrouped_score }
                       raised={ !ungrouped_score }
@@ -1149,6 +1147,11 @@ class GinAfterPartyPage extends React.Component {
           }
 
           this.setState(state => Object.assign({}, state, { timeout: null }));
+
+          if (this.props.game?.interface) {
+            this.props.game.interface.close();
+            this.props.game.interface = null;
+          }
         }
       },
       "error": (data) => {
@@ -1181,9 +1184,18 @@ class GinAfterPartyPage extends React.Component {
   }
   refreshData() {
     this.game.interface.controller.wsController.send({"message_type": "peek"});
+
+    if (this.state.finished) {
+      this.state.timeout.kill();
+      if (this.props.game?.interface) {
+        this.props.game.interface.close();
+        this.props.game.interface = null;
+      }
+      this.setState(state => Object.assign({}, state, { timeout: null }));
+    }
   }
   returnToRoom() {
-    if (this.props.game.interface) {
+    if (this.props.game?.interface) {
       this.props.game.interface.close();
     }
 

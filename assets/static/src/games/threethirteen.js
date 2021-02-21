@@ -219,6 +219,7 @@ class ThreeThirteenGame {
 
   close() {
     this.controller.close();
+    this.onChange = (e) => { return true };
   }
 }
 

@@ -434,6 +434,7 @@ class RushGame {
 
   close() {
     this.controller.close();
+    this.onChange = (e) => { return true };
   }
 }
 

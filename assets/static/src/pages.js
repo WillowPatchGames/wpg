@@ -189,7 +189,7 @@ class Page extends React.Component {
             </Helmet>
             <ProfilePage {...this_props} key="path-profile" />
           </>
-          <Redirect path="/login?path=/profile" />
+          <Redirect to="/login?path=/profile" />
         </RouteWithAuth>
         <RouteWithRoom path="/room" user={ this.props.user } room={ this.props.room }>
           <>
@@ -215,7 +215,7 @@ class Page extends React.Component {
           </>
         </Route>
         <RouteWithAuth path="/signup" user={ this.props.user }>
-          <Redirect path="profile" />
+          <Redirect to="profile" />
           <>
             <Helmet>
               <title>Sign Up</title>
