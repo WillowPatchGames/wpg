@@ -1078,7 +1078,7 @@ class GinAfterPartyPage extends React.Component {
 
         let turn = data.turn ? await UserCache.FromId(data.turn) : null;
         let dealer = data.dealer ? await UserCache.FromId(data.dealer) : null;
-        let laid_down = data.dealer ? await UserCache.FromId(data.laid_down_id) : null;
+        let laid_down = data.laid_down_id ? await UserCache.FromId(data.laid_down_id) : null;
 
         // HACK: When refreshData() is called from the button, we don't redraw
         // the screen even though new data is sent. Use snapshots to send only

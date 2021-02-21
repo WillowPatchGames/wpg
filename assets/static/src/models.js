@@ -83,7 +83,7 @@ class UserModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       ret.error = result;
       return ret;
     }
@@ -121,7 +121,7 @@ class UserModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -147,7 +147,7 @@ class UserModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -196,7 +196,7 @@ class UserModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -234,7 +234,7 @@ class UserModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -261,7 +261,7 @@ class UserModel {
 
     const data = await response.json();
     if (data !== null && 'type' in data && data['type'] === 'error') {
-      console.log(data);
+      console.trace(data);
       return data;
     }
 
@@ -299,7 +299,7 @@ class UserModel {
 
     const data = await response.json();
     if (data !== null && 'type' in data && data['type'] === 'error') {
-      console.log(data);
+      console.trace(data);
       return data;
     }
 
@@ -339,7 +339,7 @@ class UserModel {
 
     const data = await response.json();
     if (data !== null && 'type' in data && data['type'] === 'error') {
-      console.log(data);
+      console.trace(data);
       return data;
     }
 
@@ -491,7 +491,7 @@ class UserModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -532,7 +532,7 @@ class UserModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -634,7 +634,7 @@ class PlanModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       ret.error = result;
       return ret;
     }
@@ -655,7 +655,7 @@ class PlanModel {
     const data = await response.json();
 
     if ('type' in data && data['type'] === 'error') {
-      console.log(data);
+      console.trace(data);
       return data;
     }
 
@@ -686,7 +686,7 @@ class PlanModel {
 
     var data = await response.json();
     if ('type' in data && data['type'] === 'error') {
-      console.log(data);
+      console.trace(data);
       return data;
     }
 
@@ -834,7 +834,7 @@ class RoomModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       ret.error = result;
       return ret;
     }
@@ -863,7 +863,7 @@ class RoomModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       ret.error = result;
       return ret;
     }
@@ -895,7 +895,7 @@ class RoomModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -921,7 +921,7 @@ class RoomModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -960,7 +960,7 @@ class RoomModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -998,7 +998,7 @@ class RoomModel {
     });
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       return result;
     }
 
@@ -1020,7 +1020,7 @@ class RoomModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -1073,7 +1073,7 @@ class GameModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       ret.error = result;
       return ret;
     }
@@ -1136,7 +1136,7 @@ class GameModel {
 
     const result = await response.json();
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -1163,7 +1163,7 @@ class GameModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
@@ -1189,7 +1189,7 @@ class GameModel {
     const result = await response.json();
 
     if ('type' in result && result['type'] === 'error') {
-      console.log(result);
+      console.trace(result);
       this.error = result;
       return this;
     }
