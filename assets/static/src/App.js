@@ -173,7 +173,14 @@ class App extends React.Component {
     }
   }
 
-  setNotification(notification) {
+  setNotification(notification, old_notification) {
+    // To make time-based notification removal possible, add a compare-and-swap
+    // mechanism: if the expected old_notification isn't current, don't do
+    // anything.
+    if (old_notification && !this.state.notification !== old_notification) {
+      return;
+    }
+
     // Only update on change, to avoid a haptic feedback when nothing has
     // changed.
     if (this.state.notification !== notification) {

@@ -946,7 +946,7 @@ class GinGamePage extends React.Component {
       this.unmount = addEv(this.game, {
         "started": data => {
           this.props.setNotification("Starting!");
-          setTimeout(() => this.props.setNotification(null), 2000);
+          setTimeout(() => this.props.setNotification(null, "Starting!"), 2000);
           window.scrollTo(0, 0);
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);

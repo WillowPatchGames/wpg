@@ -149,6 +149,8 @@ class GamePage extends React.Component {
 
   async componentWillUnmount() {
     if (this.unmount) this.unmount();
+    this.props.setNotification(null, "Your Turn!");
+    this.props.setNotification(null, "Starting!");
   }
 
   render() {
@@ -249,7 +251,7 @@ class PreGameUserPage extends React.Component {
       },
       "started": data => {
         this.props.setNotification("Starting!");
-        setTimeout(() => this.props.setNotification(null), 2000);
+        setTimeout(() => this.props.setNotification(null, "Starting!"), 2000);
         window.scrollTo(0, 0);
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
@@ -477,7 +479,7 @@ class PreGameAdminPage extends React.Component {
       },
       "started": data => {
         this.props.setNotification("Starting!");
-        setTimeout(() => this.props.setNotification(null), 2000);
+        setTimeout(() => this.props.setNotification(null, "Starting!"), 2000);
         window.scrollTo(0, 0);
         data.message = "Let the games begin!";
         notify(this.props.snackbar, data.message, data.type);
@@ -688,7 +690,7 @@ class PreGameAdminPage extends React.Component {
             <l.ListItem disabled>
               <h1>Players</h1>
               &nbsp;&nbsp;
-              <Switch checked={ this.state.order } label="Order manually" onChange={ () => this.setState(state => Object.assign(state, { order: !state.order })) } />
+              <Switch checked={ this.state.order } label={ this.state.order ? "Order manually" : "Order automatically" } onChange={ () => this.setState(state => Object.assign(state, { order: !state.order })) } />
               &nbsp;&nbsp;
               {/*<Switch checked={ this.state.teams } label="Put into teams" onChange={ () => this.setState(state => Object.assign(state, { teams: !state.teams })) } />*/}
             </l.ListItem>
