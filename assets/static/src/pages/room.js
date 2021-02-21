@@ -288,6 +288,15 @@ class RoomGamesTab extends React.Component {
 
   componentDidMount() {
     this.state.timeout.exec();
+
+    // Fix bug: when switching from the games tab to the members/archive tab
+    // and then back to the games tab, the game should still be active.
+    // However, because the component unmounted and remounted, we need to get
+    // back all the state we lost (of which players were in which state). So
+    // re-send the join message. :-)
+    if (this.props.game?.interface) {
+      this.props.game.interface.controller.wsController.send({"message_type": "join"});
+    }
   }
 
   componentWillUnmount() {
