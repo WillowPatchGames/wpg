@@ -140,7 +140,7 @@ class Page extends React.Component {
             <LoginPage {...this_props} key="path-login" />
           </>
         </RouteWithAuth>
-        <RouteWithGame path="/game" user={ this.props.user } game={ this.props.game }>
+        <RouteWithGame path="/game" user={ this.props.user } game={ this.props.game } room={ this.props.room }>
           <>
             <Helmet>
               <title>{ "Game #" + this.props.game?.id }</title>

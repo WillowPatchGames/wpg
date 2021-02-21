@@ -120,7 +120,20 @@ function killable(func, interval) {
 class GamePage extends React.Component {
   constructor(props) {
     super(props);
-    var game = loadGame(this.props.game);
+
+    this.state = {
+      counter: 1,
+    };
+  }
+
+  async componentDidMount() {
+    var game = this.props.game;
+    if (this.props.room && !this.props.game) {
+      var id = parseInt(this.props.history.location.pathname.substr("/room/game/".length));
+      game = await GameModel.FromId(this.props.user, id);
+    }
+
+    game = loadGame(game);
     this.props.setGame(game);
     this.unmount = addEv(game, {
       "admitted": async (data) => {
@@ -133,20 +146,19 @@ class GamePage extends React.Component {
       "started": data => {
         this.props.game.lifecycle = "playing";
         this.props.game.spectating = !data.playing;
-        this.props.setPage("/game", true);
+        let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+        this.props.setPage(page, true);
       },
       "finished": async (data) => {
         this.props.game.lifecycle = "finished";
-        this.props.setPage('/game', true);
+        let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+        this.props.setPage(page, true);
       },
     });
-
-    this.state = {
-      counter: 1,
-    };
   }
 
   async componentWillUnmount() {
+    this.props.setGame(null);
     if (this.unmount) this.unmount();
     this.props.setNotification(null, "Your Turn!");
     this.props.setNotification(null, "Starting!");
@@ -156,7 +168,15 @@ class GamePage extends React.Component {
     this.props.setGame(null);
   }
 
+  componentDidCatch(error, info) {
+    console.log("Got an exception that we're ignoring:", error, info);
+  }
+
   render() {
+    if (!this.props.game) {
+      return "Please wait for the game to load...";
+    }
+
     var mode = this.props.game.mode || this.props.game.style;
     let pending = !this.props.game.admitted || this.props.game.lifecycle === 'pending' || !this.props.game.interface;
     let playing = !this.props.game.spectating && this.props.game.lifecycle === 'playing';
@@ -262,7 +282,8 @@ class PreGameUserPage extends React.Component {
         notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
         this.props.game.spectating = !data.playing;
-        this.props.setPage("/game", true);
+        let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+        this.props.setPage(page, true);
       },
       "countdown": data => {
         this.props.setNotification(data.value + "...");
@@ -304,7 +325,8 @@ class PreGameUserPage extends React.Component {
         data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
         this.game.winner = data.winner;
-        this.props.setPage('/game', true);
+        let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+        this.props.setPage(page, true);
       },
       "": data => {
         if (data.message) {
@@ -535,7 +557,8 @@ class PreGameAdminPage extends React.Component {
         notify(this.props.snackbar, data.message, data.type);
         this.props.game.lifecycle = "playing";
         this.props.game.spectating = !data.playing;
-        this.props.setPage("/game", true);
+        let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+        this.props.setPage(page, true);
       },
       "countdown": data => {
         this.props.setNotification(data.value + "...");
@@ -549,7 +572,8 @@ class PreGameAdminPage extends React.Component {
         data.message = await personalize(data.winner) + " won!";
         notify(this.props.snackbar, data.message, data.type);
         this.game.winner = data.winner;
-        this.props.setPage('/game', true);
+        let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+        this.props.setPage(page, true);
       },
       "": data => {
         if (data.message) {
@@ -1604,7 +1628,6 @@ class JoinGamePage extends React.Component {
       this.setError(user.error.message);
     } else {
       this.props.setUser(user);
-      this.props.setPage('/game', true);
     }
   }
 

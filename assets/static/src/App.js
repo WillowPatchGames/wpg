@@ -147,6 +147,12 @@ class App extends React.Component {
       page = page + search;
     }
 
+    let our_page = this.props.history.location;
+    our_page = our_page.pathname + our_page.search;
+    if (page === our_page) {
+      return;
+    }
+
     this.props.history.push(page);
     this.setState(state => Object.assign({}, state));
   }
@@ -156,6 +162,7 @@ class App extends React.Component {
   }
 
   setGame(game) {
+    if (game) console.trace("Setting new game:", game);
     this.setState(state => Object.assign({}, state, { game }));
   }
 

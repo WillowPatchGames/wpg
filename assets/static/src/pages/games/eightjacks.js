@@ -657,7 +657,8 @@ class EightJacksGamePage extends React.Component {
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
           this.props.game.lifecycle = "playing";
-          this.props.setPage('/game', true);
+          let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+          this.props.setPage(page, true);
         },
         "countdown": data => {
           this.props.setNotification(data.value + "...");
@@ -676,7 +677,8 @@ class EightJacksGamePage extends React.Component {
           data.message = await Promise.all(data.winners.map(personalize)) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.game.winner = data.winner;
-          this.props.setPage('game', true);
+          let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
+          this.props.setPage(page, true);
         },
         "error": data => {
           notify(this.props.snackbar, data.error, "error");

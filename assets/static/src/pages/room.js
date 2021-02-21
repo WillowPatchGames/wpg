@@ -33,7 +33,7 @@ import '@rmwc/theme/styles';
 
 import '../App.css';
 
-import { killable, CreateGameForm, PreGamePage } from './games.js';
+import { killable, CreateGameForm, GamePage, PreGamePage } from './games.js';
 import { GameCache } from '../utils/cache.js';
 
 import { formatDistanceToNow } from 'date-fns';
@@ -163,7 +163,7 @@ class RoomMembersTab extends React.Component {
                     <p>Or have them visit this link:</p>
                   </l.ListItem>
                   <l.ListItem key="join-code-link" onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
-                    <p><Link ref={ this.link_ref } to={ "/room?code=" + this.props.room.code }>{ window.location.origin + "/room?code=" + this.props.room.code }</Link></p>
+                    <p><Link ref={ this.link_ref } to={ "/room/members?code=" + this.props.room.code } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/room/members?code=" + this.props.room.code }</Link></p>
                   </l.ListItem>
                   { chat }
                 </l.ListGroup>
@@ -284,6 +284,10 @@ class RoomGamesTab extends React.Component {
 
     this.code_ref = React.createRef();
     this.link_ref = React.createRef();
+
+    if (this.props.game !== null && this.props.game.lifecycle !== "pending") {
+      this.clearGame();
+    }
   }
 
   componentDidMount() {
@@ -354,6 +358,9 @@ class RoomGamesTab extends React.Component {
       console.log(game);
     } else {
       this.props.setGame(game);
+      if (this.props.game.lifecycle !== "pending") {
+        this.props.setPage("/room/game/" + game.id, true);
+      }
     }
   }
 
@@ -473,7 +480,7 @@ class RoomGamesTab extends React.Component {
           }
         </>
       }
-    } else {
+    } else if (this.props.game.lifecycle === "pending") {
       right_panel = <PreGamePage {...this.props} />;
       tab_title = "Game #" + this.props.game.id;
     }
@@ -600,7 +607,7 @@ class RoomArchiveTab extends React.Component {
     this.props.setRoom(this.props.room);
 
     if (game.lifecycle === 'playing' || game.lifecycle === 'finished') {
-      this.props.setPage('/game', true);
+      this.props.setPage('/room/game/' + game.id, true);
     } else {
       this.props.setPage('/room/games', true);
     }
@@ -739,7 +746,7 @@ class RoomArchiveTab extends React.Component {
   }
 }
 
-class RoomPage extends React.Component {
+class RoomInnerPage extends React.Component {
   constructor(props) {
     super(props)
 
@@ -836,6 +843,21 @@ class RoomPage extends React.Component {
           </Route>
         </Switch>
       </div>
+    );
+  }
+}
+
+class RoomPage extends React.Component {
+  render() {
+    return (
+      <Switch>
+        <Route path="/room/game/:id">
+          <GamePage {...this.props} />
+        </Route>
+        <Route>
+          <RoomInnerPage {...this.props} />
+        </Route>
+      </Switch>
     );
   }
 }

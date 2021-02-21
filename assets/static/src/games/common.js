@@ -49,7 +49,7 @@ class WebSocketController {
     // new one.
     if (!this.game.ws || this.game.ws.url !== this.game.endpoint ||
           this.game.ws.readyState !== WebSocket.OPEN) {
-      console.trace("Generating new WebSocket connection...", this.game.ws, this.game.endpoint);
+      // console.trace("Generating new WebSocket connection...", this.game.ws, this.game.endpoint);
       var old = this.game.ws;
 
       if (old !== undefined && old !== null) {
@@ -62,25 +62,30 @@ class WebSocketController {
 
         try {
           old.close();
-        } catch {
+        } catch (e) {
           // Do nothing.
-        }
-
-        // Also remove our old keepalive handler. It might be the thing
-        // that is calling us though.
-        if (this.keepalive) {
-          this.keepalive.kill();
-          this.keepalive = null;
+          console.log("Error closing old websocket connection");
         }
       }
 
-      this.game.ws = new WebSocket(this.game.endpoint);
+      // Also remove our old keepalive handler. It might be the thing
+      // that is calling us though.
+      if (this.keepalive) {
+        this.keepalive.kill();
+        this.keepalive = null;
+      }
 
-      // Re-add all listeners to the websocket.
-      for (let type in this.listeners) {
-        for (let handler of this.listeners[type]) {
-          this.game.ws.addEventListener(type, handler);
+      try {
+        this.game.ws = new WebSocket(this.game.endpoint);
+
+        // Re-add all listeners to the websocket.
+        for (let type in this.listeners) {
+          for (let handler of this.listeners[type]) {
+            this.game.ws.addEventListener(type, handler);
+          }
         }
+      } catch (e) {
+        console.log("Unable to establish webconsole connection:", e);
       }
     }
 
@@ -102,7 +107,7 @@ class WebSocketController {
       return await this.send({ "message_type": "keepalive" });
     }
 
-    return new Promise((resolve, reject) => { return true });
+    return Promise.resolve();
   }
 
   // flushCache assumes an open WebSocket.
@@ -230,6 +235,10 @@ class WebSocketController {
     // open result. In the case when we're already open, we should resolve.
     // However, in the case when the socket is actually closed, we should
     // reject instead of resolving.
+    if (this.closed) {
+      return Promise.reject();
+    }
+
     if (!this.game.ws) {
       this.wsConnect();
     }
@@ -239,7 +248,6 @@ class WebSocketController {
     } else if (this.game.ws && !this.game.ws.readyState) {
       return this.wsPromise(resolve => ({ open: resolve }));
     } else {
-      this.closed = false;
       this.wsConnect();
       return this.waitOpen();
     }
@@ -268,7 +276,12 @@ class WebSocketController {
   // Send an object to our peer. Wait for the peer to reply with a specific
   // message destined for us.
   async sendAndWait(data) {
-    await this.waitOpen();
+    var open = true;
+    await this.waitOpen().catch(() => open = false);
+    if (!open) {
+      console.log("Unable to sendAndWait message:", data);
+      return Promise.resolve();
+    }
 
     var wire_data = this.msg_ctrl.template(data);
     var message_id = wire_data.message_id;
@@ -278,7 +291,12 @@ class WebSocketController {
 
   // Send an object to our peer but don't wait for a reply.
   async send(data) {
-    await this.waitOpen();
+    var open = true;
+    await this.waitOpen().catch(() => open = false);
+    if (!open) {
+      console.log("Unable to send message:", data);
+      return Promise.resolve();
+    }
 
     var wire_data = this.msg_ctrl.template(data);
     return this.game.ws.send(JSON.stringify(wire_data));
@@ -325,8 +343,6 @@ class WebSocketController {
   }
 
   close() {
-    console.log("Closing...");
-
     this.closed = true;
     try {
       if (this.keepalive) {
@@ -343,7 +359,9 @@ class WebSocketController {
           this.removeEventListener(type, handler);
         }
       }
-    } catch (e) { console.log(e) }
+    } catch (e) {
+      console.log("Error closing websocket connection:", e);
+    }
 
     this.game.ws = null;
   }
