@@ -123,12 +123,13 @@ class GamePage extends React.Component {
     this.props.setGame(this.game);
     let code = this.props.room?.code || this.props.game?.code;
     code = code ? "?code=" + code : true;
+    var url = this.props.room ? '/room/games' : '/play';
     if (this.props.game.lifecycle === 'playing') {
       this.props.setPage('/playing', code);
     } else if (this.props.game.lifecycle === 'finished') {
       this.props.setPage('/afterparty', code);
     } else if (this.props.game.lifecycle === 'pending') {
-      this.props.setPage('/play', code);
+      this.props.setPage(url, code);
     }
   }
   render() {
@@ -167,12 +168,13 @@ class PreGamePage extends React.Component {
     this.props.setGame(this.game);
     let code = this.props.room?.code || this.props.game?.code;
     code = code ? "?code=" + code : true;
+    var url = this.props.room ? '/room/games' : '/play';
     if (this.props.game.lifecycle === 'playing') {
       this.props.setPage('/playing', code);
     } else if (this.props.game.lifecycle === 'finished') {
       this.props.setPage('/afterparty', code);
     } else if (this.props.game.lifecycle === 'pending') {
-      this.props.setPage('/play', code);
+      this.props.setPage(url, code);
     }
   }
   render() {
