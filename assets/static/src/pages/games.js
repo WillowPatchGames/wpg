@@ -237,6 +237,8 @@ class PreGameUserPage extends React.Component {
       status: "pending",
       players: null,
       countdown: null,
+      ready: false,
+      queue: [],
     }
 
     this.game = this.props.game || {};
@@ -268,7 +270,13 @@ class PreGameUserPage extends React.Component {
         data.message = "Game starting in " + data.value;
         this.setState(state => Object.assign({}, state, { countdown: data.value }));
         setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
-        this.game.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
+        let message = {'message_type': 'countback', 'value': data.value};
+        if (this.state.ready) {
+          this.game.interface.controller.wsController.send(message);
+        } else {
+          this.state.queue.push(message);
+          this.setState(state => Object.assign({}, state, { queue: this.state.queue }));
+        }
       },
       "notify-users": async (data) => {
         if (data && data.players) {
@@ -320,15 +328,25 @@ class PreGameUserPage extends React.Component {
     this.setState(state => Object.assign({}, state, { players: this.state.players }));
   }
   toggleReady(user) {
+    var ready = false;
     for (let u in this.state.players) {
       if (this.state.players[u] === user) {
         user.ready = !user.ready;
+        ready = user.ready;
 
         this.game.interface.controller.markReady(user.ready);
       }
     }
 
-    this.setState(state => Object.assign({}, state, { players: this.state.players }));
+    if (ready && this.state.queue.length > 0) {
+      for (let message of this.state.queue) {
+        this.game.interface.controller.wsController.send(message);
+      }
+
+      this.state.queue = [];
+    }
+
+    this.setState(state => Object.assign({}, state, { players: this.state.players, ready, queue: this.state.queue }));
   }
   render() {
     let message = "Game is in an unknown state.";
