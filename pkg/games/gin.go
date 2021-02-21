@@ -611,7 +611,7 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 					// The alternative to this approach is "fixing up" the opponent's
 					// groups and removing all groups which are purely in the laid-down
 					// user's hand and addressing this then.
-					if gs.Players[gs.LaidDown].Score == 0 {
+					if gs.Players[gs.LaidDown].RoundScore == 0 {
 						for _, allCardID := range group {
 							if _, found := FindCard(hand, allCardID); found {
 								return errors.New("unable to play off the person who laid down when they went gin or big gin")

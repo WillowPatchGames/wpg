@@ -159,11 +159,13 @@ class GamePage extends React.Component {
         this.props.game.spectating = !data.playing;
         let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
         this.props.setPage(page, true);
+        this.setState(state => state);
       },
       "finished": async (data) => {
         this.props.game.lifecycle = "finished";
         let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
         this.props.setPage(page, true);
+        this.setState(state => state);
       },
     });
   }
@@ -371,15 +373,16 @@ class PreGameUserPage extends React.Component {
       }
     }
 
-    if (ready && this.state.queue.length > 0) {
-      for (let message of this.state.queue) {
+    let queue = this.state.queue;
+    if (ready && queue.length > 0) {
+      for (let message of queue) {
         this.game.interface.controller.wsController.send(message);
       }
 
-      this.state.queue = [];
+      queue = [];
     }
 
-    this.setState(state => Object.assign({}, state, { players: this.state.players, ready, queue: this.state.queue }));
+    this.setState(state => Object.assign({}, state, { players: this.state.players, ready, queue }));
   }
   render() {
     let message = "Game is in an unknown state.";

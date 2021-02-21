@@ -89,36 +89,6 @@ class GinGameComponent extends React.Component {
     if (added_group) {
       return true;
     }
-    if (this.state.groupings) {
-      for (let group of this.state.groupings) {
-        if (!group) {
-          continue;
-        }
-        for (let card of group) {
-          if (default_groupings) {
-            var found = false;
-            for (let d_group of default_groupings) {
-              if (!d_group) {
-                continue;
-              }
-              for (let d_card of d_group) {
-                if (d_card === card) {
-                  found = true;
-                }
-              }
-              if (found) {
-                break;
-              }
-            }
-            if (!found) {
-              return true;
-            }
-          } else {
-            return true;
-          }
-        }
-      }
-    }
     return false;
   }
   clearSelected() {
