@@ -1323,6 +1323,7 @@ class CreateGameForm extends React.Component {
         { this.renderField(cfg.options[7]) }
         { this.renderField(cfg.options[8]) }
         { this.renderField(cfg.options[9]) }
+        { this.renderField(cfg.options[10]) }
       </>
     );
   }

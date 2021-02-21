@@ -454,6 +454,11 @@ func (gs *GinSolver) MinScore(hand []Card) int {
 }
 
 func (gs *GinSolver) MinScoreBelow(hand []Card, maxScore int) int {
+	return gs.MinScoreBelowUsing(hand, maxScore, make([][]int, 0))
+}
+
+// For gin: play off the other player’s groups of `using`
+func (gs *GinSolver) MinScoreBelowUsing(hand []Card, maxScore int, using [][]int) int {
 	minScore := maxScore + 1
 
 	if len(hand) < 3 {
@@ -521,7 +526,7 @@ func (gs *GinSolver) MinScoreBelow(hand []Card, maxScore int) int {
 		// to the minimum score achievable using that many wildcards
 		dividedResults := make([]DividedResult, len(divisions))
 		for i, division := range divisions {
-			dividedResults[i] = gs.DivideResult(rankedHere, division, minScore-1, nwilds)
+			dividedResults[i] = gs.DivideResultUsing(rankedHere, division, minScore-1, nwilds, using)
 		}
 
 		// Find the best solution by iterating over number of
@@ -639,13 +644,30 @@ func maximalMatchesLessThanWithout(all []Match, omit map[int]bool, nwilds int) [
 	return without
 }
 
-func (gs *GinSolver) DivideResult(hand []Card, cards []int, maxScore int, nwilds int) DividedResult {
+func (gs *GinSolver) DivideResultUsing(hand []Card, cards []int, maxScore int, nwilds int, using [][]int) DividedResult {
 	all := make([]Match, 0)
+AllMatches:
 	for _, match := range gs.AllMatches(hand, cards) {
 		// Filter out matches that require too many wildcards
-		if match.wc.min <= nwilds {
-			all = append(all, match)
+		if match.wc.min > nwilds {
+			continue AllMatches
 		}
+		// Filter out matches that use some but not all of an existing group
+		for _, group := range using {
+			had := 0
+			for _, card := range group {
+				for _, c := range match.cards {
+					if c == card {
+						had += 1
+						break
+					}
+				}
+			}
+			if had > 0 && had < len(group) {
+				continue AllMatches
+			}
+		}
+		all = append(all, match)
 	}
 
 	// Compute the cost of all these cards

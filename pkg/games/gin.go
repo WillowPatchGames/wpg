@@ -64,6 +64,8 @@ type GinConfig struct {
 	GinAmount       int `json:"gin_amount" config:"type:enum,default:10,options:5:5 Points;10:10 Points;20:20 Points;25:25 Points" label:"Gin score"`                                          // Bonus for going gin.
 	BigGinAmount    int `json:"big_gin_amount" config:"type:enum,default:20,options:-1:Disabled;10:10 Points;20:20 Points;40:40 Points;50:50 Points" label:"Big Gin score"`                    // Bonus for going big gin.
 	UndercutAmount  int `json:"undercut_amount" config:"type:enum,default:10,options:-1:Disabled;5:5 Points;10:10 Points;20:20 Points;25:25 Points" label:"Undercutting bonus"`                // Bonus for going gin.
+
+	SuggestBetter bool `json:"suggest_better" config:"type:bool,default:true" label:"true:Tell users if they could get a better score,false:Don't tell users if they could get a better score"` // Whether to suggest better scores
 }
 
 func (cfg GinConfig) Validate() error {
@@ -589,6 +591,7 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 	ncards := 0
 
 	hand := gs.Players[player].Hand
+	base_groups := make([][]int, 0) // groups from other hand
 	if player != gs.LaidDown {
 		// From the laying down player's hand, only include stuff they have in
 		// groups. Note, we assume that their hand was previously validated already.
@@ -635,6 +638,18 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 				if !found {
 					hand = append(hand, card)
 				}
+
+				for _, group := range gs.Players[gs.LaidDown].Groups {
+					base_groups = append(base_groups, make([]int, len(group)))
+					for i, id := range group {
+						for j, card := range hand {
+							if card.ID == id {
+								base_groups[len(base_groups)-1][i] = j
+								break
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -679,27 +694,23 @@ func (gs *GinState) ScoreByGroups(player int, groups [][]int, leftover []int) er
 		return errors.New("some cards were missing from scoring")
 	}
 
-	/*
-		// NB: This was removed beacuse the matcher doesn't know about groups which
-		// it can't modify such as those from the player who went out.
-		ideal := solver.MinScore(hand)
-		if ideal < score {
-			max_warnings := 3
-			gs.Players[player].Warnings += 1
-			if gs.Config.SuggestBetter {
-				if gs.Players[player].Warnings < max_warnings {
-					return errors.New("you can get a better score")
-				} else if gs.Players[player].Warnings == max_warnings {
-					return errors.New("you can get a better score! last chance")
-				}
+	ideal := solver.MinScoreBelowUsing(hand, score-1, base_groups)
+	if ideal < score {
+		max_warnings := 3
+		gs.Players[player].Warnings += 1
+		if gs.Config.SuggestBetter {
+			if gs.Players[player].Warnings < max_warnings {
+				return errors.New("you can get a better score")
+			} else if gs.Players[player].Warnings == max_warnings {
+				return errors.New("you can get a better score! last chance")
 			}
 		}
-		// Note that `score` is indeed a valid score for this hand
-		// so it is suprising if it is better than `ideal`!
-		if ideal > score {
-			log.Println("failed to compute minimum score for hand; got", score, "expected", ideal, "for cards", gs.Players[player].Hand)
-		}
-	*/
+	}
+	// Note that `score` is indeed a valid score for this hand
+	// so it is suprising if it is better than `ideal`!
+	if ideal > score {
+		log.Println("failed to compute minimum score for hand; got", score, "expected", ideal, "for cards", gs.Players[player].Hand)
+	}
 
 	gs.Players[player].Groups = groups
 	gs.Players[player].Leftover = leftover
