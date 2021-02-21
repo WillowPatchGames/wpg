@@ -61,6 +61,10 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			return errors.New("unable to assign players to game that you're not the owner of")
 		}
 
+		if game.CountdownTimer != nil {
+			return errors.New("unable to assign players while the game is starting")
+		}
+
 		var data EightJacksAssignMsg
 		if err = json.Unmarshal(message, &data); err != nil {
 			return err

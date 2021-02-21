@@ -61,6 +61,10 @@ func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *
 			return errors.New("unable to assign players to game that you're not the owner of")
 		}
 
+		if game.CountdownTimer != nil {
+			return errors.New("unable to assign players while the game is starting")
+		}
+
 		var data SpadesAssignMsg
 		if err = json.Unmarshal(message, &data); err != nil {
 			return err
