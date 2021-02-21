@@ -35,19 +35,9 @@ func (ttp *ThreeThirteenPlayer) FindCard(cardID int) (int, bool) {
 }
 
 func (ttp *ThreeThirteenPlayer) RemoveCard(cardID int) bool {
-	index, found := ttp.FindCard(cardID)
-	if !found {
-		return false
-	}
-
-	var remaining []Card
-	if index > 0 {
-		remaining = ttp.Hand[:index]
-	}
-	remaining = append(remaining, ttp.Hand[index+1:]...)
-	ttp.Hand = remaining
-
-	return true
+	var ret bool
+	_, ttp.Hand, ret = RemoveCard(ttp.Hand, cardID)
+	return ret
 }
 
 type ThreeThirteenConfig struct {

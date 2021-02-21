@@ -112,19 +112,9 @@ func (ejp *EightJacksPlayer) FindCard(cardID int) (int, bool) {
 }
 
 func (ejp *EightJacksPlayer) RemoveCard(cardID int) bool {
-	index, found := ejp.FindCard(cardID)
-	if !found {
-		return false
-	}
-
-	var remaining []Card
-	if index > 0 {
-		remaining = ejp.Hand[:index]
-	}
-	remaining = append(remaining, ejp.Hand[index+1:]...)
-	ejp.Hand = remaining
-
-	return true
+	var ret bool
+	_, ejp.Hand, ret = RemoveCard(ejp.Hand, cardID)
+	return ret
 }
 
 type EightJacksConfig struct {

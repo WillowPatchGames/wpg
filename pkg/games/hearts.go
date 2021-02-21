@@ -32,19 +32,9 @@ func (hp *HeartsPlayer) FindCard(cardID int) (int, bool) {
 }
 
 func (hp *HeartsPlayer) RemoveCard(cardID int) bool {
-	index, found := hp.FindCard(cardID)
-	if !found {
-		return false
-	}
-
-	var remaining []Card
-	if index > 0 {
-		remaining = hp.Hand[:index]
-	}
-	remaining = append(remaining, hp.Hand[index+1:]...)
-	hp.Hand = remaining
-
-	return true
+	var ret bool
+	_, hp.Hand, ret = RemoveCard(hp.Hand, cardID)
+	return ret
 }
 
 type HeartsConfig struct {

@@ -65,19 +65,9 @@ func (sp *SpadesPlayer) FindCard(cardID int) (int, bool) {
 }
 
 func (sp *SpadesPlayer) RemoveCard(cardID int) bool {
-	index, found := sp.FindCard(cardID)
-	if !found {
-		return false
-	}
-
-	var remaining []Card
-	if index > 0 {
-		remaining = sp.Hand[:index]
-	}
-	remaining = append(remaining, sp.Hand[index+1:]...)
-	sp.Hand = remaining
-
-	return true
+	var ret bool
+	_, sp.Hand, ret = RemoveCard(sp.Hand, cardID)
+	return ret
 }
 
 type SpadesConfig struct {

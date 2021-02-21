@@ -86,3 +86,18 @@ func FindCard(hand []Card, cardID int) (int, bool) {
 
 	return -1, false
 }
+
+func RemoveCard(hand []Card, cardID int) (*Card, []Card, bool) {
+	index, found := FindCard(hand, cardID)
+	if !found {
+		return nil, hand, false
+	}
+
+	var card = hand[index]
+	var remaining []Card
+	if index > 0 {
+		remaining = hand[:index]
+	}
+	remaining = append(remaining, hand[index+1:]...)
+	return &card, remaining, true
+}
