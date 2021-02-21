@@ -768,7 +768,7 @@ func (gs *GinState) ReportScore(player int, score int) error {
 				bonus = gs.Config.UndercutAmount
 			}
 
-			var delta = their_score - our_score + bonus
+			var delta = our_score - their_score + bonus
 			gs.Players[their_score].Score += delta
 			max_score = gs.Players[their_score].Score
 		}
