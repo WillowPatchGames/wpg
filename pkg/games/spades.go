@@ -91,6 +91,9 @@ type SpadesConfig struct {
 	TrickMultiplier int  `json:"trick_multiplier" config:"type:enum,default:10,options:5:5x;10:10x" label:"Trick multiplier"`                                                                                        // n in {5, 10}.
 	MoonOrBoston    bool `json:"perfect_round" config:"type:bool,default:false" label:"true:Score half of winning amount for a perfect round (Moon or Boston),false:Score no additional points for a perfect round"` // Score half of the win amount for a perfect round (taking all tricks tricks).
 	NilScore        int  `json:"nil_score" config:"type:enum,default:100,options:50:50 Points;75:75 Points;100:100 Points;125:125 Points;150:150 Points;200:200 Points" label:"Single nil score"`                    // n in {50, 75. 100, 125, 150, 200}.
+
+	// Common game configuration options
+	Countdown bool `json:"countdown" config:"type:bool,default:true" label:"true:Show a 3... 2... 1... countdown before beginning,false:Start the game instantly"` // Whether to wait and send countdown messages.
 }
 
 func (cfg SpadesConfig) Validate() error {

@@ -57,6 +57,9 @@ type HeartsConfig struct {
 	AceOfHearts       bool `json:"ace_of_hearts" config:"type:bool,default:false" label:"true:Ace of Hearts counts as 5,false:Ace of Hearts counts as 1"`                                                  // Whether taking the Ace of Hearts counts as 5 points.
 	NoTrickBonus      bool `json:"no_trick_bonus" config:"type:bool,default:false" label:"true:Taking no tricks reduces your score by 5,false:No bonus for taking no tricks"`                              // Whether taking no tricks grants a -5 point bonus.
 	HundredToHalf     bool `json:"hundred_to_half" config:"type:bool,default:false" label:"true:Exactly hitting the ending amount halves your score,false:No prize for hitting the ending amount exactly"` // Whether hitting exactly WinAmount points reduces your score to half.
+
+	// Common game configuration options
+	Countdown bool `json:"countdown" config:"type:bool,default:true" label:"true:Show a 3... 2... 1... countdown before beginning,false:Start the game instantly"` // Whether to wait and send countdown messages.
 }
 
 func (cfg HeartsConfig) Validate() error {

@@ -1211,6 +1211,8 @@ class CreateGameForm extends React.Component {
         { this.renderField(cfg.options[13]) }
         { this.renderField(cfg.options[14]) }
         { this.renderField(cfg.options[15]) }
+        <l.ListGroupSubheader>General Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[16]) }
       </>
     );
   }
@@ -1241,6 +1243,8 @@ class CreateGameForm extends React.Component {
         { this.renderField(cfg.options[11]) }
         { this.renderField(cfg.options[12]) }
         { this.renderField(cfg.options[13]) }
+        <l.ListGroupSubheader>General Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[14]) }
       </>
     );
   }
@@ -1298,6 +1302,8 @@ class CreateGameForm extends React.Component {
         { this.renderField(cfg.options[13]) }
         { this.renderField(cfg.options[14]) }
         { this.renderField(cfg.options[15]) }
+        <l.ListGroupSubheader>General Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[16]) }
       </>
     );
   }
@@ -1324,6 +1330,8 @@ class CreateGameForm extends React.Component {
         { this.renderField(cfg.options[8]) }
         { this.renderField(cfg.options[9]) }
         { this.renderField(cfg.options[10]) }
+        <l.ListGroupSubheader>General Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[11]) }
       </>
     );
   }

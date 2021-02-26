@@ -56,6 +56,9 @@ type GinConfig struct {
 	UndercutAmount  int `json:"undercut_amount" config:"type:enum,default:10,options:-1:Disabled;5:5 Points;10:10 Points;20:20 Points;25:25 Points" label:"Undercutting bonus"`                // Bonus for going gin.
 
 	SuggestBetter bool `json:"suggest_better" config:"type:bool,default:true" label:"true:Tell users if they could get a better score,false:Don't tell users if they could get a better score"` // Whether to suggest better scores
+
+	// Common game configuration options
+	Countdown bool `json:"countdown" config:"type:bool,default:true" label:"true:Show a 3... 2... 1... countdown before beginning,false:Start the game instantly"` // Whether to wait and send countdown messages.
 }
 
 func (cfg GinConfig) Validate() error {

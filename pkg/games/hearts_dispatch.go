@@ -56,10 +56,14 @@ func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *
 			return err
 		}
 
-		game.Countdown = 0
-		game.CountdownTimer = nil
+		if state.Config.Countdown {
+			game.Countdown = 0
+			game.CountdownTimer = nil
 
-		return c.handleCountdown(game)
+			return c.handleCountdown(game)
+		} else {
+			return c.doHeartsStart(game, state)
+		}
 	case "join":
 		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted

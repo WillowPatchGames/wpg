@@ -74,10 +74,14 @@ func (c *Controller) dispatchGin(message []byte, header MessageHeader, game *Gam
 			return err
 		}
 
-		game.Countdown = 0
-		game.CountdownTimer = nil
+		if state.Config.Countdown {
+			game.Countdown = 0
+			game.CountdownTimer = nil
 
-		return c.handleCountdown(game)
+			return c.handleCountdown(game)
+		} else {
+			return c.doGinStart(game, state)
+		}
 	case "join":
 		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted

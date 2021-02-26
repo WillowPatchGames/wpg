@@ -74,10 +74,14 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 			return err
 		}
 
-		game.Countdown = 0
-		game.CountdownTimer = nil
+		if state.Config.Countdown {
+			game.Countdown = 0
+			game.CountdownTimer = nil
 
-		return c.handleCountdown(game)
+			return c.handleCountdown(game)
+		} else {
+			return c.doThreeThirteenStart(game, state)
+		}
 	case "join":
 		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted
