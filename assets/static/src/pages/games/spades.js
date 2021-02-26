@@ -128,7 +128,7 @@ class SpadesGameComponent extends React.Component {
         {status("Finished")}
       </div>;
     } else if (!this.state.game.interface.dealt) {
-      if (this.state.game.interface.my_turn()) {
+      if (this.state.game.interface.my_deal()) {
           return <div>
             <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
               <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>

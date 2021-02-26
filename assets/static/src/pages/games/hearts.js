@@ -126,6 +126,44 @@ class HeartsGameComponent extends React.Component {
       return <div>
         {status("Finished")}
       </div>;
+    } else if (!this.state.game.interface.dealt) {
+      if (this.state.game.interface.my_deal()) {
+          return <div>
+            <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+              <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+                <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                  <Button label="Deal!" unelevated ripple={false} onClick={() => this.state.game.interface.deal()} />
+                </div>
+              </c.Card>
+            </div>
+            <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+              <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+                <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                  <h3>Hand</h3>
+                  { this.state.game.interface.data.hand?.toImage(handProps) }
+                </div>
+              </c.Card>
+            </div>
+          </div>;
+        } else {
+          return <div>
+            <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+              <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+                <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                  <h3>Waiting for the dealer to begin...</h3>
+                </div>
+              </c.Card>
+            </div>
+            <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
+              <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+                <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
+                  <h3>Hand</h3>
+                  { this.state.game.interface.data.hand?.toImage(handProps) }
+                </div>
+              </c.Card>
+            </div>
+          </div>;
+        }
     } else if (!this.state.game.interface.passed) {
       var pass_direction = "nowhere";
       if (this.props.game.interface.synopsis) {

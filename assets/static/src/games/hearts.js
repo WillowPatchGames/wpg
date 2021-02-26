@@ -174,6 +174,10 @@ class HeartsGame {
     return +this.data.turn === +this.game.user.id;
   }
 
+  my_deal() {
+    return +this.data.dealer === +this.game.user.id;
+  }
+
   async deal() {
     return this.controller.deal();
   }
