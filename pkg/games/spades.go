@@ -370,7 +370,6 @@ func (ss *SpadesState) StartRound() error {
 		ss.Players[index].Tricks = 0
 		ss.Players[index].Hand = make([]Card, 0)
 	}
-	ss.Played = make([]Card, 0)
 
 	// We don't deal cards out when playing with two players; exit early.
 	if ss.Config.NumPlayers == 2 {

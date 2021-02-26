@@ -295,7 +295,6 @@ func (hs *HeartsState) StartRound() error {
 		hs.Players[index].Incoming = make([]Card, 0)
 		hs.Players[index].Passed = false
 	}
-	hs.Played = make([]Card, 0)
 	hs.Crib = make([]Card, 0)
 
 	// Deal out all cards. Start with the player left of the dealer.
