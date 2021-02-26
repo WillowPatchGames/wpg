@@ -39,6 +39,12 @@ class HeartsController {
     });
   }
 
+  async cancelGame() {
+    return await this.wsController.send({
+      'message_type': 'cancel',
+    });
+  }
+
   async deal() {
     return await this.wsController.sendAndWait({
       'message_type': 'deal',

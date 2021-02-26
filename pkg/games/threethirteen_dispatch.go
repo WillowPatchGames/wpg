@@ -82,6 +82,21 @@ func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader,
 		} else {
 			return c.doThreeThirteenStart(game, state)
 		}
+	case "cancel":
+		if player.UID != game.Owner {
+			return errors.New("unable to cancel game that you're not the owner of")
+		}
+
+		if !state.Config.Countdown {
+			return errors.New("unable to cancel game that doesn't use a countdown")
+		}
+
+		if state.Started || state.Finished {
+			return errors.New("unable to cancel game that is already started")
+		}
+
+		game.Countdown = 0
+		game.CountdownTimer = nil
 	case "join":
 		if state.Started && !state.Finished {
 			var started ControllerNotifyStarted

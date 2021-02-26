@@ -40,6 +40,12 @@ class RushController {
     });
   }
 
+  async cancelGame() {
+    return await this.wsController.send({
+      'message_type': 'cancel',
+    });
+  }
+
   async check() {
     return await this.wsController.sendAndWait({
       'message_type': 'check',

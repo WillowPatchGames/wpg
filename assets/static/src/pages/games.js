@@ -707,6 +707,11 @@ class PreGameAdminPage extends React.Component {
     return true;
   }
   async start() {
+    if (this.state.started) {
+      await this.game.interface.controller.cancelGame();
+      this.setState(state => Object.assign({}, state, { started: false }));
+    }
+
     for (let player of this.state.waitlist) {
       player.connected = false;
     }

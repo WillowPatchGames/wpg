@@ -46,6 +46,12 @@ class EightJacksController {
     });
   }
 
+  async cancelGame() {
+    return await this.wsController.send({
+      'message_type': 'cancel',
+    });
+  }
+
   async peek() {
     return await this.wsController.sendAndWait({
       'message_type': 'peek',
