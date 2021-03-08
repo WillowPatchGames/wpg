@@ -62,6 +62,9 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 	ssn.Dealer, _ = data.ToUserID(game.Dealer)
 
 	ssn.Played = game.Played
+	if ssn.Played == nil {
+		ssn.Played = make([]Card, 0)
+	}
 
 	ssn.WhoPlayed = make([]uint64, 0)
 	for offset := 0; offset < len(game.Players); offset++ {

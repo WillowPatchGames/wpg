@@ -195,6 +195,7 @@ func (hs *HeartsState) Start(players int) error {
 	hs.Passed = false
 	hs.Dealer = 0
 	hs.PassDirection = HoldPassDirectionHearts
+	hs.Played = make([]Card, 0)
 
 	// Start the round: shuffle the cards and (if necessary) deal them out.
 	err = hs.StartRound()
@@ -788,7 +789,6 @@ func (hs *HeartsState) scoreSingle(player int) {
 
 	for index, trick := range history.Tricks {
 		if trick.Winner != player {
-			log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found trick taken by " + strconv.Itoa(trick.Winner) + " -- not shot sun")
 			shot_sun = false
 
 			// Check if we shot the moon: if someone else took a trick with hearts
@@ -796,13 +796,11 @@ func (hs *HeartsState) scoreSingle(player int) {
 			if shot_moon {
 				for _, card := range trick.Played {
 					if card.Suit == HeartsSuit {
-						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found hearts in trick taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}
 
 					if card.Rank == QueenRank && card.Suit == SpadesSuit {
-						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found queen of spades in trick taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}
@@ -812,13 +810,11 @@ func (hs *HeartsState) scoreSingle(player int) {
 			if index == 0 && len(history.Crib) > 0 {
 				for _, card := range history.Crib {
 					if card.Suit == HeartsSuit {
-						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found hearts in crib taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}
 
 					if card.Rank == QueenRank && card.Suit == SpadesSuit {
-						log.Println("[hearts scoring] Scoring player " + strconv.Itoa(player) + " -- found queen of spades in crib taken by " + strconv.Itoa(trick.Winner) + " -- not shot moon")
 						shot_moon = false
 						break
 					}

@@ -222,6 +222,7 @@ func (ss *SpadesState) Start() error {
 	ss.Split = false
 	ss.Bid = false
 	ss.Dealer = 0
+	ss.Played = make([]Card, 0)
 
 	// Start the round: shuffle the cards and (if necessary) deal them out.
 	err = ss.StartRound()
@@ -914,6 +915,7 @@ func (ss *SpadesState) tabulateRoundScore() error {
 	}
 
 	ss.Dealt = false
+	ss.Split = false
 	ss.Bid = false
 	ss.Dealer = (ss.Dealer + 1) % ss.Config.NumPlayers
 	ss.Turn = ss.Dealer

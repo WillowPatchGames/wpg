@@ -61,6 +61,9 @@ func (hsn *HeartsStateNotification) LoadData(data *GameData, game *HeartsState, 
 
 	hsn.PassDirection = game.PassDirection
 	hsn.Played = game.Played
+	if hsn.Played == nil {
+		hsn.Played = make([]Card, 0)
+	}
 
 	hsn.WhoPlayed = make([]uint64, 0)
 	for offset := 0; offset < len(game.Players); offset++ {
