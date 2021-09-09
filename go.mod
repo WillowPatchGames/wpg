@@ -4,21 +4,20 @@ go 1.14
 
 require (
 	github.com/boombuler/barcode v1.0.1 // indirect
-	github.com/dghubble/trie v0.0.0-20201011220304-ed6d6b8add55
+	github.com/dghubble/trie v0.0.0-20210609182954-9a58e577d803
+	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
-	github.com/lib/pq v1.8.0 // indirect
-	github.com/mattn/go-sqlite3 v1.14.6 // indirect
+	github.com/jackc/pgx/v4 v4.13.0 // indirect
+	github.com/mattn/go-sqlite3 v1.14.8 // indirect
 	github.com/pquerna/otp v1.3.0
-	github.com/stripe/stripe-go/v72 v72.33.0
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	golang.org/x/text v0.3.5 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	github.com/stripe/stripe-go/v72 v72.64.1
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/postgres v1.0.8
+	gorm.io/driver/postgres v1.1.0
 	gorm.io/driver/sqlite v1.1.4
-	gorm.io/gorm v1.20.12
+	gorm.io/gorm v1.21.14
 )
