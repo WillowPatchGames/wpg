@@ -232,5 +232,7 @@ assignments:
     - "friends-and-family"
   "bookworm.as@gmail.com":
     - "friends-and-family"
+  "steveconnors@yahoo.com":
+    - "friends-and-family"
   "*":
     - "free"
