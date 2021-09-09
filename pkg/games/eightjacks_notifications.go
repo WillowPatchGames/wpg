@@ -38,6 +38,8 @@ type EightJacksGameState struct {
 	Started  bool `json:"started"`
 	Dealt    bool `json:"dealt"`
 	Finished bool `json:"finished"`
+
+	Winners []uint64 `json:"winners,omitempty"`
 }
 
 type EightJacksStateNotification struct {
@@ -73,6 +75,9 @@ func (ejsn *EightJacksStateNotification) LoadData(data *GameData, game *EightJac
 	ejsn.Started = game.Started
 	ejsn.Dealt = game.Dealt
 	ejsn.Finished = game.Finished
+	if game.Finished {
+		ejsn.Winners, _ = data.ToUserIDs(game.Winners)
+	}
 
 	for _, indexed_player := range data.ToPlayer {
 		if indexed_player.Index == -1 {
