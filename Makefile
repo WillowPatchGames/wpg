@@ -20,7 +20,10 @@ deps:
 
 deps-update: deps
 	GOROOT="$(GOROOT)" $(GO) mod tidy
-	cd assets/static && $(NPM) audit fix
+	cd assets/static && $(NPM) audit fix --force
+
+sass-update: deps-update
+	cd assets/static && $(NPM) rebuild node-sass
 
 fuzz:
 	GOROOT="$(GOROOT)" $(GO) get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
