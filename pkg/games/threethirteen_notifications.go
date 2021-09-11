@@ -19,8 +19,9 @@ type ThreeThirteenGameState struct {
 	LaidDown   bool   `json:"laid_down"`
 	LaidDownID uint64 `json:"laid_down_id,omitempty"`
 
-	Discard []Card `json:"discard"`
-	Round   int    `json:"round"`
+	Discard  []Card `json:"discard"`
+	Round    int    `json:"round"`
+	DrawDeck int    `json:"draw_deck"`
 
 	Config ThreeThirteenConfig `json:"config"`
 
@@ -64,6 +65,7 @@ func (ttsn *ThreeThirteenStateNotification) LoadData(data *GameData, game *Three
 	if len(game.Discard) >= 1 {
 		ttsn.Discard = append(ttsn.Discard, *game.Discard[len(game.Discard)-1])
 	}
+	ttsn.DrawDeck = len(game.Deck.Cards)
 
 	ttsn.Round = game.Round
 

@@ -19,7 +19,8 @@ type GinGameState struct {
 	LaidDown   bool   `json:"laid_down"`
 	LaidDownID uint64 `json:"laid_down_id,omitempty"`
 
-	Discard []Card `json:"discard"`
+	Discard  []Card `json:"discard"`
+	DrawDeck int    `json:"draw_deck"`
 
 	Config GinConfig `json:"config"`
 
@@ -64,6 +65,7 @@ func (gsn *GinStateNotification) LoadData(data *GameData, game *GinState, player
 	if len(game.Discard) >= 1 {
 		gsn.Discard = append(gsn.Discard, *game.Discard[len(game.Discard)-1])
 	}
+	gsn.DrawDeck = len(game.Deck.Cards)
 
 	gsn.Config = game.Config
 
