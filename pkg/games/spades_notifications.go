@@ -33,6 +33,8 @@ type SpadesGameState struct {
 	Split    bool `json:"split"`
 	Bidded   bool `json:"bidded"`
 	Finished bool `json:"finished"`
+
+	Winners []uint64 `json:"winners"`
 }
 
 type SpadesStateNotification struct {
@@ -82,6 +84,8 @@ func (ssn *SpadesStateNotification) LoadData(data *GameData, game *SpadesState, 
 	ssn.Split = game.Split
 	ssn.Bidded = game.Bid
 	ssn.Finished = game.Finished
+
+	ssn.Winners, _ = data.ToUserIDs(game.Winners)
 
 	if len(game.PreviousTricks) >= 1 {
 		last_trick := game.PreviousTricks[len(game.PreviousTricks)-1]
