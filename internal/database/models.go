@@ -91,6 +91,16 @@ type RoomMember struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+type TemporaryRoomCode struct {
+	JoinCode string `gorm:"primaryKey;autoIncrement:false;unique"`
+
+	RoomID sql.NullInt64 `gorm:"unique"`
+	Room   Room
+
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	ExpiresAt time.Time
+}
+
 type Game struct {
 	ID      uint64 `gorm:"primaryKey"`
 	OwnerID uint64

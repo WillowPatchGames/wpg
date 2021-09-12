@@ -89,3 +89,7 @@ func (g *Game) HandleExpiration(tx *gorm.DB) error {
 
 	return nil
 }
+
+func ExpireTemporaryRoomCodes(tx *gorm.DB) error {
+	return tx.Where("expires_at <= ?", time.Now()).Delete(TemporaryRoomCode{}).Error
+}

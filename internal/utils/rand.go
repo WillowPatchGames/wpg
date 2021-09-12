@@ -20,6 +20,7 @@ var idMax uint64 = 9999999999999999
 
 var idBytes = 8
 var tokenBytes = 512 / 8
+var temporaryTokenLength = 6
 var numWords = 4
 
 var wordLock sync.Mutex
@@ -169,4 +170,8 @@ func RandomString(length int, sets int) string {
 
 func JoinCode() string {
 	return RandomString(5, 5)
+}
+
+func TemporaryRoomCode() string {
+	return RandomString(temporaryTokenLength, 1)
 }
