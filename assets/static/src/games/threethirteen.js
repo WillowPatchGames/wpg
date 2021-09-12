@@ -165,6 +165,7 @@ class ThreeThirteenGame {
     this.data.turn = message?.turn;
     this.data.dealer = message?.dealer;
     this.data.discard = message?.discard ? CardHand.deserialize(message.discard) : null;
+    this.data.draw_deck = +message?.draw_deck;
     this.data.round = message?.round;
     this.data.config = message?.config;
     if (this.data.config) {

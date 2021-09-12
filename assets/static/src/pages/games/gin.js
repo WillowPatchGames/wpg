@@ -345,6 +345,7 @@ class GinGameComponent extends React.Component {
                   <div className="flexible">
                     <h3>Deck</h3>
                     <CardImage />
+                    <p><i>{ this.state.game.interface.data.draw_deck } cards remaining</i></p>
                   </div>
                   <div className="flexible">
                     <h3>Discard Pile</h3>
@@ -603,6 +604,7 @@ class GinGameComponent extends React.Component {
                   <div className="flexible">
                     <h3>Deck</h3>
                     <CardImage />
+                    <p><i>{ this.state.game.interface.data.draw_deck } cards remaining</i></p>
                   </div>
                   <div className="flexible">
                     <h3>Discard Pile</h3>
@@ -628,6 +630,7 @@ class GinGameComponent extends React.Component {
                   <div className="flexible">
                     <h3>Deck</h3>
                     <CardImage onClick={ () => this.state.game.interface.takeTop() } />
+                    <p><i>{ this.state.game.interface.data.draw_deck } cards remaining</i></p>
                   </div>
                   <div className="flexible">
                     <h3>Discard Pile</h3>
@@ -672,6 +675,7 @@ class GinGameComponent extends React.Component {
                   <div className="flexible">
                     <h3>Deck</h3>
                     <CardImage />
+                    <p><i>{ this.state.game.interface.data.draw_deck } cards remaining</i></p>
                   </div>
                   <div className="flexible">
                     <h3>Discard Pile</h3>
@@ -725,6 +729,7 @@ class GinGameComponent extends React.Component {
                 <div className="flexible">
                   <h3>Deck</h3>
                   <CardImage />
+                  <p><i>{ this.state.game.interface.data.draw_deck } cards remaining</i></p>
                 </div>
                 <div className="flexible">
                   <h3>Discard Pile</h3>
