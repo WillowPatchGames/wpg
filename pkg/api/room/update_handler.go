@@ -17,23 +17,26 @@ import (
 )
 
 type updateHandlerData struct {
-	RoomID   uint64      `json:"id,omitempty" query:"id,omitempty" route:"RoomID,omitempty"`
-	Style    string      `json:"style"`
-	Config   *RoomConfig `json:"config"`
-	APIToken string      `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	RoomID           uint64      `json:"id,omitempty" query:"id,omitempty" route:"RoomID,omitempty"`
+	Style            string      `json:"style"`
+	Config           *RoomConfig `json:"config"`
+	AddTemporaryCode bool        `json:"add_temporary_code"`
+	APIToken         string      `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type updateHandlerResponse struct {
-	RoomID    uint64      `json:"id"`
-	Owner     uint64      `json:"owner"`
-	Style     string      `json:"style"`
-	Lifecycle string      `json:"lifecycle"`
-	Open      bool        `json:"open"`
-	Code      string      `json:"code"`
-	Config    *RoomConfig `json:"config,omitempty"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
-	ExpiresAt time.Time   `json:"expires_at"`
+	RoomID                  uint64      `json:"id"`
+	Owner                   uint64      `json:"owner"`
+	Style                   string      `json:"style"`
+	Lifecycle               string      `json:"lifecycle"`
+	Open                    bool        `json:"open"`
+	Code                    string      `json:"code"`
+	TemporaryCode           string      `json:"temporary_code"`
+	TemporaryCodeExpiration time.Time   `json:"temporary_code_expiration"`
+	Config                  *RoomConfig `json:"config,omitempty"`
+	CreatedAt               time.Time   `json:"created_at"`
+	UpdatedAt               time.Time   `json:"updated_at"`
+	ExpiresAt               time.Time   `json:"expires_at"`
 }
 
 type UpdateHandler struct {
@@ -67,7 +70,7 @@ func (handle UpdateHandler) verifyRequest() error {
 		return api_errors.ErrMissingRequest
 	}
 
-	if handle.req.Style == "" && handle.req.Config == nil {
+	if handle.req.Style == "" && handle.req.Config == nil && handle.req.AddTemporaryCode == false {
 		return api_errors.ErrMissingRequest
 	}
 
@@ -117,6 +120,40 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 
 			room.Config.Valid = true
 			room.Config.String = string(config)
+		}
+
+		if handle.req.AddTemporaryCode {
+			if !room.Open {
+				msg := "unable to add a temporary join code to a private "
+				msg += "(invite-only) room"
+				return errors.New(msg)
+			}
+
+			if err := database.ExpireTemporaryRoomCodes(tx); err != nil {
+				return err
+			}
+
+			var code database.TemporaryRoomCode
+			code.JoinCode = utils.TemporaryRoomCode()
+			code.Room = room
+			code.ExpiresAt = time.Now().Add(5 * time.Minute)
+
+			if err := tx.Create(&code).Error; err != nil {
+				return err
+			}
+
+			handle.resp.TemporaryCode = code.JoinCode
+			handle.resp.TemporaryCodeExpiration = code.ExpiresAt
+		} else {
+			if err := database.ExpireTemporaryRoomCodes(tx); err != nil {
+				return err
+			}
+
+			var code database.TemporaryRoomCode
+			if err := tx.First(&code, "room_id = ?", room.ID).Error; err == nil {
+				handle.resp.TemporaryCode = code.JoinCode
+				handle.resp.TemporaryCodeExpiration = code.ExpiresAt
+			}
 		}
 
 		return tx.Save(&room).Error

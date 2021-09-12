@@ -87,7 +87,7 @@ func (handle *QueryHandler) Validate() error {
 	}
 
 	if handle.req.JoinCode != "" {
-		if !strings.HasPrefix(handle.req.JoinCode, "rc-") && !strings.HasPrefix(handle.req.JoinCode, "rp-") {
+		if !strings.HasPrefix(handle.req.JoinCode, "rc-") && !strings.HasPrefix(handle.req.JoinCode, "rp-") && !strings.HasPrefix(handle.req.JoinCode, "rt-") {
 			return errors.New("invalid join code identifier format")
 		}
 	}
@@ -103,6 +103,7 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 	var room database.Room
 	var room_member database.RoomMember
+	var temporary_room_code database.TemporaryRoomCode
 
 	if err := database.InTransaction(func(tx *gorm.DB) error {
 		if handle.req.RoomID > 0 {
@@ -165,6 +166,36 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 			if err := room.HandleExpiration(tx); err != nil {
 				return err
+			}
+		} else if strings.HasPrefix(handle.req.JoinCode, "rt-") {
+			if err := database.ExpireTemporaryRoomCodes(tx); err != nil {
+				return err
+			}
+
+			if err := tx.First(&temporary_room_code, "join_code = ?", handle.req.JoinCode[3:]).Error; err != nil {
+				return err
+			}
+
+			if err := tx.First(&room, "id = ?", temporary_room_code.RoomID.Int64).Error; err != nil {
+				return err
+			}
+
+			if err := room.HandleExpiration(tx); err != nil {
+				return err
+			}
+
+			if err := tx.First(&room_member, "user_id = ? AND room_id = ?", handle.user.ID, room.ID).Error; err != nil {
+				if !room.Open {
+					return errors.New("unable to join closed room by room-level join code identifier")
+				}
+
+				room_member.UserID.Valid = true
+				room_member.UserID.Int64 = int64(handle.user.ID)
+				room_member.RoomID = room.ID
+				room_member.Admitted = false
+				if err := tx.Create(&room_member).Error; err != nil {
+					return err
+				}
 			}
 		}
 
