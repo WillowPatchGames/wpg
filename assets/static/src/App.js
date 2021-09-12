@@ -71,6 +71,10 @@ class App extends React.Component {
       return null;
     }
 
+    if (verified_user.config.turn_push_notification) {
+      Notification.requestPermission();
+    }
+
     this.setUser(verified_user);
     return verified_user;
   }
@@ -191,8 +195,12 @@ class App extends React.Component {
     // changed.
     if (this.state.notification !== notification) {
       this.setState(state => Object.assign({}, state, { notification }));
-      if (notification && window && window.navigator && window.navigator.vibrate) {
+      if (notification && window && window.navigator && window.navigator.vibrate && this.state.user.config.turn_haptic_feedback) {
         window.navigator.vibrate(100);
+      }
+
+      if (notification && window && window.Notification && window.Notification.permission === "granted" && this.state.user.config.turn_push_notification) {
+        var note = new Notification('Willow Patch Games', { body: notification });
       }
     }
   }

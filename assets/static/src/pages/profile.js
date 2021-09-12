@@ -23,6 +23,8 @@ import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
 import { Select } from '@rmwc/select';
 import '@rmwc/select/styles';
+import * as s from '@rmwc/switch';
+import '@rmwc/switch/styles';
 import * as t from '@rmwc/tabs';
 import '@rmwc/tabs/styles';
 import { TextField } from '@rmwc/textfield';
@@ -44,6 +46,10 @@ class UserProfileTab extends React.Component {
     this.state = {
       email: this.props.user.email === null ? "" : this.props.user.email,
       display: this.props.user.display === null ? "" : this.props.user.display,
+
+      turn_push_notification: this.props.user?.config?.turn_push_notification,
+      turn_haptic_feedback: this.props.user?.config?.turn_haptic_feedback,
+
       nameError: null,
     };
   }
@@ -62,6 +68,12 @@ class UserProfileTab extends React.Component {
     } else {
       console.log("Unknown name: " + name);
     }
+  }
+
+  toggleField(name) {
+    var changed_state = {};
+    changed_state[name] = !Boolean(this.state[name]);
+    this.setState(state => Object.assign({}, state, changed_state));
   }
 
   async handleNamesSubmit(event) {
@@ -93,6 +105,35 @@ class UserProfileTab extends React.Component {
     this.setState(state => Object.assign({}, state, { nameError: message }));
   }
 
+  async handlePreferencesSubmit(event) {
+    event.preventDefault();
+
+    var data = {};
+    if (this.state.turn_push_notification !== this.props.user.config.turn_push_notification) {
+      data['turn_push_notification'] = this.state.turn_push_notification;
+    }
+    if (this.state.turn_haptic_feedback !== this.props.user.config.turn_haptic_feedback) {
+      data['turn_haptic_feedback'] = this.state.turn_haptic_feedback;
+    }
+
+    await this.props.user.save(data);
+
+    if (this.props.user.error) {
+      this.setNameError(this.props.user.error.message);
+      return;
+    }
+
+    let user = this.props.user;
+    this.props.setUser(user);
+
+    this.setState(state => Object.assign({}, state, { turn_push_notification: this.props.user.config.turn_push_notification }));
+    this.setState(state => Object.assign({}, state, { turn_haptic_feedback: this.props.user.config.turn_haptic_feedback }));
+
+    if (this.state.turn_push_notification && window && window.Notification && window.Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }
+
   render() {
     return (
       <div>
@@ -117,6 +158,28 @@ class UserProfileTab extends React.Component {
                 <d.DialogButton action="close" theme="secondary">OK</d.DialogButton>
               </d.DialogActions>
             </d.Dialog>
+          </div>
+        </c.Card>
+        <Typography use="headline4">Preferences</Typography>
+        <c.Card>
+          <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
+            <p>Changes to preferences don't take effect until they are saved.</p>
+            <form onSubmit={ this.handlePreferencesSubmit.bind(this) }>
+              <l.List>
+                <l.ListGroup>
+                  <l.ListItem disabled>
+                    <p>Turn Notifications</p>
+                  </l.ListItem>
+                  <l.ListItem onClick={ () => this.toggleField('turn_push_notification') }>
+                    <s.Switch checked={ this.state.turn_push_notification } label={ this.state.turn_push_notification ? "Send Notifications" : "Don't Send Notifications" } onClick={ () => this.toggleField('turn_push_notification') } />
+                  </l.ListItem>
+                  <l.ListItem onClick={ () => this.toggleField('turn_haptic_feedback') }>
+                    <s.Switch checked={ this.state.turn_haptic_feedback } label={ this.state.turn_haptic_feedback ? "Use Haptic Feedback" : "Don't Use Haptic Feedback" } onClick={ () => this.toggleField('turn_haptic_feedback') } />
+                  </l.ListItem>
+                </l.ListGroup>
+              </l.List>
+              <Button label="Update" raised />
+            </form>
           </div>
         </c.Card>
       </div>
