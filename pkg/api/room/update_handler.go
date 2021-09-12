@@ -135,6 +135,8 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 
 			var code database.TemporaryRoomCode
 			code.JoinCode = utils.TemporaryRoomCode()
+			code.RoomID.Valid = true
+			code.RoomID.Int64 = int64(room.ID)
 			code.Room = room
 			code.ExpiresAt = time.Now().Add(5 * time.Minute)
 

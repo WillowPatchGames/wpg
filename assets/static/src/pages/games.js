@@ -1596,7 +1596,7 @@ class JoinGamePage extends React.Component {
       return;
     }
 
-    if (this.state.code.length == 6) {
+    if (this.state.code.length === 6) {
       this.state.code = "rt-" + this.state.code;
     }
 

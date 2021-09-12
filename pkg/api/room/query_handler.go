@@ -32,13 +32,15 @@ type membersInfo struct {
 }
 
 type queryHandlerResponse struct {
-	RoomID    uint64 `json:"id"`
-	Owner     uint64 `json:"owner"`
-	Style     string `json:"style,omitempty"`
-	Open      bool   `json:"open,omitempty"`
-	Lifecycle string `json:"lifecycle,omitempty"`
-	Code      string `json:"code,omitempty"`
-	Games     struct {
+	RoomID                  uint64    `json:"id"`
+	Owner                   uint64    `json:"owner"`
+	Style                   string    `json:"style,omitempty"`
+	Open                    bool      `json:"open,omitempty"`
+	Lifecycle               string    `json:"lifecycle,omitempty"`
+	Code                    string    `json:"code,omitempty"`
+	TemporaryCode           string    `json:"temporary_code"`
+	TemporaryCodeExpiration time.Time `json:"temporary_code_expiration"`
+	Games                   struct {
 		Pending  []uint64 `json:"pending,omitempty"`
 		Playing  []uint64 `json:"playing,omitempty"`
 		Finished []uint64 `json:"finished,omitempty"`
@@ -234,6 +236,18 @@ func (handle *QueryHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Requ
 
 			if err := tx.Model(&database.Game{}).Where("room_id = ? AND lifecycle = ?", room.ID, "finished").Select("id").Find(&handle.resp.Games.Finished).Error; err != nil {
 				return err
+			}
+		}
+
+		if handle.user.ID == room.OwnerID {
+			if err := database.ExpireTemporaryRoomCodes(tx); err != nil {
+				return err
+			}
+
+			var code database.TemporaryRoomCode
+			if err := tx.First(&code, "room_id = ?", room.ID).Error; err == nil {
+				handle.resp.TemporaryCode = code.JoinCode
+				handle.resp.TemporaryCodeExpiration = code.ExpiresAt
 			}
 		}
 
