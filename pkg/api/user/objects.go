@@ -5,9 +5,10 @@ import (
 )
 
 type JSONUserConfig struct {
-	GravatarHash         string `json:"gravatar,omitempty"`
-	TurnPushNotification bool   `json:"turn_push_notification"`
-	TurnHapticFeedback   bool   `json:"turn_haptic_feedback"`
+	GravatarHash          string `json:"gravatar,omitempty"`
+	TurnPushNotification  bool   `json:"turn_push_notification"`
+	TurnSoundNotification bool   `json:"turn_sound_notification"`
+	TurnHapticFeedback    bool   `json:"turn_haptic_feedback"`
 }
 
 func FromConfigModel(u database.UserConfig, includePrivate bool) *JSONUserConfig {
@@ -22,6 +23,11 @@ func FromConfigModel(u database.UserConfig, includePrivate bool) *JSONUserConfig
 	if u.TurnPushNotification.Valid {
 		have_field = true
 		ret.TurnPushNotification = u.TurnPushNotification.Bool
+	}
+
+	if u.TurnSoundNotification.Valid {
+		have_field = true
+		ret.TurnSoundNotification = u.TurnSoundNotification.Bool
 	}
 
 	if u.TurnHapticFeedback.Valid {

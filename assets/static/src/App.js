@@ -18,6 +18,8 @@ import { Navigation } from './nav.js';
 import { Page, Footer } from './pages.js';
 import { normalizeCode, UserModel, RoomModel, GameModel } from './models.js';
 
+import NotificationSoundURI from './notification.mp3';
+
 // CSS overrides last
 import './App.css';
 
@@ -31,6 +33,7 @@ class App extends React.Component {
       room: null,
       immersive: false,
       notification: null,
+      notification_obj: null,
     };
 
     this.snackbar = createSnackbarQueue();
@@ -71,7 +74,7 @@ class App extends React.Component {
       return null;
     }
 
-    if (verified_user.config.turn_push_notification) {
+    if (verified_user.config.turn_push_notification && window && window.Notification) {
       Notification.requestPermission();
     }
 
@@ -191,16 +194,33 @@ class App extends React.Component {
       return;
     }
 
-    // Only update on change, to avoid a haptic feedback when nothing has
-    // changed.
+    // Only update on change, to avoid feedback when nothing has changed.
     if (this.state.notification !== notification) {
       this.setState(state => Object.assign({}, state, { notification }));
+      if (this.state.notification_obj) {
+        this.state.notification_obj.close();
+        this.setState(state => Object.assign({}, state, { notification_obj: null }));
+      }
+
+      // Haptic/Vibrate feedback: Edge, Firefox (+Android), Chrome (+Android)
       if (notification && window && window.navigator && window.navigator.vibrate && this.state.user.config.turn_haptic_feedback) {
         window.navigator.vibrate(100);
       }
 
+      // Notification: Edge, Firefox (+Android), Chrome (+Android), Safari
       if (notification && window && window.Notification && window.Notification.permission === "granted" && this.state.user.config.turn_push_notification) {
+
         var note = new Notification('Willow Patch Games', { body: notification });
+        this.setState(state => Object.assign({}, state, { notification_obj: note }));
+      }
+
+      // MP3 Sound: IE, Edge, Firefox (+Android), Chrome (+Android), Safari (+iOS)
+      if (notification && this.state.user.config.turn_sound_notification) {
+        try {
+          var alert_sound = new Audio(NotificationSoundURI);
+          var alert_promise = alert_sound.play();
+          alert_promise.then(null, function(rej) { console.log("Rejection from play:", rej) });
+        } catch(no_alert) {}
       }
     }
   }

@@ -48,6 +48,7 @@ class UserProfileTab extends React.Component {
       display: this.props.user.display === null ? "" : this.props.user.display,
 
       turn_push_notification: this.props.user?.config?.turn_push_notification,
+      turn_sound_notification: this.props.user?.config?.turn_sound_notification,
       turn_haptic_feedback: this.props.user?.config?.turn_haptic_feedback,
 
       nameError: null,
@@ -112,6 +113,9 @@ class UserProfileTab extends React.Component {
     if (this.state.turn_push_notification !== this.props.user.config.turn_push_notification) {
       data['turn_push_notification'] = this.state.turn_push_notification;
     }
+    if (this.state.turn_sound_notification !== this.props.user.config.turn_sound_notification) {
+      data['turn_sound_notification'] = this.state.turn_sound_notification;
+    }
     if (this.state.turn_haptic_feedback !== this.props.user.config.turn_haptic_feedback) {
       data['turn_haptic_feedback'] = this.state.turn_haptic_feedback;
     }
@@ -127,6 +131,7 @@ class UserProfileTab extends React.Component {
     this.props.setUser(user);
 
     this.setState(state => Object.assign({}, state, { turn_push_notification: this.props.user.config.turn_push_notification }));
+    this.setState(state => Object.assign({}, state, { turn_sound_notification: this.props.user.config.turn_sound_notification }));
     this.setState(state => Object.assign({}, state, { turn_haptic_feedback: this.props.user.config.turn_haptic_feedback }));
 
     if (this.state.turn_push_notification && window && window.Notification && window.Notification.permission !== "granted") {
@@ -172,6 +177,9 @@ class UserProfileTab extends React.Component {
                   </l.ListItem>
                   <l.ListItem onClick={ () => this.toggleField('turn_push_notification') }>
                     <s.Switch checked={ this.state.turn_push_notification } label={ this.state.turn_push_notification ? "Send Notifications" : "Don't Send Notifications" } onClick={ () => this.toggleField('turn_push_notification') } />
+                  </l.ListItem>
+                  <l.ListItem onClick={ () => this.toggleField('turn_sound_notification') }>
+                    <s.Switch checked={ this.state.turn_sound_notification } label={ this.state.turn_sound_notification ? "Play a Sound" : "Don't Play a Sound" } onClick={ () => this.toggleField('turn_sound_notification') } />
                   </l.ListItem>
                   <l.ListItem onClick={ () => this.toggleField('turn_haptic_feedback') }>
                     <s.Switch checked={ this.state.turn_haptic_feedback } label={ this.state.turn_haptic_feedback ? "Use Haptic Feedback" : "Don't Use Haptic Feedback" } onClick={ () => this.toggleField('turn_haptic_feedback') } />
