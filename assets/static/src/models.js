@@ -978,6 +978,44 @@ class RoomModel {
     return this;
   }
 
+  async generateTempCode() {
+    var request = {
+      add_temporary_code: true
+    };
+
+    var uri = this.api + '/room/' + this.id;
+    const response = await fetch(uri, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Auth-Token': this.user.token,
+      },
+      redirect: 'follow',
+      body: JSON.stringify(request),
+    });
+
+    const result = await response.json();
+
+    if ('type' in result && result['type'] === 'error') {
+      console.trace(result);
+      this.error = result;
+      return this;
+    }
+
+    Object.assign(this, result);
+    this.error = null;
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+
+    if (this.members !== undefined && this.members !== null && this.members.length > 0) {
+      for (let member of this.members) {
+        member.user = await UserCache.FromId(member.user_id);
+      }
+    }
+
+    return this;
+  }
+
   async admitPlayer(user_id, admitted, banned) {
     var request = {
       'user_id': user_id,

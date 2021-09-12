@@ -52,6 +52,7 @@ class RoomMembersTab extends React.Component {
     };
 
     this.code_ref = React.createRef();
+    this.temp_code_ref = React.createRef();
     this.link_ref = React.createRef();
   }
 
@@ -70,6 +71,16 @@ class RoomMembersTab extends React.Component {
     await this.props.room.update();
 
     this.setState(state => Object.assign({}, state, { members: this.props.room.members }));
+  }
+
+  async generateTempCode() {
+    var ret = await this.props.room.generateTempCode();
+    if (ret && (ret.error || ret.type === "error")) {
+      console.log(ret);
+    }
+
+    await this.props.room.update();
+    this.setState(state => Object.assign({}, state));
   }
 
   async updateConfig() {
@@ -143,6 +154,36 @@ class RoomMembersTab extends React.Component {
     }
 
     if (this.state.room_owner) {
+      let temporary = <>
+        <l.ListGroup>
+          <l.ListItem disabled>
+            <p>Generate a temporary, short join code for sharing in-person.</p>
+          </l.ListItem>
+          <l.ListItem disabled key="temporary-commit">
+            <Button label="Generate" raised onClick={() => this.generateTempCode() } />
+          </l.ListItem>
+        </l.ListGroup>
+      </>;
+
+      if (this.props.room.temporary_code) {
+        temporary = <>
+          <l.ListGroup>
+            <l.ListItem disabled>
+              <p>Temporary Join Code:</p>
+            </l.ListItem>
+            <l.ListItem key="temp-join-code" onClick={() => { this.temp_code_ref.current.select() ; document.execCommand("copy"); this.props.snackbar.notify({title: <b>Temporary room invite code copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); } }>
+              <l.ListItemText className="App-game-code">
+                <TextField fullwidth readOnly value={ this.props.room.temporary_code } inputRef={ this.temp_code_ref } />
+              </l.ListItemText>
+              <l.ListItemMeta icon="content_copy" />
+            </l.ListItem>
+            <l.ListItem disabled>
+              <p>Expires in { formatDistanceToNow(new Date(this.props.room.temporary_code_expiration)) }</p>
+            </l.ListItem>
+          </l.ListGroup>
+        </>;
+      }
+
       left_panel = <>
         <article key={"joining"} className="text">
           <Typography use="headline3">Joining</Typography>
@@ -165,6 +206,16 @@ class RoomMembersTab extends React.Component {
                   <l.ListItem key="join-code-link" onClick={ () => { var range = document.createRange(); range.selectNode(this.link_ref.current); window.getSelection().removeAllRanges();  window.getSelection().addRange(range); document.execCommand("copy"); this.props.snackbar.notify({title: <b>Room invite link copied!</b>, timeout: 3000, dismissesOnAction: true, icon: "info"}); }}>
                     <p><Link ref={ this.link_ref } to={ "/room/members?code=" + this.props.room.code } onClick={ (e) => { e.preventDefault(); } }>{ window.location.origin + "/room/members?code=" + this.props.room.code }</Link></p>
                   </l.ListItem>
+        </l.ListGroup>
+        { temporary }
+              </l.List>
+            </div>
+          </c.Card>
+          <Typography use="headline3">Chat</Typography>
+          <c.Card>
+            <div style={{ padding: '1rem 1rem 1rem 1rem' }}>
+              <l.List>
+                <l.ListGroup>
                   { chat }
                 </l.ListGroup>
               </l.List>

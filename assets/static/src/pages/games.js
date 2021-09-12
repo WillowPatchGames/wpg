@@ -1596,8 +1596,12 @@ class JoinGamePage extends React.Component {
       return;
     }
 
+    if (this.state.code.length == 6) {
+      this.state.code = "rt-" + this.state.code;
+    }
+
     var try_game = this.state.code[0] === "g" && (this.state.code[1] === "c" || this.state.code[1] === "p") && (this.state.code[2] === '-' || this.state.code[2] === ' ');
-    var try_room = this.state.code[0] === "r" && (this.state.code[1] === "c" || this.state.code[1] === "p") && (this.state.code[2] === '-' || this.state.code[2] === ' ');
+    var try_room = this.state.code[0] === "r" && (this.state.code[1] === "c" || this.state.code[1] === "p" || this.state.code[1] === "t") && (this.state.code[2] === '-' || this.state.code[2] === ' ');
 
     if (!try_game && !try_room) {
       try_game = true;
