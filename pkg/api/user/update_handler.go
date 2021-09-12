@@ -17,13 +17,15 @@ import (
 )
 
 type updateHandlerData struct {
-	UserID   uint64   `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
-	Email    string   `json:"email,omitempty"`
-	Display  string   `json:"display,omitempty"`
-	Old      string   `json:"old_password,omitempty"`
-	Password string   `json:"new_password,omitempty"`
-	Fields   []string `json:"fields"`
-	APIToken string   `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	UserID               uint64   `json:"id,omitempty" query:"id,omitempty" route:"UserID,omitempty"`
+	Email                string   `json:"email,omitempty"`
+	Display              string   `json:"display,omitempty"`
+	Old                  string   `json:"old_password,omitempty"`
+	Password             string   `json:"new_password,omitempty"`
+	TurnPushNotification bool     `json:"turn_push_notification,omitempty"`
+	TurnHapticFeedback   bool     `json:"turn_haptic_feedback,omitempty"`
+	Fields               []string `json:"fields"`
+	APIToken             string   `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 type updateHandlerResponse struct {
@@ -136,6 +138,12 @@ func (handle *UpdateHandler) ServeErrableHTTP(w http.ResponseWriter, r *http.Req
 				}
 
 				changePassword = true
+			case "turn_push_notification":
+				user.Config.TurnPushNotification.Valid = true
+				user.Config.TurnPushNotification.Bool = handle.req.TurnPushNotification
+			case "turn_haptic_feedback":
+				user.Config.TurnHapticFeedback.Valid = true
+				user.Config.TurnHapticFeedback.Bool = handle.req.TurnHapticFeedback
 			default:
 				log.Println("Unknown field to update in room:", field)
 				err = api_errors.ErrMissingRequest

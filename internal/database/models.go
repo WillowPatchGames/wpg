@@ -32,7 +32,9 @@ type UserConfig struct {
 
 	UserID uint64
 
-	GravatarHash sql.NullString
+	GravatarHash         sql.NullString
+	TurnPushNotification sql.NullBool
+	TurnHapticFeedback   sql.NullBool
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
