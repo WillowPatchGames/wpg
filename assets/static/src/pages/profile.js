@@ -358,6 +358,7 @@ class UserSecurityTab extends React.Component {
     var device = this.state.deleteDevice;
     var result = await this.props.user.remove2FA(device.device, this.password.current.value);
     this.openDeleteDialog(false);
+    this.password.current.value = "";
 
     if ('type' in result && result['type'] === 'error') {
       this.set2FAError(result.message);
