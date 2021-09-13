@@ -65,6 +65,16 @@ func (ict *intConfigTag) ValidateValue(field reflect.Value) error {
 }
 
 func (ict *intConfigTag) validateValue(value int) error {
+	if ict.Field == "num_players" {
+		if value < ict.Min {
+			return fmt.Errorf("need to promote %d players from spectators in order to start the game", ict.Min - value)
+		}
+
+		if value > ict.Max {
+			return fmt.Errorf("need to demote %d players to spectators in order to start the game", value - ict.Max)
+		}
+	}
+
 	if value < ict.Min || value > ict.Max {
 		return fmt.Errorf("invalid value for parameter: %s has value %d; allowed between %d and %d", ict.Field, value, ict.Min, ict.Max)
 	}
