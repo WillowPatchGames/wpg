@@ -36,6 +36,7 @@ type UserConfig struct {
 	TurnPushNotification  sql.NullBool
 	TurnSoundNotification sql.NullBool
 	TurnHapticFeedback    sql.NullBool
+	AutoReady             sql.NullBool
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`

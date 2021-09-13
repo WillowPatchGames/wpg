@@ -50,6 +50,7 @@ class UserProfileTab extends React.Component {
       turn_push_notification: this.props.user?.config?.turn_push_notification,
       turn_sound_notification: this.props.user?.config?.turn_sound_notification,
       turn_haptic_feedback: this.props.user?.config?.turn_haptic_feedback,
+      auto_ready: this.props.user?.config?.auto_ready,
 
       nameError: null,
     };
@@ -119,6 +120,9 @@ class UserProfileTab extends React.Component {
     if (this.state.turn_haptic_feedback !== this.props.user.config.turn_haptic_feedback) {
       data['turn_haptic_feedback'] = this.state.turn_haptic_feedback;
     }
+    if (this.state.auto_ready !== this.props.user.config.auto_ready) {
+      data['auto_ready'] = this.state.auto_ready;
+    }
 
     await this.props.user.save(data);
 
@@ -133,6 +137,7 @@ class UserProfileTab extends React.Component {
     this.setState(state => Object.assign({}, state, { turn_push_notification: this.props.user.config.turn_push_notification }));
     this.setState(state => Object.assign({}, state, { turn_sound_notification: this.props.user.config.turn_sound_notification }));
     this.setState(state => Object.assign({}, state, { turn_haptic_feedback: this.props.user.config.turn_haptic_feedback }));
+    this.setState(state => Object.assign({}, state, { auto_ready: this.props.user.config.auto_ready }));
 
     if (this.state.turn_push_notification && window && window.Notification && window.Notification.permission !== "granted") {
       Notification.requestPermission();
@@ -171,6 +176,14 @@ class UserProfileTab extends React.Component {
             <p>Changes to preferences don't take effect until they are saved.</p>
             <form onSubmit={ this.handlePreferencesSubmit.bind(this) }>
               <l.List>
+                <l.ListGroup>
+                  <l.ListItem disabled>
+                    <p>Joining Options</p>
+                  </l.ListItem>
+                  <l.ListItem onClick={ () => this.toggleField('auto_ready') }>
+                    <s.Switch checked={ this.state.auto_ready } label={ this.state.auto_ready ? "Automatically Mark Ready" : "Don't Automatically Mark Ready" } onClick={ () => this.toggleField('auto_ready') } />
+                  </l.ListItem>
+                </l.ListGroup>
                 <l.ListGroup>
                   <l.ListItem disabled>
                     <p>Turn Notifications</p>

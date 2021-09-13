@@ -266,11 +266,12 @@ class AfterPartyPage extends React.Component {
 class PreGameUserPage extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       status: "pending",
       players: null,
       countdown: null,
-      ready: false,
+      ready: this.getAutoReadyState(),
       queue: [],
     }
 
@@ -347,9 +348,44 @@ class PreGameUserPage extends React.Component {
         }
       },
     });
+
+    if (this.props.user?.config?.auto_ready && typeof document.hidden !== undefined) {
+      this.game.interface.controller.wsController.waitOpen().then(() => {
+        this.game.interface.controller.markReady(this.getAutoReadyState());
+      }, (err) => console.log(err));
+
+      let old_umount = this.unmount;
+      let ready_handler = () => {
+        let ready = this.getAutoReadyState();
+        this.game.interface.controller.markReady(ready);
+
+        let queue = this.state.queue;
+        if (ready && queue.length > 0) {
+          for (let message of queue) {
+            this.game.interface.controller.wsController.send(message);
+          }
+
+          queue = [];
+        }
+
+        this.setState(state => Object.assign({}, state, { ready, queue }));
+      }
+      document.addEventListener("visibilitychange", ready_handler);
+      this.unmount = function() {
+        old_umount();
+        document.removeEventListener("visibilitychange", ready_handler);
+      }
+    }
   }
   componentWillUnmount() {
     if (this.unmount) this.unmount();
+  }
+  getAutoReadyState() {
+    if (this.props.user?.config?.auto_ready && typeof document.hidden !== undefined) {
+      return !document.hidden;
+    }
+
+    return false;
   }
   toggleSpectator(user) {
     for (let u in this.state.players) {
@@ -362,12 +398,17 @@ class PreGameUserPage extends React.Component {
 
     this.setState(state => Object.assign({}, state, { players: this.state.players }));
   }
-  toggleReady(user) {
+  toggleReady(user, ready_state) {
     var ready = false;
     for (let u in this.state.players) {
       if (this.state.players[u] === user) {
-        user.ready = !user.ready;
-        ready = user.ready;
+        if (ready_state === undefined) {
+          user.ready = !user.ready;
+          ready = user.ready;
+        } else {
+          user.ready = ready_state;
+          ready = ready_state;
+        }
 
         this.game.interface.controller.markReady(user.ready);
       }

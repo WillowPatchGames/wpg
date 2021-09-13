@@ -9,6 +9,7 @@ type JSONUserConfig struct {
 	TurnPushNotification  bool   `json:"turn_push_notification"`
 	TurnSoundNotification bool   `json:"turn_sound_notification"`
 	TurnHapticFeedback    bool   `json:"turn_haptic_feedback"`
+	AutoReady             bool   `json:"auto_ready"`
 }
 
 func FromConfigModel(u database.UserConfig, includePrivate bool) *JSONUserConfig {
@@ -33,6 +34,11 @@ func FromConfigModel(u database.UserConfig, includePrivate bool) *JSONUserConfig
 	if u.TurnHapticFeedback.Valid {
 		have_field = true
 		ret.TurnHapticFeedback = u.TurnHapticFeedback.Bool
+	}
+
+	if u.AutoReady.Valid {
+		have_field = true
+		ret.AutoReady = u.AutoReady.Bool
 	}
 
 	if !have_field {
