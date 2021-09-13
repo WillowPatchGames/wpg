@@ -142,6 +142,7 @@ type EightJacksConfig struct {
 	BoardHeight  int  `json:"board_height" config:"type:int,min:8,default:10,max:10" label:"Board height"`
 	RemoveUnused bool `json:"remove_unused" config:"type:bool,default:true" label:"true:Remove cards not used on the board,false:Keep all cards even if not present on the board"` // Whether to remove cards not used on the board.
 	WildCorners  bool `json:"wild_corners" config:"type:bool,default:true" label:"true:Add wild cards in the corners,false:Don't fill in corners with wild cards"`                 // Whether corners are wild (free for everyone to play on).
+	BoardLayout  int  `json:"board_layout" config:"type:enum,default:1,options:1:Sorted;2:Spiral;3:Pinwheel;4:Random" label:"Board layout"`
 
 	HandSize   int `json:"hand_size" config:"type:int,min:2,default:7,max:15" label:"Hand size"`     // Number of cards in the hand.
 	JokerCount int `json:"joker_count" config:"type:int,min:0,default:8,max:16" label:"Joker count"` // "dual-use jacks".
@@ -153,6 +154,10 @@ type EightJacksConfig struct {
 func (cfg EightJacksConfig) Validate() error {
 	if cfg.BoardWidth == 10 && cfg.BoardHeight == 10 && !cfg.WildCorners {
 		return GameConfigError{"wild corners", strconv.Itoa(cfg.JokerCount), "true if using a 10x10 board"}
+	}
+
+	if cfg.BoardLayout == 3 && (cfg.BoardWidth != 10 || cfg.BoardHeight != 10) {
+		return GameConfigError{"board width and height", strconv.Itoa(cfg.BoardWidth) + "," + strconv.Itoa(cfg.BoardHeight), "10x10 if using a pinwheel board layout"}
 	}
 
 	return nil
@@ -369,6 +374,7 @@ func (ejs *EightJacksState) StartRound() error {
 func (ejs *EightJacksState) CreateBoard() error {
 	ejs.Board.Init(ejs.Config.BoardWidth, ejs.Config.BoardHeight)
 
+	// Sorted, spiral, or random order use the same logic.
 	ejs.Deck.Init()
 	ejs.Deck.AddStandard52Deck()
 	ejs.Deck.AddStandard52Deck()
@@ -379,7 +385,13 @@ func (ejs *EightJacksState) CreateBoard() error {
 		ejs.Deck.RemoveCard(JackRank, suit)
 	}
 
-	// See HACK note in MarkRun before changing ID assignment scheme.
+	// Random order
+	if ejs.Config.BoardLayout == 4 {
+		ejs.Deck.Shuffle()
+	}
+
+	// See HACK note in MarkRun before changing ID assignment scheme. See also
+	// HACK note in EJSBoardIndexScheme to generate our indexing/card schemes.
 	id := 1
 	for x := 0; x < ejs.Board.Width; x++ {
 		for y := 0; y < ejs.Board.Height; y++ {
@@ -399,7 +411,8 @@ func (ejs *EightJacksState) CreateBoard() error {
 				piece.Value.Rank = JokerRank
 				piece.Value.Suit = NoneSuit
 			} else {
-				piece.Value = *ejs.Deck.Draw()
+				piece.Value = EJSBoardIndexScheme(&ejs.Deck, ejs.Config.BoardLayout, ejs.Board.Width, ejs.Board.Height, x, y, ejs.Config.WildCorners)
+				log.Println("Got card: " + piece.Value.String())
 				piece.Value.ID = 0
 			}
 

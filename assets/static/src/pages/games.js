@@ -1312,11 +1312,12 @@ class CreateGameForm extends React.Component {
         { this.renderField(cfg.options[4]) }
         { this.renderField(cfg.options[5]) }
         { this.renderField(cfg.options[6]) }
-        <l.ListGroupSubheader>Hand Options</l.ListGroupSubheader>
         { this.renderField(cfg.options[7]) }
+        <l.ListGroupSubheader>Hand Options</l.ListGroupSubheader>
         { this.renderField(cfg.options[8]) }
-        <l.ListGroupSubheader>General Options</l.ListGroupSubheader>
         { this.renderField(cfg.options[9]) }
+        <l.ListGroupSubheader>General Options</l.ListGroupSubheader>
+        { this.renderField(cfg.options[10]) }
       </>
     );
   }
