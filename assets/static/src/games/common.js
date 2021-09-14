@@ -29,6 +29,13 @@ class GameController {
     });
   }
 
+  async unbindPeer(peer) {
+    return await this.wsController.send({
+      'message_type': 'unbind-request',
+      'peer_id': +peer,
+    });
+  }
+
   async acceptBind(player) {
     return await this.wsController.send({
       'message_type': 'bind-accept',

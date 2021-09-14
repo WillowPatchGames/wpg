@@ -210,6 +210,12 @@ class PreGameUserPage extends React.Component {
       notify(this.props.snackbar, response.message, response.type);
     }
   }
+  async unbindPeer(spectator) {
+    let response = await this.game.interface.controller.unbindPeer(spectator.user_id);
+    if (response) {
+      notify(this.props.snackbar, response.message, response.type);
+    }
+  }
   render() {
     let message = "Game is in an unknown state.";
     if (this.state.status === "pending") {
@@ -256,7 +262,7 @@ class PreGameUserPage extends React.Component {
                       </span>
                     :
                       <span className="leftpad">
-                        <Button label="Unbind" raised onClick={ () => this.unbindFromSpectator(player) } />
+                        <Button label="Unbind" raised onClick={ () => this.unbindPeer(player) } />
                       </span>
                   : <></>
                 }
@@ -265,6 +271,14 @@ class PreGameUserPage extends React.Component {
                   ?
                     <span className="leftpad">
                       <Button label="Accept Bind" raised onClick={ () => this.acceptBindToPlayer(player) } />
+                    </span>
+                  : <></>
+                }
+                {
+                  !us.playing && player !== us && us?.bound_players?.includes(player?.id || player?.user_id)
+                  ?
+                    <span className="leftpad">
+                      <Button label="Unbind" raised onClick={ () => this.unbindPeer(player) } />
                     </span>
                   : <></>
                 }

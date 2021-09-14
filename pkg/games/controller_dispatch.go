@@ -40,7 +40,7 @@ type GameBindAccept struct {
 
 type GameUnbindRequest struct {
 	MessageHeader
-	PeerUID uint64 `json:"peer_uid"`
+	PeerUID uint64 `json:"peer_id"`
 }
 
 func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {

@@ -51,12 +51,34 @@ type PlayerData struct {
 	BoundPlayers []uint64 `json:"-"`
 }
 
-func (p *PlayerData) IsBound(index uint64) bool {
+func (p *PlayerData) IsBound(uid uint64) bool {
 	for _, value := range p.BoundPlayers {
-		if value == index {
+		if value == uid {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (p *PlayerData) Unbind(uid uint64) bool {
+	var remaining []uint64 = nil
+	var remainder_index = -1
+
+	for index, value := range p.BoundPlayers {
+		if value == uid {
+			remaining = p.BoundPlayers[:index]
+			remainder_index = index + 1
+		}
+	}
+
+	if remainder_index != -1 && remainder_index < len(p.BoundPlayers) {
+		remaining = append(remaining, p.BoundPlayers[remainder_index:]...)
+	}
+
+	if remaining != nil {
+		p.BoundPlayers = remaining
+	}
+
+	return remainder_index != -1
 }

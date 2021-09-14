@@ -269,7 +269,7 @@ func (c *Controller) handleBindAccept(message []byte, game *GameData, spectator 
 	}
 
 	// Don't allow spectators to bind to other players.
-	if !target.Playing {
+	if !target.Admitted || !target.Playing {
 		return errors.New("unable to accept binding to another spectator; must bind to player")
 	}
 
@@ -286,6 +286,34 @@ func (c *Controller) handleBindAccept(message []byte, game *GameData, spectator 
 	var notification ControllerNotifyBindSuccess
 	notification.LoadFromController(game, target, spectator.UID)
 	c.undispatch(game, target, notification.MessageID, 0, notification)
+
+	// Inform everyone of the new list of bound players.
+	for _, indexed_player := range game.ToPlayer {
+		// Only let admitted players know who else is in the room.
+		if !indexed_player.Admitted {
+			continue
+		}
+
+		var users ControllerListUsersInGame
+		users.LoadFromController(game, indexed_player)
+		c.undispatch(game, indexed_player, users.MessageID, 0, users)
+	}
+
+	return nil
+}
+
+func (c *Controller) handleUnbindRequest(message []byte, game *GameData, player *PlayerData) error {
+	var data GameUnbindRequest
+	if err := json.Unmarshal(message, &data); err != nil {
+		return err
+	}
+
+	player.Unbind(data.PeerUID)
+
+	target, present := game.ToPlayer[data.PeerUID]
+	if present {
+		target.Unbind(player.UID)
+	}
 
 	// Inform everyone of the new list of bound players.
 	for _, indexed_player := range game.ToPlayer {

@@ -70,6 +70,9 @@ class PreGameAdminPage extends React.Component {
             if (data.ready !== undefined && data.ready !== null) {
               Object.assign(player, { ready: data.ready });
             }
+            if (data.bound_players !== undefined) {
+              Object.assign(player, { bound_players: data.bound_players });
+            }
             missing = false;
           }
         }
@@ -119,6 +122,14 @@ class PreGameAdminPage extends React.Component {
         this.game.winner = data.winner;
         let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
         this.props.setPage(page, true);
+      },
+      "notify-bind": async(data) => {
+        let bind_requests = [data.initiator_id];
+        for (let existing_request of this.state.bind_requests) {
+          bind_requests.push(existing_request);
+        }
+
+        this.setState(state => Object.assign({}, state, { bind_requests }));
       },
       "": data => {
         if (data.message) {
@@ -198,23 +209,32 @@ class PreGameAdminPage extends React.Component {
     }
   }
   async bindToSpectator(spectator) {
-    let response = await this.game.interface.controller.bindToSpectator(spectator.user_id);
+    let id = spectator?.id || spectator?.user_id;
+    let response = await this.game.interface.controller.bindToSpectator(id);
     if (response) {
       notify(this.props.snackbar, response.message, response.type);
     }
   }
   async acceptBindToPlayer(player) {
-    let response = await this.game.interface.controller.acceptBind(player.user_id);
+    let id = player?.id || player?.user_id;
+    let response = await this.game.interface.controller.acceptBind(id);
     if (!response) {
       let bind_requests = [];
       for (let remaining_request of this.state.bind_requests) {
-        if (remaining_request !== player.user_id) {
+        if (remaining_request !== id) {
           bind_requests.push(remaining_request);
         }
       }
 
       this.setState(state => Object.assign({}, state, { bind_requests }));
     } else {
+      notify(this.props.snackbar, response.message, response.type);
+    }
+  }
+  async unbindPeer(player) {
+    let id = player?.id || player?.user_id;
+    let response = await this.game.interface.controller.unbindPeer(id);
+    if (response) {
       notify(this.props.snackbar, response.message, response.type);
     }
   }
@@ -371,20 +391,28 @@ class PreGameAdminPage extends React.Component {
                     : <></>
                   }
                   <l.ListItemMeta>
+                    {
+                      user !== us && this.state.bind_requests.includes(user?.id || user?.user_id)
+                      ?
+                        <>
+                          <Button label="Accept Bind" raised onClick={ () => this.acceptBindToPlayer(user) } />&nbsp;
+                        </>
+                      : <></>
+                    }
+                    {
+                      user !== us && us?.bound_players?.includes(user?.id || user?.user_id)
+                      ?
+                        <>
+                          <Button label="Unbind" raised onClick={ () => this.unbindPeer(user) } />&nbsp;
+                        </>
+                      : <></>
+                    }
                     { user.id === this.props.user.id
                       ? null
                       : <>
                           <Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
                           &nbsp;
                         </>
-                    }
-                    {
-                      !us.playing && user !== us && user.playing && this.state.bind_requests.includes(user.user_id)
-                      ?
-                        <>
-                          <Button label="Accept Bind" raised onClick={ () => this.acceptBindToPlayer(user) } />&nbsp;
-                        </>
-                      : <></>
                     }
                     <Button raised label="Bench" onClick={ () => this.toggleSpectator(user) } />
                     { this.state.order
@@ -418,9 +446,21 @@ class PreGameAdminPage extends React.Component {
                   <l.ListItemMeta>
                     <span>
                     {
-                      us.playing && user !== us && !user.playing && !us?.bound_players?.includes(user.id)
+                      user !== us
                       ?
-                        <><Button label="Bind" raised onClick={ () => this.bindToSpectator(user) } />&nbsp;</>
+                        !us?.bound_players?.includes(user?.id || user?.user_id)
+                        ?
+                          <><Button label="Bind" raised onClick={ () => this.bindToSpectator(user) } />&nbsp;</>
+                        :
+                          <><Button label="Unbind" raised onClick={ () => this.unbindPeer(user) } />&nbsp;</>
+                      : <></>
+                    }
+                    {
+                      user !== us && this.state.bind_requests.includes(user?.id || user?.user_id)
+                      ?
+                        <>
+                          <Button label="Accept Bind" raised onClick={ () => this.acceptBindToPlayer(user) } />&nbsp;
+                        </>
                       : <></>
                     }
                     { user.id === this.props.user.id
