@@ -44,6 +44,11 @@ type EightJacksSortMsg struct {
 	Order []int `json:"order"`
 }
 
+type EightJacksSelectMsg struct {
+	MessageHeader
+	SquareID int `json:"square_id"`
+}
+
 func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
 	var err error
 	var state *EightJacksState = game.State.(*EightJacksState)
@@ -216,7 +221,47 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 
 		var synopsis EightJacksSynopsisNotification
 		synopsis.LoadData(game, state, player)
-		c.undispatch(game, player, response.MessageID, header.MessageID, synopsis)
+		c.undispatch(game, player, synopsis.MessageID, header.MessageID, synopsis)
+	case "select":
+		var data EightJacksSelectMsg
+		if err = json.Unmarshal(message, &data); err != nil {
+			return err
+		}
+
+		// If it is the message sender's turn, or a trusted spectating peer of that
+		// player, we can accept the selected square and send it back down to the
+		// player for their client to take and use in their play message. If,
+		// however, this is a random other player, we should discard the message
+		// and send an error.
+		var is_current_turn = player.Playing && player.Index == state.Turn
+		current_turn_uid, found_uid := game.ToUserID(state.Turn)
+		var is_trusted_peer = found_uid && !player.Playing && game.PlayersAreBound(current_turn_uid, player.UID)
+
+		if !is_current_turn && !is_trusted_peer {
+			return errors.New("unable to update selected square for the current player")
+		}
+
+		// While strictly we can use player in this case, it still seems like this
+		// case would indicate corrupted state information so it seems best to
+		// throw an error and make the player select their square manually on their
+		// own board.
+		if !found_uid {
+			return errors.New("unable to find current turn's player by uid")
+		}
+
+		state.Players[state.Turn].SelectedSquare = data.SquareID
+
+		// We don't really need to inform the trusted peer if the square changed,
+		// especially since it is public information and other (future) players
+		// might be playing around with their selected squares while they're
+		// waiting to play (and thus, leak information and/or corrupt this current
+		// player's data) -- so only tell the current turn's player explicitly. For
+		// simplicity, let's just reuse the state notification message and not make
+		// it a reply.
+		current_player := game.ToPlayer[current_turn_uid]
+		var response EightJacksStateNotification
+		response.LoadData(game, state, current_player)
+		c.undispatch(game, current_player, response.MessageID, 0, response)
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}

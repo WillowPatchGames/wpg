@@ -109,6 +109,8 @@ type EightJacksPlayer struct {
 	History  []Card `json:"history"`
 	Discards []Card `json:"discards"`
 
+	SelectedSquare int `json:"selected_square"`
+
 	Team int     `json:"team"`
 	Runs [][]int `json:"runs"`
 }
@@ -206,7 +208,7 @@ func (ejs *EightJacksState) Init(cfg EightJacksConfig) error {
 
 	ejs.Config = cfg
 	ejs.Turn = -1
-	ejs.Dealer = -1
+	ejs.Dealer = 0
 	ejs.Assigned = false
 	ejs.Started = false
 	ejs.Dealt = false
