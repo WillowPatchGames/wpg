@@ -1,5 +1,5 @@
 import {
-  WebSocketController
+  GameController
 } from './common.js';
 
 import {
@@ -10,41 +10,7 @@ import {
   CardHand,
 } from './card.js';
 
-class HeartsController {
-  constructor(game) {
-    this.game = game;
-
-    this.wsController = new WebSocketController(this.game);
-  }
-
-  async admitPlayer(player, admit, playing) {
-    return await this.wsController.send({
-      'message_type': 'admit',
-      'target_id': +player,
-      'admit': admit,
-      'playing': playing,
-    });
-  }
-
-  async markReady(ready) {
-    return await this.wsController.send({
-      'message_type': 'ready',
-      'ready': ready,
-    });
-  }
-
-  async startGame() {
-    return await this.wsController.sendAndWait({
-      'message_type': 'start',
-    });
-  }
-
-  async cancelGame() {
-    return await this.wsController.send({
-      'message_type': 'cancel',
-    });
-  }
-
+class HeartsController extends GameController {
   async deal() {
     return await this.wsController.sendAndWait({
       'message_type': 'deal',
@@ -63,14 +29,6 @@ class HeartsController {
       'message_type': 'play',
       'card_id': +card,
     });
-  }
-
-  onMessage(type, handler) {
-    return this.wsController.onMessage(type, handler);
-  }
-
-  close() {
-    this.wsController.close();
   }
 }
 

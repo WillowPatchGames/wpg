@@ -1,5 +1,5 @@
 import {
-  WebSocketController
+  GameController,
 } from './common.js';
 
 import {
@@ -10,51 +10,11 @@ import {
   CardHand,
 } from './card.js';
 
-class EightJacksController {
-  constructor(game) {
-    this.game = game;
-
-    this.wsController = new WebSocketController(this.game);
-  }
-
-  async admitPlayer(player, admit, playing) {
-    return await this.wsController.send({
-      'message_type': 'admit',
-      'target_id': +player,
-      'admit': admit,
-      'playing': playing,
-    });
-  }
-
-  async markReady(ready) {
-    return await this.wsController.send({
-      'message_type': 'ready',
-      'ready': ready,
-    });
-  }
-
+class EightJacksController extends GameController {
   async assignTeams(team_data) {
     return await this.wsController.sendAndWait({
       'message_type': 'assign',
       ...team_data,
-    });
-  }
-
-  async startGame() {
-    return await this.wsController.sendAndWait({
-      'message_type': 'start',
-    });
-  }
-
-  async cancelGame() {
-    return await this.wsController.send({
-      'message_type': 'cancel',
-    });
-  }
-
-  async peek() {
-    return await this.wsController.sendAndWait({
-      'message_type': 'peek',
     });
   }
 
@@ -85,14 +45,6 @@ class EightJacksController {
       'message_type': 'sort',
       'order': order,
     });
-  }
-
-  onMessage(type, handler) {
-    return this.wsController.onMessage(type, handler);
-  }
-
-  close() {
-    this.wsController.close();
   }
 }
 

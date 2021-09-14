@@ -6,46 +6,10 @@ import {
 } from './word.js';
 
 import {
-  WebSocketController
+  GameController
 } from './common.js';
 
-class RushController {
-  constructor(game) {
-    this.game = game;
-    this.draw_id = 1;
-    this.remaining_tiles = 0;
-
-    this.wsController = new WebSocketController(this.game);
-  }
-
-  async admitPlayer(player, admit, playing) {
-    return await this.wsController.send({
-      'message_type': 'admit',
-      'target_id': +player,
-      'admit': admit,
-      'playing': playing,
-    });
-  }
-
-  async markReady(ready) {
-    return await this.wsController.send({
-      'message_type': 'ready',
-      'ready': ready,
-    });
-  }
-
-  async startGame() {
-    return await this.wsController.sendAndWait({
-      'message_type': 'start',
-    });
-  }
-
-  async cancelGame() {
-    return await this.wsController.send({
-      'message_type': 'cancel',
-    });
-  }
-
+class RushController extends GameController {
   async check() {
     return await this.wsController.sendAndWait({
       'message_type': 'check',
@@ -117,20 +81,6 @@ class RushController {
       'x': pos.x,
       'y': pos.y,
     });
-  }
-
-  async peek() {
-    return await this.wsController.send({
-      'message_type': 'peek',
-    });
-  }
-
-  onMessage(type, handler) {
-    return this.wsController.onMessage(type, handler);
-  }
-
-  close() {
-    this.wsController.close();
   }
 }
 
