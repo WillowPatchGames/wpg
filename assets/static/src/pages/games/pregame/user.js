@@ -249,9 +249,15 @@ class PreGameUserPage extends React.Component {
                 {
                   us.playing && player !== us && !player.playing
                   ?
-                    <span className="leftpad">
-                      <Button label="Bind" raised onClick={ () => this.bindToSpectator(player) } />
-                    </span>
+                    !us?.bound_players?.includes(player.user_id)
+                    ?
+                      <span className="leftpad">
+                        <Button label="Bind" raised onClick={ () => this.bindToSpectator(player) } />
+                      </span>
+                    :
+                      <span className="leftpad">
+                        <Button label="Unbind" raised onClick={ () => this.unbindFromSpectator(player) } />
+                      </span>
                   : <></>
                 }
                 {

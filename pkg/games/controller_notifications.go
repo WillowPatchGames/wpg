@@ -133,9 +133,10 @@ func (cnw *ControllerNotifyWord) LoadFromController(data *GameData, player *Play
 }
 
 type ControllerPlayerState struct {
-	UID     uint64 `json:"user"`
-	Playing bool   `json:"playing"`
-	Ready   bool   `json:"ready"`
+	UID          uint64   `json:"user"`
+	Playing      bool     `json:"playing"`
+	Ready        bool     `json:"ready"`
+	BoundPlayers []uint64 `json:"bound_players"`
 }
 
 type ControllerListUsersInGame struct {
@@ -154,6 +155,12 @@ func (cluig *ControllerListUsersInGame) LoadFromController(data *GameData, playe
 			state.UID = indexed_player.UID
 			state.Playing = indexed_player.Playing
 			state.Ready = indexed_player.Ready
+
+			for _, other_player := range indexed_player.BoundPlayers {
+				if data.PlayersAreBound(indexed_player.UID, other_player) {
+					state.BoundPlayers = append(state.BoundPlayers, other_player)
+				}
+			}
 
 			cluig.Players = append(cluig.Players, state)
 		}

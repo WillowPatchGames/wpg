@@ -37,6 +37,7 @@ class PreGameAdminPage extends React.Component {
       countdown: null,
       order: true,
       teams: true,
+      bind_requests: [],
     };
 
     this.game = this.props.game || {};
@@ -196,6 +197,27 @@ class PreGameAdminPage extends React.Component {
       }
     }
   }
+  async bindToSpectator(spectator) {
+    let response = await this.game.interface.controller.bindToSpectator(spectator.user_id);
+    if (response) {
+      notify(this.props.snackbar, response.message, response.type);
+    }
+  }
+  async acceptBindToPlayer(player) {
+    let response = await this.game.interface.controller.acceptBind(player.user_id);
+    if (!response) {
+      let bind_requests = [];
+      for (let remaining_request of this.state.bind_requests) {
+        if (remaining_request !== player.user_id) {
+          bind_requests.push(remaining_request);
+        }
+      }
+
+      this.setState(state => Object.assign({}, state, { bind_requests }));
+    } else {
+      notify(this.props.snackbar, response.message, response.type);
+    }
+  }
   async assignTeams(verify) {
     if (!this.state.teams) return true;
     var team_data = {};
@@ -310,6 +332,25 @@ class PreGameAdminPage extends React.Component {
     let spectators = this.state.waitlist.filter(user => user.admitted && !user.playing);
     let waiting = this.state.waitlist;
 
+    let us = null;
+    if (players !== null) {
+      for (let player_id of Object.keys(players).sort()) {
+        let player = players[player_id];
+        if (+player.id === +this.props.user.id) {
+          us = player;
+        }
+      }
+    }
+
+    if (spectators !== null) {
+      for (let player_id of Object.keys(spectators).sort()) {
+        let player = spectators[player_id];
+        if (+player.id === +this.props.user.id) {
+          us = player;
+        }
+      }
+    }
+
     let userContent = <c.Card>
       <div style={{ padding: '1rem 1rem 1rem 1rem' }} >
         <l.List twoLine>
@@ -336,6 +377,14 @@ class PreGameAdminPage extends React.Component {
                           <Button raised label="Kick out" onClick={ () => this.toggleAdmitted(user) } />
                           &nbsp;
                         </>
+                    }
+                    {
+                      !us.playing && user !== us && user.playing && this.state.bind_requests.includes(user.user_id)
+                      ?
+                        <>
+                          <Button label="Accept Bind" raised onClick={ () => this.acceptBindToPlayer(user) } />&nbsp;
+                        </>
+                      : <></>
                     }
                     <Button raised label="Bench" onClick={ () => this.toggleSpectator(user) } />
                     { this.state.order
@@ -368,6 +417,12 @@ class PreGameAdminPage extends React.Component {
                   <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
                     <span>
+                    {
+                      us.playing && user !== us && !user.playing && !us?.bound_players?.includes(user.id)
+                      ?
+                        <><Button label="Bind" raised onClick={ () => this.bindToSpectator(user) } />&nbsp;</>
+                      : <></>
+                    }
                     { user.id === this.props.user.id
                       ? <>&nbsp;<Button raised label="Make Player" onClick={ () => this.toggleSpectator(user) } /></>
                       : <>

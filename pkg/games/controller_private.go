@@ -229,9 +229,13 @@ func (c *Controller) handleBindRequest(message []byte, game *GameData, player *P
 		return errors.New("unable to bind to another player; must bind to spectator")
 	}
 
+	if player.IsBound(target.UID) && target.IsBound(player.UID) {
+		return errors.New("you are already bound to this spectator")
+	}
+
 	// Add this as a waiting request. Request is only approved once performed
 	// bidirectionally.
-	target.BoundPlayers = append(target.BoundPlayers, player.UID)
+	player.BoundPlayers = append(player.BoundPlayers, target.UID)
 
 	// Inform the target of the request.
 	var notification ControllerNotifyBindRequest
@@ -244,7 +248,7 @@ func (c *Controller) handleBindRequest(message []byte, game *GameData, player *P
 func (c *Controller) handleBindAccept(message []byte, game *GameData, spectator *PlayerData) error {
 	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
 
-	var data GameBindRequest
+	var data GameBindAccept
 	if err := json.Unmarshal(message, &data); err != nil {
 		return err
 	}
@@ -259,7 +263,7 @@ func (c *Controller) handleBindAccept(message []byte, game *GameData, spectator 
 		return errors.New("unable to initiate binding from spectator account")
 	}
 
-	target, present := game.ToPlayer[data.TargetUID]
+	target, present := game.ToPlayer[data.InitiatorUID]
 	if !present {
 		return errors.New("unknown target player to accept binding to")
 	}
@@ -269,14 +273,31 @@ func (c *Controller) handleBindAccept(message []byte, game *GameData, spectator 
 		return errors.New("unable to accept binding to another spectator; must bind to player")
 	}
 
+	// Don't allow duplicate binds
+	if spectator.IsBound(target.UID) && target.IsBound(spectator.UID) {
+		return errors.New("you are already bound to this player")
+	}
+
 	// Add this as a waiting request. Request is only approved once performed
 	// bidirectionally.
-	target.BoundPlayers = append(target.BoundPlayers, spectator.UID)
+	spectator.BoundPlayers = append(spectator.BoundPlayers, target.UID)
 
 	// Inform the target of the success of their bind.
 	var notification ControllerNotifyBindSuccess
 	notification.LoadFromController(game, target, spectator.UID)
 	c.undispatch(game, target, notification.MessageID, 0, notification)
+
+	// Inform everyone of the new list of bound players.
+	for _, indexed_player := range game.ToPlayer {
+		// Only let admitted players know who else is in the room.
+		if !indexed_player.Admitted {
+			continue
+		}
+
+		var users ControllerListUsersInGame
+		users.LoadFromController(game, indexed_player)
+		c.undispatch(game, indexed_player, users.MessageID, 0, users)
+	}
 
 	return nil
 }

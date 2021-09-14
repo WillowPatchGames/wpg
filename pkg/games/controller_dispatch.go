@@ -38,6 +38,11 @@ type GameBindAccept struct {
 	InitiatorUID uint64 `json:"initiator_id"`
 }
 
+type GameUnbindRequest struct {
+	MessageHeader
+	PeerUID uint64 `json:"peer_uid"`
+}
+
 func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
 	// Get some common started/finished information first. Because we store
 	// this in the game state, accessing it requires knowing the game mode.
@@ -183,6 +188,8 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		return c.handleBindRequest(message, game, player)
 	case "bind-accept":
 		return c.handleBindAccept(message, game, player)
+	case "unbind-request":
+		return c.handleUnbindRequest(message, game, player)
 	}
 
 	if game.Mode == RushGame {
