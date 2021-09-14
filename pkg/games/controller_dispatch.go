@@ -28,6 +28,16 @@ type GameCountback struct {
 	Value int `json:"value"`
 }
 
+type GameBindRequest struct {
+	MessageHeader
+	TargetUID uint64 `json:"target_id"`
+}
+
+type GameBindAccept struct {
+	MessageHeader
+	InitiatorUID uint64 `json:"initiator_id"`
+}
+
 func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
 	// Get some common started/finished information first. Because we store
 	// this in the game state, accessing it requires knowing the game mode.
@@ -169,6 +179,10 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		c.undispatch(game, admin, message.MessageID, 0, message)
 
 		return c.handleCountdown(game)
+	case "bind-request":
+		return c.handleBindRequest(message, game, player)
+	case "bind-accept":
+		return c.handleBindAccept(message, game, player)
 	}
 
 	if game.Mode == RushGame {

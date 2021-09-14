@@ -46,12 +46,12 @@ type PlayerData struct {
 	// two-way authorization (mutual verification) of player <-> spectator
 	// binding, allowing the spectator to perform certain actions on behalf of
 	// this player (such as choosing a square to play on in 8Js, given the
-	// specified card selected by the player). This is a list of Indices of other
+	// specified card selected by the player). This is a list of UIDs of other
 	// PlayerData units.
-	BoundPlayers []int `json:"-"`
+	BoundPlayers []uint64 `json:"-"`
 }
 
-func (p *PlayerData) IsBound(index int) bool {
+func (p *PlayerData) IsBound(index uint64) bool {
 	for _, value := range p.BoundPlayers {
 		if value == index {
 			return true

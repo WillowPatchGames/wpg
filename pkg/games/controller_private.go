@@ -177,6 +177,8 @@ func (c *Controller) markAdmitted(us uint64, gid uint64, uid uint64, admitted bo
 }
 
 func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id int, reply_to int, obj interface{}) {
+	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
+
 	if player.Notifications == nil {
 		log.Println("Player disconnected; refusing to send message to peer.", player.UID)
 		return
@@ -197,4 +199,84 @@ func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id i
 		Message:   string(message),
 	}
 	player.OutboundMsgs = append(player.OutboundMsgs, &db_msg)
+}
+
+func (c *Controller) handleBindRequest(message []byte, game *GameData, player *PlayerData) error {
+	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
+
+	var data GameBindRequest
+	if err := json.Unmarshal(message, &data); err != nil {
+		return err
+	}
+
+	// Don't allow unadmitted player binding; prevents spam from malicious users.
+	if !player.Admitted {
+		return errors.New("unable to bind from unadmitted user; wait for game admin to admit you")
+	}
+
+	// Don't allow spectators to initiate the binding.
+	if !player.Playing {
+		return errors.New("unable to initiate binding from spectator account")
+	}
+
+	target, present := game.ToPlayer[data.TargetUID]
+	if !present {
+		return errors.New("unknown target player to bind to")
+	}
+
+	// Don't allow players to bind to other players.
+	if !target.Admitted || target.Playing {
+		return errors.New("unable to bind to another player; must bind to spectator")
+	}
+
+	// Add this as a waiting request. Request is only approved once performed
+	// bidirectionally.
+	target.BoundPlayers = append(target.BoundPlayers, player.UID)
+
+	// Inform the target of the request.
+	var notification ControllerNotifyBindRequest
+	notification.LoadFromController(game, target, player.UID)
+	c.undispatch(game, target, notification.MessageID, 0, notification)
+
+	return nil
+}
+
+func (c *Controller) handleBindAccept(message []byte, game *GameData, spectator *PlayerData) error {
+	// !!NO LOCK!! This should already be held elsewhere, like Dispatch.
+
+	var data GameBindRequest
+	if err := json.Unmarshal(message, &data); err != nil {
+		return err
+	}
+
+	// Don't allow unadmitted player binding; prevents spam from malicious users.
+	if !spectator.Admitted {
+		return errors.New("unable to bind from unadmitted user; wait for game admin to admit you")
+	}
+
+	// Don't allow players to accept bindings.
+	if spectator.Playing {
+		return errors.New("unable to initiate binding from spectator account")
+	}
+
+	target, present := game.ToPlayer[data.TargetUID]
+	if !present {
+		return errors.New("unknown target player to accept binding to")
+	}
+
+	// Don't allow spectators to bind to other players.
+	if !target.Playing {
+		return errors.New("unable to accept binding to another spectator; must bind to player")
+	}
+
+	// Add this as a waiting request. Request is only approved once performed
+	// bidirectionally.
+	target.BoundPlayers = append(target.BoundPlayers, spectator.UID)
+
+	// Inform the target of the success of their bind.
+	var notification ControllerNotifyBindSuccess
+	notification.LoadFromController(game, target, spectator.UID)
+	c.undispatch(game, target, notification.MessageID, 0, notification)
+
+	return nil
 }

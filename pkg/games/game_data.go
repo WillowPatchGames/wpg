@@ -42,6 +42,7 @@ func (data *GameData) ToUserID(index int) (uint64, bool) {
 
 	return 0, false
 }
+
 func (data *GameData) ToUserIDs(indices []int) ([]uint64, bool) {
 	players := make([]uint64, len(indices))
 	for i, index := range indices {
@@ -52,4 +53,18 @@ func (data *GameData) ToUserIDs(indices []int) ([]uint64, bool) {
 		}
 	}
 	return players, true
+}
+
+func (data *GameData) PlayersAreBound(left_uid uint64, right_uid uint64) bool {
+	left, left_present := data.ToPlayer[left_uid]
+	if !left_present || !left.IsBound(right_uid) {
+		return false
+	}
+
+	right, right_present := data.ToPlayer[right_uid]
+	if !right_present || !right.IsBound(left_uid) {
+		return false
+	}
+
+	return true
 }

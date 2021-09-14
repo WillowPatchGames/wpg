@@ -159,3 +159,27 @@ func (cluig *ControllerListUsersInGame) LoadFromController(data *GameData, playe
 		}
 	}
 }
+
+type ControllerNotifyBindRequest struct {
+	MessageHeader
+	InitiatorID uint64 `json:"initiator_id"`
+}
+
+func (cnbr *ControllerNotifyBindRequest) LoadFromController(data *GameData, player *PlayerData, initiator uint64) {
+	cnbr.LoadHeader(data, player)
+	cnbr.MessageType = "notify-bind"
+
+	cnbr.InitiatorID = initiator
+}
+
+type ControllerNotifyBindSuccess struct {
+	MessageHeader
+	TargetID uint64 `json:"target_id"`
+}
+
+func (cnbr *ControllerNotifyBindSuccess) LoadFromController(data *GameData, player *PlayerData, target uint64) {
+	cnbr.LoadHeader(data, player)
+	cnbr.MessageType = "notify-bound"
+
+	cnbr.TargetID = target
+}
