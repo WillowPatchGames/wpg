@@ -24,8 +24,15 @@ class GameController {
 
   async bindToSpectator(spectator) {
     return await this.wsController.send({
-      'message_type': 'bind',
+      'message_type': 'bind-request',
       'target_id': +spectator,
+    });
+  }
+
+  async acceptBind(player) {
+    return await this.wsController.send({
+      'message_type': 'bind-accept',
+      'initiator_id': +player,
     });
   }
 

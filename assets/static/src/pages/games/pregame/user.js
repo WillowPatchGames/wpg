@@ -28,6 +28,7 @@ class PreGameUserPage extends React.Component {
       countdown: null,
       ready: this.getAutoReadyState(),
       queue: [],
+      bind_requests: [],
     }
 
     this.game = this.props.game || {};
@@ -89,6 +90,14 @@ class PreGameUserPage extends React.Component {
 
           this.setState(state => Object.assign({}, state, { players }));
         }
+      },
+      "notify-bind": async(data) => {
+        let bind_requests = [data.initiator_id];
+        for (let existing_request of this.state.bind_requests) {
+          bind_requests.push(existing_request);
+        }
+
+        this.setState(state => Object.assign({}, state, { bind_requests }));
       },
       "finished": async (data) => {
         data.message = await personalize(data.winner) + " won!";
@@ -180,6 +189,27 @@ class PreGameUserPage extends React.Component {
 
     this.setState(state => Object.assign({}, state, { players: this.state.players, ready, queue }));
   }
+  async bindToSpectator(spectator) {
+    let response = await this.game.interface.controller.bindToSpectator(spectator.user_id);
+    if (response) {
+      notify(this.props.snackbar, response.message, response.type);
+    }
+  }
+  async acceptBindToPlayer(player) {
+    let response = await this.game.interface.controller.acceptBind(player.user_id);
+    if (!response) {
+      let bind_requests = [];
+      for (let remaining_request of this.state.bind_requests) {
+        if (remaining_request !== player.user_id) {
+          bind_requests.push(remaining_request);
+        }
+      }
+
+      this.setState(state => Object.assign({}, state, { bind_requests }));
+    } else {
+      notify(this.props.snackbar, response.message, response.type);
+    }
+  }
   render() {
     let message = "Game is in an unknown state.";
     if (this.state.status === "pending") {
@@ -194,20 +224,45 @@ class PreGameUserPage extends React.Component {
       var i = 0;
       for (let player_id of Object.keys(this.state.players).sort()) {
         let player = this.state.players[player_id];
+        if (+player_id === +this.props.user.id) {
+          us = player;
+        }
+      }
+
+      for (let player_id of Object.keys(this.state.players).sort()) {
+        let player = this.state.players[player_id];
         let display = player.user.display;
         let disabled = true;
         let onClick = undefined;
         if (+player_id === +this.props.user.id) {
           display = "You";
-          us = player;
           disabled = false;
           onClick = () => this.toggleSpectator(player);
         }
+
         users.push(
           <l.ListItem key={display} disabled>
             <span className="unselectable">{+i + 1}.&nbsp;</span> {display}
             <l.ListItemMeta>
-              <span className="leftpad"><Switch checked={ player.playing } label={ player.playing ? "Player" : "Spectator" } disabled={ disabled } onClick={ onClick } /></span>
+              <span className="leftpad">
+                <Switch checked={ player.playing } label={ player.playing ? "Player" : "Spectator" } disabled={ disabled } onClick={ onClick } />
+                {
+                  us.playing && player !== us && !player.playing
+                  ?
+                    <span className="leftpad">
+                      <Button label="Bind" raised onClick={ () => this.bindToSpectator(player) } />
+                    </span>
+                  : <></>
+                }
+                {
+                  !us.playing && player !== us && player.playing && this.state.bind_requests.includes(player.user_id)
+                  ?
+                    <span className="leftpad">
+                      <Button label="Accept Bind" raised onClick={ () => this.acceptBindToPlayer(player) } />
+                    </span>
+                  : <></>
+                }
+              </span>
             </l.ListItemMeta>
           </l.ListItem>
         );
