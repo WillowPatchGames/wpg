@@ -45,6 +45,7 @@ class EightJacksGameComponent extends React.Component {
     super(props);
     this.state = {};
     this.state.game = props.game;
+    this.state.last_remote_selected = null;
     this.state.board_selected = null;
     this.state.selected = null;
     this.state.last_hand = null;
@@ -59,10 +60,17 @@ class EightJacksGameComponent extends React.Component {
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
       old_handler();
-      this.setState(state => {
-        // Jinx
-        return state;
-      });
+
+      let board_selected = this.state.board_selected;
+      let last_remote_selected = this.state.last_remote_selected;
+      let selected_square = this.state.game.interface.data.selected_square;
+
+      if (selected_square !== last_remote_selected) {
+        board_selected = selected_square;
+        last_remote_selected = selected_square;
+      }
+
+      this.setState(state => Object.assign({}, state, { board_selected, last_remote_selected }));
     };
   }
   cancelMarksAnd(then) {
@@ -77,7 +85,7 @@ class EightJacksGameComponent extends React.Component {
     return (...arg) => {
       this.setState(state => Object.assign(state, {
         selected: null,
-        board_selected: null,
+        board_selected: this.state.last_remote_selected,
       }));
       return then && then(...arg);
     };
@@ -297,19 +305,19 @@ class EightJacksGameComponent extends React.Component {
     for (let ids of view_order) {
       var col = [];
       for (let id of ids) {
-        var spot = by_id[id];
-        var suit = new CardSuit(spot.value.suit).toImage();
-        var rank = new CardRank(spot.value.rank).toImage();
+        let spot = by_id[id];
+        let suit = new CardSuit(spot.value.suit).toImage();
+        let rank = new CardRank(spot.value.rank).toImage();
         if (rank === "joker") {
           suit = ""; rank = "logo";
         }
-        var mark = spot.marker === -1 ? null : ""+(+spot.marker+1);
-        var sel = this.state.marking
+        let mark = spot.marker === -1 ? null : ""+(+spot.marker+1);
+        let sel = this.state.marking
           ? this.state.marking.includes(spot.id) && 2
           : this.state.board_selected === spot.id && 1;
-        var run = spot.id in runs ? (runs[spot.id] === true ? "*" : ""+(runs[spot.id])) : null;
-        var text = mark || <>&nbsp;</>;
-        var overlay = <>
+        let run = spot.id in runs ? (runs[spot.id] === true ? "*" : ""+(runs[spot.id])) : null;
+        let text = mark || <>&nbsp;</>;
+        let overlay = <>
           { !mark && !run ? null :
             <span
               className={"marker"}
@@ -320,7 +328,7 @@ class EightJacksGameComponent extends React.Component {
               }}>{ text }</span>
           }
         </>;
-        var tooltip = e => e;
+        let tooltip = e => e;
         if (spot.who_marked !== undefined && spot.who_marked !== -1) {
           let name = displays[spot.who_marked];
           if (name) {
@@ -423,7 +431,15 @@ class EightJacksGameComponent extends React.Component {
               ? <>
                 {big_status("Your turn to play")}
                 <Button label={ this.state.marking ? "Finish or cancel marking sequence before playing" : (this.state.board_selected ? "Play here" : "Pick a spot!") } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected || this.state.marking || this.state.sorting }
-                  onClick={this.clearSelectAnd(() => this.state.game.interface.play(this.state.selected, this.state.board_selected)) } />
+                  onClick={
+                    this.clearSelectAnd(
+                      () => {
+                        this.state.game.interface.play(this.state.selected, this.state.board_selected);
+                        this.setState(state => Object.assign({}, state, { board_selected: null, last_remote_selected: null }));
+                      }
+                    )
+                  }
+                  />
                 <hr/>
                 </>
               : <>
@@ -753,10 +769,7 @@ class EightJacksAfterPartyPage extends React.Component {
       historical_round: "0",
       active: {
         turn: null,
-        leader: null,
         dealer: null,
-        played: null,
-        played_history: null,
       },
       winners: this.game?.winners,
       dealt: false,
@@ -767,6 +780,7 @@ class EightJacksAfterPartyPage extends React.Component {
       timeout: killable(() => { this.refreshData() }, 5000),
       orientation: 0,
       half_height: false,
+      board_selected: null,
     };
 
     GameCache.Invalidate(this.props.game.id);
@@ -774,16 +788,29 @@ class EightJacksAfterPartyPage extends React.Component {
     let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     this.unmount = addEv(this.game, {
       "game-state": async (data) => {
-        var winners = [];
+        let winners = [];
         if (data.winners) {
           winners = await Promise.all(data.winners.map(UserCache.FromId.bind(UserCache)));
         }
         if (!winners.length) winners = null;
         this.game.winners = winners;
 
+        let active = {
+          turn: null,
+          dealer: null,
+        };
+        let board_selected = this.state.board_selected;
+        if (!data.finished) {
+          active.turn = await UserCache.FromId(data.turn);
+          if (active?.turn !== this.state.active?.turn) {
+            board_selected = null;
+          }
+          active.dealer = await UserCache.FromId(data.dealer);
+        }
+
         // Note: this also tells the rendering to update for the
         // interface state updates.
-        this.setState(state => Object.assign(state, { winners }));
+        this.setState(state => Object.assign(state, { winners, active, board_selected }));
         if (data.finished) {
           if (this.state.timeout) {
             this.state.timeout.kill();
@@ -818,8 +845,14 @@ class EightJacksAfterPartyPage extends React.Component {
     });
   }
   drawBoard = EightJacksGameComponent.prototype.drawBoard;
-  handleClick() {
-    return null;
+  handleClick(spot) {
+    if (new CardRank(spot.value.rank).toString() === "joker") return;
+    return () => {
+      this.setState(state => Object.assign(state, {
+        board_selected:state.board_selected===spot.id?null:spot.id
+      }));
+      this.game.interface.controller.select(spot.id);
+    }
   }
   componentDidMount() {
     this.state.timeout.exec();
@@ -1086,6 +1119,8 @@ class EightJacksAfterPartyPage extends React.Component {
       }
 
       winner_info = <h1 style={{ color: "#249724" }}>{winner_names} won!</h1>
+    } else if (!this.state.finished && this.state.active?.turn) {
+      winner_info = <h1>{ this.state.active.turn.display }'s turn!</h1>
     }
 
     return (
@@ -1120,7 +1155,7 @@ class EightJacksAfterPartyPage extends React.Component {
                     icon="rotate_90_degrees_ccw"
                   />
                 </div>
-                { this.drawBoard(false) }
+                { this.drawBoard(true) }
               </div>
             </c.Card>
           </div>

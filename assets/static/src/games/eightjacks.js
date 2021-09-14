@@ -46,6 +46,13 @@ class EightJacksController extends GameController {
       'order': order,
     });
   }
+
+  async select(square) {
+    return await this.wsController.send({
+      'message_type': 'select',
+      'square_id': +square,
+    });
+  }
 }
 
 // Unlike Rush, where we have to duplicate logic on the client and server to
@@ -107,6 +114,7 @@ class EightJacksGame {
     }
     this.data.board = message?.board;
     this.data.players = message?.players;
+    this.data.selected_square = message?.selected_square;
 
     this.onChange(this);
   }
