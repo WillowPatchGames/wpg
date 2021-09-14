@@ -73,16 +73,19 @@ wpgapi: cmd/wpgapi/main.go pkg/*/*.go internal/*/*.go
 	GOROOT="$(GOROOT)" $(GO) build $(NAMESPACE)/cmd/wpgapi
 
 clean:
-	rm -f wpgapi wpg.sqlite3
+	rm -f wpgapi
 
 distclean: clean
-	rm -rf assets/static/node_modules assets/static/package-lock.json
+	rm -rf wpg.sqlite3 assets/static/node_modules assets/static/package-lock.json
 
 submod:
 	git submodule init && git submodule update
 
 webui:
 	cd assets/static && REACT_EDITOR=none BROWSER=none $(NPM) start
+
+backend: all
+	./scripts/start-backend.sh
 
 images:
 	cd assets/static/src/images && git pull
