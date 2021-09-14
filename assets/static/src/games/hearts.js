@@ -92,6 +92,7 @@ class HeartsGame {
     if (readonly === undefined || readonly === null || readonly === false) {
       this.controller = new HeartsController(game);
       this.controller.onMessage("state", (data) => { this.handleNewState(data) });
+      this.controller.onMessage("game-state", (data) => { this.handleNewState(data) });
       this.controller.onMessage("synopsis", (data) => { this.handleNewSynopsis(data) });
     }
 

@@ -448,6 +448,7 @@ class HeartsGamePage extends React.Component {
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
           this.props.game.lifecycle = "playing";
+          this.props.game.spectating = !data.playing;
           let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
           this.props.setPage(page, true);
         },

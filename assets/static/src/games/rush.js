@@ -327,6 +327,7 @@ class RushGame {
     if (readonly === undefined || readonly === null || readonly === false) {
       this.controller = new RushController(game);
       this.controller.onMessage("state", (data) => { this.handleNewState(data) });
+      this.controller.onMessage("game-state", (data) => { this.handleNewState(data) });
     }
 
     this.data = new RushData(game);

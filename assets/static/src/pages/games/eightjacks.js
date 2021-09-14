@@ -659,6 +659,7 @@ class EightJacksGamePage extends React.Component {
           data.message = "Let the games begin!";
           notify(this.props.snackbar, data.message, data.type);
           this.props.game.lifecycle = "playing";
+          this.props.game.spectating = !data.playing;
           let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
           this.props.setPage(page, true);
         },
@@ -669,7 +670,6 @@ class EightJacksGamePage extends React.Component {
           this.setState(state => Object.assign({}, state, { countdown: data.value }));
           setTimeout(() => this.setState(state => Object.assign({}, state, { countdown: null })), 1000);
           this.state.interface.controller.wsController.send({'message_type': 'countback', 'value': data.value});
-
         },
         "draw": async (data) => {
           data.message = await personalize(data.drawer) + " drew!";
@@ -678,7 +678,7 @@ class EightJacksGamePage extends React.Component {
         "finished": async (data) => {
           data.message = await Promise.all(data.winners.map(personalize)) + " won!";
           notify(this.props.snackbar, data.message, data.type);
-          this.game.winner = data.winner;
+          this.game.winners = data.winners;
           let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
           this.props.setPage(page, true);
         },
@@ -771,14 +771,16 @@ class EightJacksAfterPartyPage extends React.Component {
 
     GameCache.Invalidate(this.props.game.id);
 
+    let personalize = async (usr) => usr === this.props.user.id ? "You" : (await UserCache.FromId(usr)).display;
     this.unmount = addEv(this.game, {
-      "state": async (data) => {
+      "game-state": async (data) => {
         var winners = [];
         if (data.winners) {
           winners = await Promise.all(data.winners.map(UserCache.FromId.bind(UserCache)));
         }
         if (!winners.length) winners = null;
         this.game.winners = winners;
+
         // Note: this also tells the rendering to update for the
         // interface state updates.
         this.setState(state => Object.assign(state, { winners }));
@@ -789,6 +791,15 @@ class EightJacksAfterPartyPage extends React.Component {
 
           this.setState(state => Object.assign({}, state, { finished: true, timeout: null }));
         }
+      },
+      "draw": async (data) => {
+        data.message = await personalize(data.drawer) + " drew!";
+        notify(this.props.snackbar, data.message, data.type);
+      },
+      "finished": async (data) => {
+        data.message = await Promise.all(data.winners.map(personalize)) + " won!";
+        notify(this.props.snackbar, data.message, data.type);
+        this.game.winners = data.winners;
       },
       "error": (data) => {
         var message = "Unable to load game data.";
@@ -1109,7 +1120,7 @@ class EightJacksAfterPartyPage extends React.Component {
                     icon="rotate_90_degrees_ccw"
                   />
                 </div>
-                { this.drawBoard() }
+                { this.drawBoard(false) }
               </div>
             </c.Card>
           </div>
