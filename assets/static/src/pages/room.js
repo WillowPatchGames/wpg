@@ -7,6 +7,8 @@ import {
 
 import { Icon } from '@rmwc/icon';
 import '@rmwc/icon/styles';
+import * as g from '@rmwc/grid';
+import '@rmwc/grid/styles';
 import * as t from '@rmwc/tabs';
 import '@rmwc/tabs/styles';
 import { Typography } from '@rmwc/typography';
@@ -17,6 +19,7 @@ import '@rmwc/theme/styles';
 import '../App.css';
 
 import { RoomArchiveTab } from './room/archive.js';
+import { CreateRoomForm } from './room/config.js';
 import { RoomGamesTab } from './room/games.js';
 import { RoomMembersTab } from './room/members.js';
 import { killable, GamePage } from './games.js';
@@ -137,4 +140,25 @@ class RoomPage extends React.Component {
   }
 }
 
-export { RoomPage };
+class CreateRoomPage extends React.Component {
+  render() {
+    return (
+      <div className="App-page">
+        <Typography use="headline2">Create a Game Room</Typography>
+        <p>
+          Invite your friends to play online with you!
+          This way, you'll be able to play multiple games without having to
+          re-share a link.
+        </p>
+        <g.Grid fixedColumnWidth={ true }>
+          <g.GridCell align="left" span={3} tablet={8} />
+          <g.GridCell align="middle" span={6} tablet={8}>
+            <CreateRoomForm {...this.props} />
+          </g.GridCell>
+        </g.Grid>
+      </div>
+    );
+  }
+}
+
+export { RoomPage, CreateRoomPage };
