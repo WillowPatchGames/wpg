@@ -41,14 +41,12 @@ type PlayerData struct {
 	// don't need to access it.
 	Notifications chan interface{} `json:"-"`
 
-	// Bound players; don't serialize this as every time the server restarts, the
-	// data might change and users might be on different devices. This is a
-	// two-way authorization (mutual verification) of player <-> spectator
-	// binding, allowing the spectator to perform certain actions on behalf of
-	// this player (such as choosing a square to play on in 8Js, given the
-	// specified card selected by the player). This is a list of UIDs of other
-	// PlayerData units.
-	BoundPlayers []uint64 `json:"-"`
+	// Bound players is a two-way authorization (mutual verification) of
+	// player <-> spectator binding, allowing the spectator to perform certain
+	// actions on behalf of this player (such as choosing a square to play on
+	// in 8Js, given the specified card selected by the player). This is a
+	// list of UIDs of other PlayerData units.
+	BoundPlayers []uint64 `json:"bound_players"`
 }
 
 func (p *PlayerData) IsBound(uid uint64) bool {
