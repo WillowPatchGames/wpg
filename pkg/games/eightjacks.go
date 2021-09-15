@@ -327,21 +327,22 @@ func (ejs *EightJacksState) StartRound() error {
 	if ejs.Config.RemoveUnused {
 		// Remove cards that aren't present on the board -- except jacks.
 		for _, target := range StandardCardRanks {
-			have_card := false
-			for _, square := range ejs.Board.Squares {
-				if target == JackRank {
-					have_card = true
-					continue
-				}
-
-				if square.Value.Rank == target {
-					have_card = true
-					break
-				}
+			if target == JackRank {
+				continue
 			}
 
-			if !have_card {
-				for _, suit := range StandardCardSuits {
+			// If the card isn't a jack, check for a square of the right rank
+			// and suit on the board.
+			for _, suit := range StandardCardSuits {
+				have_card := false
+				for _, square := range ejs.Board.Squares {
+					if square.Value.Rank == target && square.Value.Suit == suit {
+						have_card = true
+						break
+					}
+				}
+
+				if !have_card {
 					// Remove twice -- one for each deck.
 					ejs.Deck.RemoveCard(target, suit)
 					ejs.Deck.RemoveCard(target, suit)
