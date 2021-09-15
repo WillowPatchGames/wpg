@@ -414,7 +414,6 @@ func (ejs *EightJacksState) CreateBoard() error {
 				piece.Value.Suit = NoneSuit
 			} else {
 				piece.Value = EJSBoardIndexScheme(&ejs.Deck, ejs.Config.BoardLayout, ejs.Board.Width, ejs.Board.Height, x, y, ejs.Config.WildCorners)
-				log.Println("Got card: " + piece.Value.String())
 				piece.Value.ID = 0
 			}
 
