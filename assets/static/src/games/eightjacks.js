@@ -115,6 +115,7 @@ class EightJacksGame {
     this.data.board = message?.board;
     this.data.players = message?.players;
     this.data.selected_square = message?.selected_square;
+    this.data.turn = await UserCache.FromId(message?.turn);
 
     this.onChange(this);
   }

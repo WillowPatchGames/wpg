@@ -443,7 +443,11 @@ class EightJacksGameComponent extends React.Component {
                 <hr/>
                 </>
               : <>
-                {status("Waiting for other player(s) …")}
+                {
+                  this.state.game.interface.data?.turn
+                  ? status("Waiting for " + this.state.game.interface.data.turn.display  + "…")
+                  : status("Waiting for other player(s) …")
+                }
                 </>
             }
             {this.state.marking ?
