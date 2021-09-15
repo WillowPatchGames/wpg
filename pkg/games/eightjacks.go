@@ -574,8 +574,12 @@ func (ejs *EightJacksState) PlayCard(player int, cardID int, squareID int) error
 	turn.Where = squareID
 	turn.Played = played
 
-	// Mark the square.
+	// Mark (or unmark) the square.
 	if IsOneEyedJack(played) && square.Marker != -1 {
+		if square.Marker == ejs.Players[player].Team {
+			return errors.New("unable to remove your own marker")
+		}
+
 		for _, indexed_player := range ejs.Players {
 			for _, indexed_run := range indexed_player.Runs {
 				for _, indexed_square := range indexed_run {
