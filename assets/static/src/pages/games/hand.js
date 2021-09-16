@@ -24,13 +24,16 @@ class CardHandComponent extends React.Component {
     this.state.overlap = true;
     this.state.selected = null;
     this.state.sorting = null;
+    this.state.sort_by_suit = false;
+    this.state.sort_ace_high = false;
+    this.state.sort_eight_jacks =  false;
 
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {
       old_handler();
       this.setState(state => {
         if (autosort_persistent && state?.autosort) {
-          state?.game.interface.data.hand.cardSort(false, false);
+          state?.game.interface.data.hand.cardSort(this.state.sort_by_suit, this.state.sort_ace_high, this.state.sort_eight_jacks);
         }
         // Jinx
         return state;
@@ -55,7 +58,7 @@ class CardHandComponent extends React.Component {
     this.setState(state => {
       state.autosort = autosort;
       if (autosort_persistent && autosort) {
-        this.state.game.interface.data.hand.cardSort(false, false);
+        this.state.game.interface.data.hand.cardSort(this.state.sort_by_suit, this.state.sort_ace_high, this.state.sort_eight_jacks);
       }
       return state;
     });
@@ -133,7 +136,7 @@ class CardHandComponent extends React.Component {
     </>;
 
     var cards = this.state.game.interface.data.hand
-      .cardSortIf(this.state.autosort)(false,false).cards;
+      .cardSortIf(this.state.autosort)(this.state.sort_by_suit, this.state.sort_ace_high, this.state.sort_eight_jacks).cards;
 
     return (
       <CardHandImage {...{...handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap }}>

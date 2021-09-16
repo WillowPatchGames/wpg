@@ -78,12 +78,12 @@ class HeartsGame {
     // Then update the main data object.
     this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
     if (this.data.hand != null) {
-      this.data.hand.cardSort(true, true);
+      this.data.hand.cardSort(true, true, false);
     }
     this.data.have_passed = message?.have_passed;
     this.data.incoming = message?.incoming ? CardHand.deserialize(message.incoming) : null;
     if (this.data.incoming != null) {
-      this.data.incoming.cardSort(true, true);
+      this.data.incoming.cardSort(true, true, false);
     }
     this.data.tricks = message?.tricks;
     this.data.round_score = message?.round_score;
@@ -97,7 +97,7 @@ class HeartsGame {
     this.data.history = message?.history ? message.history.map(CardHand.deserialize) : null;
     this.data.crib = message?.crib ? CardHand.deserialize(message.crib) : null;
     if (this.data.crib !== null) {
-      this.data.crib.cardSort(true, true);
+      this.data.crib.cardSort(true, true, false);
     }
     this.data.config = message?.config;
     if (this.data.config) {

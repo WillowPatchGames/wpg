@@ -25,7 +25,7 @@ import { EightJacksGameBoard } from './board.js';
 class EightJacksGameComponent extends EightJacksGameBoard {
   constructor(props) {
     super(props);
-    this.state.game = props.game;
+    this.state.sort_eight_jacks = true;
   }
   render() {
     var status = a => <h3>{ a }</h3>;

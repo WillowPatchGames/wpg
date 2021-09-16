@@ -25,12 +25,13 @@ class SpadesGameComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
-    this.state.game = props.game;
     this.state.selected = null;
     this.state.bid_select = new Set();
     this.state.bid = null;
     this.state.bid_suggesting = true;
     this.state.last_hand = null;
+    this.state.sort_by_suit = true;
+    this.state.sort_ace_high = true;
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;
     this.state.game.interface.onChange = () => {

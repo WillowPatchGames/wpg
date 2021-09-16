@@ -129,6 +129,7 @@ class CardRank {
   };
 
   static ACE = 1;
+  static JACK = 11;
   static JOKER = 14;
 
   constructor(value) {
@@ -191,7 +192,7 @@ class Card {
     }
   }
 
-  compareTo(other, by_suit, ace_high) {
+  compareTo(other, by_suit, ace_high, eight_jacks) {
     if (this.suit.value === other.suit.value && this.rank.value === other.rank.value) {
       return 0;
     }
@@ -205,6 +206,39 @@ class Card {
     }
     if (other.rank.value === CardRank.JOKER) {
       return -1;
+    }
+
+    if (eight_jacks) {
+      // In EightJacks, we want the following ordering:
+      // Jokers
+      // Two eyed jacks (diamonds, clubs)
+      // One eyed jacks (hearts, spades)
+      // Everything else, with aces low.
+      by_suit = true;
+      ace_high = false;
+
+      if (this.rank.value === CardRank.JACK && other.rank.value === CardRank.JACK) {
+        let us_twoeyed = this.suit.toString() === 'diamonds' || this.suit.toString() === 'clubs';
+        let us_oneeyed = this.suit.toString() === 'hearts' || this.suit.toString() === 'spades';
+        let other_twoeyed = other.suit.toString() === 'diamonds' || other.suit.toString() === 'clubs';
+        let other_oneeyed = other.suit.toString() === 'hearts' || other.suit.toString() === 'spades';
+        if ((us_twoeyed && other_twoeyed) || (us_oneeyed && other_oneeyed)) {
+          return 0;
+        }
+        if (us_twoeyed && other_oneeyed) {
+          return 1;
+        }
+        if (us_oneeyed && other_twoeyed) {
+          return -1;
+        }
+      }
+
+      if (this.rank.value === CardRank.JACK) {
+        return 1;
+      }
+      if (other.rank.value === CardRank.JACK) {
+        return -1;
+      }
     }
 
     if (by_suit) {
@@ -495,13 +529,13 @@ class CardHand {
   cardSortIf(cond) {
     return cond ? ((...arg) => this.copy().cardSort(...arg)) : (() => this);
   }
-  cardSort(by_suit, ace_high) {
+  cardSort(by_suit, ace_high, eight_jacks) {
     let sorted = [];
 
     // Insertion sort
     for (let card of this.cards) {
       var index = 0;
-      while (index < sorted.length && card.compareTo(sorted[index], by_suit, ace_high) <= 0) {
+      while (index < sorted.length && card.compareTo(sorted[index], by_suit, ace_high, eight_jacks) <= 0) {
         index++
       }
 

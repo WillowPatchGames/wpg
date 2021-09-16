@@ -141,7 +141,7 @@ class ThreeThirteenGame {
         player.has_laid_down = (+player.user.id === +this.laid_down_id);
         player.hand = player?.hand ? CardHand.deserialize(player.hand) : null;
         if (player.hand) {
-          player.hand.cardSort(false, false);
+          player.hand.cardSort(false, false, false);
         }
       }
     }

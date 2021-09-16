@@ -32,11 +32,11 @@ var discardProps = {
 class ThreeThirteenGameComponent extends CardHandComponent {
   constructor(props) {
     super(props);
-    this.state.game = props.game;
     this.state.round_score = 0;
     this.state.groupings = [];
     this.state.grouping_selected = [];
     this.state.confirming = false;
+    this.state.sort_ace_high = this.state.game.config.ace_high;
   }
   newState(fn, cb) {
     if (!this.state.editable) {

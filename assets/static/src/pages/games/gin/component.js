@@ -34,11 +34,11 @@ class GinGameComponent extends CardHandComponent {
   constructor(props) {
     super(props);
 
-    this.state.game = props.game;
     this.state.round_score = 0;
     this.state.groupings = this.defaultGroupings();
     this.state.grouping_selected = [];
     this.state.confirming = false;
+    this.state.sort_ace_high = this.state.game.config.ace_high;
 
     // FIXME: hack?
     let old_handler = this.state.game.interface.onChange;

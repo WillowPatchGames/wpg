@@ -103,7 +103,7 @@ class SpadesGame {
     // Then update the main data object.
     this.data.hand = message?.hand ? CardHand.deserialize(message.hand) : null;
     if (this.data.hand != null) {
-      this.data.hand.cardSort(true, true);
+      this.data.hand.cardSort(true, true, false);
     }
     this.data.drawn = message?.drawn ? Card.deserialize(message.drawn) : null;
     this.data.peeked = message?.peeked;
