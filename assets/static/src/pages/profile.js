@@ -181,22 +181,22 @@ class UserProfileTab extends React.Component {
                   <l.ListItem disabled>
                     <p>Joining Options</p>
                   </l.ListItem>
-                  <l.ListItem onClick={ () => this.toggleField('auto_ready') }>
-                    <s.Switch checked={ this.state.auto_ready } label={ this.state.auto_ready ? "Automatically Mark Ready" : "Don't Automatically Mark Ready" } onClick={ () => this.toggleField('auto_ready') } />
+                  <l.ListItem onClick={ (e) => { e.preventDefault() ; this.toggleField('auto_ready'); } }>
+                    <s.Switch checked={ this.state.auto_ready } label={ this.state.auto_ready ? "Automatically Mark Ready" : "Don't Automatically Mark Ready" } onChange={ () => this.toggleField('auto_ready') } />
                   </l.ListItem>
                 </l.ListGroup>
                 <l.ListGroup>
                   <l.ListItem disabled>
                     <p>Turn Notifications</p>
                   </l.ListItem>
-                  <l.ListItem onClick={ () => this.toggleField('turn_push_notification') }>
-                    <s.Switch checked={ this.state.turn_push_notification } label={ this.state.turn_push_notification ? "Send Notifications" : "Don't Send Notifications" } onClick={ () => this.toggleField('turn_push_notification') } />
+                  <l.ListItem onClick={ (e) => { e.preventDefault() ; this.toggleField('turn_push_notification'); } }>
+                    <s.Switch checked={ this.state.turn_push_notification } label={ this.state.turn_push_notification ? "Send Notifications" : "Don't Send Notifications" } onChange={ () => this.toggleField('turn_push_notification') } />
                   </l.ListItem>
-                  <l.ListItem onClick={ () => this.toggleField('turn_sound_notification') }>
-                    <s.Switch checked={ this.state.turn_sound_notification } label={ this.state.turn_sound_notification ? "Play a Sound" : "Don't Play a Sound" } onClick={ () => this.toggleField('turn_sound_notification') } />
+                  <l.ListItem onClick={ (e) => { e.preventDefault() ; this.toggleField('turn_sound_notification'); } }>
+                    <s.Switch checked={ this.state.turn_sound_notification } label={ this.state.turn_sound_notification ? "Play a Sound" : "Don't Play a Sound" } onChange={ () => this.toggleField('turn_sound_notification') } />
                   </l.ListItem>
-                  <l.ListItem onClick={ () => this.toggleField('turn_haptic_feedback') }>
-                    <s.Switch checked={ this.state.turn_haptic_feedback } label={ this.state.turn_haptic_feedback ? "Use Haptic Feedback" : "Don't Use Haptic Feedback" } onClick={ () => this.toggleField('turn_haptic_feedback') } />
+                  <l.ListItem onClick={ (e) => { e.preventDefault() ; this.toggleField('turn_haptic_feedback'); } }>
+                    <s.Switch checked={ this.state.turn_haptic_feedback } label={ this.state.turn_haptic_feedback ? "Use Haptic Feedback" : "Don't Use Haptic Feedback" } onChange={ () => this.toggleField('turn_haptic_feedback') } />
                   </l.ListItem>
                 </l.ListGroup>
               </l.List>
