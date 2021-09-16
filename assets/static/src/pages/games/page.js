@@ -12,7 +12,77 @@ import '@rmwc/grid/styles';
 import { loadGame, addEv, notify, CreateGameForm } from '../games.js';
 import { UserCache } from '../../utils/cache.js';
 
-class GenericGamePage extends React.Component {
+import { EightJacksAfterPartyComponent } from './eightjacks/afterparty.js';
+import { EightJacksGameComponent } from './eightjacks/component.js';
+import { EightJacksGameSynopsis } from './eightjacks/synopsis.js';
+import { GinAfterPartyComponent } from './gin/afterparty.js';
+import { GinGameComponent } from './gin/component.js';
+import { GinGameSynopsis } from './gin/synopsis.js';
+import { HeartsAfterPartyComponent } from './hearts/afterparty.js';
+import { HeartsGameComponent } from './hearts/component.js';
+import { HeartsGameSynopsis } from './hearts/synopsis.js';
+import { RushAfterPartyComponent } from './rush/afterparty.js';
+import { RushGameComponent } from './rush/component.js';
+import { RushGameSynopsis } from './rush/synopsis.js';
+import { SpadesAfterPartyComponent } from './spades/afterparty.js';
+import { SpadesGameComponent } from './spades/component.js';
+import { SpadesGameSynopsis } from './spades/synopsis.js';
+import { ThreeThirteenAfterPartyComponent } from './threethirteen/afterparty.js';
+import { ThreeThirteenGameComponent } from './threethirteen/component.js';
+import { ThreeThirteenGameSynopsis } from './threethirteen/synopsis.js';
+
+var layouts = {
+  "eight jacks": {
+    configuration: true,
+    finished_synopsis: true,
+    immersive: false,
+    synopsis: EightJacksGameSynopsis,
+    player: EightJacksGameComponent,
+    afterparty: EightJacksAfterPartyComponent,
+  },
+  "gin": {
+    configuration: true,
+    finished_synopsis: false,
+    immersive: false,
+    synopsis: GinGameSynopsis,
+    player: GinGameComponent,
+    afterparty: GinAfterPartyComponent,
+  },
+  "hearts": {
+    configuration: true,
+    finished_synopsis: false,
+    immersive: false,
+    synopsis: HeartsGameSynopsis,
+    player: HeartsGameComponent,
+    afterparty: HeartsAfterPartyComponent,
+  },
+  "rush": {
+    configuration: true,
+    finished_synopsis: true,
+    immersive: true,
+    synopsis: RushGameSynopsis,
+    player: RushGameComponent,
+    afterparty: RushAfterPartyComponent,
+  },
+  "spades": {
+    configuration: true,
+    finished_synopsis: false,
+    immersive: false,
+    synopsis: SpadesGameSynopsis,
+    player: SpadesGameComponent,
+    afterparty: SpadesAfterPartyComponent,
+  },
+  "three thirteen": {
+    configuration: true,
+    finished_synopsis: false,
+    immersive: false,
+    synopsis: ThreeThirteenGameSynopsis,
+    player: ThreeThirteenGameComponent,
+    afterparty: ThreeThirteenAfterPartyComponent,
+  },
+};
+
+class DispatchingGamePage extends React.Component {
   constructor(props) {
     super(props);
 
@@ -80,8 +150,16 @@ class GenericGamePage extends React.Component {
       this.props.setImmersive(false);
     }
   }
+  pageLayout() {
+    var mode = this.props.game.mode || this.props.game.style;
+    return layouts[mode];
+  }
   render() {
     var layout = this.pageLayout();
+    if (layout === undefined) {
+      var mode = this.props.game.mode || this.props.game.style;
+      return "Unrecognized game mode: " + mode;
+    }
 
     var countdown_element = null;
     if (this.state.countdown !== null && this.state.countdown !== 0) {
@@ -150,5 +228,5 @@ class GenericGamePage extends React.Component {
 }
 
 export {
-  GenericGamePage
+  DispatchingGamePage
 };

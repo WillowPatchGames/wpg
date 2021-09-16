@@ -11,12 +11,7 @@ import '../App.css';
 import '../main.scss';
 import { GameModel } from '../models.js';
 import { loadGame, addEv, notify, killable } from './games/common.js';
-import { EightJacksGamePage } from './games/eightjacks/page.js'
-import { GinGamePage } from './games/gin/page.js'
-import { HeartsGamePage } from './games/hearts/page.js'
-import { RushGamePage } from './games/rush/page.js'
-import { SpadesGamePage } from './games/spades/page.js'
-import { ThreeThirteenGamePage } from './games/threethirteen/page.js'
+import { DispatchingGamePage } from './games/page.js';
 import { CreateGameForm } from './games/config.js';
 import { PreGameAdminPage } from './games/pregame/admin.js';
 import { PreGameUserPage } from './games/pregame/user.js';
@@ -95,31 +90,12 @@ class GamePage extends React.Component {
       return "Please wait for the game to load...";
     }
 
-    var mode = this.props.game.mode || this.props.game.style;
     let pending = !this.props.game.admitted || this.props.game.lifecycle === 'pending' || !this.props.game.interface;
-    let playing = !this.props.game.spectating && this.props.game.lifecycle === 'playing';
-
     if (pending) {
       return <PreGamePage {...this.props} />;
-    } else if (playing) {
-      if (mode === 'rush') {
-        return <RushGamePage {...this.props} />
-      } else if (mode === 'spades') {
-        return <SpadesGamePage {...this.props} />
-      } else if (mode === 'three thirteen') {
-        return <ThreeThirteenGamePage {...this.props} />
-      } else if (mode === 'hearts') {
-        return <HeartsGamePage {...this.props} />
-      } else if (mode === 'eight jacks') {
-        return <EightJacksGamePage {...this.props} />
-      } else if (mode === 'gin') {
-        return <GinGamePage {...this.props} />
-      } else {
-        return "Unrecognized game mode: " + mode;
-      }
-    } else {
-      return <AfterPartyPage {...this.props} />;
     }
+
+    return <DispatchingGamePage {...this.props} />;
   }
 }
 
@@ -139,32 +115,6 @@ class PreGamePage extends React.Component {
   }
   render() {
     return this.admin ? <PreGameAdminPage {...this.props} /> : <PreGameUserPage {...this.props} />
-  }
-}
-
-class AfterPartyPage extends React.Component {
-  constructor(props) {
-    super(props);
-    this.game = loadGame(this.props.game);
-    this.props.setGame(this.game);
-  }
-  render() {
-    var mode = this.props.game.mode || this.props.game.style;
-    if (mode === 'rush') {
-      return <RushGamePage {...this.props}/>
-    } else if (mode === 'spades') {
-      return <SpadesGamePage {...this.props}/>
-    } else if (mode === 'three thirteen') {
-      return <ThreeThirteenGamePage {...this.props}/>
-    } else if (mode === 'hearts') {
-      return <HeartsGamePage {...this.props}/>
-    } else if (mode === 'eight jacks') {
-      return <EightJacksGamePage {...this.props}/>
-    } else if (mode === 'gin') {
-      return <GinGamePage {...this.props}/>
-    } else {
-      return "Unrecognized game mode: " + mode;
-    }
   }
 }
 
@@ -194,11 +144,9 @@ export {
   addEv,
   notify,
   killable,
-  AfterPartyPage,
   CreateGamePage,
   CreateGameForm,
   JoinGamePage,
   PreGamePage,
-  RushGamePage,
   GamePage,
 };
