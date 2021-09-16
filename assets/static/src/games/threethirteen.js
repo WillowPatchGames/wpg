@@ -151,7 +151,7 @@ class ThreeThirteenGame {
   }
 
   my_turn() {
-    return +this.data.turn === +this.game.user.id;
+    return +this.data.turn === +this.game.user.id || +this.data.turn?.id === +this.game.user.id;
   }
 
   async deal() {
