@@ -273,6 +273,10 @@ func (c *Controller) handleBindAccept(message []byte, game *GameData, spectator 
 		return errors.New("unable to accept binding to another spectator; must bind to player")
 	}
 
+	if !target.IsBound(spectator.UID) {
+		return errors.New("binding request has been cancelled")
+	}
+
 	// Don't allow duplicate binds
 	if spectator.IsBound(target.UID) && target.IsBound(spectator.UID) {
 		return errors.New("you are already bound to this player")

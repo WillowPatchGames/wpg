@@ -17,6 +17,7 @@ import '../../../App.css';
 import { loadGame, addEv, notify } from '../common.js';
 import { CreateGameForm } from '../config.js';
 import { UserCache } from '../../../utils/cache.js';
+import { CancellableButton } from '../../../utils/cancellable.js';
 
 class PreGameUserPage extends React.Component {
   constructor(props) {
@@ -258,7 +259,7 @@ class PreGameUserPage extends React.Component {
                     !us?.bound_players?.includes(player.user_id)
                     ?
                       <span className="leftpad">
-                        <Button label="Bind" raised onClick={ () => this.bindToSpectator(player) } />
+                        <CancellableButton label="Bind" loadingLabel="Binding..." raised submitHandler={ () => this.bindToSpectator(player) } cancelHandler={ () => this.unbindPeer(player) } />
                       </span>
                     :
                       <span className="leftpad">
