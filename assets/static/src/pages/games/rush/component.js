@@ -2,7 +2,7 @@ import React from 'react';
 import shallowEqual from 'shallow-eq';
 import mergeProps from 'react-merge-props';
 
-import '../../main.scss';
+import '../../../main.scss';
 
 import { Button } from '@rmwc/button';
 import '@rmwc/button/styles';
