@@ -22,6 +22,7 @@ import { loadGame, addEv, notify, killable } from '../../games.js';
 import { UserCache, GameCache } from '../../../utils/cache.js';
 import { gravatarify } from '../../../utils/gravatar.js';
 
+import { EightJacksGameBoard } from './board.js';
 import { EightJacksGameComponent } from './component.js';
 
 // Properties used for displaying card hands
@@ -31,29 +32,22 @@ var handProps = {
   curve: true,
 };
 
-class EightJacksAfterPartyComponent extends React.Component {
+class EightJacksAfterPartyComponent extends EightJacksGameBoard {
   constructor(props) {
     super(props);
-    this.game = loadGame(this.props.game);
-    this.state = {
-      player_mapping: null,
-      history: null,
-      historical_round: "0",
-      active: {
-        turn: null,
-        dealer: null,
-      },
-      winners: this.game?.winners,
-      dealt: false,
-      passed: false,
-      finished: false,
-      message: "Loading results...",
-      scale: 0.225,
-      timeout: killable(() => { this.refreshData() }, 5000),
-      orientation: 0,
-      half_height: false,
-      board_selected: null,
+    this.game = this.state.game;
+    this.state.player_mapping = null;
+    this.state.history = null;
+    this.state.historical_round = "0";
+    this.state.active = {
+      turn: null,
+      dealer: null,
     };
+    this.state.winners = this.game?.winners;
+    this.state.dealt = false;
+    this.state.finished = false;
+    this.state.message = "Loading results...";
+    this.state.timeout = killable(() => { this.refreshData() }, 5000);
 
     GameCache.Invalidate(this.props.game.id);
 
@@ -116,16 +110,6 @@ class EightJacksAfterPartyComponent extends React.Component {
       },
     });
   }
-  drawBoard = EightJacksGameComponent.prototype.drawBoard;
-  handleClick(spot) {
-    if (new CardRank(spot.value.rank).toString() === "joker") return;
-    return () => {
-      this.setState(state => Object.assign(state, {
-        board_selected:state.board_selected===spot.id?null:spot.id
-      }));
-      this.game.interface.controller.select(spot.id);
-    }
-  }
   componentDidMount() {
     this.state.timeout.exec();
   }
@@ -157,7 +141,6 @@ class EightJacksAfterPartyComponent extends React.Component {
       }
     }
   }
-
   render() {
     var historical_data = null;
     var scoreboard_data = null;
@@ -173,7 +156,7 @@ class EightJacksAfterPartyComponent extends React.Component {
         for (let player_index in this.state.history.players[round_index]) {
           let user = this.state.player_mapping[player_index];
           let player = round_players[player_index];
-          let hand = player?.hand ? CardHand.deserialize(player.hand).cardSort(true, false) : null;
+          let hand = player?.hand ? CardHand.deserialize(player.hand).cardSort(true, false, true) : null;
           hands_data.push(
             <div>
               <l.List>
@@ -379,6 +362,23 @@ class EightJacksAfterPartyComponent extends React.Component {
       winner_info = <h1>{ this.state.active.turn.display + "'s" } turn!</h1>
     }
 
+    let marking_button = <Button
+      label={ "Mark sequence of " + this.state.game.interface.data.config?.run_length } unelevated ripple={false}
+      onClick={() => {this.setState(state => Object.assign(state, {marking:[]}))}}
+    />;
+    if (this.state.marking) {
+      marking_button = <Button
+        label={ "Cancel marking" } unelevated ripple={false}
+        onClick={this.cancelMarksAnd()}
+      />;
+      if (this.state.marking.length === this.state.game.interface.data.config.run_length) {
+        marking_button = <Button
+          label={ "Mark complete sequence" } raised ripple={false}
+          onClick={this.cancelMarksAnd(() => this.state.game.interface.mark(this.state.marking))}
+        />;
+      }
+    }
+
     return (
       <div>
         <h1 style={{ color: "#000000" }}><span style={{ color: "#bd2525" }}>Eight</span> Jacks</h1>
@@ -411,6 +411,7 @@ class EightJacksAfterPartyComponent extends React.Component {
                   />
                 </div>
                 { this.drawBoard(true) }
+                { marking_button }
               </div>
             </c.Card>
           </div>
