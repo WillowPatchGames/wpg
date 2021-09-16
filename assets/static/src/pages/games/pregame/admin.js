@@ -417,7 +417,7 @@ class PreGameAdminPage extends React.Component {
                     }
                     <Button raised label="Bench" onClick={ () => this.toggleSpectator(user) } />
                     { this.state.order
-                      ? <>
+                      ? <span style={{ 'whiteSpace': 'nowrap' }}>
                           <IconButton className="vertical-align-middle"
                             icon={{ icon: 'north', size: 'xsmall' }}
                             onClick={ () => this.moveUser(user, true) }
@@ -426,7 +426,7 @@ class PreGameAdminPage extends React.Component {
                             icon={{ icon: 'south', size: 'xsmall' }}
                             onClick={ () => this.moveUser(user, false) }
                             disabled={ i === players.length-1 }/>
-                        </>
+                        </span>
                       : null
                     }
                     { this.state.teams
@@ -442,10 +442,9 @@ class PreGameAdminPage extends React.Component {
               <h1>Spectators</h1>
             </l.ListItem>
             { spectators.map((user, i) =>
-                <l.ListItem key={user.id} disabled>
+                <l.ListItem key={user.id} disabled style={{ height: "auto", minHeight: "48px" }}>
                   <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
-                    <span>
                     {
                       user !== us
                       ?
@@ -472,7 +471,6 @@ class PreGameAdminPage extends React.Component {
                           <Button raised label="Make Player" onClick={ () => this.toggleSpectator(user) } />
                         </>
                     }
-                    </span>
                   </l.ListItemMeta>
                 </l.ListItem>
             )}

@@ -55,19 +55,15 @@ class CancellableButton extends React.Component {
     }
 
     return (
-      <div
-        onClick={ (e) => { e.preventDefault() ; this.clickHandler() } }
+      <Button
+        label={ label }
+        icon={ icon }
+        raised={ this.props?.raised }
+        disabled={ this.props?.disabled }
         onMouseEnter={ (e) => { e.preventDefault() ; this.setState(state => Object.assign({}, state, { hovering: true })) } }
         onMouseLeave={ (e) => { e.preventDefault() ; this.setState(state => Object.assign({}, state, { hovering: false })) } }
-      >
-        <Button
-          label={ label }
-          icon={ icon }
-          raised={ this.props?.raised }
-          disabled={ this.props?.disabled }
-          onClick={ (e) => { e.currentTarget.blur(); e.preventDefault(); } }
-        />
-      </div>
+        onClick={ (e) => { e.currentTarget.blur() ; e.preventDefault() ; this.clickHandler() } }
+      />
     );
   }
 }

@@ -398,6 +398,13 @@ input:not([type="checkbox"]):not([type="radio"]):disabled, textarea:disabled {
   max-width: 100vw;
 }
 
+/* Prevent buttons in the meta space from text wrapping and being compresed on
+   mobile devices. */
+.mdc-list-item__meta Button.mdc-button {
+  white-space: nowrap;
+  margin: 2px;
+}
+
 a, a:visited {
   color: black;
 }
