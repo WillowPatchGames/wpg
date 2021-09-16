@@ -10,12 +10,18 @@ import '@rmwc/typography/styles';
 import '../App.css';
 import { GameModel } from '../models.js';
 import { loadGame, addEv, notify, killable } from './games/common.js';
-import { RushGamePage, RushAfterPartyPage } from './games/rush.js';
-import { SpadesGamePage, SpadesAfterPartyPage } from './games/spades.js';
-import { ThreeThirteenGamePage, ThreeThirteenAfterPartyPage } from './games/threethirteen.js';
-import { HeartsGamePage, HeartsAfterPartyPage } from './games/hearts.js';
-import { EightJacksGamePage, EightJacksAfterPartyPage } from './games/eightjacks.js';
-import { GinGamePage, GinAfterPartyPage } from './games/gin.js';
+import { EightJacksGamePage } from './games/eightjacks/page.js'
+import { EightJacksAfterPartyPage } from './games/eightjacks/afterparty.js';
+import { GinGamePage } from './games/gin/page.js'
+import { GinAfterPartyPage } from './games/gin/afterparty.js';
+import { HeartsGamePage } from './games/hearts/page.js'
+import { HeartsAfterPartyPage } from './games/hearts/afterparty.js';
+import { RushGamePage } from './games/rush/page.js'
+import { RushAfterPartyPage } from './games/rush/afterparty.js';
+import { SpadesGamePage } from './games/spades/page.js'
+import { SpadesAfterPartyPage } from './games/spades/afterparty.js';
+import { ThreeThirteenGamePage } from './games/threethirteen/page.js'
+import { ThreeThirteenAfterPartyPage } from './games/threethirteen/afterparty.js';
 import { CreateGameForm } from './games/config.js';
 import { PreGameAdminPage } from './games/pregame/admin.js';
 import { PreGameUserPage } from './games/pregame/user.js';
