@@ -5,6 +5,8 @@ import { HeartsGame } from '../../games/hearts.js';
 import { EightJacksGame } from '../../games/eightjacks.js';
 import { GinGame } from '../../games/gin.js';
 
+import { killable } from '../../utils/killable.js';
+
 function loadGame(game) {
   if (!game || !game.endpoint) return null;
 
@@ -64,16 +66,6 @@ function notify(snackbar, message, type) {
     timeout: type === "error" ? 7000 : 3000,
     actions: [{ title: type === "error" ? "Aw shucks" : "Cool" }],
   });
-}
-
-function killable(func, interval) {
-  var killer = {};
-  killer.func = func;
-  killer.interval = interval;
-  killer.kill = () => { clearTimeout(killer.timeout) };
-  killer.exec = () => { killer.kill() ; killer.func() ; killer.restart() };
-  killer.restart = () => { killer.timeout = setTimeout(() => { killer.exec() }, killer.interval) };
-  return killer;
 }
 
 export { loadGame, addEv, notify, killable };

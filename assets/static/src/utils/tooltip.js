@@ -3,18 +3,33 @@ import React from 'react';
 import { Tooltip } from '@rmwc/tooltip';
 import '@rmwc/tooltip/styles';
 
+import { killable } from './killable.js';
+
 class TooltipWrapper extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       tooltip: false,
+      timeout: killable(() => { this.autoHide() }, 5000),
     };
     this.time = 0;
+  }
+  autoHide() {
+    this.setState(state => {
+      state.tooltip = false;
+      state.timeout.kill();
+      return state;
+    });
   }
   onClick() {
     if (Date.now() > this.time + 200) { // 20 was not enough lol
       this.setState(state => {
         state.tooltip = !state.tooltip;
+        if (state.tooltip) {
+          state.timeout.reset();
+        } else {
+          state.timeout.kill();
+        }
         return state;
       });
     }
@@ -22,13 +37,21 @@ class TooltipWrapper extends React.Component {
   }
   onMouseEnter() {
     if (!this.state.tooltip) {
-      this.setState(state => Object.assign(state, {tooltip:true}));
+      this.setState(state => {
+        state.tooltip = true;
+        state.timeout.reset();
+        return state;
+      });
     }
     this.time = Date.now();
   }
   onMouseLeave() {
     if (this.state.tooltip) {
-      this.setState(state => Object.assign(state, {tooltip:false}));
+      this.setState(state => {
+        state.tooltip = false;
+        state.timeout.kill();
+        return state;
+      });
     }
     this.time = Date.now();
   }
