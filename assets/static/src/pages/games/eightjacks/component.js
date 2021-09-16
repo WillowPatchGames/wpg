@@ -64,9 +64,16 @@ class EightJacksGameComponent extends EightJacksGameBoard {
       player_status = <div className="player-status">{ player_status }</div>;
     }
 
+    // We have three states:
+    // 1. Waiting for the game to start (should largely be temporary...)
+    // 2. The game has finished (should largely be temporary -> redirect to after party)
+    // 3. Playing the game.
+
     if (!this.state.game.interface.started) {
       return status("Waiting for game to start …");
-    } else if (this.state.game.interface.finished) {
+    }
+
+    if (this.state.game.interface.finished) {
       return <div>
         {status("Finished")}
       </div>;
