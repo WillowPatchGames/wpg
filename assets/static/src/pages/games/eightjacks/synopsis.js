@@ -2,13 +2,17 @@ import React from 'react';
 
 import '../../../main.scss';
 
+import { Avatar } from '@rmwc/avatar';
+import '@rmwc/avatar/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
 
+import { GameSynopsis, sortSynopsisPlayers } from '../synopsis.js';
 import { CardHand } from '../../../games/card.js';
+import { gravatarify } from '../../../utils/gravatar.js';
 import { PlayerAvatar } from '../../../utils/player.js';
 
-class EightJacksGameSynopsis extends React.Component {
+class EightJacksGameSynopsis extends GameSynopsis {
   constructor(props) {
     super(props);
 
@@ -22,17 +26,9 @@ class EightJacksGameSynopsis extends React.Component {
   }
 
   newState() {
-    let new_state = { indexed_players: {}, spectators: {}, suit: undefined, global_history: null, player_history: null };
+    let new_state = { indexed_players: {}, spectators: {}, global_history: null, player_history: null };
+    sortSynopsisPlayers(this.props.game.interface?.synopsis, new_state);
 
-    if (this.props.game.interface.synopsis && this.props.game.interface.synopsis.players) {
-      for (let player of this.props.game.interface.synopsis.players) {
-        if (player.player_index !== -1) {
-          new_state.indexed_players[player.player_index] = player;
-        } else {
-          new_state.spectators[player.player_index] = player;
-        }
-      }
-    }
     if (this.props.game.interface.data && this.props.game.interface.data.global_history) {
       new_state.global_history = this.props.game.interface.data.global_history;
     } else {
@@ -63,59 +59,14 @@ class EightJacksGameSynopsis extends React.Component {
       },
       "score":"Score",
     };
-
-    var tabulate = columns => data => {
-      if (!data) return [null];
-      var rows = [];
-      for (let dat of data) {
-        rows.push([]);
-        for (let k in columns) {
-          var printer = a => a;
-          if (typeof columns[k] === "object") printer = columns[k].printer;
-          rows[rows.length-1].push(<td key={ k }>{ printer(dat[k],dat,this.state) }</td>)
-        }
-      }
-      return rows.map((row, i) => <tr key={ data[i].user.id }>{row}</tr>);
+    var spectator_columns = {
+      "user":{
+        name: "User",
+        printer: user => <Avatar src={ gravatarify(user) } name={ user.display } size={ user.id === this.props.user.id ? "xlarge" : "large" } />,
+      },
     };
 
-    var headings = [];
-    for (let k in synopsis_columns) {
-      var name = synopsis_columns[k];
-      if (typeof name === "object") name = name.name;
-      headings.push(<th key={ k }>{ name }</th>);
-    }
-
-    var player_rows = [];
-    if (this.state.indexed_players) {
-      var remaining = [];
-
-      for (let player_index of Object.keys(this.state.indexed_players).sort()) {
-        let player = this.state.indexed_players[player_index];
-        if (+this.props.user.id === +player.user.id) {
-          if (player.is_turn && !this.props.game.interface.finished) {
-            this.props.setNotification("Your Turn!");
-          } else {
-            this.props.setNotification(null);
-          }
-        }
-
-        remaining.push(player);
-      }
-
-      player_rows.push(...tabulate(synopsis_columns)(remaining));
-    }
-
-    var player_view = null;
-    if (player_rows) {
-      player_view = <table style={{ "textAlign": "center" }}>
-        <tbody>
-          <tr key={ "spades_synopsis_headings" }>
-            { headings }
-          </tr>
-          { player_rows }
-        </tbody>
-      </table>
-    }
+    var player_view = this.renderPlayerView(synopsis_columns, spectator_columns);
 
     return (
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
