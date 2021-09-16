@@ -277,7 +277,6 @@ class EightJacksGameComponent extends CardHandComponent {
         {status("Finished")}
       </div>;
     }
-    console.log(this.state.game.interface.my_turn());
     return <div>
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>

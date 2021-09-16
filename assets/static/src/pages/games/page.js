@@ -121,6 +121,9 @@ class DispatchingGamePage extends React.Component {
           notify(this.props.snackbar, data.message, data.type);
         },
         "finished": async (data) => {
+          if (data?.winner && !data?.winners) {
+            data.winners = [data?.winner];
+          }
           data.message = await Promise.all(data.winners.map(personalize)) + " won!";
           notify(this.props.snackbar, data.message, data.type);
           this.props.game.winners = data.winners;
