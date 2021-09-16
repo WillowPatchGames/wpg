@@ -18,8 +18,6 @@ import '@rmwc/theme/styles';
 import { CardRank, CardHandImage, CardImage } from '../../../games/card.js';
 import { CardHandComponent } from '../hand.js';
 
-var autosort_persistent = true;
-
 // Properties used for displaying card hands
 var handProps = {
   scale: 0.50,

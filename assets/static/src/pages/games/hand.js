@@ -2,25 +2,7 @@ import React from 'react';
 
 import '../../main.scss';
 
-import { Avatar } from '@rmwc/avatar';
-import '@rmwc/avatar/styles';
-import { Button } from '@rmwc/button';
-import '@rmwc/button/styles';
-import { IconButton } from '@rmwc/icon-button';
-import '@rmwc/icon-button/styles';
-import * as c from '@rmwc/card';
-import '@rmwc/card/styles';
-import { CircularProgress } from '@rmwc/circular-progress';
-import '@rmwc/circular-progress/styles';
-import { Switch } from '@rmwc/switch';
-import '@rmwc/switch/styles';
-import { Slider } from '@rmwc/slider';
-import '@rmwc/slider/styles';
-
-import { CardSuit, CardRank, CardImage, CardHandImage } from '../../games/card.js';
-import { gravatarify } from '../../utils/gravatar.js';
-import { team_colors } from './team_colors.js';
-import { TooltipWrapper } from '../../utils/tooltip.js';
+import { CardImage, CardHandImage } from '../../games/card.js';
 
 var autosort_persistent = true;
 
@@ -39,6 +21,7 @@ class CardHandComponent extends React.Component {
     this.state.game = props.game;
 
     this.state.autosort = false;
+    this.state.overlap = true;
     this.state.selected = null;
     this.state.sorting = null;
 
@@ -152,10 +135,8 @@ class CardHandComponent extends React.Component {
     var cards = this.state.game.interface.data.hand
       .cardSortIf(this.state.autosort)(false,false).cards;
 
-    console.log("CardHandComponent -- render");
-
     return (
-      <CardHandImage {...handProps}>
+      <CardHandImage {...{...handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap }}>
         { [
           <CardImage key={ "action" } overlay={ sortOverlay }
             scale={handProps.scale} selected={!!this.state.sorting}

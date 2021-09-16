@@ -17,34 +17,21 @@ import '@rmwc/switch/styles';
 import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
-import { CardSuit, CardRank, CardImage, CardHandImage } from '../../../games/card.js';
+import { CardSuit, CardRank, CardImage } from '../../../games/card.js';
 import { gravatarify } from '../../../utils/gravatar.js';
 import { team_colors } from '../team_colors.js';
 import { TooltipWrapper } from '../../../utils/tooltip.js';
+import { CardHandComponent } from '../hand.js';
 
-var autosort_persistent = true;
-
-// Properties used for displaying card hands
-var handProps = {
-  scale: 0.50,
-  overlap: true,
-  curve: true,
-};
-
-class EightJacksGameComponent extends React.Component {
+class EightJacksGameComponent extends CardHandComponent {
   constructor(props) {
     super(props);
-    this.state = {};
     this.state.game = props.game;
     this.state.last_remote_selected = null;
     this.state.board_selected = null;
-    this.state.selected = null;
     this.state.last_hand = null;
     this.state.marking = null;
     this.state.scale = 0.225;
-    this.state.overlap = true;
-    this.state.autosort = false;
-    this.state.sorting = null;
     this.state.orientation = 0;
     this.state.half_height = false;
     // FIXME: hack?
@@ -106,110 +93,6 @@ class EightJacksGameComponent extends React.Component {
         board_selected:state.board_selected===spot.id?null:spot.id
       }));
     }
-  }
-  setAutosort(autosort) {
-    this.setState(state => {
-      state.autosort = autosort;
-      if (autosort_persistent && autosort) {
-        this.state.game.interface.data.hand.cardSort(true, false);
-      }
-      return state;
-    });
-  }
-  sort() {
-    this.setState(state => {
-      if (!state.sorting) {
-        state.sorting = [];
-      } else {
-        state.autosort = false;
-        state.game.interface.sort(state.sorting);
-        state.sorting = null;
-      }
-      return state;
-    });
-  }
-  renderHand(selecting) {
-    var selected = card => {
-      if (!this.state.sorting) {
-        if (!selecting) return;
-        return card.id === this.state.selected;
-      }
-      return this.state.sorting.includes(card.id);
-    };
-    var select = card => {
-      this.setState(state => {
-        if (!state.sorting) {
-          if (!selecting) return state;
-          if (state.selected === card.id)
-            state.selected = null;
-          else
-            state.selected = card.id;
-          return state;
-        }
-        var i = state.sorting.findIndex(id => id === card.id);
-        if (i >= 0) {
-          state.sorting.splice(i, 1);
-        } else {
-          state.sorting.push(card.id);
-        }
-        return state;
-      });
-    };
-    var badger = card => {
-      if (!this.state.sorting) return;
-      var i = this.state.sorting.findIndex(id => id === card.id);
-      if (i >= 0) return +i+1;
-      return null;
-    }
-
-    var sideStyle = {
-      writingMode: "vertical-rl",
-      textOrientation: "mixed",
-      textAlign: "end",
-      fontWeight: 600,
-      height: "calc(100% - 1em)",
-      marginRight: "auto",
-      paddingBottom: "0.5em",
-    };
-    var modeStyle = {
-      alignSelf: "start",
-      fontWeight: 800,
-      marginRight: "0.5em",
-      fontSize: "1.2em",
-    };
-    var sortMessage =
-      this.state.sorting
-      ? this.state.sorting.length
-        ? this.state.sorting.length === 1
-          ? "Put card here"
-          : "Put cards here"
-        : "Select cards to put here"
-      : "Sort cards here";
-    var sortMode = this.state.sorting ? "Sorting" : null;
-    var sortOverlay = <>
-      { <span style={sideStyle}>{ sortMessage }</span> }
-      { <span style={modeStyle}>{ sortMode }</span> }
-    </>;
-
-    var cards = this.state.game.interface.data.hand
-      .cardSortIf(this.state.autosort)(true, false).cards;
-
-    return (
-      <CardHandImage {...{...handProps, overlap: this.state.overlap, curve: handProps.curve && this.state.overlap} }>
-        { [
-          <CardImage key={ "action" } overlay={ sortOverlay }
-            scale={handProps.scale} selected={!!this.state.sorting}
-            onClick={() => this.sort()}/>
-        ].concat(cards.map((card,i) =>
-          <CardImage card={ card } key={ card.id }
-            scale={handProps.scale}
-            selected={ selected(card) }
-            badge={ badger(card) }
-            onClick={() => select(card)}
-            />
-        ))}
-      </CardHandImage>
-    );
   }
   drawBoard() {
     var boardProps = {
@@ -394,6 +277,7 @@ class EightJacksGameComponent extends React.Component {
         {status("Finished")}
       </div>;
     }
+    console.log(this.state.game.interface.my_turn());
     return <div>
       <div style={{ width: "90%" , margin: "0 auto 1em auto" }}>
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
