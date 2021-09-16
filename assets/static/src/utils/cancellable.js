@@ -17,8 +17,21 @@ class CancellableButton extends React.Component {
 
     this.state = {
       loading: false,
+      seenIsLoading: false,
       hovering: false,
     };
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    if (state.loading) {
+      if (state.seenIsLoading && !props.isLoading) {
+        return Object.assign({}, state, { loading: false });
+      } else if (!state.seenIsLoading && props.isLoading) {
+        return Object.assign({}, state, { seenIsLoading: true });
+      }
+    } else {
+      Object.assign({}, state, { seenIsLoading: false })
+    }
   }
 
   clickHandler() {
@@ -36,8 +49,9 @@ class CancellableButton extends React.Component {
   }
 
   render() {
+    let loading = this.state.loading;
     let label = this.props?.label;
-    if (this.state.loading) {
+    if (loading) {
       if (!this.state.hovering) {
         label = this.props?.loadingLabel || ("Cancel " + label);
       } else {
@@ -46,7 +60,7 @@ class CancellableButton extends React.Component {
     }
 
     let icon = this.props?.icon;
-    if (this.state.loading) {
+    if (loading) {
       if (!this.state.hovering) {
         icon = <CircularProgress theme="secondary" />;
       } else {
@@ -59,6 +73,7 @@ class CancellableButton extends React.Component {
         label={ label }
         icon={ icon }
         raised={ this.props?.raised }
+        style={ this.props?.style }
         disabled={ this.props?.disabled }
         onMouseEnter={ (e) => { e.preventDefault() ; this.setState(state => Object.assign({}, state, { hovering: true })) } }
         onMouseLeave={ (e) => { e.preventDefault() ; this.setState(state => Object.assign({}, state, { hovering: false })) } }

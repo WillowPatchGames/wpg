@@ -279,6 +279,10 @@ class PreGameAdminPage extends React.Component {
     }
     return true;
   }
+  async cancel() {
+    await this.game.interface.controller.cancelGame();
+    this.setState(state => Object.assign({}, state, { started: false }));
+  }
   async start() {
     if (this.state.started) {
       await this.game.interface.controller.cancelGame();
@@ -490,7 +494,7 @@ class PreGameAdminPage extends React.Component {
             { waiting.filter(user => !user.admitted).length === 0 ? "There are no users waiting to join this game." : null }
           </l.ListGroup>
         </l.List>
-        <Button onClick={ () => this.start() } label={ this.state.started ? "Restart" : "Start" } raised />
+        <CancellableButton style={{ 'zIndex': '9999999' }} label={ this.state.started ? "Restart" : "Start" } loadingLabel="Countdown" submitHandler={ () => this.start() } cancelHandler={ () => this.cancel() } isLoading={ this.state.started } raised />
       </div>
     </c.Card>;
 
