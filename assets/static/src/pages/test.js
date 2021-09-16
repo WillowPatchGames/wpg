@@ -216,7 +216,7 @@ class TestGamePage extends React.Component {
       user: this.props.user,
       id: +id,
       mode: mode,
-      endpoint: ws() + "//" + document.location.host + "/api/v1/game/" + id + "/ws?user_id=" + this.props.user.id + '&api_token=' + this.props.user.token,
+      endpoint: ws() + "//" + document.location.host + "/api/v1/game/" + id + "/ws?user_id=" + this.props.user.id + '&api_token=' + this.props.user.token + '&session_id=' + this.props.user.session_id,
     };
     var wsController = new WebSocketController(game);
     wsController.addEventListener("message", this.receive.bind(this));

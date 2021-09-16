@@ -190,7 +190,9 @@ func (c *Controller) undispatch(data *GameData, player *PlayerData, message_id i
 		return
 	}
 
-	player.Notifications <- obj
+	for _, channel := range player.Notifications {
+		channel <- obj
+	}
 
 	var db_msg = database.GameMessage{
 		UserID:    player.UID,

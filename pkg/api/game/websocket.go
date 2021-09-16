@@ -17,6 +17,7 @@ import (
 
 type GameID uint64
 type UserID uint64
+type SessionID uint64
 
 const (
 	// Time allowed to connect to the peer.
@@ -75,6 +76,10 @@ type Client struct {
 
 	// UserID this client is authicated as.
 	userID UserID
+
+	// SessionID associated with this client. This allows each user to have
+	// multiple (mirrored) sessions open at the same time.
+	sessionID SessionID
 }
 
 // upgrader takes a regular net/http connection and upgrades it into a
@@ -86,7 +91,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func (c *Client) String() string {
-	return "user:" + strconv.FormatUint(uint64(c.userID), 10) + "@game:" + strconv.FormatUint(uint64(c.gameID), 10)
+	return "user:" + strconv.FormatUint(uint64(c.userID), 10) + "[session:" + strconv.FormatUint(uint64(c.sessionID), 10) + "]" + "@game:" + strconv.FormatUint(uint64(c.gameID), 10)
 }
 
 func (c *Client) isActive() bool {
@@ -97,10 +102,17 @@ func (c *Client) isActive() bool {
 		return false
 	}
 
-	current_connection, ok := game_conns[c.userID]
-	if !ok || current_connection != c {
-		// Client was deleted under us or client reconnected from somewhere
-		// else
+	user_sessions, ok := game_conns[c.userID]
+	if !ok {
+		// All of this user's sessions were deleted under us. Likely a server
+		// restart.
+		return false
+	}
+
+	connection, ok := user_sessions[c.sessionID]
+	if !ok || connection != c {
+		// This session was removed and/or (dangerously!!!) the client reused the
+		// session id (most likely a zero id from a non-upgraded client).
 		return false
 	}
 
@@ -312,10 +324,8 @@ type Hub struct {
 	// game state.
 	controller games.Controller
 
-	// Connections maps (gid, uid) tuples to an active Client connection. In the
-	// future, this could be multiple connections to let the same player play on
-	// different devices if they wish.
-	connections map[GameID]map[UserID]*Client
+	// Connections maps (gid, uid, sid) tuples to an active Client connection.
+	connections map[GameID]map[UserID]map[SessionID]*Client
 
 	// dbgames maps gid to a loaded GameModel instance. In the future, some cache
 	// invalidation should occur and we should figure out when to reload it from
@@ -336,7 +346,7 @@ type Hub struct {
 func NewHub() *Hub {
 	// Note that inner maps and channels must be created per-game.
 	var ret = new(Hub)
-	ret.connections = make(map[GameID]map[UserID]*Client)
+	ret.connections = make(map[GameID]map[UserID]map[SessionID]*Client)
 	ret.dbgames = make(map[GameID]*database.Game)
 	ret.register = make(chan *Client, registerChannelSize)
 	ret.unregister = make(chan *Client, registerChannelSize)
@@ -391,19 +401,28 @@ func (hub *Hub) connectPlayer(client *Client) error {
 	user_client_map, present := hub.connections[client.gameID]
 	if !present {
 		// When
-		hub.connections[client.gameID] = make(map[UserID]*Client)
+		hub.connections[client.gameID] = make(map[UserID]map[SessionID]*Client)
 		user_client_map = hub.connections[client.gameID]
 	}
 
-	player, present := user_client_map[client.userID]
+	player_connections, present := user_client_map[client.userID]
 	if present {
-		if player != client {
+		session_client, present := player_connections[client.sessionID]
+		if present && session_client != client {
 			// If the player is already connected, assume this connection should take
-			// precedence and update accordingly.
-			hub.connections[client.gameID][client.userID] = client
+			// precedence and update accordingly -- but this is dangerous (!!!)
+			// because the client is reusing session identifiers (most likely due to
+			// an older client that isn't yet updated to support session IDs).
+			hub.connections[client.gameID][client.userID][client.sessionID] = client
+			return nil
 		}
 
-		return nil
+		// If this player is already present (hence the above present conditional)
+		// but this session ID isn't present, it is the "same" player, just
+		// another connection -- but we still need to go into the controller to
+		// add the Notification channel. Hence why we don't return from this branch.
+	} else {
+		user_client_map[client.userID] = make(map[SessionID]*Client)
 	}
 
 	// Create a new game if doesn't exist.
@@ -423,13 +442,13 @@ func (hub *Hub) connectPlayer(client *Client) error {
 
 	// The controller handles creating or resuming all of the player state
 	// information.
-	_, err = hub.controller.AddPlayer(uint64(client.gameID), uint64(client.userID), game_player.Admitted)
+	_, err = hub.controller.AddPlayer(uint64(client.gameID), uint64(client.userID), uint64(client.sessionID), game_player.Admitted)
 	if err != nil {
 		return err
 	}
 
-	hub.connections[client.gameID][client.userID] = client
-	client.send, err = hub.controller.Undispatch(uint64(client.gameID), uint64(client.userID))
+	hub.connections[client.gameID][client.userID][client.sessionID] = client
+	client.send, err = hub.controller.Undispatch(uint64(client.gameID), uint64(client.userID), uint64(client.sessionID))
 	return err
 }
 
@@ -487,13 +506,18 @@ func (hub *Hub) deleteClient(client *Client) {
 
 	var deleteGame bool = false
 
-	if hub.connections[client.gameID][client.userID] != client {
+	if hub.connections[client.gameID][client.userID][client.sessionID] != client {
 		// Only remove the client if they're actually the ones playing. Otherwise
 		// we risk disrupting some other connection of the client's.
 		return
 	}
 
-	delete(hub.connections[client.gameID], client.userID)
+	delete(hub.connections[client.gameID][client.userID], client.sessionID)
+	if len(hub.connections[client.gameID][client.userID]) == 0 {
+		// Only delete the user if this was the last session.
+		delete(hub.connections[client.gameID], client.userID)
+	}
+
 	if len(hub.connections[client.gameID]) == 0 {
 		// Hold off on doing the delete; see notes below.
 		deleteGame = true
@@ -512,7 +536,7 @@ func (hub *Hub) deleteClient(client *Client) {
 
 	// Notify the game controller that the player left, so we quit trying to
 	// process messages for them.
-	hub.controller.PlayerLeft(uint64(client.gameID), uint64(client.userID))
+	hub.controller.PlayerLeft(uint64(client.gameID), uint64(client.userID), uint64(client.sessionID))
 
 	if deleteGame {
 		hub.deleteGame(client.gameID)

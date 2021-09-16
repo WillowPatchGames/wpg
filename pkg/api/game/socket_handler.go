@@ -14,9 +14,10 @@ import (
 )
 
 type socketHandlerRequest struct {
-	GameID   uint64 `query:"id,omitempty" route:"GameID,omitempty"`
-	UserID   uint64 `query:"user_id,omitempty" route:"UserID,omitempty"`
-	APIToken string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
+	GameID    uint64 `query:"id,omitempty" route:"GameID,omitempty"`
+	UserID    uint64 `query:"user_id,omitempty" route:"UserID,omitempty"`
+	SessionID uint64 `query:"session_id,omitempty" json:"session_id,omitempty"`
+	APIToken  string `json:"api_token,omitempty" header:"X-Auth-Token,omitempty" query:"api_token,omitempty"`
 }
 
 // SocketHandler is a handler for game connections
@@ -90,6 +91,7 @@ func (handle SocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	client.send = nil
 	client.gameID = GameID(gamedb.ID)
 	client.userID = UserID(handle.user.ID)
+	client.sessionID = SessionID(handle.req.SessionID)
 
 	// Connect Player to ActiveGame, Client to Hub
 	handle.Hub.register <- client

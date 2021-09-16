@@ -39,7 +39,7 @@ type PlayerData struct {
 	// Notifications to undispatch. Once processed above, data can be queued here
 	// until Undispatch is called by the Websocket. This isn't persisted as we
 	// don't need to access it.
-	Notifications chan interface{} `json:"-"`
+	Notifications map[uint64]chan interface{} `json:"-"`
 
 	// Bound players is a two-way authorization (mutual verification) of
 	// player <-> spectator binding, allowing the spectator to perform certain

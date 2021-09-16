@@ -31,6 +31,7 @@ class UserModel {
     this.email = null;
     this.display = null;
     this.guest = false;
+    this.session_id = parseInt(sessionStorage.getItem('session_id')) || null;
 
     this.api = window.location.protocol + '//' + window.location.host + '/api/v1';
 
@@ -54,6 +55,11 @@ class UserModel {
 
   ToJSON() {
     return JSON.stringify(this);
+  }
+
+  getSessionID() {
+    this.session_id = parseInt(sessionStorage.getItem('session_id')) || null;
+    return this.session_id;
   }
 
   static async FromId(id, token) {
@@ -870,7 +876,7 @@ class RoomModel {
 
     Object.assign(ret, result);
     ret.error = null;
-    ret.endpoint = ws() + "//" + document.location.host + "/room/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+    ret.endpoint = ws() + "//" + document.location.host + "/room/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token + '&session_id=' + ret.user.getSessionID();
     return ret;
   }
 
@@ -903,7 +909,7 @@ class RoomModel {
     this.error = null;
     delete result["config"];
     Object.assign(this, result);
-    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token + '&session_id=' + this.user.getSessionID();
     return this;
   }
 
@@ -928,7 +934,7 @@ class RoomModel {
 
     Object.assign(this, result);
     this.error = null;
-    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token + '&session_id=' + this.user.getSessionID();
 
     if (this.members !== undefined && this.members !== null && this.members.length > 0) {
       for (let member of this.members) {
@@ -967,7 +973,7 @@ class RoomModel {
 
     Object.assign(this, result);
     this.error = null;
-    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token + '&session_id=' + this.user.getSessionID();
 
     if (this.members !== undefined && this.members !== null && this.members.length > 0) {
       for (let member of this.members) {
@@ -1005,7 +1011,7 @@ class RoomModel {
 
     Object.assign(this, result);
     this.error = null;
-    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/room/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token + '&session_id=' + this.user.getSessionID();
 
     if (this.members !== undefined && this.members !== null && this.members.length > 0) {
       for (let member of this.members) {
@@ -1118,7 +1124,7 @@ class GameModel {
 
     Object.assign(ret, result);
     ret.error = null;
-    ret.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token;
+    ret.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + ret.id + "/ws?user_id=" + ret.user.id + '&api_token=' + ret.user.token + '&session_id=' + ret.user.getSessionID();
     return ret;
   }
 
@@ -1182,7 +1188,7 @@ class GameModel {
     this.error = null;
     delete result["config"];
     Object.assign(this, result);
-    this.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token + '&session_id=' + this.user.getSessionID();
     return this;
   }
 
@@ -1208,7 +1214,7 @@ class GameModel {
 
     Object.assign(this, result);
     this.error = null;
-    this.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token;
+    this.endpoint = ws() + "//" + document.location.host + "/api/v1/game/" + this.id + "/ws?user_id=" + this.user.id + '&api_token=' + this.user.token + '&session_id=' + this.user.getSessionID();
     return this;
   }
 

@@ -48,6 +48,17 @@ class App extends React.Component {
   }
 
   async loadUser() {
+    // Before loading the user, we want to initialize a random identifier for
+    // use as the session identifier. Since we're passing this into the
+    // WebSocket API as a uint64, we want a (large-ish) number here. This
+    // simplifies the server design and prevents malicious clients from sending
+    // large session identifiers.
+    var session_id = parseInt(sessionStorage.getItem('session_id'));
+    if (!session_id) {
+      session_id = parseInt(Math.random() * 1000000000000);
+      sessionStorage.setItem('session_id', session_id);
+    }
+
     var serialization = localStorage.getItem('user');
     if (!serialization) {
       var guest_serialization = localStorage.getItem('guest');
@@ -62,6 +73,9 @@ class App extends React.Component {
       return;
     }
 
+    // Overwrite any previous (outdated) session identifiers.
+    user.session_id = session_id;
+
     this.setUser(user);
 
     var user_id = user.id;
@@ -74,6 +88,9 @@ class App extends React.Component {
       this.setUser(null);
       return null;
     }
+
+    // Overwrite any previous (outdated) session identifiers.
+    user.session_id = session_id;
 
     if (verified_user.config.turn_push_notification && window && window.Notification) {
       Notification.requestPermission();

@@ -93,7 +93,7 @@ func (c *Controller) LoadGame(gamedb *database.Game) error {
 		// then add it to the controller.
 		data.CountdownTimer = nil
 		for _, indexed_player := range data.ToPlayer {
-			indexed_player.Notifications = make(chan interface{}, notificationQueueLength)
+			indexed_player.Notifications = make(map[uint64]chan interface{})
 		}
 
 		c.ToGame[gamedb.ID] = &data
@@ -278,7 +278,7 @@ func (c *Controller) PlayerExists(gid uint64, uid uint64) bool {
 
 // Add a player to this game. Returns true iff the player was already
 // present.
-func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, error) {
+func (c *Controller) AddPlayer(gid uint64, uid uint64, sid uint64, admitted bool) (bool, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -291,8 +291,9 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 	present_player, present := game.ToPlayer[uid]
 	if present {
 		if game.ToPlayer[uid].Notifications == nil {
-			game.ToPlayer[uid].Notifications = make(chan interface{}, notificationQueueLength)
+			game.ToPlayer[uid].Notifications = make(map[uint64]chan interface{})
 		}
+		game.ToPlayer[uid].Notifications[sid] = make(chan interface{}, notificationQueueLength)
 
 		if present_player.Admitted {
 			var notification ControllerNotifyAdmitted
@@ -313,7 +314,8 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 	player.InboundMsgs = nil
 	player.OutboundID = 1
 	player.OutboundMsgs = nil
-	player.Notifications = make(chan interface{}, notificationQueueLength)
+	player.Notifications = make(map[uint64]chan interface{})
+	player.Notifications[sid] = make(chan interface{}, notificationQueueLength)
 	game.ToPlayer[uid] = player
 
 	if owner {
@@ -323,7 +325,7 @@ func (c *Controller) AddPlayer(gid uint64, uid uint64, admitted bool) (bool, err
 	return false, c.notifyAdmin(game, uid)
 }
 
-func (c *Controller) PlayerLeft(gid uint64, uid uint64) {
+func (c *Controller) PlayerLeft(gid uint64, uid uint64, sid uint64) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -337,11 +339,20 @@ func (c *Controller) PlayerLeft(gid uint64, uid uint64) {
 		return
 	}
 
-	log.Println("Removing notification socket for leaving player:", uid, "in", gid)
-
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
-	player.Notifications = nil
+
+	log.Println("Removing notification socket for leaving player:", uid, "[ session:", sid, "]", "in", gid, " -- remaining sessions:", len(player.Notifications)-1)
+
+	_, present := player.Notifications[sid]
+	if !present {
+		log.Println("channel for specified session id (" + strconv.FormatUint(sid, 10) + ") no longer exists in the controller for user (" + strconv.FormatUint(uid, 10) + ") and controller (" + strconv.FormatUint(gid, 10) + ")")
+	}
+
+	delete(player.Notifications, sid)
+	if len(player.Notifications) == 0 {
+		player.Notifications = nil
+	}
 }
 
 // Remove a given game once it is no longer needed.
@@ -366,7 +377,7 @@ func (c *Controller) RemovePlayer(gid uint64, uid uint64) error {
 }
 
 // Return the underlying channel for a player so callers can get updates.
-func (c *Controller) Undispatch(gid uint64, uid uint64) (chan interface{}, error) {
+func (c *Controller) Undispatch(gid uint64, uid uint64, sid uint64) (chan interface{}, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -384,7 +395,12 @@ func (c *Controller) Undispatch(gid uint64, uid uint64) (chan interface{}, error
 	defer game.lock.Unlock()
 
 	player := game.ToPlayer[uid]
-	return player.Notifications, nil
+	channel, present := player.Notifications[sid]
+	if !present {
+		return nil, errors.New("channel for specified session id (" + strconv.FormatUint(sid, 10) + ") no longer exists in the controller for user (" + strconv.FormatUint(uid, 10) + ") and controller (" + strconv.FormatUint(gid, 10) + ")")
+	}
+
+	return channel, nil
 }
 
 func parseMessageHeader(message []byte) (MessageHeader, error) {
