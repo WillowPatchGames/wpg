@@ -10,6 +10,7 @@ import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
 import '../App.css';
+import '../main.scss';
 
 import GameStartsScreen from '../images/Screenshots/Game starts screen 1.png';
 import YouDrewMessage from '../images/Screenshots/you drew message.png';

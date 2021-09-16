@@ -8,6 +8,7 @@ import '@rmwc/typography/styles';
 
 // Application imports
 import '../App.css';
+import '../main.scss';
 import { GameModel } from '../models.js';
 import { loadGame, addEv, notify, killable } from './games/common.js';
 import { EightJacksGamePage } from './games/eightjacks/page.js'

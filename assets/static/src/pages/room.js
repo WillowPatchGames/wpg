@@ -17,6 +17,7 @@ import { ThemeProvider } from '@rmwc/theme';
 import '@rmwc/theme/styles';
 
 import '../App.css';
+import '../main.scss';
 
 import { RoomArchiveTab } from './room/archive.js';
 import { CreateRoomForm } from './room/config.js';

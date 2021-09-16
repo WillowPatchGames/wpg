@@ -10,6 +10,7 @@ import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
 import '../App.css';
+import '../main.scss';
 
 /* change name GameStartsScreen */
 import ShareSecretCode from '../images/Screenshots/ShareSecretCode.png';

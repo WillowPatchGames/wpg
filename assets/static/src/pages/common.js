@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 
 import '../App.css';
+import '../main.scss';
 
 import * as c from '@rmwc/card';
 import '@rmwc/card/styles';

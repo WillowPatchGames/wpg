@@ -10,6 +10,7 @@ import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
 import '../App.css';
+import '../main.scss';
 
 import willows from '../images/WillowPatch.jpg';
 import alex_scheel from '../images/alex-scheel.jpg';

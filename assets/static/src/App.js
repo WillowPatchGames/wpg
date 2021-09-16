@@ -22,6 +22,7 @@ import NotificationSoundURI from './notification.mp3';
 
 // CSS overrides last
 import './App.css';
+import './main.scss';
 
 class App extends React.Component {
   constructor(props) {

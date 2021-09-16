@@ -10,6 +10,7 @@ import { Theme } from '@rmwc/theme';
 import '@rmwc/theme/styles';
 
 import '../App.css';
+import '../main.scss';
 
 import logo from '../images/logo.png';
 import WinnerGif from '../images/Home-Page-small.gif';

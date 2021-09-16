@@ -6,6 +6,7 @@ import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
 import '../App.css';
+import '../main.scss';
 
 class PrivacyPage extends React.Component {
   render() {
@@ -109,7 +110,7 @@ class PrivacyPage extends React.Component {
                   will be shared with other users.
               </p>
               <p class="text-left">
-                We allow only selected administrators to access the production 
+                We allow only selected administrators to access the production
                   servers. This limits the spread of data within our organization.
               </p>
               <p class="text-left">
@@ -135,7 +136,7 @@ class PrivacyPage extends React.Component {
               </Typography>
               <p class="text-left">
                 Feel free to reach out to us via email
-                at <a href="mailto:willowpatchgames@gmail.com">willowpatchgames.com</a> with 
+                at <a href="mailto:willowpatchgames@gmail.com">willowpatchgames.com</a> with
                 any questions or concerns.
               </p>
             </section>

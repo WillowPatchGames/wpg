@@ -12,6 +12,7 @@ import '@rmwc/textfield/styles';
 
 // Application imports
 import '../App.css';
+import '../main.scss';
 import { ws } from '../models.js';
 import { WebSocketController } from '../games/common.js';
 

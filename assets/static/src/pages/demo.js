@@ -11,6 +11,7 @@ import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
 import '../App.css';
+import '../main.scss';
 
 import { Card, CardHand, CardHandImage, CardImage } from '../games/card.js';
 

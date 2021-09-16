@@ -18,6 +18,7 @@ import { Typography } from '@rmwc/typography';
 import '@rmwc/typography/styles';
 
 import '../App.css';
+import '../main.scss';
 
 import { UserModel } from '../models.js';
 
