@@ -248,7 +248,7 @@ class PreGameUserPage extends React.Component {
         }
 
         users.push(
-          <l.ListItem key={display} disabled style={{ height: "auto", minHeight: "48px" }}>
+          <l.ListItem key={display} disabled style={{ height: "auto", minHeight: "56px" }}>
             <span className="unselectable">{+i + 1}.&nbsp;</span> {display}
             <l.ListItemMeta>
               <span className="leftpad">

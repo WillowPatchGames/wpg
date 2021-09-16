@@ -442,7 +442,7 @@ class PreGameAdminPage extends React.Component {
               <h1>Spectators</h1>
             </l.ListItem>
             { spectators.map((user, i) =>
-                <l.ListItem key={user.id} disabled style={{ height: "auto", minHeight: "48px" }}>
+                <l.ListItem key={user.id} disabled style={{ height: "auto", minHeight: "56px" }}>
                   <span className="unselectable">{+i + 1}.&nbsp;</span> {user.display}{user.id === this.props.user.id ? " (You)" : ""}
                   <l.ListItemMeta>
                     {
