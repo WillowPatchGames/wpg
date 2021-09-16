@@ -12,17 +12,13 @@ import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
 import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
-import * as g from '@rmwc/grid';
-import '@rmwc/grid/styles';
 import { Switch } from '@rmwc/switch';
 import '@rmwc/switch/styles';
 
 import { CardHand } from '../../../games/card.js';
-import { loadGame, addEv, notify, killable, CreateGameForm } from '../../games.js';
+import { loadGame, addEv, notify, killable } from '../../games.js';
 import { UserCache, GameCache } from '../../../utils/cache.js';
 import { gravatarify } from '../../../utils/gravatar.js';
-
-import { HeartsGameSynopsis } from './synopsis.js';
 
 // Properties used for display card hands
 var handProps = {
@@ -32,7 +28,7 @@ var handProps = {
 };
 
 
-class HeartsAfterPartyPage extends React.Component {
+class HeartsAfterPartyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.game = loadGame(this.props.game);
@@ -663,29 +659,8 @@ class HeartsAfterPartyPage extends React.Component {
       </div>;
     }
 
-    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
-      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-        <div className="text-center">
-          <h3>Game Configuration</h3>
-          <l.List>
-            <l.CollapsibleList handle={
-                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-              }
-            >
-              <CreateGameForm {...this.props} editable={ false } />
-            </l.CollapsibleList>
-          </l.List>
-        </div>
-      </c.Card>
-    </div>;
-
     return (
       <div>
-        {
-          !this.state.finished
-          ? <HeartsGameSynopsis game={ this.game } {...this.props} />
-          : null
-        }
         <h1 style={{ color: "#bd2525" }}>Hearts</h1>
         <div>
           {
@@ -699,12 +674,6 @@ class HeartsAfterPartyPage extends React.Component {
           { current_round }
           { scoreboard_data }
           { historical_data }
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} tablet={8} />
-            <g.GridCell align="right" span={6} tablet={8}>
-              { configuration }
-            </g.GridCell>
-          </g.Grid>
         </div>
       </div>
     );
@@ -712,5 +681,5 @@ class HeartsAfterPartyPage extends React.Component {
 }
 
 export {
-  HeartsAfterPartyPage
+  HeartsAfterPartyComponent
 };

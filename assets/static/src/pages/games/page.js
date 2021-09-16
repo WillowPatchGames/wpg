@@ -53,7 +53,8 @@ class GenericGamePage extends React.Component {
         "finished": async (data) => {
           data.message = await Promise.all(data.winners.map(personalize)) + " won!";
           notify(this.props.snackbar, data.message, data.type);
-          this.game.winners = data.winners;
+          this.props.game.winners = data.winners;
+          this.props.game.lifecycle = "finished";
           let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
           this.props.setPage(page, true);
         },
@@ -69,61 +70,76 @@ class GenericGamePage extends React.Component {
     }
   }
   componentDidMount() {
-    if (this.props.immersive) {
+    if (this.pageLayout().immersive) {
       this.props.setImmersive(true);
     }
   }
   componentWillUnmount() {
     if (this.unmount) this.unmount();
-    if (this.props.immersive) {
+    if (this.pageLayout().immersive) {
       this.props.setImmersive(false);
     }
   }
   render() {
-    var countdown = null;
+    var layout = this.pageLayout();
+
+    var countdown_element = null;
     if (this.state.countdown !== null && this.state.countdown !== 0) {
-      countdown = <div className="countdown-overlay">
+      countdown_element = <div className="countdown-overlay">
         <div className="countdown-circle">
           { this.state.countdown }
         </div>
       </div>
     }
 
-    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
-      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-        <div className="text-center">
-          <h3>Game Configuration</h3>
-          <l.List>
-            <l.CollapsibleList handle={
-                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-              }
-            >
-              <CreateGameForm {...this.props} editable={ false } />
-            </l.CollapsibleList>
-          </l.List>
-        </div>
-      </c.Card>
-    </div>;
+    var configuration_element = null;
+    if (layout.configuration) {
+      configuration_element = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
+        <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
+          <div className="text-center">
+            <h3>Game Configuration</h3>
+            <l.List>
+              <l.CollapsibleList handle={
+                  <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
+                }
+              >
+                <CreateGameForm {...this.props} editable={ false } />
+              </l.CollapsibleList>
+            </l.List>
+          </div>
+        </c.Card>
+      </div>;
+    }
 
     let subcomponent_props = {...this.props};
     subcomponent_props.game = this.game;
     subcomponent_props.interface = this.state.interface;
     subcomponent_props.notify = (...arg) => notify(this.props.snackbar, ...arg);
-    subcomponent_props.synopsis = undefined;
-    subcomponent_props.component = undefined;
+
+    let synopsis_element = null;
+    if (this.props.game?.lifecycle !== "finished" || layout.finished_synopsis) {
+      synopsis_element = React.createElement(layout.synopsis, subcomponent_props, this.props.children);
+    }
+
+    let game_component = null;
+    if (this.props.game?.spectating || this.props.game?.lifecycle === "finished") {
+      game_component = React.createElement(layout.afterparty, subcomponent_props, this.props.children);
+    } else {
+      game_component = React.createElement(layout.player, subcomponent_props, this.props.children);
+    }
 
     return (
       <div>
-        { countdown }
-        { React.createElement(this.props.synopsis, subcomponent_props, this.props.children) }
-        { React.createElement(this.props.component, subcomponent_props, this.props.children) }
+        { countdown_element }
+        { synopsis_element }
+        { game_component }
         {
-          this.props.configuration
+          layout.configuration
           ?
             <g.Grid fixedColumnWidth={ true }>
               <g.GridCell align="left" span={3} tablet={8} />
               <g.GridCell align="right" span={6} tablet={8}>
-                { configuration }
+                { configuration_element }
               </g.GridCell>
             </g.Grid>
           : null

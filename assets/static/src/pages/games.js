@@ -12,17 +12,11 @@ import '../main.scss';
 import { GameModel } from '../models.js';
 import { loadGame, addEv, notify, killable } from './games/common.js';
 import { EightJacksGamePage } from './games/eightjacks/page.js'
-import { EightJacksAfterPartyPage } from './games/eightjacks/afterparty.js';
 import { GinGamePage } from './games/gin/page.js'
-import { GinAfterPartyPage } from './games/gin/afterparty.js';
 import { HeartsGamePage } from './games/hearts/page.js'
-import { HeartsAfterPartyPage } from './games/hearts/afterparty.js';
 import { RushGamePage } from './games/rush/page.js'
-import { RushAfterPartyPage } from './games/rush/afterparty.js';
 import { SpadesGamePage } from './games/spades/page.js'
-import { SpadesAfterPartyPage } from './games/spades/afterparty.js';
 import { ThreeThirteenGamePage } from './games/threethirteen/page.js'
-import { ThreeThirteenAfterPartyPage } from './games/threethirteen/afterparty.js';
 import { CreateGameForm } from './games/config.js';
 import { PreGameAdminPage } from './games/pregame/admin.js';
 import { PreGameUserPage } from './games/pregame/user.js';
@@ -157,17 +151,17 @@ class AfterPartyPage extends React.Component {
   render() {
     var mode = this.props.game.mode || this.props.game.style;
     if (mode === 'rush') {
-      return <RushAfterPartyPage {...this.props}/>
+      return <RushGamePage {...this.props}/>
     } else if (mode === 'spades') {
-      return <SpadesAfterPartyPage {...this.props}/>
+      return <SpadesGamePage {...this.props}/>
     } else if (mode === 'three thirteen') {
-      return <ThreeThirteenAfterPartyPage {...this.props}/>
+      return <ThreeThirteenGamePage {...this.props}/>
     } else if (mode === 'hearts') {
-      return <HeartsAfterPartyPage {...this.props}/>
+      return <HeartsGamePage {...this.props}/>
     } else if (mode === 'eight jacks') {
-      return <EightJacksAfterPartyPage {...this.props}/>
+      return <EightJacksGamePage {...this.props}/>
     } else if (mode === 'gin') {
-      return <GinAfterPartyPage {...this.props}/>
+      return <GinGamePage {...this.props}/>
     } else {
       return "Unrecognized game mode: " + mode;
     }

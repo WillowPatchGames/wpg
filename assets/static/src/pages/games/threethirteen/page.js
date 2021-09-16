@@ -1,17 +1,21 @@
-import React from 'react';
-
 import '../../../main.scss'
 
 import { GenericGamePage } from '../page.js';
 
+import { ThreeThirteenAfterPartyComponent } from './afterparty.js';
 import { ThreeThirteenGameComponent } from './component.js';
 import { ThreeThirteenGameSynopsis } from './synopsis.js';
 
-class ThreeThirteenGamePage extends React.Component {
-  render() {
-    return (
-      <GenericGamePage {...this.props} configuration={ true } immersive={ false } synopsis={ ThreeThirteenGameSynopsis } component={ ThreeThirteenGameComponent } />
-    );
+class ThreeThirteenGamePage extends GenericGamePage {
+  pageLayout() {
+    return {
+      configuration: true,
+      finished_synopsis: false,
+      immersive: false,
+      synopsis: ThreeThirteenGameSynopsis,
+      player: ThreeThirteenGameComponent,
+      afterparty: ThreeThirteenAfterPartyComponent,
+    };
   }
 }
 

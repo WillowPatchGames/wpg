@@ -12,20 +12,17 @@ import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
 import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
-import * as g from '@rmwc/grid';
-import '@rmwc/grid/styles';
 import { Select } from '@rmwc/select';
 import '@rmwc/select/styles';
 import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
 import { CardRank, CardHand } from '../../../games/card.js';
-import { loadGame, addEv, notify, killable, CreateGameForm } from '../../games.js';
+import { loadGame, addEv, notify, killable } from '../../games.js';
 import { UserCache, GameCache } from '../../../utils/cache.js';
 import { gravatarify } from '../../../utils/gravatar.js';
 
 import { EightJacksGameComponent } from './component.js';
-import { EightJacksGameSynopsis } from './synopsis.js';
 
 // Properties used for displaying card hands
 var handProps = {
@@ -34,7 +31,7 @@ var handProps = {
   curve: true,
 };
 
-class EightJacksAfterPartyPage extends React.Component {
+class EightJacksAfterPartyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.game = loadGame(this.props.game);
@@ -339,22 +336,6 @@ class EightJacksAfterPartyPage extends React.Component {
       </div>;
     }
 
-    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
-      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-        <div className="text-center">
-          <h3>Game Configuration</h3>
-          <l.List>
-            <l.CollapsibleList handle={
-                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-              }
-            >
-              <CreateGameForm {...this.props} editable={ false } />
-            </l.CollapsibleList>
-          </l.List>
-        </div>
-      </c.Card>
-    </div>;
-
     var winner_info = <h1>Please wait while the game finishes...</h1>;
     if (this.state.finished && this.state.winners) {
       var winner_names = this.state.winners[0].display;
@@ -395,12 +376,11 @@ class EightJacksAfterPartyPage extends React.Component {
 
       winner_info = <h1 style={{ color: "#249724" }}>{winner_names} won!</h1>
     } else if (!this.state.finished && this.state.active?.turn) {
-      winner_info = <h1>{ this.state.active.turn.display }'s turn!</h1>
+      winner_info = <h1>{ this.state.active.turn.display + "'s" } turn!</h1>
     }
 
     return (
       <div>
-        <EightJacksGameSynopsis game={ this.game } {...this.props} />
         <h1 style={{ color: "#000000" }}><span style={{ color: "#bd2525" }}>Eight</span> Jacks</h1>
         <div>
           { winner_info }
@@ -435,12 +415,6 @@ class EightJacksAfterPartyPage extends React.Component {
             </c.Card>
           </div>
           { historical_data }
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} tablet={8} />
-            <g.GridCell align="right" span={6} tablet={8}>
-              { configuration }
-            </g.GridCell>
-          </g.Grid>
         </div>
       </div>
     );
@@ -449,5 +423,5 @@ class EightJacksAfterPartyPage extends React.Component {
 
 
 export {
-  EightJacksAfterPartyPage,
+  EightJacksAfterPartyComponent,
 }

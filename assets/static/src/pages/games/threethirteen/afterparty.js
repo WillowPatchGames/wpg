@@ -8,21 +8,15 @@ import { Button } from '@rmwc/button';
 import '@rmwc/card/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/button/styles';
-import * as g from '@rmwc/grid';
-import '@rmwc/grid/styles';
 import { IconButton } from '@rmwc/icon-button';
 import '@rmwc/icon-button/styles';
-import * as l from '@rmwc/list';
-import '@rmwc/list/styles';
 import { Switch } from '@rmwc/switch';
 import '@rmwc/switch/styles';
 
-import { loadGame, addEv, notify, killable, CreateGameForm } from '../../games.js';
+import { loadGame, addEv, notify, killable } from '../../games.js';
 import { UserCache, GameCache } from '../../../utils/cache.js';
 import { Card, CardHand, CardImage } from '../../../games/card.js';
 import { gravatarify } from '../../../utils/gravatar.js';
-
-import { ThreeThirteenGameSynopsis } from './synopsis.js';
 
 // Properties used for displaying card hands
 var handProps = {
@@ -36,7 +30,7 @@ var discardProps = {
 }
 
 
-class ThreeThirteenAfterPartyPage extends React.Component {
+class ThreeThirteenAfterPartyComponent extends React.Component {
   constructor(props) {
     super(props);
 
@@ -496,29 +490,8 @@ class ThreeThirteenAfterPartyPage extends React.Component {
       </div>;
     }
 
-    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
-      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-        <div className="text-center">
-          <h3>Game Configuration</h3>
-          <l.List>
-            <l.CollapsibleList handle={
-                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-              }
-            >
-              <CreateGameForm {...this.props} editable={ false } />
-            </l.CollapsibleList>
-          </l.List>
-        </div>
-      </c.Card>
-    </div>;
-
     return (
       <div>
-        {
-          !this.state.finished
-          ? <ThreeThirteenGameSynopsis game={ this.game } {...this.props} />
-          : null
-        }
         <h1 style={{ color: "#bd2525" }}>Three Thirteen</h1>
         <div>
           {
@@ -532,12 +505,6 @@ class ThreeThirteenAfterPartyPage extends React.Component {
           { current_round }
           { scoreboard_data }
           { historical_data }
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} tablet={8} />
-            <g.GridCell align="right" span={6} tablet={8}>
-              { configuration }
-            </g.GridCell>
-          </g.Grid>
         </div>
       </div>
     );
@@ -545,5 +512,5 @@ class ThreeThirteenAfterPartyPage extends React.Component {
 }
 
 export {
-  ThreeThirteenAfterPartyPage
+  ThreeThirteenAfterPartyComponent
 };

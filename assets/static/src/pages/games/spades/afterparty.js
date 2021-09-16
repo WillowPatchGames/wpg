@@ -12,15 +12,11 @@ import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
 import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
-import * as g from '@rmwc/grid';
-import '@rmwc/grid/styles';
 
 import { CardHand } from '../../../games/card.js';
-import { loadGame, addEv, notify, killable, CreateGameForm } from '../../games.js';
+import { loadGame, addEv, notify, killable } from '../../games.js';
 import { UserCache, GameCache } from '../../../utils/cache.js';
 import { gravatarify } from '../../../utils/gravatar.js';
-
-import { SpadesGameSynopsis } from './synopsis.js';
 
 // Properties used for display card hands
 var handProps = {
@@ -29,7 +25,7 @@ var handProps = {
   scale: 0.50,
 };
 
-class SpadesAfterPartyPage extends React.Component {
+class SpadesAfterPartyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.game = loadGame(this.props.game);
@@ -594,22 +590,6 @@ class SpadesAfterPartyPage extends React.Component {
       </div>;
     }
 
-    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
-      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-        <div className="text-center">
-          <h3>Game Configuration</h3>
-          <l.List>
-            <l.CollapsibleList handle={
-                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-              }
-            >
-              <CreateGameForm {...this.props} editable={ false } />
-            </l.CollapsibleList>
-          </l.List>
-        </div>
-      </c.Card>
-    </div>;
-
     var winner_info = <h1>Please wait while the game finishes...</h1>;
     if (this.state.finished && this.state.winners) {
       var winner_names = this.state.winners[0].display;
@@ -653,11 +633,6 @@ class SpadesAfterPartyPage extends React.Component {
 
     return (
       <div>
-        {
-          !this.state.finished
-          ? <SpadesGameSynopsis game={ this.game } {...this.props} />
-          : null
-        }
         <h1 style={{ color: "#000000" }}>Spades</h1>
         <div>
           { winner_info }
@@ -667,12 +642,6 @@ class SpadesAfterPartyPage extends React.Component {
           { current_round }
           { scoreboard_data }
           { historical_data }
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} tablet={8} />
-            <g.GridCell align="right" span={6} tablet={8}>
-              { configuration }
-            </g.GridCell>
-          </g.Grid>
         </div>
       </div>
     );
@@ -680,5 +649,5 @@ class SpadesAfterPartyPage extends React.Component {
 }
 
 export {
-  SpadesAfterPartyPage
+  SpadesAfterPartyComponent
 };

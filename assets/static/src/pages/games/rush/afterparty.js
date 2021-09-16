@@ -3,23 +3,15 @@ import React from 'react';
 
 import { Button } from '@rmwc/button';
 import '@rmwc/button/styles';
-import * as c from '@rmwc/card';
-import '@rmwc/card/styles';
-import * as g from '@rmwc/grid';
-import '@rmwc/grid/styles';
-import * as l from '@rmwc/list';
-import '@rmwc/list/styles';
 
 // Application imports
 import { RushGame, RushData } from '../../../games/rush.js';
 import { RushGameComponent } from './component.js';
 
-import { loadGame, addEv, notify, killable, CreateGameForm } from '../../games.js';
+import { loadGame, addEv, notify, killable } from '../../games.js';
 import { UserCache, GameCache } from '../../../utils/cache.js';
 
-import { RushGameSynopsis } from './synopsis.js';
-
-class RushAfterPartyPage extends React.Component {
+class RushAfterPartyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.game = loadGame(this.props.game);
@@ -126,25 +118,8 @@ class RushAfterPartyPage extends React.Component {
     this.props.setPage("room", true);
   }
   render() {
-    var configuration = <div style={{ width: "90%" , margin: "0 auto 0.5em auto" }}>
-      <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
-        <div className="text-center">
-          <h3>Game Configuration</h3>
-          <l.List>
-            <l.CollapsibleList handle={
-                <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
-              }
-            >
-              <CreateGameForm {...this.props} editable={ false } />
-            </l.CollapsibleList>
-          </l.List>
-        </div>
-      </c.Card>
-    </div>;
-
     return (
       <>
-        <RushGameSynopsis {...this.props} />
         <div>
           { this.state.finished && this.state.winner
           ? <h1>{ this.state.winner.id === this.props.user.id ? "You" : this.state.winner.display } won!</h1>
@@ -171,12 +146,6 @@ class RushAfterPartyPage extends React.Component {
             : <p>{ this.state.message }</p>
             }
           </ol>
-          <g.Grid fixedColumnWidth={ true }>
-            <g.GridCell align="left" span={3} tablet={8} />
-            <g.GridCell align="right" span={6} tablet={8}>
-              { configuration }
-            </g.GridCell>
-          </g.Grid>
         </div>
       </>
     );
@@ -184,5 +153,5 @@ class RushAfterPartyPage extends React.Component {
 }
 
 export {
-  RushAfterPartyPage
+  RushAfterPartyComponent
 };
