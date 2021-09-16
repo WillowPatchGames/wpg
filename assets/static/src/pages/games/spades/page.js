@@ -10,7 +10,7 @@ import { SpadesGameSynopsis } from './synopsis.js';
 class SpadesGamePage extends React.Component {
   render() {
     return (
-      <GenericGamePage {...this.props} configuration={ true } synopsis={ SpadesGameSynopsis } component={ SpadesGameComponent } />
+      <GenericGamePage {...this.props} configuration={ true } immersive={ false } synopsis={ SpadesGameSynopsis } component={ SpadesGameComponent } />
     );
   }
 }

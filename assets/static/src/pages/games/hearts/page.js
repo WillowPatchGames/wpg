@@ -10,7 +10,7 @@ import { HeartsGameSynopsis } from './synopsis.js';
 class HeartsGamePage extends React.Component {
   render() {
     return (
-      <GenericGamePage {...this.props} configuration={ true } synopsis={ HeartsGameSynopsis } component={ HeartsGameComponent } />
+      <GenericGamePage {...this.props} configuration={ true } immersive={ false } synopsis={ HeartsGameSynopsis } component={ HeartsGameComponent } />
     );
   }
 }

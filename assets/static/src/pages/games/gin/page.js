@@ -10,7 +10,7 @@ import { GinGameSynopsis } from './synopsis.js';
 class GinGamePage extends React.Component {
   render() {
     return (
-      <GenericGamePage {...this.props} configuration={ true } synopsis={ GinGameSynopsis } component={ GinGameComponent } />
+      <GenericGamePage {...this.props} configuration={ true } immersive={ false } synopsis={ GinGameSynopsis } component={ GinGameComponent } />
     );
   }
 }

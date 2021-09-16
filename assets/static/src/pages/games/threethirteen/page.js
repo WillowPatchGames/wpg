@@ -10,7 +10,7 @@ import { ThreeThirteenGameSynopsis } from './synopsis.js';
 class ThreeThirteenGamePage extends React.Component {
   render() {
     return (
-      <GenericGamePage {...this.props} configuration={ true } synopsis={ ThreeThirteenGameSynopsis } component={ ThreeThirteenGameComponent } />
+      <GenericGamePage {...this.props} configuration={ true } immersive={ false } synopsis={ ThreeThirteenGameSynopsis } component={ ThreeThirteenGameComponent } />
     );
   }
 }

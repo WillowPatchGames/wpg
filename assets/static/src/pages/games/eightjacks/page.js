@@ -10,7 +10,7 @@ import { EightJacksGameSynopsis } from './synopsis.js';
 class EightJacksGamePage extends React.Component {
   render() {
     return (
-      <GenericGamePage {...this.props} configuration={ true } synopsis={ EightJacksGameSynopsis } component={ EightJacksGameComponent } />
+      <GenericGamePage {...this.props} configuration={ true } immersive={ false } synopsis={ EightJacksGameSynopsis } component={ EightJacksGameComponent } />
     );
   }
 }

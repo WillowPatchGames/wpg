@@ -10,7 +10,7 @@ import { RushGameSynopsis } from './synopsis.js';
 class RushGamePage extends React.Component {
   render() {
     return (
-      <GenericGamePage {...this.props} configuration={ false } synopsis={ RushGameSynopsis } component={ RushGameComponent } />
+      <GenericGamePage {...this.props} configuration={ false } immersive={ true } synopsis={ RushGameSynopsis } component={ RushGameComponent } />
     );
   }
 }

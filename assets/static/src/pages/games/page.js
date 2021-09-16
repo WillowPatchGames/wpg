@@ -69,11 +69,15 @@ class GenericGamePage extends React.Component {
     }
   }
   componentDidMount() {
-    //this.props.setImmersive(true);
+    if (this.props.immersive) {
+      this.props.setImmersive(true);
+    }
   }
   componentWillUnmount() {
     if (this.unmount) this.unmount();
-    //this.props.setImmersive(false);
+    if (this.props.immersive) {
+      this.props.setImmersive(false);
+    }
   }
   render() {
     var countdown = null;
@@ -105,6 +109,8 @@ class GenericGamePage extends React.Component {
     subcomponent_props.game = this.game;
     subcomponent_props.interface = this.state.interface;
     subcomponent_props.notify = (...arg) => notify(this.props.snackbar, ...arg);
+    subcomponent_props.synopsis = undefined;
+    subcomponent_props.component = undefined;
 
     return (
       <div>
