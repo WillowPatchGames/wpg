@@ -102,19 +102,19 @@ class EightJacksGameComponent extends CardHandComponent {
     var board = game.interface.data?.board;
     var by_id = board?.id_mapped;
     if (!by_id) return;
-    var selected_card = this.state.selected &&
+    let selected_card = this.state.selected &&
       game.interface.data.hand.cards.find(
         card => card.id === this.state.selected
       );
     if (selected_card && ["jack","joker"].includes(selected_card.toString())) {
       selected_card = null;
     }
-    var runs = {}; var user_team = null;
+    let runs = {}; let user_team = null;
     for (let player of game.interface.data.players) {
       if (player.runs) {
         for (let run of player.runs) {
           for (let spot_id of run) {
-            var t = +player.team+1;
+            let t = +player.team+1;
             if (runs[spot_id] && runs[spot_id] !== t) runs[spot_id] = true;
             else runs[spot_id] = t;
           }
@@ -124,7 +124,7 @@ class EightJacksGameComponent extends CardHandComponent {
         user_team = +player.team+1;
       }
     }
-    var displays = {};
+    let displays = {};
     if (game.interface.synopsis.players) {
       for (let player of game.interface.synopsis.players) {
         if (player.player_index !== undefined && player.player_index !== -1) {
@@ -132,8 +132,8 @@ class EightJacksGameComponent extends CardHandComponent {
         }
       }
     }
-    var view_order = []; var last_row = [];
-    var transpose = false;
+    let view_order = []; let last_row = [];
+    let transpose = false;
     if (this.state.orientation === 2) {
       transpose = -0;
       for (let i=board.width-1; i>=0; i-=1) {
@@ -175,9 +175,9 @@ class EightJacksGameComponent extends CardHandComponent {
         }
       }
     }
-    var rows = [];
+    let rows = [];
     for (let ids of view_order) {
-      var col = [];
+      let col = [];
       for (let id of ids) {
         let spot = by_id[id];
         let suit = new CardSuit(spot.value.suit).toImage();
