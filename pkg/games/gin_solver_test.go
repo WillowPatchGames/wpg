@@ -1066,106 +1066,106 @@ func TestIsValidGroup(t *testing.T) {
 	}
 	t.Log("min score", defaultSolver.MinScoreBelowUsing(hand, 99, base_groups))
 	/*
-	return
-	for _, tc := range GroupTestCases {
-		for _, entry := range tc.Entries {
-			group := entry.Group
-			cards := make([]int, len(group))
-			for index := range group {
-				cards[index] = index
-			}
-			actual_group := (&tc.Solver).IsValidGroup(group, cards)
-			actual_run := (&tc.Solver).IsRun(group, cards)
-			actual_kind := (&tc.Solver).IsKind(group, cards)
-
-			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
-				t.Error("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
-			}
-			actual_score := (&tc.Solver).MinScoreBelow(group, 100)
-			if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
-				if len(group) > 10 {
-					continue
+		return
+		for _, tc := range GroupTestCases {
+			for _, entry := range tc.Entries {
+				group := entry.Group
+				cards := make([]int, len(group))
+				for index := range group {
+					cards[index] = index
 				}
-				//m := (&tc.Solver).AllMatches(group, cards)
-				//if len(m) < 12 {
-				//	t.Log("All matches", m)
-				//}
-				t.Log("Mostly", tc.Solver.MostlyWildGroups, "all", tc.Solver.AllWildGroups)
-				t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+				actual_group := (&tc.Solver).IsValidGroup(group, cards)
+				actual_run := (&tc.Solver).IsRun(group, cards)
+				actual_kind := (&tc.Solver).IsKind(group, cards)
+
+				if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
+					t.Error("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+				}
+				actual_score := (&tc.Solver).MinScoreBelow(group, 100)
+				if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
+					if len(group) > 10 {
+						continue
+					}
+					//m := (&tc.Solver).AllMatches(group, cards)
+					//if len(m) < 12 {
+					//	t.Log("All matches", m)
+					//}
+					t.Log("Mostly", tc.Solver.MostlyWildGroups, "all", tc.Solver.AllWildGroups)
+					t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+				}
 			}
 		}
-	}
-	for _, tc := range HandTestCases {
-		for _, entry := range tc.Entries {
-			group := entry.Hand
-			cards := make([]int, len(group))
-			regular := make([]int, 0, len(group))
-			for index, card := range group {
-				cards[index] = index
-				if !(&tc.Solver).IsWildCard(card) {
-					regular = append(regular, index)
+		for _, tc := range HandTestCases {
+			for _, entry := range tc.Entries {
+				group := entry.Hand
+				cards := make([]int, len(group))
+				regular := make([]int, 0, len(group))
+				for index, card := range group {
+					cards[index] = index
+					if !(&tc.Solver).IsWildCard(card) {
+						regular = append(regular, index)
+					}
 				}
-			}
-			wc := len(cards) - len(regular)
+				wc := len(cards) - len(regular)
 
-			actual_score := (&tc.Solver).MinScore(group)
+				actual_score := (&tc.Solver).MinScore(group)
 
-			if actual_score != entry.Score {
-				t.Log("Regular", regular)
+				if actual_score != entry.Score {
+					t.Log("Regular", regular)
 
-				sorted := make([]Card, len(regular))
-				for i, index := range regular {
-					sorted[i] = group[index]
-				}
-				sort.SliceStable(sorted, func(i, j int) bool {
-					return sorted[i].Rank < sorted[j].Rank
-				})
-				t.Log("Divided", (&tc.Solver).DivideHandBy(sorted, wc))
+					sorted := make([]Card, len(regular))
+					for i, index := range regular {
+						sorted[i] = group[index]
+					}
+					sort.SliceStable(sorted, func(i, j int) bool {
+						return sorted[i].Rank < sorted[j].Rank
+					})
+					t.Log("Divided", (&tc.Solver).DivideHandBy(sorted, wc))
 
-				m1 := (&tc.Solver).AllMatches(group, regular)
-				m2 := make([]Match, 0)
-				for _, m := range m1 {
-					found := false
-					for _, m_ := range m2 {
-						if reflect.DeepEqual(m, m_) {
-							found = true
-							break
+					m1 := (&tc.Solver).AllMatches(group, regular)
+					m2 := make([]Match, 0)
+					for _, m := range m1 {
+						found := false
+						for _, m_ := range m2 {
+							if reflect.DeepEqual(m, m_) {
+								found = true
+								break
+							}
+						}
+						if !found && m.wc.min <= wc {
+							m2 = append(m2, m)
 						}
 					}
-					if !found && m.wc.min <= wc {
-						m2 = append(m2, m)
+					sort.SliceStable(m2, func(i, j int) bool {
+						return m2[i].cost > m2[j].cost
+					})
+					if len(m2) < 40 {
+						t.Log("All matches", m2)
 					}
-				}
-				sort.SliceStable(m2, func(i, j int) bool {
-					return m2[i].cost > m2[j].cost
-				})
-				if len(m2) < 40 {
-					t.Log("All matches", m2)
-				}
 
-				m3 := maximalMatchesLessThanWithout(m2, make(map[int]bool), wc)
-				m4 := make([]Match, 0, len(m3))
-				for _, m := range m3 {
-					found := false
-					for _, m_ := range m4 {
-						if reflect.DeepEqual(m, m_) {
-							found = true
-							break
+					m3 := maximalMatchesLessThanWithout(m2, make(map[int]bool), wc)
+					m4 := make([]Match, 0, len(m3))
+					for _, m := range m3 {
+						found := false
+						for _, m_ := range m4 {
+							if reflect.DeepEqual(m, m_) {
+								found = true
+								break
+							}
+						}
+						if !found {
+							m4 = append(m4, m)
 						}
 					}
-					if !found {
-						m4 = append(m4, m)
+					sort.SliceStable(m4, func(i, j int) bool {
+						return m4[i].cost > m4[j].cost
+					})
+					if len(m4) < 160 {
+						t.Log("maximal matches", m4)
 					}
-				}
-				sort.SliceStable(m4, func(i, j int) bool {
-					return m4[i].cost > m4[j].cost
-				})
-				if len(m4) < 160 {
-					t.Log("maximal matches", m4)
-				}
 
-				t.Error("ERROR Expected:", entry.Score, "got:", actual_score, "\nfor group\n", entry.Hand, "\nand solver\n", tc.Solver)
+					t.Error("ERROR Expected:", entry.Score, "got:", actual_score, "\nfor group\n", entry.Hand, "\nand solver\n", tc.Solver)
+				}
 			}
-		}
-	}*/
+		}*/
 }
