@@ -3,8 +3,8 @@ import React from 'react';
 import { CardSuit } from '../../games/card.js';
 
 function getSuit(synopsis, new_state) {
-  if (this.props.game.interface.synopsis) {
-    var suit = this.props.game.interface.synopsis.suit;
+  if (synopsis) {
+    var suit = synopsis.suit;
     if (suit && CardSuit.fromString(suit) !== null) {
       suit = CardSuit.fromString(suit);
     }

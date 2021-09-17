@@ -23,6 +23,7 @@ class HeartsGameComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+    this.state.game = this.props.game;
     this.state.selected = null;
     this.state.pass_select = new Set();
     this.state.pass = null;
