@@ -40,12 +40,12 @@ func (hp *HeartsPlayer) RemoveCard(cardID int) bool {
 type HeartsConfig struct {
 	NumPlayers int `json:"num_players" config:"type:int,min:3,default:4,max:7" label:"Number of players"` // Best with four.
 
-	NumberToPass     int  `json:"number_to_pass" config:"type:int,min:1,default:3,max:8" label:"Number of cards to pass"`                                                                                  // Number of cards to pass.
-	HoldRound        bool `json:"hold_round" config:"type:bool,default:true" label:"true:Pass left, right, then hold (non-four players only),false:Only pass left and then right (non-four players only)"` // Whether to add a holding round when playing with non-four players.
-	MustBreakHearts  bool `json:"must_break_hearts" config:"type:bool,default:true" label:"true:Hearts must be broken before being lead,false:Can lead Hearts at any time"`                                // Whether hearts need to be broken before they can be lead.
-	BlackWidowBreaks bool `json:"black_widow_breaks" config:"type:bool,default:false" label:"true:Black Widow (Queen of Spades) breaks Hearts,false:Black Widow (Queen of Spades) doesn't break Hearts"`   // Whether Queen of Spades breaks hearts.
-	FirstTrickHearts bool `json:"first_trick_hearts" config:"type:bool,default:false" label:"true:Can sluff points on the first trick,false:Can't play points on the first trick"`                         // Whether Hearts are allowed on the first trick.
-	WithCrib         bool `json:"with_crib" config:"type:bool,default:false" label:"true:Put extra cards in a crib (taken with the first trick),false:Remove extra cards to deal evenly"`                  // Whether to remove cards or add a crib.
+	NumberToPass     int  `json:"number_to_pass" config:"type:int,min:1,default:3,max:8" label:"Number of cards to pass"`                                                                                         // Number of cards to pass.
+	HoldRound        bool `json:"hold_round" config:"type:bool,default:true" label:"true:Pass left then right and then hold (non-four players only),false:Only pass left and then right (non-four players only)"` // Whether to add a holding round when playing with non-four players.
+	MustBreakHearts  bool `json:"must_break_hearts" config:"type:bool,default:true" label:"true:Hearts must be broken before being lead,false:Can lead Hearts at any time"`                                       // Whether hearts need to be broken before they can be lead.
+	BlackWidowBreaks bool `json:"black_widow_breaks" config:"type:bool,default:false" label:"true:Black Widow (Queen of Spades) breaks Hearts,false:Black Widow (Queen of Spades) doesn't break Hearts"`          // Whether Queen of Spades breaks hearts.
+	FirstTrickHearts bool `json:"first_trick_hearts" config:"type:bool,default:false" label:"true:Can sluff points on the first trick,false:Can't play points on the first trick"`                                // Whether Hearts are allowed on the first trick.
+	WithCrib         bool `json:"with_crib" config:"type:bool,default:false" label:"true:Put extra cards in a crib (taken with the first trick),false:Remove extra cards to deal evenly"`                         // Whether to remove cards or add a crib.
 
 	// Scoring
 	WinAmount         int  `json:"win_amount" config:"type:int,min:50,default:100,max:500,step:5" label:"Ending amount"`
