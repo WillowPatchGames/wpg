@@ -17,13 +17,12 @@ import '@rmwc/select/styles';
 import { Slider } from '@rmwc/slider';
 import '@rmwc/slider/styles';
 
-import { CardRank, CardHand } from '../../../games/card.js';
-import { loadGame, addEv, notify, killable } from '../../games.js';
+import { CardHand } from '../../../games/card.js';
+import { addEv, notify, killable } from '../../games.js';
 import { UserCache, GameCache } from '../../../utils/cache.js';
 import { gravatarify } from '../../../utils/gravatar.js';
 
 import { EightJacksGameBoard } from './board.js';
-import { EightJacksGameComponent } from './component.js';
 
 // Properties used for displaying card hands
 var handProps = {

@@ -66,9 +66,12 @@ class EightJacksGameBoard extends CardHandComponent {
       });
     } else {
       if (new CardRank(spot.value.rank).toString() === "joker") return;
-      return () => this.setState(state => Object.assign(state, {
-        board_selected:state.board_selected===spot.id?null:spot.id
-      }));
+      return () => {
+        this.setState(state => Object.assign(state, {
+          board_selected:state.board_selected===spot.id?null:spot.id
+        }));
+        this.state.game.interface.controller.select(spot.id);
+      }
     }
   }
   drawBoard() {
