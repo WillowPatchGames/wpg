@@ -25,6 +25,7 @@ class SpadesGameComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+    this.state.game = this.props.game;
     this.state.selected = null;
     this.state.bid_select = new Set();
     this.state.bid = null;
