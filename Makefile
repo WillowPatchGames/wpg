@@ -11,7 +11,9 @@ test: check
 
 dist: distui tarball
 
-check: vet gosec staticcheck crypt utils games database business api-tests
+check: vet gosec staticcheck crypt utils games database business
+
+check-api: check api-tests
 
 deps:
 	GOROOT="$(GOROOT)" $(GO) get -u $(NAMESPACE)/...
@@ -75,8 +77,11 @@ wpgapi: cmd/wpgapi/main.go pkg/*/*.go internal/*/*.go
 clean:
 	rm -f wpgapi
 
-distclean: clean
-	rm -rf wpg.sqlite3 assets/static/node_modules assets/static/package-lock.json
+clean-api: clean
+	rm -rf wpg.sqlite3
+
+distclean: clean-api
+	rm -rf assets/static/node_modules assets/static/package-lock.json
 
 submod:
 	git submodule init && git submodule update
