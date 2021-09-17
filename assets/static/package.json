@@ -73,6 +73,7 @@
     "include": [
       "/",
       "/game",
+      "/docs",
       "/profile",
       "/profile/overview",
       "/profile/security",
@@ -80,10 +81,16 @@
       "/profile/archive",
       "/room",
       "/room/members",
+      "/room/game",
       "/room/games",
       "/room/archive",
       "/demo",
+      "/pricing",
+      "/privacy",
+      "/rules",
+      "/rules/rush",
       "/afterparty",
+      "/join",
       "/play",
       "/playing"
     ]
