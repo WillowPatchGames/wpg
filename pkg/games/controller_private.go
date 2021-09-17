@@ -90,7 +90,7 @@ func (c *Controller) markReady(gid uint64, uid uint64, ready bool) error {
 
 	game := c.ToGame[gid]
 	player := game.ToPlayer[uid]
-	player.Ready = ready
+	player.Ready = ready || game.Owner == player.UID
 
 	var notification ControllerNotifyAdmitted
 	notification.LoadFromController(game, player)

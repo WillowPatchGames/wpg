@@ -284,9 +284,9 @@ class PreGameAdminPage extends React.Component {
     this.setState(state => Object.assign({}, state, { started: false }));
   }
   async start() {
+    this.game.interface.controller.markReady(true);
     if (this.state.started) {
-      await this.game.interface.controller.cancelGame();
-      this.setState(state => Object.assign({}, state, { started: false }));
+      await this.cancel();
     }
 
     for (let player of this.state.waitlist) {
@@ -300,6 +300,7 @@ class PreGameAdminPage extends React.Component {
       this.setState(state => Object.assign({}, state, { started: false }));
       return;
     }
+
     var ret = await this.game.interface.controller.startGame();
     if (ret && ret.message_type && ret.message_type === "error") {
       notify(this.props.snackbar, ret.error, "error");
