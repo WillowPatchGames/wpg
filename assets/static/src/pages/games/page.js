@@ -2,6 +2,8 @@ import React from 'react';
 
 import '../../main.scss';
 
+import { Button } from '@rmwc/button';
+import '@rmwc/button/styles';
 import * as c from '@rmwc/card';
 import '@rmwc/card/styles';
 import * as l from '@rmwc/list';
@@ -157,6 +159,16 @@ class DispatchingGamePage extends React.Component {
     var mode = this.props.game.mode || this.props.game.style;
     return layouts[mode];
   }
+  returnToRoom() {
+    if (this.props.game?.interface) {
+      this.props.game.interface.close();
+    }
+
+    this.props.game.interface = null;
+
+    this.props.setGame(null);
+    this.props.setPage("room", true);
+  }
   render() {
     var layout = this.pageLayout();
     if (layout === undefined) {
@@ -179,6 +191,9 @@ class DispatchingGamePage extends React.Component {
         <c.Card style={{ width: "100%" , padding: "0.5em 0.5em 0.5em 0.5em" }}>
           <div className="text-center">
             <h3>Game Configuration</h3>
+            {
+              this.props.room ? <><Button onClick={ () => this.returnToRoom() } raised >Return to Room</Button><br /><br /></> : <></>
+            }
             <l.List>
               <l.CollapsibleList handle={
                   <l.SimpleListItem text={ <b>Configuration</b> } metaIcon="chevron_right" />
