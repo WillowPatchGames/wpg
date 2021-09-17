@@ -27,8 +27,10 @@ class EightJacksGameBoard extends CardHandComponent {
       let board_selected = this.state.board_selected;
       let last_remote_selected = this.state.last_remote_selected;
       let selected_square = this.state.game.interface.data.selected_square;
+      let not_us = this.state.game.interface.data.selected_square_uid !== this.props.user.id;
+      let not_this_client = !not_us && this.state.game.interface.data.selected_square_sid !== this.props.user.getSessionID();
 
-      if (selected_square !== last_remote_selected) {
+      if (selected_square !== last_remote_selected && (not_us || not_this_client)) {
         board_selected = selected_square;
         last_remote_selected = selected_square;
       }
