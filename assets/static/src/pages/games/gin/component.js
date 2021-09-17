@@ -439,6 +439,9 @@ class GinGameComponent extends CardHandComponent {
                 <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
                   <h3>Hand</h3>
                   { this.renderHand(false) }
+                  <br/><br/>
+                  <Switch label={ "Autosort" } checked={this.state.autosort}
+                    onChange={e => this.setAutosort(e.currentTarget.checked)}/>
                 </div>
               </c.Card>
             </div>
@@ -450,6 +453,9 @@ class GinGameComponent extends CardHandComponent {
             <div style={{ padding: "1rem 1rem 1rem 1rem" }}>
               <h3>Hand</h3>
               { this.renderHand(false) }
+              <br/><br/>
+              <Switch label={ "Autosort" } checked={this.state.autosort}
+                onChange={e => this.setAutosort(e.currentTarget.checked)}/>
             </div>
           </c.Card>
         </div>;
