@@ -46,7 +46,9 @@ class JoinGamePage extends React.Component {
     }
 
     if (this.state.code.length === 6) {
-      this.state.code = "rt-" + this.state.code;
+      var code = "rt-" + this.state.code;
+      this.setState(state => Object.assign({}, state, { code }));
+      this.state.code = code;
     }
 
     var try_game = this.state.code[0] === "g" && (this.state.code[1] === "c" || this.state.code[1] === "p") && (this.state.code[2] === '-' || this.state.code[2] === ' ');
