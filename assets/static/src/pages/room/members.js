@@ -56,8 +56,19 @@ class RoomMembersTab extends React.Component {
   }
 
   async checkForGames() {
+    let was_admitted = this.props.room.admitted;
+    let old_code = this.props.room.code;
+
     // XXX: Convert to WebSocket
     await this.props.room.update();
+
+    if (!was_admitted && this.props.room.admitted) {
+      // Just changed from not admitted to admitted. Check if we joined via
+      // a temporary join code and switch to the full join code.
+      if (old_code.substr(0, 3) === 'rt-' && this.props.room.code !== old_code) {
+        this.props.setPage('/room/members', '?code=' + this.props.room.code);
+      }
+    }
 
     this.setState(state => Object.assign({}, state, { members: this.props.room.members }));
   }
