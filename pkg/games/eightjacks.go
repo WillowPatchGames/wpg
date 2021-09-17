@@ -109,7 +109,9 @@ type EightJacksPlayer struct {
 	History  []Card `json:"history"`
 	Discards []Card `json:"discards"`
 
-	SelectedSquare int `json:"selected_square"`
+	SelectedSquare        int    `json:"selected_square"`
+	SelectedSquareUser    uint64 `json:"selected_square_uid"`
+	SelectedSquareSession uint64 `json:"selected_square_sid"`
 
 	Team int     `json:"team"`
 	Runs [][]int `json:"runs"`

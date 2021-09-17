@@ -8,7 +8,9 @@ type EightJacksPlayerState struct {
 	History  []Card `json:"history"`
 	Discards []Card `json:"discards"`
 
-	SelectedSquare int `json:"selected_square"`
+	SelectedSquare        int    `json:"selected_square"`
+	SelectedSquareUser    uint64 `json:"selected_square_uid"`
+	SelectedSquareSession uint64 `json:"selected_square_sid"`
 
 	Team  int     `json:"team"`
 	Runs  [][]int `json:"runs"`
@@ -63,6 +65,8 @@ func (ejsn *EightJacksStateNotification) LoadData(data *GameData, game *EightJac
 	ejsn.Discards = game.Players[player.Index].Discards
 
 	ejsn.SelectedSquare = game.Players[player.Index].SelectedSquare
+	ejsn.SelectedSquareUser = game.Players[player.Index].SelectedSquareUser
+	ejsn.SelectedSquareSession = game.Players[player.Index].SelectedSquareSession
 
 	ejsn.Team = game.Players[player.Index].Team
 	ejsn.Runs = game.Players[player.Index].Runs

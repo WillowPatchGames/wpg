@@ -254,11 +254,15 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			// Since we are a player and we're updating our own selected square, it
 			// is safe to undispatch back to our player from the controller.
 			state.Players[player.Index].SelectedSquare = data.SquareID
+			state.Players[player.Index].SelectedSquareUser = player.UID
+			state.Players[player.Index].SelectedSquareSession = sid
 			var response EightJacksStateNotification
 			response.LoadData(game, state, player)
 			c.undispatch(game, player, response.MessageID, 0, response)
 		} else {
 			state.Players[state.Turn].SelectedSquare = data.SquareID
+			state.Players[state.Turn].SelectedSquareUser = player.UID
+			state.Players[state.Turn].SelectedSquareSession = sid
 
 			// We don't really need to inform the trusted peer if the square changed,
 			// especially since it is public information and other (future) players
