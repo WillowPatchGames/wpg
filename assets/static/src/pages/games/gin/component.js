@@ -62,7 +62,7 @@ class GinGameComponent extends CardHandComponent {
       for (let other of this.state.game.interface.synopsis.players) {
         if (other.user.id !== this.state.game.interface.laid_down_id) continue;
         if (other.round_score === 0) continue;
-        return other.groups || [];
+        return [...other.groups] || [];
       }
     }
     return [];
