@@ -70,7 +70,7 @@ func (handle UpdateHandler) verifyRequest() error {
 		return api_errors.ErrMissingRequest
 	}
 
-	if handle.req.Style == "" && handle.req.Config == nil && handle.req.AddTemporaryCode == false {
+	if handle.req.Style == "" && handle.req.Config == nil && !handle.req.AddTemporaryCode {
 		return api_errors.ErrMissingRequest
 	}
 

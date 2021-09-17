@@ -269,7 +269,7 @@ func (ss *SpadesState) AssignTeams(dealer int, num_players int, player_assignmen
 	ss.Assigned = true
 	ss.Teams = len(player_assignments)
 	for index, players := range player_assignments {
-		if len(players) < 0 {
+		if len(players) == 0 {
 			return errors.New("unable to have an empty team: " + strconv.Itoa(index) + " has no players")
 		}
 

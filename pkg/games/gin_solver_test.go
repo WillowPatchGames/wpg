@@ -1,8 +1,8 @@
 package games
 
 import (
-	"reflect"
-	"sort"
+	//"reflect"
+	//"sort"
 	"testing"
 )
 
@@ -1065,6 +1065,7 @@ func TestIsValidGroup(t *testing.T) {
 		Card{35, ClubsSuit, NineRank},
 	}
 	t.Log("min score", defaultSolver.MinScoreBelowUsing(hand, 99, base_groups))
+	/*
 	return
 	for _, tc := range GroupTestCases {
 		for _, entry := range tc.Entries {
@@ -1166,5 +1167,5 @@ func TestIsValidGroup(t *testing.T) {
 				t.Error("ERROR Expected:", entry.Score, "got:", actual_score, "\nfor group\n", entry.Hand, "\nand solver\n", tc.Solver)
 			}
 		}
-	}
+	}*/
 }

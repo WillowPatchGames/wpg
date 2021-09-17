@@ -92,8 +92,7 @@ func ejsComputeSpiral(wild_corners bool, width int, height int) map[int]map[int]
 	// For spiral layouts, we construct a map of x,y coordinate to index
 	// and then populate the indices (into the deck) in a spiral iteration
 	// pattern.
-	var deck_indices map[int]map[int]int
-	deck_indices = make(map[int]map[int]int)
+	var deck_indices map[int]map[int]int = make(map[int]map[int]int)
 	for i := 0; i < width; i++ {
 		deck_indices[i] = make(map[int]int)
 		for j := 0; j < height; j++ {
@@ -116,7 +115,7 @@ func ejsComputeSpiral(wild_corners bool, width int, height int) map[int]map[int]
 		remaining -= 4
 	}
 
-	for true {
+	for {
 		var increment_count int = 0
 		for deck_indices[x][y] != -1 {
 			x, y, depth, direction = ejsBoardSpiralIncrement(x, y, depth, direction, width, height)
@@ -201,8 +200,7 @@ func ejsComputePinwheel() map[int]map[int]int {
 	var width = 10
 	var height = 10
 
-	var deck_indices map[int]map[int]int
-	deck_indices = make(map[int]map[int]int)
+	var deck_indices map[int]map[int]int = make(map[int]map[int]int)
 	for i := 0; i < width; i++ {
 		deck_indices[i] = make(map[int]int)
 		for j := 0; j < height; j++ {
