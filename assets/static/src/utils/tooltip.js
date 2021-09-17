@@ -21,8 +21,15 @@ class TooltipWrapper extends React.Component {
       return state;
     });
   }
-  onClick() {
-    if (Date.now() > this.time + 200) { // 20 was not enough lol
+  onClick(event) {
+    event.preventDefault();
+
+    if (this.props.clickHandler) {
+      this.props?.clickHandler();
+    }
+
+    let now = Date.now()
+    if (now > this.time + 200) { // 20 was not enough lol
       this.setState(state => {
         state.tooltip = !state.tooltip;
         if (state.tooltip) {
@@ -33,7 +40,8 @@ class TooltipWrapper extends React.Component {
         return state;
       });
     }
-    this.time = Date.now();
+
+    this.time = now;
   }
   onMouseEnter() {
     if (!this.state.tooltip) {
@@ -43,7 +51,7 @@ class TooltipWrapper extends React.Component {
         return state;
       });
     }
-    this.time = Date.now();
+    this.time = new Date();
   }
   onMouseLeave() {
     if (this.state.tooltip) {
@@ -53,17 +61,20 @@ class TooltipWrapper extends React.Component {
         return state;
       });
     }
-    this.time = Date.now();
+    this.time = new Date();
   }
   render() {
-    let { content, align, ...props } = this.props;
+    let { content, align, style, clickHandler, ...props } = this.props;
     if (!align) align = "right";
+    if (!style) style = {};
+    if (clickHandler) style['cursor'] = 'pointer';
     return <Tooltip align={ align } content={ content } open={ this.state.tooltip } activateOn={[]}>
       <div
         onClick={ this.onClick.bind(this) }
-        onTouchStart={ this.onClick.bind(this) }
+        onTouchStart={ this.onMouseEnter.bind(this) }
         onMouseEnter={ this.onMouseEnter.bind(this) }
         onMouseLeave={ this.onMouseLeave.bind(this) }
+        style={ style }
         {... props }
         >
         { props.children }

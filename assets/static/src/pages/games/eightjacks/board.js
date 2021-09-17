@@ -182,11 +182,11 @@ class EightJacksGameBoard extends CardHandComponent {
               }}>{ text }</span>
           }
         </>;
-        let tooltip = e => e;
+        let tooltip = (e, handler) => e;
         if (spot.who_marked !== undefined && spot.who_marked !== -1) {
           let name = displays[spot.who_marked];
           if (name) {
-            tooltip = e => <TooltipWrapper content={ name } align="bottom">{e}</TooltipWrapper>;
+            tooltip = (e, handler) => <TooltipWrapper content={ name } align="bottom" clickHandler={ handler }>{e}</TooltipWrapper>;
           }
         }
         col.push(
@@ -197,9 +197,11 @@ class EightJacksGameBoard extends CardHandComponent {
                 transpose={ transpose }
                 onClick={ this.handleClick(spot) }
                 style={{
+                  "cursor": "pointer",
                   "--card-fill": sel === 2 ? (team_colors[user_team] || "#82fff3") : sel ? "rgb(251 255 2)" : null,
                   "--card-fill-opacity": sel ? 0.5 : 1,
-                }} />
+                }} />,
+              () => { this.handleClick(spot) }
             )}
           </td>
         );
