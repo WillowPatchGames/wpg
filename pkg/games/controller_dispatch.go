@@ -114,6 +114,18 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 			var users ControllerListUsersInGame
 			users.LoadFromController(game, player)
 			c.undispatch(game, player, users.MessageID, 0, users)
+
+			// Since this user won't have an admit message, go ahead and send
+			// everyone else a message telling them of the new player.
+			for _, indexed_player := range game.ToPlayer {
+				if !indexed_player.Admitted || indexed_player.UID == player.UID {
+					continue
+				}
+
+				var users ControllerListUsersInGame
+				users.LoadFromController(game, indexed_player)
+				c.undispatch(game, indexed_player, users.MessageID, 0, users)
+			}
 		}
 	case "admit":
 		var data GameAdmit
