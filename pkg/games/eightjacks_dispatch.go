@@ -49,7 +49,7 @@ type EightJacksSelectMsg struct {
 	SquareID int `json:"square_id"`
 }
 
-func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, game *GameData, player *PlayerData, sid uint64) error {
 	var err error
 	var state *EightJacksState = game.State.(*EightJacksState)
 	if state == nil {

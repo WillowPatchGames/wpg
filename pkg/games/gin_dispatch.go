@@ -41,7 +41,7 @@ type GinScoreByGroupsMsg struct {
 	Leftover []int   `json:"leftover"`
 }
 
-func (c *Controller) dispatchGin(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+func (c *Controller) dispatchGin(message []byte, header MessageHeader, game *GameData, player *PlayerData, sid uint64) error {
 	var err error
 	var state *GinState = game.State.(*GinState)
 	if state == nil {

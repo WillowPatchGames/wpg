@@ -41,7 +41,7 @@ type ThreeThirteenScoreByGroupsMsg struct {
 	Leftover []int   `json:"leftover"`
 }
 
-func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+func (c *Controller) dispatchThreeThirteen(message []byte, header MessageHeader, game *GameData, player *PlayerData, sid uint64) error {
 	var err error
 	var state *ThreeThirteenState = game.State.(*ThreeThirteenState)
 	if state == nil {

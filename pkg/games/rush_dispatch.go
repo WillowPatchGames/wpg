@@ -42,7 +42,7 @@ type RushPlay struct {
 	Y      int `json:"y"`
 }
 
-func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+func (c *Controller) dispatchRush(message []byte, header MessageHeader, game *GameData, player *PlayerData, sid uint64) error {
 	var err error
 	var state *RushState = game.State.(*RushState)
 	if state == nil {

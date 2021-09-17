@@ -23,7 +23,7 @@ type HeartsPlayMsg struct {
 	CardID int `json:"card_id"`
 }
 
-func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+func (c *Controller) dispatchHearts(message []byte, header MessageHeader, game *GameData, player *PlayerData, sid uint64) error {
 	var err error
 	var state *HeartsState = game.State.(*HeartsState)
 	if state == nil {

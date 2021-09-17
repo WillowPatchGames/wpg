@@ -44,7 +44,7 @@ type GameUnbindRequest struct {
 	PeerUID uint64 `json:"peer_id"`
 }
 
-func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameData, player *PlayerData, sid uint64) error {
 	// Get some common started/finished information first. Because we store
 	// this in the game state, accessing it requires knowing the game mode.
 	var started = false
@@ -199,17 +199,17 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 	}
 
 	if game.Mode == RushGame {
-		return c.dispatchRush(message, header, game, player)
+		return c.dispatchRush(message, header, game, player, sid)
 	} else if game.Mode == SpadesGame {
-		return c.dispatchSpades(message, header, game, player)
+		return c.dispatchSpades(message, header, game, player, sid)
 	} else if game.Mode == ThreeThirteenGame {
-		return c.dispatchThreeThirteen(message, header, game, player)
+		return c.dispatchThreeThirteen(message, header, game, player, sid)
 	} else if game.Mode == EightJacksGame {
-		return c.dispatchEightJacks(message, header, game, player)
+		return c.dispatchEightJacks(message, header, game, player, sid)
 	} else if game.Mode == HeartsGame {
-		return c.dispatchHearts(message, header, game, player)
+		return c.dispatchHearts(message, header, game, player, sid)
 	} else if game.Mode == GinGame {
-		return c.dispatchGin(message, header, game, player)
+		return c.dispatchGin(message, header, game, player, sid)
 	} else {
 		panic("Valid but unsupported game mode: " + game.Mode.String())
 	}

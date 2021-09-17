@@ -608,7 +608,7 @@ func (hub *Hub) processMessage(client *Client, message []byte) error {
 		return errors.New("unable to process message from non-existent client:" + client.String())
 	}
 
-	changed_state, err := hub.controller.Dispatch(message, uint64(client.gameID), uint64(client.userID))
+	changed_state, err := hub.controller.Dispatch(message, uint64(client.gameID), uint64(client.userID), uint64(client.sessionID))
 	if err != nil {
 		log.Println("Got error processing message:", err, string(message))
 	}

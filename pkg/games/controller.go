@@ -414,7 +414,7 @@ func parseMessageHeader(message []byte) (MessageHeader, error) {
 	return obj, nil
 }
 
-func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) (bool, error) {
+func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64, sid uint64) (bool, error) {
 	var header MessageHeader
 	var err error
 
@@ -472,7 +472,7 @@ func (c *Controller) Dispatch(message []byte, gid uint64, uid uint64) (bool, err
 	}
 	playerData.InboundMsgs = append(playerData.InboundMsgs, &db_msg)
 
-	err = c.dispatch(message, header, gameData, playerData)
+	err = c.dispatch(message, header, gameData, playerData, sid)
 	if err != nil {
 		// There was an error handling this action. Send the error to the client.
 		var notification ControllerNotifyError

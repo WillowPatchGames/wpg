@@ -44,7 +44,7 @@ type SpadesPlayMsg struct {
 	CardID int `json:"card_id"`
 }
 
-func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *GameData, player *PlayerData) error {
+func (c *Controller) dispatchSpades(message []byte, header MessageHeader, game *GameData, player *PlayerData, sid uint64) error {
 	var err error
 	var state *SpadesState = game.State.(*SpadesState)
 	if state == nil {
