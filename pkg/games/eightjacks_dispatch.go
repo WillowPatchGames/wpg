@@ -143,7 +143,7 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 			return errors.New("unable to cancel game that doesn't use a countdown")
 		}
 
-		if state.Started || state.Finished {
+		if state.Started || state.Dealt || state.Finished {
 			return errors.New("unable to cancel game that is already started")
 		}
 
