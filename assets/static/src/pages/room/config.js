@@ -9,8 +9,8 @@ import * as d from '@rmwc/dialog';
 import '@rmwc/dialog/styles';
 import * as l from '@rmwc/list';
 import '@rmwc/list/styles';
-import { Select } from '@rmwc/select';
-import '@rmwc/select/styles';
+/*import { Select } from '@rmwc/select';
+import '@rmwc/select/styles';*/
 import { Switch } from '@rmwc/switch';
 import '@rmwc/switch/styles';
 import { TextField } from '@rmwc/textfield';
@@ -26,7 +26,7 @@ class CreateRoomForm extends React.Component {
 
     this.state = {
       error: null,
-      mode: 'single',
+      mode: 'dynamic',
       open: true,
       video_chat: '',
     }
@@ -85,32 +85,29 @@ class CreateRoomForm extends React.Component {
             <l.List twoLine>
               <l.ListGroup>
                 <l.ListGroupSubheader>Joining Options</l.ListGroupSubheader>
-                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label={ this.state.open ? "Open for anyone to join if they have the room code" : "Generate unique invite codes for everyone" } checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
+                <l.ListItem onClick={(e) => e.target === e.currentTarget && this.toggle("open") }><Switch label={ this.state.open ? "Open for anyone to join if they have the room code" : "Generate unique invite codes for every player" } checked={ this.state.open } onChange={ () => this.toggle("open", true) } /></l.ListItem>
                 <TextField fullwidth label="Video Chat Link" value={ this.state.video_chat } onChange={ this.inputHandler("video_chat") } />
               </l.ListGroup>
               <br />
               <br />
-              <l.ListGroup>
-                <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
-                <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") } options={
-                  [
-                    {
-                      label: 'Single (Only one game)',
-                      value: 'single',
-                    },
-                    {
-                      label: 'Dynamic (Play multiple types of games)',
-                      value: 'dynamic',
-                    }
-                  ]
-                } />
-                <br/>
-                {
-                  this.state.mode === 'rush' ?
-                  <p>In rush mode, when one player draws a tile, all players must draw tiles and catch up – first to finish their board when there are no more tiles left wins!</p>
-                  : <></>
-                }
-              </l.ListGroup>
+              {/*
+                <l.ListGroup>
+                  <l.ListGroupSubheader>Game Options</l.ListGroupSubheader>
+                  <Select label="Game Mode" enhanced value={ this.state.mode } onChange={ this.inputHandler("mode") } options={
+                    [
+                      {
+                        label: 'Single (Only one game)',
+                        value: 'single',
+                      },
+                      {
+                        label: 'Dynamic (Play multiple types of games)',
+                        value: 'dynamic',
+                      }
+                    ]
+                  } />
+                  <br/>
+                </l.ListGroup>
+              */}
             </l.List>
 
             <Button label="Create" raised />
