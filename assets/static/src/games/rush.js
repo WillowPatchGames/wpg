@@ -10,6 +10,13 @@ import {
 } from './common.js';
 
 class RushController extends GameController {
+  constructor(game) {
+    super(game);
+
+    this.draw_id = 1;
+    this.remaining_tiles = 0;
+  }
+
   async check() {
     return await this.wsController.sendAndWait({
       'message_type': 'check',
