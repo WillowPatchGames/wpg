@@ -678,7 +678,7 @@ class UserArchiveTab extends React.Component {
       var loaded_games = [];
       for (let game of this.state.games) {
         loaded_games.push(
-          <l.ListItem>
+          <l.ListItem style={{ height: "auto", minHeight: "56px" }}>
             <l.ListItemText className="double-info">
               <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
                 <b>Game #{ game.game_id }</b>&nbsp;-&nbsp;{ game.style }&nbsp;-&nbsp;<i>{ game.lifecycle }</i>
@@ -739,7 +739,7 @@ class UserArchiveTab extends React.Component {
       var loaded_rooms = [];
       for (let room of this.state.rooms) {
         loaded_rooms.push(
-          <l.ListItem>
+          <l.ListItem style={{ height: "auto", minHeight: "56px" }}>
             <l.ListItemText className="double-info">
               <l.ListItemPrimaryText style={{ "textAlign": "left" }}>
                 <b>Room #{ room.room_id }</b>&nbsp;-&nbsp;{ room.style }&nbsp;-&nbsp;<i>{ room.lifecycle }</i>
