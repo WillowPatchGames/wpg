@@ -3,6 +3,7 @@ package games
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"time"
 )
 
@@ -183,6 +184,11 @@ func (c *Controller) dispatch(message []byte, header MessageHeader, game *GameDa
 		message.LoadFromController(game, admin, player)
 		c.undispatch(game, admin, message.MessageID, 0, message)
 
+		if started {
+			log.Println("ignoring countback on already started game; assuming from multiple clients from the same user")
+			return nil
+		}
+
 		return c.handleCountdown(game)
 	case "bind-request":
 		return c.handleBindRequest(message, game, player)
@@ -266,6 +272,13 @@ func (c *Controller) handleCountdown(game *GameData) error {
 		} else {
 			panic("Unknown game mode: " + game.Mode.String())
 		}
+	}
+
+	// Here we need to guard against multiple players entering the game with
+	// multiple sessions. We can exit if the countdown timer is still nil here,
+	// because it means we got an additional or extra countback late.
+	if game.CountdownTimer == nil {
+		return nil
 	}
 
 	// Ensure the previous timer has elapsed, or wait until it does.
