@@ -199,7 +199,7 @@ class EightJacksGameComponent extends EightJacksGameBoard {
       { this.drawBoard(true) }
     </>;
 
-    let play_button = <Button label={ this.state.marking ? "Finish marking" : (this.state.board_selected ? "Play here" : "Pick a spot!") } unelevated ripple={false} disabled={ !this.state.board_selected || !this.state.selected || this.state.marking || this.state.sorting }
+    let play_button = <Button label={ this.state.marking ? "Finish marking" : (this.state.board_selected ? "Play here" : "Pick a spot!") } unelevated ripple={false} disabled={ !this.state.game?.interface?.my_turn() || !this.state.board_selected || !this.state.selected || this.state.marking || this.state.sorting }
       onClick={
         this.clearSelectAnd(
           () => {
@@ -228,7 +228,7 @@ class EightJacksGameComponent extends EightJacksGameBoard {
     }
 
     let discard_button = <Button
-      label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.selected || this.state.sorting }
+      label={ "Discard dead card" } unelevated ripple={false} disabled={ !this.state.game?.interface?.my_turn() || !this.state.selected || this.state.sorting }
       onClick={this.clearSelectAnd(() => this.state.game.interface.discard(this.state.selected))}
     />;
 
