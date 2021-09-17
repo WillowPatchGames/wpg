@@ -29,9 +29,9 @@ class CancellableButton extends React.Component {
       } else if (!state.seenIsLoading && props.isLoading) {
         return Object.assign({}, state, { seenIsLoading: true });
       }
-    } else {
-      Object.assign({}, state, { seenIsLoading: false })
     }
+
+    return Object.assign({}, state, { seenIsLoading: false })
   }
 
   clickHandler() {
