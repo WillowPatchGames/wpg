@@ -236,8 +236,9 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 		var is_current_turn = player.Playing && player.Index == state.Turn
 		current_turn_uid, found_uid := game.ToUserID(state.Turn)
 		var is_trusted_peer = found_uid && !player.Playing && game.PlayersAreBound(current_turn_uid, player.UID)
+		var self_is_player = player.Playing && player.Index != state.Turn
 
-		if !is_current_turn && !is_trusted_peer {
+		if !is_current_turn && !is_trusted_peer && !self_is_player {
 			return errors.New("unable to update selected square for the current player")
 		}
 
@@ -245,23 +246,32 @@ func (c *Controller) dispatchEightJacks(message []byte, header MessageHeader, ga
 		// case would indicate corrupted state information so it seems best to
 		// throw an error and make the player select their square manually on their
 		// own board.
-		if !found_uid {
+		if !found_uid && !self_is_player {
 			return errors.New("unable to find current turn's player by uid")
 		}
 
-		state.Players[state.Turn].SelectedSquare = data.SquareID
+		if self_is_player {
+			// Since we are a player and we're updating our own selected square, it
+			// is safe to undispatch back to our player from the controller.
+			state.Players[player.Index].SelectedSquare = data.SquareID
+			var response EightJacksStateNotification
+			response.LoadData(game, state, player)
+			c.undispatch(game, player, response.MessageID, 0, response)
+		} else {
+			state.Players[state.Turn].SelectedSquare = data.SquareID
 
-		// We don't really need to inform the trusted peer if the square changed,
-		// especially since it is public information and other (future) players
-		// might be playing around with their selected squares while they're
-		// waiting to play (and thus, leak information and/or corrupt this current
-		// player's data) -- so only tell the current turn's player explicitly. For
-		// simplicity, let's just reuse the state notification message and not make
-		// it a reply.
-		current_player := game.ToPlayer[current_turn_uid]
-		var response EightJacksStateNotification
-		response.LoadData(game, state, current_player)
-		c.undispatch(game, current_player, response.MessageID, 0, response)
+			// We don't really need to inform the trusted peer if the square changed,
+			// especially since it is public information and other (future) players
+			// might be playing around with their selected squares while they're
+			// waiting to play (and thus, leak information and/or corrupt this current
+			// player's data) -- so only tell the current turn's player explicitly. For
+			// simplicity, let's just reuse the state notification message and not make
+			// it a reply.
+			current_player := game.ToPlayer[current_turn_uid]
+			var response EightJacksStateNotification
+			response.LoadData(game, state, current_player)
+			c.undispatch(game, current_player, response.MessageID, 0, response)
+		}
 	default:
 		return errors.New("unknown message_type issued to spades game: " + header.MessageType)
 	}
