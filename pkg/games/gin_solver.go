@@ -442,6 +442,9 @@ func (gs *GinSolver) WcRun(hand []Card, cards []int) Interval {
 	if !gs.MostlyWildGroups && (len(cards)-min < more) {
 		more = len(cards) - min
 	}
+	if more < 0 {
+		return none
+	}
 
 	return Interval{min, more}
 }

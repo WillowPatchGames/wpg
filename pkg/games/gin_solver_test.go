@@ -1,8 +1,8 @@
 package games
 
 import (
-	//"reflect"
-	//"sort"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -671,7 +671,7 @@ var GroupTestCases = []ValidGroupEntry{
 					Card{0, NoneSuit, JokerRank},
 					Card{0, SpadesSuit, TwoRank},
 				},
-				IsRun:  true,
+				IsRun:  false,
 				IsKind: false,
 			},
 			GroupEntry{
@@ -1005,6 +1005,29 @@ var HandTestCases = []ValidHandEntry{
 			},
 		},
 	},
+	ValidHandEntry{
+		Solver: setAceLow(true, threeThirteenSolver(QueenRank)),
+		Entries: []HandEntry{
+			HandEntry{
+				Hand: []Card{
+					Card{107, ClubsSuit, AceRank},    // 0
+					Card{3, DiamondsSuit, AceRank},   // 1
+					Card{62, SpadesSuit, ThreeRank},  // 2
+					Card{83, ClubsSuit, ThreeRank},   // 3
+					Card{55, SpadesSuit, FourRank},   // 4
+					Card{102, SpadesSuit, EightRank}, // 5
+					Card{67, HeartsSuit, KingRank},   // 6
+
+					Card{1, HeartsSuit, QueenRank},   // 7
+					Card{2, SpadesSuit, QueenRank},   // 8
+					Card{3, DiamondsSuit, QueenRank}, // 9
+					Card{4, ClubsSuit, QueenRank},    // 10
+					Card{0, FancySuit, JokerRank},    // 11
+				},
+				Score: 5,
+			},
+		},
+	},
 }
 
 func TestIsValidGroup(t *testing.T) {
@@ -1040,71 +1063,72 @@ func TestIsValidGroup(t *testing.T) {
 		}
 	*/
 	// base_groups [[17 12 11 10 16] [14 15 13]] hand [Card{40, DiamondsSuit, ThreeRank} Card{54, HeartsSuit, JackRank} Card{21, DiamondsSuit, TenRank} Card{12, SpadesSuit, JackRank} Card{38, DiamondsSuit, SixRank} Card{29, SpadesSuit, EightRank} Card{28, SpadesSuit, SixRank} Card{5, DiamondsSuit, NineRank} Card{27, SpadesSuit, TenRank} Card{34, ClubsSuit, JackRank} Card{32, ClubsSuit, TenRank} Card{45, FancySuit, JokerRank} Card{31, ClubsSuit, EightRank} Card{48, DiamondsSuit, KingRank} Card{36, ClubsSuit, KingRank} Card{10, HeartsSuit, KingRank} Card{43, ClubsSuit, SixRank} Card{35, ClubsSuit, NineRank}] groups [[35 31 45 32 43] [36 10 48]]
-	base_groups := [][]int{[]int{17, 12, 11, 10, 16}, []int{14, 15, 13}}
-	hand := []Card{
-		Card{40, DiamondsSuit, ThreeRank},
-		Card{54, HeartsSuit, JackRank},
-		Card{21, DiamondsSuit, TenRank},
-		Card{12, SpadesSuit, JackRank},
-		Card{38, DiamondsSuit, SixRank},
-		Card{29, SpadesSuit, EightRank},
-		Card{28, SpadesSuit, SixRank},
-		Card{5, DiamondsSuit, NineRank},
-		Card{27, SpadesSuit, TenRank},
-		Card{34, ClubsSuit, JackRank},
-
-		Card{32, ClubsSuit, TenRank}, // 10
-		Card{45, FancySuit, JokerRank},
-		Card{31, ClubsSuit, EightRank},
-
-		Card{48, DiamondsSuit, KingRank},
-		Card{36, ClubsSuit, KingRank},
-		Card{10, HeartsSuit, KingRank},
-
-		Card{43, ClubsSuit, SixRank},
-		Card{35, ClubsSuit, NineRank},
-	}
-	t.Log("min score", defaultSolver.MinScoreBelowUsing(hand, 99, base_groups))
 	/*
-		return
-		for _, tc := range GroupTestCases {
-			for _, entry := range tc.Entries {
-				group := entry.Group
-				cards := make([]int, len(group))
-				for index := range group {
-					cards[index] = index
-				}
-				actual_group := (&tc.Solver).IsValidGroup(group, cards)
-				actual_run := (&tc.Solver).IsRun(group, cards)
-				actual_kind := (&tc.Solver).IsKind(group, cards)
+		base_groups := [][]int{[]int{17, 12, 11, 10, 16}, []int{14, 15, 13}}
+		hand := []Card{
+			Card{40, DiamondsSuit, ThreeRank},
+			Card{54, HeartsSuit, JackRank},
+			Card{21, DiamondsSuit, TenRank},
+			Card{12, SpadesSuit, JackRank},
+			Card{38, DiamondsSuit, SixRank},
+			Card{29, SpadesSuit, EightRank},
+			Card{28, SpadesSuit, SixRank},
+			Card{5, DiamondsSuit, NineRank},
+			Card{27, SpadesSuit, TenRank},
+			Card{34, ClubsSuit, JackRank},
 
-				if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
-					t.Error("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+			Card{32, ClubsSuit, TenRank}, // 10
+			Card{45, FancySuit, JokerRank},
+			Card{31, ClubsSuit, EightRank},
+
+			Card{48, DiamondsSuit, KingRank},
+			Card{36, ClubsSuit, KingRank},
+			Card{10, HeartsSuit, KingRank},
+
+			Card{43, ClubsSuit, SixRank},
+			Card{35, ClubsSuit, NineRank},
+		}
+		t.Log("min score", defaultSolver.MinScoreBelowUsing(hand, 99, base_groups))
+	*/
+
+	for _, tc := range GroupTestCases {
+		for _, entry := range tc.Entries {
+			group := entry.Group
+			cards := make([]int, len(group))
+			for index := range group {
+				cards[index] = index
+			}
+			actual_group := (&tc.Solver).IsValidGroup(group, cards)
+			actual_run := (&tc.Solver).IsRun(group, cards)
+			actual_kind := (&tc.Solver).IsKind(group, cards)
+
+			if actual_group != (entry.IsRun || entry.IsKind) || actual_run != entry.IsRun || actual_kind != entry.IsKind {
+				t.Error("ERROR Expected:", entry.IsRun || entry.IsKind, entry.IsRun, entry.IsKind, "got:", actual_group, actual_run, actual_kind, "\nfor group\n", group, "\nand solver\n", tc.Solver)
+			}
+			actual_score := (&tc.Solver).MinScoreBelow(group, 100)
+			if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
+				if len(group) > 10 {
+					continue
 				}
-				actual_score := (&tc.Solver).MinScoreBelow(group, 100)
-				if (entry.IsRun || entry.IsKind) == (actual_score != 0) {
-					if len(group) > 10 {
-						continue
-					}
-					//m := (&tc.Solver).AllMatches(group, cards)
-					//if len(m) < 12 {
-					//	t.Log("All matches", m)
-					//}
-					t.Log("Mostly", tc.Solver.MostlyWildGroups, "all", tc.Solver.AllWildGroups)
-					t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
-				}
+				//m := (&tc.Solver).AllMatches(group, cards)
+				//if len(m) < 12 {
+				//	t.Log("All matches", m)
+				//}
+				t.Log("Mostly", tc.Solver.MostlyWildGroups, "all", tc.Solver.AllWildGroups)
+				t.Error("ERROR Expected:", (entry.IsRun || entry.IsKind), "got:", actual_score, "\nfor group\n", group, "\nand solver\n", tc.Solver)
 			}
 		}
-		for _, tc := range HandTestCases {
-			for _, entry := range tc.Entries {
-				group := entry.Hand
-				cards := make([]int, len(group))
-				regular := make([]int, 0, len(group))
-				for index, card := range group {
-					cards[index] = index
-					if !(&tc.Solver).IsWildCard(card) {
-						regular = append(regular, index)
-					}
+	}
+
+	for _, tc := range HandTestCases {
+		for _, entry := range tc.Entries {
+			group := entry.Hand
+			cards := make([]int, len(group))
+			regular := make([]int, 0, len(group))
+			for index, card := range group {
+				cards[index] = index
+				if !(&tc.Solver).IsWildCard(card) {
+					regular = append(regular, index)
 				}
 				wc := len(cards) - len(regular)
 
@@ -1167,5 +1191,6 @@ func TestIsValidGroup(t *testing.T) {
 					t.Error("ERROR Expected:", entry.Score, "got:", actual_score, "\nfor group\n", entry.Hand, "\nand solver\n", tc.Solver)
 				}
 			}
-		}*/
+		}
+	}
 }
