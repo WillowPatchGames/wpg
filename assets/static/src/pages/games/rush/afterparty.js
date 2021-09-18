@@ -23,6 +23,8 @@ class RushAfterPartyComponent extends React.Component {
       timeout: killable(() => { this.refreshData() }, 5000),
     };
 
+    this.props.setImmersive(false);
+
     GameCache.Invalidate(this.props.game.id);
 
     this.unmount = addEv(this.game, {

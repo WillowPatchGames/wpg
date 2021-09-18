@@ -132,6 +132,7 @@ class DispatchingGamePage extends React.Component {
           this.props.game.lifecycle = "finished";
           let page = this.props.room ? "/room/game/" + this.props.game.id : "/game";
           this.props.setPage(page, true);
+          this.props.setImmersive(false);
         },
         "error": data => {
           notify(this.props.snackbar, data.error, "error");
@@ -145,7 +146,8 @@ class DispatchingGamePage extends React.Component {
     }
   }
   componentDidMount() {
-    if (this.pageLayout().immersive) {
+    let is_afterparty = this.props.game?.spectating || this.props.game?.lifecycle === "finished";
+    if (this.pageLayout().immersive && !is_afterparty) {
       this.props.setImmersive(true);
     }
   }
