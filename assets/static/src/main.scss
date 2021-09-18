@@ -222,6 +222,10 @@ table.word.grid {
   height: 100%;
 }
 
+ol.results {
+  padding-left: 0px;
+}
+
 .results .game-component > .board, .results .game-component > .bank {
   height: initial;
   overflow-y: hidden;
