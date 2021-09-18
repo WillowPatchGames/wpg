@@ -748,7 +748,7 @@ class RushGameComponent extends React.Component {
   }
 
   render() {
-    let grid = e('div', {key: "grid", className: "board", ref: this.board}, e('table',
+    let grid = e('div', {key: "grid", className: "rush board", ref: this.board}, e('table',
       {
         className: "word grid" + (this.state.presentation.readOnly ? " read-only" : ""),
         style: {
@@ -788,7 +788,7 @@ class RushGameComponent extends React.Component {
         )
       )
     ))));
-    let bank = e('div', {key: "bank", className: "word bank", ref: this.droppable(["bank",""], true)},
+    let bank = e('div', {key: "bank", className: "rush word bank", ref: this.droppable(["bank",""], true)},
       [
         e('div', {key: "letters", className: "letters"}, this.state.interface.data.bank.map((letter, i) =>
           e('span', {
