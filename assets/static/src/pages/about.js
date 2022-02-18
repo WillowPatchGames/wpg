@@ -28,7 +28,7 @@ class AboutPage extends React.Component {
               <article className="text" style={{ padding: '1rem 1rem 1rem 1rem' }}>
                 <p>
                   This company was started one fun week in Ann Arbor, Michigan. Two
-                  brothers, Nick and Alex, got together and built the core game engine
+                  siblings, Verity and Alex, got together and built the core game engine
                   for Willow Patch Games. That weekend (and many cans of pop later), we
                   play-tested it for the first time. With a bit of polish, we decided
                   to launch and share our game with anyone who'd like to play.
@@ -75,7 +75,7 @@ class AboutPage extends React.Component {
                 <article className="text-left" style={{ padding: '0 1rem 1rem 1rem' }}>
                   <p>
                     Alex is one of the two cofounders of <i>Willow Patch Games</i> with
-                    his brother Nick. He is an engineer at Red Hat working on the Red Hat
+                    his sibling Verity. He is an engineer at Red Hat working on the Red Hat
                     Certificate System product. When not working, often you'll find him
                     playing violin or taking photos.
                   </p>
@@ -99,11 +99,11 @@ class AboutPage extends React.Component {
             <div className="flexible">
               <c.Card style={{ width: '300px' }}>
                 <c.CardMedia square style={{ backgroundImage: 'url(' + nick_scheel + ')' }} />
-                <Typography use="headline3">Nick&nbsp;Scheel</Typography>
+                <Typography use="headline3">Verity&nbsp;Scheel</Typography>
                 <article className="text-left" style={{ padding: '0 1rem 1rem 1rem' }}>
                   <p>
-                    Nick is one of the two cofounders of <i>Willow Patch Games</i> with
-                    his brother Alex. Nick is pursuing dual degrees in Cello Performance
+                    Verity is one of the two cofounders of <i>Willow Patch Games</i> with
+                    their brother Alex. Verity is pursuing dual degrees in Cello Performance
                     and Mathematics at <a href="https://www.bard.edu/" target="_blank" rel="noopener noreferrer">Bard</a> in
                     New York.
                   </p>
