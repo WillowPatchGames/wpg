@@ -14,7 +14,7 @@ import '../main.scss';
 
 import willows from '../images/WillowPatch.jpg';
 import alex_scheel from '../images/alex-scheel.jpg';
-import nick_scheel from '../images/nick-scheel.png';
+import verity_scheel from '../images/verity-scheel.jpg';
 import liz_mayo from '../images/liz-mayo.jpg';
 
 class AboutPage extends React.Component {
@@ -98,7 +98,7 @@ class AboutPage extends React.Component {
           <LazyLoadComponent>
             <div className="flexible">
               <c.Card style={{ width: '300px' }}>
-                <c.CardMedia square style={{ backgroundImage: 'url(' + nick_scheel + ')' }} />
+                <c.CardMedia square style={{ backgroundImage: 'url(' + verity_scheel + ')' }} />
                 <Typography use="headline3">Verity&nbsp;Scheel</Typography>
                 <article className="text-left" style={{ padding: '0 1rem 1rem 1rem' }}>
                   <p>
